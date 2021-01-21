@@ -1,4 +1,25 @@
-/* Sets all the text color to red! */
-body {
-    color: red;
+/* List View Default Styling; rendered internally as a table. */
+.list-view-table {
+    width: 100%;
+}
+
+.list-view-table > tr {
+    margin-top: 1em;
+    margin-bottom: 1em;
+    text-align: left;
+}
+
+.list-view-table > tr > th {
+    font-weight: 700;
+    font-size: larger;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    border-bottom: solid;
+}
+
+.list-view-table > tr > td {
+    text-align: left;
+    border: none;
+    font-weight: 400;
 }
