@@ -3,10 +3,10 @@
   "version": "0.0.1",
   "description": "Advanced data views for Obsidian.md.",
   "main": "main.js",
-  "test": "jest",
   "scripts": {
     "dev": "rollup --config rollup.config.js -w",
-    "build": "rollup --config rollup.config.js"
+    "build": "rollup --config rollup.config.js",
+    "test": "jest"
   },
   "keywords": [],
   "author": "",
@@ -24,6 +24,8 @@
   },
   "dependencies": {
     "@types/jest": "^26.0.20",
+    "@types/parsimmon": "^1.10.6",
+    "parsimmon": "^1.16.0",
     "ts-jest": "^26.4.4"
   }
 }
