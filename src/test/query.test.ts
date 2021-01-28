@@ -1,4 +1,4 @@
-import { QUERY_LANGUAGE, parseQuery, QueryType, BinaryOpField, Fields, NamedField } from "../query";
+import { Query, QUERY_LANGUAGE, parseQuery, QueryType, BinaryOpField, Fields, NamedField, QuerySortBy } from "../query";
 import { Success, Failure, Result } from "parsimmon";
 
 test("Parse Query Type", () => {
@@ -54,7 +54,6 @@ test("Parse Parenthesis", () => {
 
 test("Order of Operations", () => {
     let result = QUERY_LANGUAGE.field.parse("14 + 6 >= 19 - 2") as Success<BinaryOpField>;
-    console.log(result);
     expect(result.status).toBe(true);
     expect(result.value).toEqual(Fields.binaryOp(
         Fields.binaryOp(Fields.literal('number', 14), '+', Fields.literal('number', 6)),
@@ -71,4 +70,39 @@ test("Named Fields", () => {
     let complex = QUERY_LANGUAGE.namedField.parse("(time-played + 4) as something") as Success<NamedField>;
     expect(complex.status).toBe(true);
     expect(complex.value).toEqual(Fields.named("something", Fields.binaryOp(Fields.variable("time-played"), '+', Fields.literal('number', 4))));
+});
+
+test("Sort Fields", () => {
+    let simple = QUERY_LANGUAGE.sortField.parse("time-played DESC") as Success<QuerySortBy>;
+    expect(simple.status).toBe(true);
+    expect(simple.value).toEqual(Fields.sortBy(Fields.variable('time-played'), 'descending'));
+
+    let complex = QUERY_LANGUAGE.sortField.parse("(time-played - \"where\")") as Success<QuerySortBy>;
+    expect(complex.status).toBe(true);
+    expect(complex.value).toEqual(Fields.sortBy(
+        Fields.binaryOp(Fields.variable('time-played'), '-', Fields.literal('string', "where")),
+        'ascending'));
+});
+
+test("Minimal Query", () => {
+    let simple = parseQuery("TABLE time-played, rating, length FROM #games") as Query;
+    expect(simple.type).toBe('table');
+    expect(simple.fields).toEqual([
+        Fields.named('time-played', Fields.variable('time-played')),
+        Fields.named('rating', Fields.variable('rating')),
+        Fields.named('length', Fields.variable('length')),
+    ]);
+    expect(simple.from).toEqual(["#games"]);
+});
+
+test("Fat Query", () => {
+    let fat = parseQuery("TABLE (time-played + 100) as long, rating as rate, length\n"
+        + "FROM #games, #gaming, -#games/unfun\n"
+        + "WHERE long > 150 and rate - 10 < 40\n"
+        + "SORT length + 8 + 4 DESCENDING, long ASC") as Query;
+    expect(fat.type).toBe('table');
+    expect(fat.fields.length).toBe(3);
+    expect(fat.from).toEqual(["#games", "#gaming"]);
+    expect(fat.except).toEqual(["#games/unfun"]);
+    expect(fat.sortBy.length).toBe(2);
 });

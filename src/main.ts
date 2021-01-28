@@ -1,5 +1,7 @@
 import { App, TFile, getAllTags, Plugin, Workspace } from 'obsidian';
 import { createAnchor } from './render';
+import { TaskCache } from './index';
+import * as Tasks from './tasks';
 
 interface DataviewSettings { }
 
@@ -22,17 +24,36 @@ export default class DataviewPlugin extends Plugin {
 	settings: DataviewSettings;
 	workspace: Workspace;
 
+	tasks: TaskCache;
+
 	async onload() {
 		this.settings = Object.assign(DEFAULT_SETTINGS, await this.loadData());
 		this.workspace = this.app.workspace;
 		
 		console.log("Dataview Plugin - Version 0.0.1 Loaded");
 
+		// Wait for layout-ready so the vault is ready for traversal (doing it before leads to
+		// an empty vault object, yielding no markdown files).
+		this.workspace.on("layout-ready", async () => {
+			this.tasks = await TaskCache.generate(this.app.vault);
+		});
+
+		// Main entry point for dataview.
 		this.registerMarkdownPostProcessor(async (el, ctx) => {
 			let code = parseDataviewBlock(el);
 			if (!code) return;
 
-			if (code.type == 'list') {
+			// Not initialized yet, stall...
+			if (this.tasks === undefined || this.tasks === null) {
+				return;
+			}
+
+			if (code.type == 'task') {
+				el.removeChild(el.firstChild);
+
+				Tasks.renderFileTasks(el, this.tasks.all());
+				ctx.addChild(new Tasks.TaskViewLifecycle(this.app, el));
+			} else if (code.type == 'list') {
 				let files = findFilesWithTag(this.app, code.query);
 				el.removeChild(el.firstChild);
 

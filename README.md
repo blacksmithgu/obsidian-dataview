@@ -14,8 +14,7 @@ The simplest view, which simply auto-generates a bullet list over a single field
 ```dataview
 list file
 from #game
-where rating < 7/10
-sort 
+where should-replay
 ```
 ~~~
 
@@ -40,13 +39,9 @@ All dataviews take queries in order to determine what exactly to show. Queries u
 ```dataview
 [list|table] field1, field2, ..., fieldN
 
-from #tag
-[from #tag2] (if you want to fetch from multiple tags)
-[from -#tag3] (if you want to exclude a tag or subtag)
+from #tag, #tag2, -#tag3 ('-' excludes files with tag)
 
-where field [>|>=|<|<=|=] [field2|literal value]
-[where ...] (for additional constraints; equivalent to an AND; higher precedence than OR)
-[or where ...] (for additional constraints; equivalent to an OR)
+where field [>|>=|<|<=|=] [field2|literal value] (and field2 ...) (or field3...)
 
 sort field [ascending|descending] (ascending is implied if not provided)
 ```
@@ -63,7 +58,7 @@ A very long roadmap with lots of features (some big, some small). Not sorted in 
     - [ ] Select file title
     - [ ] Select creation time & last modify time
     - [ ] Select file length (in words, in bytes, etc).
-    - [ ] Select from CSV (data is selected from CSV)
+    - [ ] Select from CSV (data is selected from CSV).
 - [ ] **Query Filtering**:
     - [ ] Inferred data schema
         - [ ] Number

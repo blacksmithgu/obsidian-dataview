@@ -1,4 +1,4 @@
-import { App, TFile, MarkdownRenderChild } from 'obsidian';
+import { Vault, App, TFile, MarkdownRenderChild } from 'obsidian';
 import { createAnchor } from './render';
 
 /**
@@ -7,7 +7,7 @@ import { createAnchor } from './render';
  */
 
 /** A specific task. */
-interface Task {
+export interface Task {
 	/** The text of this task. */
 	text: string;
 	/** The line this task shows up on. */
@@ -19,43 +19,40 @@ interface Task {
 }
 
 /** Holds DOM events for a rendered task view, including check functionality. */
-class TaskViewLifecycle extends MarkdownRenderChild {
-	constructor(container: HTMLElement) {
+export class TaskViewLifecycle extends MarkdownRenderChild {
+	app: App;
+
+	constructor(app: App, container: HTMLElement) {
 		super();
+		this.app = app;
 		this.containerEl = container;
 	}
 
 	onload() {
 		let checkboxes = this.containerEl.querySelectorAll("input");
-        console.log(checkboxes);
+		console.log(checkboxes);
 
 		for (let index = 0; index < checkboxes.length; index++) {
 			const checkbox = checkboxes.item(index);
 			this.registerDomEvent(checkbox, "click", event => {
 				if (!checkbox.hasAttribute('checked')) {
-					checkbox.setAttribute('checked', "");
+					console.log("checking");
+					checkbox.setAttribute('checked', "true");
 					checkbox.parentElement.addClass('is-checked');
+
+					setTaskCheckedInFile(this.app, checkbox.dataset["file"], parseInt(checkbox.dataset["lineno"]),
+						checkbox.dataset["text"], false, true);
 				} else {
+					console.log("unchecking");
 					checkbox.removeAttribute('checked');
 					checkbox.parentElement.removeClass('is-checked');
+
+					setTaskCheckedInFile(this.app, checkbox.dataset["file"], parseInt(checkbox.dataset["lineno"]),
+						checkbox.dataset["text"], true, false);
 				}
 			});
 		}
 	}
-}
-
-
-/**
- * Returns a map of file path -> tasks in that file.
- */
-async function findAllTasks(app: App): Promise<Record<string, Task[]>> {
-	let result: Record<string, Task[]> = {};
-	for (let file of app.vault.getMarkdownFiles()) {
-		let tasks = await findTasksInFile(app, file);
-		if (tasks.length > 0) result[file.path] = tasks;
-	}
-
-	return result;
 }
 
 /** Matches lines of the form "- [ ] <task thing>". */
@@ -65,8 +62,8 @@ const TASK_REGEX = /(\s*)-\s*\[([ Xx\.]?)\]\s*(.+)/i;
  * A hacky approach to scanning for all tasks using regex. Does not support multiline 
  * tasks yet (though can probably be retro-fitted to do so).
 */
-async function findTasksInFile(app: App, file: TFile): Promise<Task[]> {
-	let text = await app.vault.cachedRead(file);
+export async function findTasksInFile(vault: Vault, file: TFile): Promise<Task[]> {
+	let text = await vault.cachedRead(file);
 
 	// Dummy top of the stack that we'll just never get rid of.
 	let stack: [Task, number][] = [];
@@ -97,7 +94,7 @@ async function findTasksInFile(app: App, file: TFile): Promise<Task[]> {
 }
 
 /** Render tasks from multiple files. */
-function renderFileTasks(container: HTMLElement, tasks: Record<string, Task[]>) {
+export function renderFileTasks(container: HTMLElement, tasks: Record<string, Task[]>) {
 	for (let path of Object.keys(tasks)) {
 		let basepath = path.replace(".md", "");
 
@@ -110,7 +107,7 @@ function renderFileTasks(container: HTMLElement, tasks: Record<string, Task[]>) 
 }
 
 /** Render a list of tasks as a single list. */
-function renderTasks(container: HTMLElement, path: string, tasks: Task[]) {
+export function renderTasks(container: HTMLElement, path: string, tasks: Task[]) {
 	let ul = container.createEl('ul', { cls: 'contains-task-list' });
 	for (let task of tasks) {
 		let li = ul.createEl('li', { cls: 'task-list-item' });
@@ -122,11 +119,6 @@ function renderTasks(container: HTMLElement, path: string, tasks: Task[]) {
 		// This fields is technically optional, but is provided to double-check
 		// we are editing the right line!
 		check.dataset["text"] = task.text;
-
-		check.addEventListener("click", event => {
-			console.log("clicky");
-			check.checked = !check.checked;
-		});
 
 		if (task.completed) {
 			li.addClass('is-checked');
@@ -144,25 +136,48 @@ function renderTasks(container: HTMLElement, path: string, tasks: Task[]) {
 }
 
 /** Check a task in a file by rewriting it. */
-async function setTaskCheckedInFile(app: App, path: string, task: Task, check: boolean) {
-	if (check == task.completed) return;
+export async function setTaskCheckedInFile(app: App, path: string, taskLine: number, taskText: string, wasChecked: boolean, check: boolean) {
+	if (check == wasChecked) return;
 
 	let text = await app.vault.adapter.read(path);
+	let splitText = text.replace("\r", "").split("\n");
 
-	// A little slow - read file, go to line, check if line is valid task, and replace it if it is.
-	let lineno = 0;
-	for (let line of text.replace("\r", "").split("\n")) {
-		lineno += 1;
+	if (splitText.length < taskLine) return;
+	console.log("past length");
 
-		let match = TASK_REGEX.exec(line);
-		if (!match) continue;
+	let match = TASK_REGEX.exec(splitText[taskLine - 1]);
+	if (!match) return;
 
-		let indent = match[1].replace("\t" , "    ").length;
-		let task: Task = {
-			text: match[3],
-			completed: match[2] == 'X' || match[2] == 'x',
-			line: lineno,
-			subtasks: []
-		};
+	let indent = match[1].replace("\t" , "    ").length;
+	let foundText = match[3];
+	let foundCompleted = match[2] == 'X' || match[2] == 'x';
+
+	console.log(`${taskText.trim()} | ${foundText.trim()}`);
+	if (taskText.trim() != foundText.trim()) return;
+	console.log("text matches");
+	console.log(splitText[taskLine - 1]);
+	console.log(wasChecked);
+	console.log(foundCompleted);
+	if (wasChecked != foundCompleted) return;
+	console.log("check matches");
+
+	if (check) {
+		splitText[taskLine - 1] = splitText[taskLine - 1]
+			.replace("- [ ]", "- [X]")
+			.replace("- []", "- [X]")
+			.replace("-[]", "- [X]");
+	} else {
+		splitText[taskLine - 1] = splitText[taskLine - 1]
+			.replace("- [X]", "- [ ]")
+			.replace("-[X]", "- [ ]");
+	}
+	
+	let hasRn = text.contains("\r");
+	if (hasRn) {
+		let final = splitText.join("\r\n");
+		await app.vault.adapter.write(path, final);
+	} else {
+		let final = splitText.join("\n");
+		await app.vault.adapter.write(path, final);
 	}
 }
