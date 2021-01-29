@@ -44,7 +44,10 @@ export default class DataviewPlugin extends Plugin {
 			if (!code) return;
 
 			// Not initialized yet, stall...
+			// TODO: Depending on perf, can we block render for this?
 			if (this.tasks === undefined || this.tasks === null) {
+				el.removeChild(el.firstChild);
+				el.createEl('h2', { text: "Dataview is still indexing files... try reloading this page."});
 				return;
 			}
 

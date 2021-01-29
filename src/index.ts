@@ -31,7 +31,7 @@ export class MetadataIndex {
 /** Caches tasks for each file to avoid repeated re-loading. */
 export class TaskCache {
     /** How often the reload queue is checked for reloads. */
-    static RELOAD_INTERVAL = 5_000;
+    static RELOAD_INTERVAL = 1_000;
 
     /** Create a task cache for the given vault. */
     static async generate(vault: Vault): Promise<TaskCache> {

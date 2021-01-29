@@ -30,28 +30,39 @@ export class TaskViewLifecycle extends MarkdownRenderChild {
 
 	onload() {
 		let checkboxes = this.containerEl.querySelectorAll("input");
-		console.log(checkboxes);
 
 		for (let index = 0; index < checkboxes.length; index++) {
 			const checkbox = checkboxes.item(index);
-			this.registerDomEvent(checkbox, "click", event => {
-				if (!checkbox.hasAttribute('checked')) {
-					console.log("checking");
-					checkbox.setAttribute('checked', "true");
-					checkbox.parentElement.addClass('is-checked');
-
-					setTaskCheckedInFile(this.app, checkbox.dataset["file"], parseInt(checkbox.dataset["lineno"]),
-						checkbox.dataset["text"], false, true);
-				} else {
-					console.log("unchecking");
-					checkbox.removeAttribute('checked');
-					checkbox.parentElement.removeClass('is-checked');
-
-					setTaskCheckedInFile(this.app, checkbox.dataset["file"], parseInt(checkbox.dataset["lineno"]),
-						checkbox.dataset["text"], true, false);
-				}
-			});
+			this.registerHandler(checkbox);
 		}
+	}
+
+	registerHandler(checkbox: HTMLInputElement) {
+		this.registerDomEvent(checkbox, "click", event => {
+			if (!checkbox.hasAttribute('checked')) {
+				let newCheckbox = createCheckbox(checkbox.dataset["file"],
+					parseInt(checkbox.dataset["lineno"]),
+					checkbox.dataset["text"], true);
+
+				checkbox.parentElement.addClass('is-checked');
+				checkbox.parentElement.replaceChild(newCheckbox, checkbox);
+				this.registerHandler(newCheckbox);
+
+				setTaskCheckedInFile(this.app, checkbox.dataset["file"], parseInt(checkbox.dataset["lineno"]),
+					checkbox.dataset["text"], false, true);
+			} else {
+				let newCheckbox = createCheckbox(checkbox.dataset["file"],
+					parseInt(checkbox.dataset["lineno"]),
+					checkbox.dataset["text"], false);
+
+				checkbox.parentElement.removeClass('is-checked');
+				checkbox.parentElement.replaceChild(newCheckbox, checkbox);
+				this.registerHandler(newCheckbox);
+
+				setTaskCheckedInFile(this.app, checkbox.dataset["file"], parseInt(checkbox.dataset["lineno"]),
+					checkbox.dataset["text"], true, false);
+			}
+		});
 	}
 }
 
@@ -111,28 +122,37 @@ export function renderTasks(container: HTMLElement, path: string, tasks: Task[])
 	let ul = container.createEl('ul', { cls: 'contains-task-list' });
 	for (let task of tasks) {
 		let li = ul.createEl('li', { cls: 'task-list-item' });
-
-		let check = li.createEl('input', { type: 'checkbox', cls: 'task-list-item-checkbox' });
-		check.dataset["file"] = path;
-		check.dataset["lineno"] = "" + task.line;
-
-		// This fields is technically optional, but is provided to double-check
-		// we are editing the right line!
-		check.dataset["text"] = task.text;
+		let check = createCheckbox(path, task.line, task.text, task.completed);
 
 		if (task.completed) {
 			li.addClass('is-checked');
-			check.checked = true;
-		} else {
-			check.checked = false;
 		}
 
+		li.appendChild(check);
 		li.insertAdjacentText("beforeend", task.text);
 
 		if (task.subtasks.length > 0) {
 			renderTasks(li, path, task.subtasks);
 		}
 	}
+}
+
+function createCheckbox(file: string, line: number, text: string, checked: boolean): HTMLInputElement {
+	let check = document.createElement("input");
+	check.addClass('task-list-item-checkbox');
+	check.type = 'checkbox';
+	check.dataset["file"] = file;
+	check.dataset["lineno"] = "" + line;
+
+	// This field is technically optional, but is provided to double-check
+	// we are editing the right line!
+	check.dataset["text"] = text;
+
+	if (checked) {
+		check.setAttribute('checked', '');
+	}
+
+	return check;
 }
 
 /** Check a task in a file by rewriting it. */
@@ -143,7 +163,6 @@ export async function setTaskCheckedInFile(app: App, path: string, taskLine: num
 	let splitText = text.replace("\r", "").split("\n");
 
 	if (splitText.length < taskLine) return;
-	console.log("past length");
 
 	let match = TASK_REGEX.exec(splitText[taskLine - 1]);
 	if (!match) return;
@@ -152,14 +171,8 @@ export async function setTaskCheckedInFile(app: App, path: string, taskLine: num
 	let foundText = match[3];
 	let foundCompleted = match[2] == 'X' || match[2] == 'x';
 
-	console.log(`${taskText.trim()} | ${foundText.trim()}`);
 	if (taskText.trim() != foundText.trim()) return;
-	console.log("text matches");
-	console.log(splitText[taskLine - 1]);
-	console.log(wasChecked);
-	console.log(foundCompleted);
 	if (wasChecked != foundCompleted) return;
-	console.log("check matches");
 
 	if (check) {
 		splitText[taskLine - 1] = splitText[taskLine - 1]
@@ -169,7 +182,9 @@ export async function setTaskCheckedInFile(app: App, path: string, taskLine: num
 	} else {
 		splitText[taskLine - 1] = splitText[taskLine - 1]
 			.replace("- [X]", "- [ ]")
-			.replace("-[X]", "- [ ]");
+			.replace("-[X]", "- [ ]")
+			.replace("- [x]", "- [ ]")
+			.replace("-[x]", "- [ ]");
 	}
 	
 	let hasRn = text.contains("\r");
