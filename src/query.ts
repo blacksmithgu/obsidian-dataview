@@ -18,27 +18,21 @@ export type LiteralTypeRepr<T extends LiteralType> =
 export type BinaryOp = '+' | '-' | '>' | '>=' | '<=' | '<' | '=' | '&' | '|';
 
 /** A (potentially computed) field to select or compare against. */
+export type Field = BinaryOpField | VariableField | LiteralField;
+export type LiteralField = LiteralFieldRepr<'string'> | LiteralFieldRepr<'number'> | LiteralFieldRepr<'boolean'>;
 
-export interface Field {
-    /**
-     * The field type - literals are actual raw values, variables are things in the frontmatter,
-     * and computed are complex functions of subfields.
-     * */
-    type: 'literal' | 'variable' | 'binaryop';
-}
-
-export interface LiteralField<T extends LiteralType> extends Field {
+export interface LiteralFieldRepr<T extends LiteralType> {
     type: 'literal';
     valueType: T;
     value: LiteralTypeRepr<T>;
 }
 
-export interface VariableField extends Field {
+export interface VariableField {
     type: 'variable';
     name: string;
 }
 
-export interface BinaryOpField extends Field {
+export interface BinaryOpField {
     type: 'binaryop';
     left: Field;
     right: Field;
@@ -66,8 +60,8 @@ export namespace Fields {
         return { type: 'variable', name };
     }
 
-    export function literal<T extends LiteralType>(vtype: T, val: LiteralTypeRepr<T>): Field {
-        return { type: 'literal', valueType: vtype, value: val } as LiteralField<T>;
+    export function literal<T extends LiteralType>(vtype: T, val: LiteralTypeRepr<T>): LiteralField {
+        return { type: 'literal', valueType: vtype, value: val } as LiteralFieldRepr<T> as LiteralField;
     }
     
     export function binaryOp(left: Field, op: BinaryOp, right: Field): Field {
@@ -80,6 +74,17 @@ export namespace Fields {
 
     export function sortBy(field: Field, dir: 'ascending' | 'descending'): QuerySortBy {
         return { field, direction: dir };
+    }
+
+    export function isTruthy(field: LiteralField): boolean {
+        switch (field.valueType) {
+            case "number":
+                return field.value != 0;
+            case "string":
+                return field.value.length > 0;
+            case "boolean":
+                return field.value;
+        }
     }
 }
 
@@ -160,12 +165,18 @@ interface QueryLanguageTypes {
 /** A parsimmon-powered parser-combinator implementation of the query language. */
 export const QUERY_LANGUAGE = Parsimmon.createLanguage<QueryLanguageTypes>({
     // Simple atom parsing, like words, identifiers, numbers.
-    queryType: q => Parsimmon.alt<string>(Parsimmon.regexp(/TABLE|LIST|TASK/i)).map(str => str.toLowerCase() as QueryType),
-    number: q => Parsimmon.regexp(/[0-9]+/).map(str => Number.parseFloat(str)),
-    string: q => Parsimmon.regexp(/"(.*)"/, 1),
-    bool: q => Parsimmon.regexp(/true|false/).map(str => str == "true"),
-    tag: q => Parsimmon.regexp(/-?#[\w/]+/),
-    identifier: q => Parsimmon.regexp(/[a-zA-Z][\w_-]+/),
+    queryType: q => Parsimmon.alt<string>(Parsimmon.regexp(/TABLE|LIST|TASK/i)).map(str => str.toLowerCase() as QueryType)
+        .desc("query type ('TABLE' or 'LIST')"),
+    number: q => Parsimmon.regexp(/[0-9]+/).map(str => Number.parseFloat(str))
+        .desc("number"),
+    string: q => Parsimmon.regexp(/"(.*)"/, 1)
+        .desc("string"),
+    bool: q => Parsimmon.regexp(/true|false/).map(str => str == "true")
+        .desc("boolean ('true' or 'false')"),
+    tag: q => Parsimmon.regexp(/-?#[\w/]+/)
+        .desc("tag ('#hello' or '-#goodbye')"),
+    identifier: q => Parsimmon.regexp(/[a-zA-Z][\w_-]+/)
+        .desc("variable identifier"),
     binaryPlusMinus: q => Parsimmon.regexp(/\+|-/).map(str => str as BinaryOp),
     binaryCompareOp: q => Parsimmon.regexp(/>=|<=|!=|>|<|=/).map(str => str as BinaryOp),
     binaryBooleanOp: q => Parsimmon.regexp(/and|or|&|\|/i).map(str => {
@@ -175,10 +186,14 @@ export const QUERY_LANGUAGE = Parsimmon.createLanguage<QueryLanguageTypes>({
     }),
 
     // Field parsing.
-    variableField: q => q.identifier.map(Fields.variable),
-    numberField: q => q.number.map(val => Fields.literal('number', val)),
-    stringField: q => q.string.map(val => Fields.literal('string', val)),
-    boolField: q => q.bool.map(val => Fields.literal('boolean', val)),
+    variableField: q => q.identifier.map(Fields.variable)
+        .desc("variable field"),
+    numberField: q => q.number.map(val => Fields.literal('number', val))
+        .desc("number field"),
+    stringField: q => q.string.map(val => Fields.literal('string', val))
+        .desc("string field"),
+    boolField: q => q.bool.map(val => Fields.literal('boolean', val))
+        .desc("boolean field"),
     atomField: q => Parsimmon.alt(q.parensField, q.boolField, q.variableField, q.numberField, q.stringField),
     binaryPlusMinusField: q => Parsimmon.seqMap(q.atomField, Parsimmon.seq(Parsimmon.optWhitespace, q.binaryPlusMinus, Parsimmon.optWhitespace, q.atomField).many(),
         (first, rest) => {
@@ -264,7 +279,7 @@ export const QUERY_LANGUAGE = Parsimmon.createLanguage<QueryLanguageTypes>({
             clause.exclude.forEach(e => excludes.add(e));
         }
 
-        let compoundWhere = Fields.literal('boolean', true);
+        let compoundWhere: Field = Fields.literal('boolean', true);
         for (let clause of whereClauses) {
             compoundWhere = Fields.binaryOp(compoundWhere, '&', clause.field);
         }

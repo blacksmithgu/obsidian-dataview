@@ -1,30 +1,19 @@
 import { App, TFile, getAllTags, Plugin, Workspace } from 'obsidian';
 import { createAnchor } from './render';
-import { TaskCache } from './index';
+import { FullIndex, TaskCache } from './index';
 import * as Tasks from './tasks';
+import { parseQuery } from './query';
+import { execute } from './engine';
 
 interface DataviewSettings { }
 
 const DEFAULT_SETTINGS: DataviewSettings = { }
 
-interface DataviewCodeblock {
-	/** The type of dataview to render. */
-	type: string;
-	/** The query string (like '#nice' or 'tasks') to fetch data for. */
-	query: string;
-	/** The extra fields to render in this dataview. */
-	fields: string[];
-}
-
-interface Query {
-
-}
-
 export default class DataviewPlugin extends Plugin {
 	settings: DataviewSettings;
 	workspace: Workspace;
 
-	tasks: TaskCache;
+	index: FullIndex;
 
 	async onload() {
 		this.settings = Object.assign(DEFAULT_SETTINGS, await this.loadData());
@@ -35,7 +24,7 @@ export default class DataviewPlugin extends Plugin {
 		// Wait for layout-ready so the vault is ready for traversal (doing it before leads to
 		// an empty vault object, yielding no markdown files).
 		this.workspace.on("layout-ready", async () => {
-			this.tasks = await TaskCache.generate(this.app.vault);
+			this.index = await FullIndex.generate(this.app.vault, this.app.metadataCache);
 		});
 
 		// Main entry point for dataview.
@@ -43,48 +32,61 @@ export default class DataviewPlugin extends Plugin {
 			let code = parseDataviewBlock(el);
 			if (!code) return;
 
-			// Not initialized yet, stall...
-			// TODO: Depending on perf, can we block render for this?
-			if (this.tasks === undefined || this.tasks === null) {
-				el.removeChild(el.firstChild);
-				el.createEl('h2', { text: "Dataview is still indexing files... try reloading this page."});
+			el.removeChild(el.firstChild);
+
+			// Don't need the index to parse the query, in case of errors.
+			let query = parseQuery(code);
+			if (typeof query === 'string') {
+				el.createEl('h2', { text: query });
 				return;
 			}
 
-			if (code.type == 'task') {
-				el.removeChild(el.firstChild);
+			// Not initialized yet, stall...
+			// TODO: Depending on perf, can we block render for this?
+			if (this.index === undefined || this.index === null) {
+				let header = el.createEl('h2', { text: "Dataview is still indexing files"});
 
-				Tasks.renderFileTasks(el, this.tasks.all());
+				while (this.index === undefined || this.index === null) {
+					// TODO: Move to utility. Then again, this is an anti-pattern :D.
+					const wait = (ms: number) => new Promise((re, rj) => setTimeout(re, ms));
+					await wait(1_000);
+					header.textContent += ".";
+				}
+
+				el.removeChild(el.firstChild);
+			}
+
+			if (query.type == 'task') {
+				Tasks.renderFileTasks(el, this.index.task.all());
 				ctx.addChild(new Tasks.TaskViewLifecycle(this.app, el));
-			} else if (code.type == 'list') {
-				let files = findFilesWithTag(this.app, code.query);
-				el.removeChild(el.firstChild);
+			} else if (query.type == 'list') {
+				let result = execute(query, this.index);
+				if (typeof result === 'string') {
+					el.createEl('h2', { text: result });
+				} else {
+					renderList(el, result.data.map(e => {
+						let cleanName = e.file.replace(".md", "");
+						return createAnchor(cleanName, cleanName, true);
+					}));
+				}
+			} else if (query.type == 'table') {
+				let result = execute(query, this.index);
+				if (typeof result === 'string') {
+					el.createEl('h2', { text: result });
+					return;
+				}
 
-				let anchors = files.map(elem => createAnchor(
-					elem.name.replace(".md", ""),
-					elem.path.replace(".md", ""),
-					true));
-
-				renderList(el, anchors);
-			} else if (code.type == 'table') {
-				let files = findFilesWithTag(this.app, code.query);
-				el.removeChild(el.firstChild);
-
-				let filesWithMeta = files.map(elem => {
-					let front = this.app.metadataCache.getFileCache(elem)?.frontmatter;
-					let name = elem.name.replace(".md", "");
-
+				let prettyFields = result.names.map(prettifyYamlKey);
+				renderTable(el, ["Name"].concat(prettyFields), result.data.map(row => {
 					let result: (string | HTMLElement)[] =
-						[createAnchor(name, elem.path.replace(".md", ""), true)];
-
-					for (let field of code.fields) {
-						result.push("" + (front?.[field] ?? "-"));
+						[createAnchor(row.file, row.file.replace(".md", ""), true)];
+				
+					for (let elem of row.data) {
+						result.push("" + elem.value);
 					}
-					return result;
-				});
 
-				let prettyFields = code.fields.map(prettifyYamlKey);
-				renderTable(el, ["Name"].concat(prettyFields), filesWithMeta);
+					return result;
+				}));
 			}
 		});
 	}
@@ -92,51 +94,14 @@ export default class DataviewPlugin extends Plugin {
 	onunload() { }
 }
 
-/**
- * Checks if the second tag is the same, or a subset, of the first tag. For example,
- * '#game/shooter' is a subtag of '#game'.
- */
-function isSubtag(tag: string, subtag: string): boolean {
-	if (tag == subtag) return true;
-	
-	return subtag.length > tag.length && subtag.startsWith(tag)
-		&& subtag.charAt(tag.length) == '/';
-}
-
-/** Find all markdown files in the vault which have the given tag. */
-function findFilesWithTag(app: App, tag: string): TFile[] {
-	// TODO: A simple linear scan for now until I find a more efficient way to do this.
-	// We can make a fancier serialized index for better startup performance.
-	// And we can additionally have an in-memory index for good performance while running.
-	let result = [];
-	for (let file of app.vault.getMarkdownFiles()) {
-		let meta = app.metadataCache.getFileCache(file);
-		let tags = getAllTags(meta);
-		if (!tags) continue;
-
-		if (tags.some(value => isSubtag(tag, value))) result.push(file);
-	}
-
-	return result;
-}
-
-/** Parse a div block from the postprocessor, looking for codeblocks. */
-function parseDataviewBlock(element: HTMLElement): DataviewCodeblock | null {
+/** Parse a div block from the postprocessor, looking for codeblocks. Returns the query on success. */
+function parseDataviewBlock(element: HTMLElement): string | null {
 	// Look for a <code> element with a 'language-dataview' class.
 	let dataviewCode = element.find('code.language-dataview');
 	if (!dataviewCode) return null;
 
 	// Parse the inside of the code element for the type and query.
-	let contents = dataviewCode.innerHTML;
-	if (!contents.contains(" ")) return null; // TODO: Malformed.
-
-	let split = contents.split(" ").map(elem => elem.trim());
-
-	return {
-		type: split[0],
-		query: split[1],
-		fields: split.slice(2)
-	};
+	return dataviewCode.innerText;
 }
 
 /** Pretifies YAML keys like 'time-played' into 'Time Played' */

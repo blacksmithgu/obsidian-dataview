@@ -9,6 +9,7 @@
     "noImplicitAny": true,
     "moduleResolution": "node",
     "importHelpers": true,
+    "downlevelIteration": true,
     "lib": [
       "dom",
       "es5",
