@@ -1,4 +1,4 @@
-import { Query, QUERY_LANGUAGE, parseQuery, QueryType, BinaryOpField, Fields, NamedField, QuerySortBy } from "../query";
+import { Query, QUERY_LANGUAGE, parseQuery, QueryType, BinaryOpField, Fields, Sources, NamedField, QuerySortBy } from "../query";
 import { Success, Failure, Result } from "parsimmon";
 
 test("Parse Query Type", () => {
@@ -92,17 +92,16 @@ test("Minimal Query", () => {
         Fields.named('rating', Fields.variable('rating')),
         Fields.named('length', Fields.variable('length')),
     ]);
-    expect(simple.from).toEqual(["#games"]);
+    expect(simple.source).toEqual(Sources.tag("#games"));
 });
 
 test("Fat Query", () => {
     let fat = parseQuery("TABLE (time-played + 100) as long, rating as rate, length\n"
-        + "FROM #games, #gaming, -#games/unfun\n"
+        + "FROM #games or #gaming\n"
         + "WHERE long > 150 and rate - 10 < 40\n"
         + "SORT length + 8 + 4 DESCENDING, long ASC") as Query;
     expect(fat.type).toBe('table');
     expect(fat.fields.length).toBe(3);
-    expect(fat.from).toEqual(["#games", "#gaming"]);
-    expect(fat.except).toEqual(["#games/unfun"]);
+    expect(fat.source).toEqual(Sources.binaryOp(Sources.tag("#games"), '|', Sources.tag("#gaming")));
     expect(fat.sortBy.length).toBe(2);
 });

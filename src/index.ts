@@ -2,6 +2,7 @@
 import { MetadataCache, Vault, TFile } from 'obsidian';
 import { Task } from './tasks';
 import * as Tasks from './tasks';
+import { parseJsonText } from 'typescript';
 
 /** Aggregate index which has several sub-indices and will initialize all of them. */
 export class FullIndex {
@@ -12,11 +13,10 @@ export class FullIndex {
     static async generate(vault: Vault, cache: MetadataCache): Promise<FullIndex> {
         // TODO: Probably need to do this on a worker thread to actually get 
         let tags = TagIndex.generate(vault, cache);
-        let front = FrontmatterIndex.generate(vault, cache);
-        let tasks = TaskCache.generate(vault);
+        let prefix = PrefixIndex.generate(vault);
 
-        return Promise.all([tags, front, tasks]).then(value => {
-            return new FullIndex(vault, cache, value[0], value[1], value[2]);
+        return Promise.all([tags, prefix]).then(value => {
+            return new FullIndex(vault, cache, value[0], value[1]);
         });
     }
 
@@ -29,21 +29,18 @@ export class FullIndex {
 
     // The set of indices which we update.
     tag: TagIndex;
-    frontmatter: FrontmatterIndex;
-    task: TaskCache;
+    prefix: PrefixIndex;
 
     // Other useful things to hold onto.
     vault: Vault;
     metadataCache: MetadataCache;
 
-    constructor(vault: Vault, metadataCache: MetadataCache, tag: TagIndex,
-        front: FrontmatterIndex, task: TaskCache) {
+    constructor(vault: Vault, metadataCache: MetadataCache, tag: TagIndex, prefix: PrefixIndex) {
         this.vault = vault;
         this.metadataCache = metadataCache;
 
         this.tag = tag;
-        this.frontmatter = front;
-        this.task = task;
+        this.prefix = prefix;
 
         this.reloadQueue = [];
         this.reloadSet = new Set();
@@ -74,9 +71,7 @@ export class FullIndex {
 
         for (let file of copy) {
             await Promise.all([
-                this.task.reloadFile(file),
                 this.tag.reloadFile(file),
-                this.frontmatter.reloadFile(file)
             ]);
         }
     }
@@ -143,22 +138,22 @@ export class TagIndex {
     }
 
     /** Returns all files which have the given tag. */
-    public get(tag: string): string[] {
+    public get(tag: string): Set<string> {
         let result = this.map.get(tag);
         if (result === undefined) {
-            return [];
+            return new Set();
         } else {
-            return Array.from(result);
+            return new Set(result);
         }
     }
 
     /** Returns all tags the given file has. */
-    public getInverse(file: string): string[] {
+    public getInverse(file: string): Set<string> {
         let result = this.invMap.get(file);
         if (result === undefined) {
-            return [];
+            return new Set();
         } else {
-            return Array.from(result);
+            return new Set(result);
         }
     }
 
@@ -193,14 +188,122 @@ export class TagIndex {
     }
 }
 
-/** Index which efficiently allows querying which files have given frontmatter keys. */
-export class FrontmatterIndex {
-    static async generate(vault: Vault, cache: MetadataCache): Promise<FrontmatterIndex> {
-        // TODO: Implement me.
-        return Promise.resolve(null);
+/** A node in the prefix tree. */
+export class PrefixIndexNode {
+    // TODO: Instead of only storing file paths at the leaf, consider storing them at every level,
+    // since this will make for faster deletes and gathers in exchange for slightly slower adds and more memory usage.
+    // since we are optimizing for gather, and file paths tend to be shallow, this should be ok.
+    files: Set<string>;
+    element: string;
+    totalCount: number;
+    children: Map<string, PrefixIndexNode>;
+
+    constructor(element: string) {
+        this.element = element;
+        this.files = new Set();
+        this.totalCount = 0;
+        this.children = new Map();
     }
 
-    reloadFile(file: TFile) {}
+    public static add(root: PrefixIndexNode, path: string) {
+        let parts = path.split("/");
+        let node = root;
+        for (let index = 0; index < parts.length - 1; index++) {
+            if (!node.children.has(parts[index])) node.children.set(parts[index], new PrefixIndexNode(parts[index]));
+
+            node.totalCount += 1;
+            node = node.children.get(parts[index]);
+        }
+
+        node.totalCount += 1;
+        node.files.add(path);
+    }
+
+    public static remove(root: PrefixIndexNode, path: string) {
+        let parts = path.split("/");
+        let node = root;
+        let nodes = [];
+        for (let index = 0; index < parts.length - 1; index++) {
+            if (!node.children.has(parts[index])) return;
+
+            nodes.push(node);
+            node = node.children.get(parts[index]);
+        }
+
+        if (!node.files.has(path)) return;
+        node.files.delete(path);
+        node.totalCount -= 1;
+
+        for (let p of nodes) p.totalCount -= 1;
+    }
+
+    public static find(root: PrefixIndexNode, prefix: string): PrefixIndexNode | null {
+        if (prefix.length == 0 || prefix == '/') return root;
+        let parts = prefix.split("/");
+        let node = root;
+        for (let index = 0; index < parts.length; index++) {
+            if (!node.children.has(parts[index])) return null;
+
+            node = node.children.get(parts[index]);
+        }
+
+        return node;
+    }
+
+    public static gather(root: PrefixIndexNode): Set<string> {
+        let result = new Set<string>();
+        PrefixIndexNode.gatherRec(root, result);
+        return result;
+    }
+
+    static gatherRec(root: PrefixIndexNode, output: Set<string>) {
+        for (let file of root.files) output.add(file);
+        for (let child of root.children.values()) this.gatherRec(child, output);
+    }
+}
+
+/** Indexes files by their full prefix - essentially a simple prefix tree. */
+export class PrefixIndex {
+
+    public static async generate(vault: Vault): Promise<PrefixIndex> {
+        let root = new PrefixIndexNode("");
+        let timeStart = new Date().getTime();
+
+        // First time load...
+        for (let file of vault.getMarkdownFiles()) {
+            PrefixIndexNode.add(root, file.path);
+        }
+
+        let totalTimeMs = new Date().getTime() - timeStart;
+        console.log(`Dataview: Parsed all file prefixes (${totalTimeMs / 1000.0}s)`);
+
+        return Promise.resolve(new PrefixIndex(vault, root));
+    }
+
+    root: PrefixIndexNode;
+    vault: Vault;
+
+    constructor(vault: Vault, root: PrefixIndexNode) {
+        this.vault = vault;
+        this.root = root;
+
+        // TODO: I'm not sure if there is an event for all files in a folder, or just the folder.
+        // I'm assuming the former naively for now until I inevitably fix it.
+        this.vault.on("delete", file => {
+            PrefixIndexNode.remove(this.root, file.path);
+        });
+
+        this.vault.on("create", file => {
+            PrefixIndexNode.add(this.root, file.path);
+        });
+    }
+
+    public get(prefix: string): Set<string> {
+        let node = PrefixIndexNode.find(this.root, prefix);
+        if (node == null || node == undefined) return new Set();
+
+        return PrefixIndexNode.gather(node);
+    }
 }
 
 /** Caches tasks for each file to avoid repeated re-loading. */

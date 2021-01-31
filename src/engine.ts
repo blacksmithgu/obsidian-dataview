@@ -1,7 +1,7 @@
 /**
  * Takes a full query and a set of indices, and (hopefully quickly) returns all relevant files.
  */
-import { LiteralType, LiteralTypeRepr, Field, LiteralField, LiteralFieldRepr, Query, BinaryOp, Fields } from './query';
+import { LiteralType, LiteralTypeRepr, Field, LiteralField, LiteralFieldRepr, Query, BinaryOp, Fields, Source, Sources } from './query';
 import { FullIndex } from './index';
 import { Task } from './tasks';
 
@@ -122,17 +122,42 @@ export function evaluate(field: Field, context: Map<string, LiteralField>): Lite
     }
 }
 
+/** Recursively collect target files from the given source. */
+export function collectFromSource(source: Source, index: FullIndex): Set<string> | string {
+    if (source.type === 'empty') {
+        return new Set<string>();
+    } else if (source.type === 'tag') {
+        return index.tag.get(source.tag);
+    } else if (source.type === 'folder') {
+        return index.prefix.get(source.folder);
+    } else if (source.type === 'binaryop') {
+        let left = collectFromSource(source.left, index);
+        if (typeof left === 'string') return left;
+        let right = collectFromSource(source.right, index);
+        if (typeof right === 'string') return right;
+
+        if (source.op == '&') {
+            let result = new Set<string>();
+            for (let elem of right) {
+                if (left.has(elem)) result.add(elem);
+            }
+
+            return result;
+        } else if (source.op == '|') {
+            let result = new Set(left);
+            for (let elem of right) result.add(elem);
+            return result;
+        } else {
+            return `Unrecognized operator '${source.op}'.`;
+        }
+    }
+}
+
 /** Execute a query over the given index, returning  */
 export function execute(query: Query, index: FullIndex): QueryResult | string {
     // Start by collecting all of the files that match the 'from' queries.
-    let fileset = new Set<string>();
-    for (let tag of query.from) {
-        for (let file of index.tag.get(tag)) fileset.add(file);
-    }
-    // And eliminate files that match the 'except'.
-    for (let tag of query.except) {
-        for (let file of index.tag.get(tag)) fileset.delete(file);
-    }
+    let fileset = collectFromSource(query.source, index);
+    if (typeof fileset === 'string') return fileset;
 
     // TODO: Schema inference from file data.
     // Then, evaluate each file one at a time.

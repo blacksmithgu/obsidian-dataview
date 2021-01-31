@@ -14,6 +14,7 @@ export default class DataviewPlugin extends Plugin {
 	workspace: Workspace;
 
 	index: FullIndex;
+	tasks: TaskCache;
 
 	async onload() {
 		this.settings = Object.assign(DEFAULT_SETTINGS, await this.loadData());
@@ -25,6 +26,7 @@ export default class DataviewPlugin extends Plugin {
 		// an empty vault object, yielding no markdown files).
 		this.workspace.on("layout-ready", async () => {
 			this.index = await FullIndex.generate(this.app.vault, this.app.metadataCache);
+			this.tasks = await TaskCache.generate(this.app.vault);
 		});
 
 		// Main entry point for dataview.
@@ -57,7 +59,7 @@ export default class DataviewPlugin extends Plugin {
 			}
 
 			if (query.type == 'task') {
-				Tasks.renderFileTasks(el, this.index.task.all());
+				Tasks.renderFileTasks(el, this.tasks.all());
 				ctx.addChild(new Tasks.TaskViewLifecycle(this.app, el));
 			} else if (query.type == 'list') {
 				let result = execute(query, this.index);
