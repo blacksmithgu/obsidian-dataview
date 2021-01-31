@@ -3,7 +3,7 @@ import { createAnchor } from './render';
 import { FullIndex, TaskCache } from './index';
 import * as Tasks from './tasks';
 import { parseQuery } from './query';
-import { execute } from './engine';
+import { execute, getFileName } from './engine';
 
 interface DataviewSettings { }
 
@@ -65,8 +65,8 @@ export default class DataviewPlugin extends Plugin {
 					el.createEl('h2', { text: result });
 				} else {
 					renderList(el, result.data.map(e => {
-						let cleanName = e.file.replace(".md", "");
-						return createAnchor(cleanName, cleanName, true);
+						let cleanName = getFileName(e.file).replace(".md", "");
+						return createAnchor(cleanName, e.file.replace(".md", ""), true);
 					}));
 				}
 			} else if (query.type == 'table') {
@@ -78,8 +78,9 @@ export default class DataviewPlugin extends Plugin {
 
 				let prettyFields = result.names.map(prettifyYamlKey);
 				renderTable(el, ["Name"].concat(prettyFields), result.data.map(row => {
+					let filename = getFileName(row.file).replace(".md", "");
 					let result: (string | HTMLElement)[] =
-						[createAnchor(row.file, row.file.replace(".md", ""), true)];
+						[createAnchor(filename, row.file.replace(".md", ""), true)];
 				
 					for (let elem of row.data) {
 						result.push("" + elem.value);

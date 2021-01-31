@@ -23,7 +23,20 @@ export interface QueryRow {
     sort: LiteralField[];
 }
 
+/** Get the file name for the file, without any parent directories. */
+export function getFileName(path: string): string {
+    if (path.contains("/")) return path.substring(path.lastIndexOf("/") + 1);
+    else return path;
+}
+
 export function evaluateBiop(op: BinaryOp, left: LiteralField, right: LiteralField): LiteralField | string {
+    // Null short-circuit.
+    if (left.valueType === 'null') {
+        return `Cannot operate on a null field (left operand)`;
+    } else if (right.valueType === 'null') {
+        return `Cannot operate on a null field (right operand)`;
+    }
+
     // TODO: This is ugly and big. Could/should be replaced with a lookup table.
     // This would also make operators like '<' and '>' and '=' much easier to write since we can
     // just write them in terms of other operations (as '>' == !'<=', for example).
@@ -93,8 +106,9 @@ export function evaluate(field: Field, context: Map<string, LiteralField>): Lite
     if (field.type === 'literal') return field;
     else if (field.type === 'variable') {
         let value = context.get(field.name);
-        if (value === undefined || value === null) {
-            return `Could not find variable '${field.name}'; available variables are ${Array.from(context.keys()).join(", ")}`;
+        if (value == undefined || value == null) {
+            return Fields.literal('null', null);
+            // return `Could not find variable '${field.name}'; available variables are ${Array.from(context.keys()).join(", ")}`;
         } else {
             return value;
         }
@@ -127,14 +141,15 @@ export function execute(query: Query, index: FullIndex): QueryResult | string {
     outer: for (let file of fileset) {
         let context = new Map<string, LiteralField>();
         // TODO: Add 'ctime', 'mtime' to fields. Make 'file' a link type.
-        context.set("path", Fields.literal('string', file));
+        context.set("filepath", Fields.literal('string', file));
+        context.set("filename", Fields.literal('string', getFileName(file)));
 
         let fileData = index.metadataCache.getCache(file);
         if (fileData && fileData.frontmatter) {
             for (let key of Object.keys(fileData.frontmatter)) {
                 if (key === 'position') continue;
-                let value = fileData.frontmatter[key];
 
+                let value = fileData.frontmatter[key];
                 // TODO: Handle lists and dicts.
                 // For dicts, just recurse (so stuff like 'dict.element.thing' whatever).
                 // For lists, need special operators (probably 'has'/'in'/other predicates).

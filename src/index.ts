@@ -51,7 +51,7 @@ export class FullIndex {
         // Background task which regularly checks for reloads.
         this.reloadHandle = window.setInterval(() => this.reloadInternal(), FullIndex.RELOAD_INTERVAL);
 
-        // Reload on any modify.
+        // TODO: Metadata cache is not updated on modify, but on metadatacache resolve.
         vault.on("modify", file => {
             if (file instanceof TFile) {
                 this.queueReload(file);

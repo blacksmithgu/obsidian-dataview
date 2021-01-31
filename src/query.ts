@@ -5,7 +5,7 @@ import * as Parsimmon from 'parsimmon';
 /** The supported query types (corresponding to view types). */
 export type QueryType = 'list' | 'table' | 'task';
 
-export type LiteralType = 'boolean' | 'number' | 'string' | 'duration' | 'date' | 'rating';
+export type LiteralType = 'boolean' | 'number' | 'string' | 'duration' | 'date' | 'rating' | 'null';
 export type LiteralTypeRepr<T extends LiteralType> =
     T extends 'boolean' ? boolean :
     T extends 'number' ? number :
@@ -13,13 +13,18 @@ export type LiteralTypeRepr<T extends LiteralType> =
     T extends 'duration' ? number :
     T extends 'date' ? number :
     T extends 'rating' ? number :
+    T extends 'null' ? null :
     any;
 
 export type BinaryOp = '+' | '-' | '>' | '>=' | '<=' | '<' | '=' | '&' | '|';
 
 /** A (potentially computed) field to select or compare against. */
 export type Field = BinaryOpField | VariableField | LiteralField;
-export type LiteralField = LiteralFieldRepr<'string'> | LiteralFieldRepr<'number'> | LiteralFieldRepr<'boolean'>;
+export type LiteralField =
+    LiteralFieldRepr<'string'>
+    | LiteralFieldRepr<'number'>
+    | LiteralFieldRepr<'boolean'>
+    | LiteralFieldRepr<'null'>;
 
 export interface LiteralFieldRepr<T extends LiteralType> {
     type: 'literal';
@@ -65,7 +70,7 @@ export namespace Fields {
     }
     
     export function binaryOp(left: Field, op: BinaryOp, right: Field): Field {
-        return { left, op, right } as BinaryOpField;
+        return { type: 'binaryop', left, op, right } as BinaryOpField;
     }
 
     export function named(name: string, field: Field): NamedField {
