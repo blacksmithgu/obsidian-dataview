@@ -14,7 +14,7 @@ sort rating desc
 ```
 ~~~
 
-![Game Example](images/game.png =250x250)
+![Game Example](images/game.png)
 
 ---
 
@@ -26,7 +26,7 @@ list from #game/moba or #game/crpg
 ```
 ~~~
 
-![Game List](images/game-list.png =250x250)
+![Game List](images/game-list.png)
 
 ---
 
@@ -38,7 +38,7 @@ tasks from #projects/active
 ```
 ~~~
 
-![Task List](images/project-task.png =250x250)
+![Task List](images/project-task.png)
 
 # Usage
 
