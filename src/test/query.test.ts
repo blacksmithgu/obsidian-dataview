@@ -105,3 +105,11 @@ test("Fat Query", () => {
     expect(fat.source).toEqual(Sources.binaryOp(Sources.tag("#games"), '|', Sources.tag("#gaming")));
     expect(fat.sortBy.length).toBe(2);
 });
+
+test("Task query with no fields", () => {
+    let q = parseQuery("task from #games") as Query;
+    console.log(q);
+    expect(typeof q).toBe('object');
+    expect(q.type).toBe('task');
+    expect(q.source).toEqual(Sources.tag("#games"));
+});

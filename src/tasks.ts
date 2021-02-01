@@ -105,15 +105,15 @@ export async function findTasksInFile(vault: Vault, file: TFile): Promise<Task[]
 }
 
 /** Render tasks from multiple files. */
-export function renderFileTasks(container: HTMLElement, tasks: Record<string, Task[]>) {
-	for (let path of Object.keys(tasks)) {
+export function renderFileTasks(container: HTMLElement, tasks: Map<string, Task[]>) {
+	for (let path of tasks.keys()) {
 		let basepath = path.replace(".md", "");
 
 		let header = container.createEl('h4');
 		header.appendChild(createAnchor(basepath, basepath, true));
 		let div = container.createDiv();
 
-		renderTasks(div, path, tasks[path]);
+		renderTasks(div, path, tasks.get(path));
 	}
 }
 

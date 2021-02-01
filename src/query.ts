@@ -242,7 +242,7 @@ export function createBinaryParser<T, U>(child: Parsimmon.Parser<T>, sep: Parsim
 export const QUERY_LANGUAGE = Parsimmon.createLanguage<QueryLanguageTypes>({
     // Simple atom parsing, like words, identifiers, numbers.
     queryType: q => Parsimmon.alt<string>(Parsimmon.regexp(/TABLE|LIST|TASK/i)).map(str => str.toLowerCase() as QueryType)
-        .desc("query type ('TABLE' or 'LIST')"),
+        .desc("query type ('TABLE', 'LIST', or 'TASK')"),
     number: q => Parsimmon.regexp(/[0-9]+/).map(str => Number.parseFloat(str))
         .desc("number"),
     string: q => Parsimmon.regexp(/"(.*)"/, 1)
@@ -264,7 +264,7 @@ export const QUERY_LANGUAGE = Parsimmon.createLanguage<QueryLanguageTypes>({
     // Source parsing.
     tagSource: q => q.tag.map(tag => Sources.tag(tag)),
     folderSource: q => q.string.map(str => Sources.folder(str)),
-    parensSource: q => Parsimmon.seqMap(Parsimmon.oneOf("("), Parsimmon.optWhitespace, q.source, Parsimmon.optWhitespace, Parsimmon.oneOf(")"), (_1, _2, field, _3, _4) => field),
+    parensSource: q => Parsimmon.seqMap(Parsimmon.string("("), Parsimmon.optWhitespace, q.source, Parsimmon.optWhitespace, Parsimmon.string(")"), (_1, _2, field, _3, _4) => field),
     atomSource: q => Parsimmon.alt<Source>(q.parensSource, q.folderSource, q.tagSource),
     binaryOpSource: q => createBinaryParser(q.atomSource, q.binaryBooleanOp, Sources.binaryOp),
     source: q => q.binaryOpSource,
@@ -283,7 +283,7 @@ export const QUERY_LANGUAGE = Parsimmon.createLanguage<QueryLanguageTypes>({
     binaryCompareField: q => createBinaryParser(q.binaryPlusMinusField, q.binaryCompareOp, Fields.binaryOp),
     binaryBooleanField: q => createBinaryParser(q.binaryCompareField, q.binaryBooleanOp, Fields.binaryOp),
     binaryOpField: q => q.binaryBooleanField,
-    parensField: q => Parsimmon.seqMap(Parsimmon.oneOf("("), Parsimmon.optWhitespace, q.field, Parsimmon.optWhitespace, Parsimmon.oneOf(")"), (_1, _2, field, _3, _4) => field),
+    parensField: q => Parsimmon.seqMap(Parsimmon.string("("), Parsimmon.optWhitespace, q.field, Parsimmon.optWhitespace, Parsimmon.string(")"), (_1, _2, field, _3, _4) => field),
     field: q => q.binaryOpField,
     explicitNamedField: q => Parsimmon.seqMap(q.field, Parsimmon.whitespace, Parsimmon.regexp(/AS/i), Parsimmon.whitespace, q.identifier,
         (field, _1, _2, _3, ident) => Fields.named(ident, field)),
@@ -303,7 +303,7 @@ export const QUERY_LANGUAGE = Parsimmon.createLanguage<QueryLanguageTypes>({
                 };
             }),
 
-    selectClause: q => Parsimmon.seqMap(q.queryType, Parsimmon.whitespace, Parsimmon.sepBy1(q.namedField, Parsimmon.oneOf(',').trim(Parsimmon.optWhitespace)),
+    selectClause: q => Parsimmon.seqMap(q.queryType, Parsimmon.whitespace, Parsimmon.sepBy(q.namedField.notFollowedBy(Parsimmon.whitespace.then(q.source)), Parsimmon.string(',').trim(Parsimmon.optWhitespace)),
         (qtype, _, fields) => {
             return { type: qtype, fields }
         }),
@@ -317,7 +317,7 @@ export const QUERY_LANGUAGE = Parsimmon.createLanguage<QueryLanguageTypes>({
     whereClause: q => Parsimmon.seqMap(Parsimmon.regexp(/WHERE/i), Parsimmon.whitespace, q.field, (where, _, field) => {
         return { type: 'where', field };
     }),
-    sortByClause: q => Parsimmon.seqMap(Parsimmon.regexp(/SORT/i), Parsimmon.whitespace, q.sortField.sepBy1(Parsimmon.oneOf(',').trim(Parsimmon.optWhitespace)),
+    sortByClause: q => Parsimmon.seqMap(Parsimmon.regexp(/SORT/i), Parsimmon.whitespace, q.sortField.sepBy1(Parsimmon.string(',').trim(Parsimmon.optWhitespace)),
         (sort, _1, fields) => {
             return { type: 'sort-by', fields };
         }),
@@ -328,14 +328,16 @@ export const QUERY_LANGUAGE = Parsimmon.createLanguage<QueryLanguageTypes>({
         let whereClauses = clauses.filter((c): c is WhereClause => c.type == 'where');
         let sortClauses = clauses.filter((c): c is SortByClause => c.type == 'sort-by');
 
-        let source: Source = Sources.empty();
+        let source: Source = null;
         for (let clause of fromClauses) {
-            source = Sources.binaryOp(source, '|', clause.source);
+            if (source == null) source = clause.source;
+            else source = Sources.binaryOp(source, '|', clause.source);
         }
 
-        let compoundWhere: Field = Fields.literal('boolean', true);
+        let compoundWhere: Field = null;
         for (let clause of whereClauses) {
-            compoundWhere = Fields.binaryOp(compoundWhere, '&', clause.field);
+            if (compoundWhere == null) compoundWhere = clause.field;
+            else compoundWhere = Fields.binaryOp(compoundWhere, '&', clause.field);
         }
 
         let sortBy: QuerySortBy[] = [];
@@ -346,8 +348,8 @@ export const QUERY_LANGUAGE = Parsimmon.createLanguage<QueryLanguageTypes>({
         return {
             type: select.type,
             fields: select.fields,
-            source: source,
-            where: compoundWhere,
+            source: source ?? Sources.empty(),
+            where: compoundWhere ?? Fields.literal('boolean', true),
             sortBy: sortBy
         } as Query;
     })
@@ -362,6 +364,6 @@ export function parseQuery(text: string): Query | string {
     if (result.status == true) {
         return result.value;
     } else {
-        return `Failed to parse query (line ${result.index.line}, column ${result.index.column}): expected one of ${result.expected}`;
+        return `Failed to parse query (line ${result.index.line}, column ${result.index.column}): expected ${result.expected}`;
     }
 }

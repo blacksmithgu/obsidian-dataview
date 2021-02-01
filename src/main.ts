@@ -1,9 +1,9 @@
-import { App, TFile, getAllTags, Plugin, Workspace } from 'obsidian';
+import { Plugin, Workspace } from 'obsidian';
 import { createAnchor } from './render';
 import { FullIndex, TaskCache } from './index';
 import * as Tasks from './tasks';
 import { parseQuery } from './query';
-import { execute, getFileName } from './engine';
+import { execute, executeTask, getFileName } from './engine';
 
 interface DataviewSettings { }
 
@@ -20,13 +20,16 @@ export default class DataviewPlugin extends Plugin {
 		this.settings = Object.assign(DEFAULT_SETTINGS, await this.loadData());
 		this.workspace = this.app.workspace;
 		
-		console.log("Dataview Plugin - Version 0.0.1 Loaded");
+		console.log("Dataview Plugin - Version 0.1.0 Loaded");
 
 		// Wait for layout-ready so the vault is ready for traversal (doing it before leads to
 		// an empty vault object, yielding no markdown files).
 		this.workspace.on("layout-ready", async () => {
 			this.index = await FullIndex.generate(this.app.vault, this.app.metadataCache);
 			this.tasks = await TaskCache.generate(this.app.vault);
+
+			// TODO: A little hacky; improve the index to include the task cache in the future.
+			this.index.on("reload", file => this.tasks.reloadFile(file));
 		});
 
 		// Main entry point for dataview.
@@ -44,7 +47,6 @@ export default class DataviewPlugin extends Plugin {
 			}
 
 			// Not initialized yet, stall...
-			// TODO: Depending on perf, can we block render for this?
 			if (this.index === undefined || this.index === null) {
 				let header = el.createEl('h2', { text: "Dataview is still indexing files"});
 
@@ -55,12 +57,28 @@ export default class DataviewPlugin extends Plugin {
 					header.textContent += ".";
 				}
 
-				el.removeChild(el.firstChild);
+				el.removeChild(header);
 			}
 
 			if (query.type == 'task') {
-				Tasks.renderFileTasks(el, this.tasks.all());
-				ctx.addChild(new Tasks.TaskViewLifecycle(this.app, el));
+				if (this.tasks === undefined || this.tasks === null) {
+					let header = el.createEl('h2', { text: "Dataview is still indexing tasks..." });
+					while (this.tasks === undefined || this.tasks === null) {
+						const wait = (ms: number) => new Promise((re, rj) => setTimeout(re, ms));
+						await wait(1_000);
+						header.textContent += ".";
+					}
+
+					el.removeChild(header);
+				}
+
+				let result = executeTask(query, this.index, this.tasks);
+				if (typeof result === 'string') {
+					el.createEl('h2', { text: result });
+				} else {
+					Tasks.renderFileTasks(el, result);
+					ctx.addChild(new Tasks.TaskViewLifecycle(this.app, el));
+				}
 			} else if (query.type == 'list') {
 				let result = execute(query, this.index);
 				if (typeof result === 'string') {

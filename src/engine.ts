@@ -2,7 +2,7 @@
  * Takes a full query and a set of indices, and (hopefully quickly) returns all relevant files.
  */
 import { LiteralType, LiteralTypeRepr, Field, LiteralField, LiteralFieldRepr, Query, BinaryOp, Fields, Source, Sources } from './query';
-import { FullIndex } from './index';
+import { FullIndex, TaskCache } from './index';
 import { Task } from './tasks';
 
 /** The result of executing a query over an index. */
@@ -245,10 +245,26 @@ export function execute(query: Query, index: FullIndex): QueryResult | string {
     };
 }
 
-// TODO: Implement this. At what level do we filter tasks? I'm thinking per-file for now,
-// and then we can move this to per-task block. Per individual task may be wierd to render.
-// The main complication is how to handle subtasks - do you filter those too? What if only
-// a subtask matches, but not a task?
-export function executeTask(query: Query, index: FullIndex): Map<string, Task[]> | string {
-    return null;
+export function executeTask(query: Query, index: FullIndex, cache: TaskCache): Map<string, Task[]> | string {
+    // This is a somewhat silly way to do this for now; call into regular execute on the full query,
+    // yielding a list of files. Then map the files to their tasks.
+    // TODO: Consider per-task or per-task-block filtering via a more nuanced algorithm.
+
+    // TODO: Hacky special-case for tasks; if no source provided, search everywhere.
+    if (query.source.type === 'empty') {
+        query.source = Sources.folder("");
+    }
+
+    let result = execute(query, index);
+    if (typeof result === 'string') return result;
+
+    let realResult = new Map<string, Task[]>();
+    for (let row of result.data) {
+        let tasks = cache.get(row.file);
+        if (tasks == undefined || tasks.length == 0) continue;
+
+        realResult.set(row.file, tasks);
+    }
+
+    return realResult;
 }

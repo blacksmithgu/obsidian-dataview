@@ -2,7 +2,6 @@
 import { MetadataCache, Vault, TFile } from 'obsidian';
 import { Task } from './tasks';
 import * as Tasks from './tasks';
-import { parseJsonText } from 'typescript';
 
 /** Aggregate index which has several sub-indices and will initialize all of them. */
 export class FullIndex {
@@ -26,6 +25,8 @@ export class FullIndex {
     reloadQueue: TFile[];
     // Set of paths being reloaded, used for debouncing.
     reloadSet: Set<string>;
+    // Custom extra reload handlers.
+    reloadHandlers: ((f: TFile) => Promise<void>)[];
 
     // The set of indices which we update.
     tag: TagIndex;
@@ -44,6 +45,7 @@ export class FullIndex {
 
         this.reloadQueue = [];
         this.reloadSet = new Set();
+        this.reloadHandlers = [];
 
         // Background task which regularly checks for reloads.
         this.reloadHandle = window.setInterval(() => this.reloadInternal(), FullIndex.RELOAD_INTERVAL);
@@ -63,6 +65,10 @@ export class FullIndex {
         this.reloadQueue.push(file);
     }
 
+    public on(event: 'reload', handler: (a: TFile) => Promise<void>) {
+        this.reloadHandlers.push(handler);
+    }
+
     /** Utility method which regularly checks the reload queue. */
     private async reloadInternal() {
         let copy = Array.from(this.reloadQueue);
@@ -70,9 +76,7 @@ export class FullIndex {
         this.reloadQueue = [];
 
         for (let file of copy) {
-            await Promise.all([
-                this.tag.reloadFile(file),
-            ]);
+            await Promise.all([this.tag.reloadFile(file)].concat(this.reloadHandlers.map(f => f(file))));
         }
     }
 }
