@@ -1,89 +1,97 @@
 # Obsidian Dataview
 
-Like Notion Databases, but better. Provides several advanced views for viewing pages, objects, and other data in your vault.
+Treat your obsidian vault as a database which you can query from. Provides several advanced views for viewing pages, objects, and other data in your vault. You can filter by folders and tags (or combinations of folders & tags) and by YAML front-matter fields; more functionality forthcoming.
 
-## Views
+## Examples
 
-Views are the core abstraction of Obsidian Dataviews (as the name might imply). They are conceptually similar to Obsidian embedded queries - you provide a query in a codeblock in the Editor view, and then obtain a nice rendered query result. See the query section below for an explanation
-
-### List Views
-
-The simplest view, which simply auto-generates a bullet list over a single field (or numbered list, if a 'sort' clause is provided).
+Show all games in the game folder, sorted by rating, with some metadata:
 
 ~~~
 ```dataview
-list file
-from #game
-where should-replay
+table time-played, length, rating
+from "games"
+sort rating desc
 ```
 ~~~
 
-### Table Views
+![Game Example](images/game.png =250x250)
 
-The most generic and flexible view; renders an arbitary number of fields in a tabular view.
+---
+
+List games which are MOBAs or CRPGs.
 
 ~~~
 ```dataview
-table length, time-played, rating
-from #game
-where length > 80h
-sort rating descending
+list from #game/moba or #game/crpg
 ```
 ~~~
 
-## Queries
+![Game List](images/game-list.png =250x250)
 
-All dataviews take queries in order to determine what exactly to show. Queries use a line-based format, and have the general form:
+---
+
+List all tasks in un-completed projects:
 
 ~~~
 ```dataview
-[list|table] field1, field2, ..., fieldN
-
-from #tag, #tag2, -#tag3 ('-' excludes files with tag)
-
-where field [>|>=|<|<=|=] [field2|literal value] (and field2 ...) (or field3...)
-
-sort field [ascending|descending] (ascending is implied if not provided)
+tasks from #projects/active
 ```
 ~~~
 
-Sorting and filters (like 'where') are data type dependent (since comparing strings is different
-than comparing numbers). They will infer the data-types automatically by default; you can force a datatype using the more complicated query syntax.
+![Task List](images/project-task.png =250x250)
+
+# Usage
+
+Dataview allows you to write queries over markdown files which can be filtered by folder, tag, and markdown YAML fields; it can then display the resulting data in various formats. All dataviews are embedded code blocks with the general form
+
+~~~
+```dataview
+[list|table|task] field1, (field2 + field3) as myfield, ..., fieldN
+from #tag or "folder"
+where field [>|>=|<|<=|=|&|'|'] [field2|literal value] (and field2 ...) (or field3...)
+sort field [ascending|descending|asc|desc] (ascending is implied if not provided)
+```
+~~~
+
+The first word in a query is always the view type - currently, either:
+- `list`, which just renders a list of files that pass the query filters.
+- `table`, which renders files and any selected fields that pass the query filters.
+- `task`, which renders all tasks from any files that pass the query filters.
+
+Fields can be any YAML front-matter field (currently, strings and numbers are supported, with support for ratings, links, dates, durations, and intervals forthcoming), any custom defined field (using the `field as field2` syntax) or the special fields `filename` or `filepath`. They can also be functions of other fields - for example, `rating + offset`, is a valid field.
 
 ## Roadmap
 
-A very long roadmap with lots of features (some big, some small). Not sorted in any particular priority order.
+There is a lot of potential for a generic query system; here is the upcoming features (roughly sorted in order in which I'll work on them):
 
-- [ ] **Better Queries**:
+- [ ] **Query/frontmatter date and duration support**
+    - [ ] Expose folder creation time and last modified time as date fields `ctime` and `mtime`.
+    - [ ] Expose daily note days as date field `day`.
+    - [ ] Add shorthands for various times - `today`, `tommorow`, `eom` (end-of-month), `som` (start-of-month).
+- [ ] **Improved query debuggability**:
+    - [ ] Show query parse + execute time on views.
+    - [ ] Show errors for every file that failed to be selected due to query syntax error.
+    - [ ] Improve parsimmon error reporting (possibly rewrite into custom recursive descent parser?)
+    - [ ] More parser tests
+- [ ] **More complex task queries**:
+    - [ ] Filter on a per-task, rather than per-file basis.
+    - [ ] Filter tasks by completion.
+    - [ ] Include nearby context with tasks - the header they are under, the preceding paragraph, etc.
+- [ ] **More query fields**:
     - [ ] Select file title
-    - [ ] Select creation time & last modify time
     - [ ] Select file length (in words, in bytes, etc).
     - [ ] Select from CSV (data is selected from CSV).
-- [ ] **Query Filtering**:
-    - [ ] Inferred data schema
-        - [ ] Number
-        - [ ] String
-        - [ ] Date
-        - [ ] Tag
-        - [ ] Link
-    - [ ] Simple '>', '<', '=' on numeric/string fields
-    - [ ] 'Around' for date and numeric fields
-    - [ ] 'today', 'next week', other date constants
-- [.] **Views**:
-    - [X] List View (a list with metadata)
-    - [ ] Task View (collects tasks from entire vault)
-        - [x] Collect tasks from whole vault
-        - [ ] Check a task box and have it be checked in original file
-    - [ ] Object View (create custom objects anywhere in a file & collect them into a list)
-    - [ ] Calendar-based View (computed off of a date object, could be used for dailies)
-    - [ ] Timeline View
-    - [ ] Gallery View (primarily for images)
-    - [ ] Heirarchical View (where some way of determining parent/child relationship is provided)
-    - [ ] Embedded Graph View (?)
-- [ ] **Better Views**:
-    - [ ] Sort By
-    - [ ] Show Hidden Properties
+- [ ] **Responsive views**:
+    - [ ] Allow automatic sorting by clicking on headers.
+    - [ ] Allow automatic filtering with a right-click modal.
+    - [ ] Add properties to query automatically via a '+' button.
+    - [ ] A simple query builder modal? (Something like the vantage plugin for search)
     - [ ] Live Updating View (when a new query match shows up)
-    - [ ] Modal for auto-generating view codeblocks
 - [ ] **Usability**:
     - [ ] Schema validation for objects (using a central `Schema.md` file probably)
+- [ ] **More dataviews**:
+    - [ ] Calendar view
+    - [ ] Timeline view
+    - [ ] Gallery view (primarily for images)
+    - [ ] Heirarchical view
+    - [ ] Object view (create custom objects anywhere in a file & collect them into a list)

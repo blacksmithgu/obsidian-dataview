@@ -152,10 +152,11 @@ function prettifyYamlKey(key: string): string {
 function renderList(container: HTMLElement, elements: (string | HTMLElement)[]) {
 	let listEl = container.createEl('ul', { cls: 'list-view-ul' });
 	for (let elem of elements) {
+		let li = listEl.createEl('li');
 		if (typeof elem == "string") {
-			listEl.createEl('li', { text: elem });
+			li.appendText(elem);
 		} else {
-			listEl.appendChild(elem);
+			li.appendChild(elem);
 		}
 	}
 }
