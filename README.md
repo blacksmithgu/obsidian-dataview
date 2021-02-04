@@ -34,7 +34,7 @@ List all tasks in un-completed projects:
 
 ~~~
 ```dataview
-tasks from #projects/active
+task from #projects/active
 ```
 ~~~
 
