@@ -20,11 +20,11 @@ export interface Task {
 
 /** Holds DOM events for a rendered task view, including check functionality. */
 export class TaskViewLifecycle extends MarkdownRenderChild {
-	app: App;
+	vault: Vault;
 
-	constructor(app: App, container: HTMLElement) {
+	constructor(vault: Vault, container: HTMLElement) {
 		super();
-		this.app = app;
+		this.vault = vault;
 		this.containerEl = container;
 	}
 
@@ -48,7 +48,7 @@ export class TaskViewLifecycle extends MarkdownRenderChild {
 				checkbox.parentElement.replaceChild(newCheckbox, checkbox);
 				this.registerHandler(newCheckbox);
 
-				setTaskCheckedInFile(this.app, checkbox.dataset["file"], parseInt(checkbox.dataset["lineno"]),
+				setTaskCheckedInFile(this.vault, checkbox.dataset["file"], parseInt(checkbox.dataset["lineno"]),
 					checkbox.dataset["text"], false, true);
 			} else {
 				let newCheckbox = createCheckbox(checkbox.dataset["file"],
@@ -59,7 +59,7 @@ export class TaskViewLifecycle extends MarkdownRenderChild {
 				checkbox.parentElement.replaceChild(newCheckbox, checkbox);
 				this.registerHandler(newCheckbox);
 
-				setTaskCheckedInFile(this.app, checkbox.dataset["file"], parseInt(checkbox.dataset["lineno"]),
+				setTaskCheckedInFile(this.vault, checkbox.dataset["file"], parseInt(checkbox.dataset["lineno"]),
 					checkbox.dataset["text"], true, false);
 			}
 		});
@@ -156,10 +156,10 @@ function createCheckbox(file: string, line: number, text: string, checked: boole
 }
 
 /** Check a task in a file by rewriting it. */
-export async function setTaskCheckedInFile(app: App, path: string, taskLine: number, taskText: string, wasChecked: boolean, check: boolean) {
+export async function setTaskCheckedInFile(vault: Vault, path: string, taskLine: number, taskText: string, wasChecked: boolean, check: boolean) {
 	if (check == wasChecked) return;
 
-	let text = await app.vault.adapter.read(path);
+	let text = await vault.adapter.read(path);
 	let splitText = text.replace("\r", "").split("\n");
 
 	if (splitText.length < taskLine) return;
@@ -190,9 +190,9 @@ export async function setTaskCheckedInFile(app: App, path: string, taskLine: num
 	let hasRn = text.contains("\r");
 	if (hasRn) {
 		let final = splitText.join("\r\n");
-		await app.vault.adapter.write(path, final);
+		await vault.adapter.write(path, final);
 	} else {
 		let final = splitText.join("\n");
-		await app.vault.adapter.write(path, final);
+		await vault.adapter.write(path, final);
 	}
 }

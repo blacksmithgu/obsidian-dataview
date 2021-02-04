@@ -1,8 +1,8 @@
-import { Plugin, Workspace } from 'obsidian';
-import { createAnchor } from './render';
+import { MarkdownRenderChild, Plugin, Workspace, Vault } from 'obsidian';
+import { createAnchor, prettifyYamlKey, renderErrorPre, renderList, renderTable } from './render';
 import { FullIndex, TaskCache } from './index';
 import * as Tasks from './tasks';
-import { parseQuery } from './query';
+import { parseQuery, Query } from './query';
 import { execute, executeTask, getFileName } from './engine';
 
 interface DataviewSettings { }
@@ -22,162 +22,203 @@ export default class DataviewPlugin extends Plugin {
 		
 		console.log("Dataview Plugin - Version 0.1.0 Loaded");
 
-		// Wait for layout-ready so the vault is ready for traversal (doing it before leads to
-		// an empty vault object, yielding no markdown files).
-		this.workspace.on("layout-ready", async () => {
-			this.index = await FullIndex.generate(this.app.vault, this.app.metadataCache);
-			this.tasks = await TaskCache.generate(this.app.vault);
-
-			// TODO: A little hacky; improve the index to include the task cache in the future.
-			this.index.on("reload", file => this.tasks.reloadFile(file));
-		});
+		if (!this.workspace.layoutReady) {
+			this.workspace.on("layout-ready", async () => this.prepareIndexes());
+		} else {
+			await this.prepareIndexes();
+		}
 
 		// Main entry point for dataview.
+		// TODO: Replace w/ code post processor & raise minimum version.
 		this.registerMarkdownPostProcessor(async (el, ctx) => {
-			let code = parseDataviewBlock(el);
-			if (!code) return;
-
+			// Look for a <code> element with a 'language-dataview' class.
+			let dataviewCode = el.find('code.language-dataview');
+			if (!dataviewCode) return;
 			el.removeChild(el.firstChild);
 
-			// Don't need the index to parse the query, in case of errors.
-			let query = parseQuery(code);
+			let query = parseQuery(dataviewCode.innerText);
+
+			// In case of parse error, just render the error.
 			if (typeof query === 'string') {
-				el.createEl('h2', { text: query });
+				renderErrorPre(el, "Dataview: " + query);
 				return;
 			}
 
-			// Not initialized yet, stall...
-			if (this.index === undefined || this.index === null) {
-				let header = el.createEl('h2', { text: "Dataview is still indexing files"});
+			// TODO: Look into cleaner ways to ensure the indices are initialized before rendering.
+			// We currently use a dummy render child which passes off to another render child upon success;
+			// perhaps we can pass the ctx along?
 
-				while (this.index === undefined || this.index === null) {
-					// TODO: Move to utility. Then again, this is an anti-pattern :D.
-					const wait = (ms: number) => new Promise((re, rj) => setTimeout(re, ms));
-					await wait(1_000);
-					header.textContent += ".";
-				}
-
-				el.removeChild(header);
-			}
-
-			if (query.type == 'task') {
-				if (this.tasks === undefined || this.tasks === null) {
-					let header = el.createEl('h2', { text: "Dataview is still indexing tasks..." });
-					while (this.tasks === undefined || this.tasks === null) {
-						const wait = (ms: number) => new Promise((re, rj) => setTimeout(re, ms));
-						await wait(1_000);
-						header.textContent += ".";
-					}
-
-					el.removeChild(header);
-				}
-
-				let result = executeTask(query, this.index, this.tasks);
-				if (typeof result === 'string') {
-					el.createEl('h2', { text: result });
-				} else {
-					Tasks.renderFileTasks(el, result);
-					ctx.addChild(new Tasks.TaskViewLifecycle(this.app, el));
-				}
-			} else if (query.type == 'list') {
-				let result = execute(query, this.index);
-				if (typeof result === 'string') {
-					el.createEl('h2', { text: result });
-				} else {
-					renderList(el, result.data.map(e => {
-						let cleanName = getFileName(e.file).replace(".md", "");
-						return createAnchor(cleanName, e.file.replace(".md", ""), true);
-					}));
-				}
-			} else if (query.type == 'table') {
-				let result = execute(query, this.index);
-				if (typeof result === 'string') {
-					el.createEl('h2', { text: result });
-					return;
-				}
-
-				let prettyFields = result.names.map(prettifyYamlKey);
-				renderTable(el, ["Name"].concat(prettyFields), result.data.map(row => {
-					let filename = getFileName(row.file).replace(".md", "");
-					let result: (string | HTMLElement)[] =
-						[createAnchor(filename, row.file.replace(".md", ""), true)];
-				
-					for (let elem of row.data) {
-						result.push("" + elem.value);
-					}
-
-					return result;
-				}));
+			switch (query.type) {
+				case 'task':
+					ctx.addChild(this.wrapWithEnsureTaskIndex(el, () => new DataviewTaskRenderer(query as Query, el, this.index, this.tasks, this.app.vault)));
+					break;
+				case 'list':
+					ctx.addChild(this.wrapWithEnsureIndex(el, () => new DataviewListRenderer(query as Query, el, this.index)));
+					break;
+				case 'table':
+					ctx.addChild(this.wrapWithEnsureIndex(el, () => new DataviewTableRenderer(query as Query, el, this.index)));
+					break;
 			}
 		});
 	}
 
 	onunload() { }
+
+	async prepareIndexes() {
+		// Workspace is already ready, generate indices immediately.
+		this.index = await FullIndex.generate(this.app.vault, this.app.metadataCache);
+		this.tasks = await TaskCache.generate(this.app.vault);
+
+		// TODO: A little hacky; improve the index to include the task cache in the future.
+		this.index.on("reload", file => this.tasks.reloadFile(file));
+	}
+
+	wrapWithEnsureIndex(container: HTMLElement, success: () => MarkdownRenderChild): EnsurePredicateRenderer {
+		return new EnsurePredicateRenderer(container,
+			el => this.index !== null || this.index !== undefined,
+			success);
+	}
+
+	wrapWithEnsureTaskIndex(container: HTMLElement, success: () => MarkdownRenderChild): EnsurePredicateRenderer {
+		return new EnsurePredicateRenderer(container,
+			el => (this.index !== null || this.index !== undefined) && (this.tasks !== null || this.tasks !== undefined),
+			success);
+	}
 }
 
-/** Parse a div block from the postprocessor, looking for codeblocks. Returns the query on success. */
-function parseDataviewBlock(element: HTMLElement): string | null {
-	// Look for a <code> element with a 'language-dataview' class.
-	let dataviewCode = element.find('code.language-dataview');
-	if (!dataviewCode) return null;
+/** A generic renderer which waits for a predicate, only continuing on success. */
+class EnsurePredicateRenderer extends MarkdownRenderChild {
+	static CHECK_INTERVAL_MS = 1_000;
 
-	// Parse the inside of the code element for the type and query.
-	return dataviewCode.innerText;
+	update: (container: HTMLElement) => boolean;
+	success: () => MarkdownRenderChild;
+
+	dead: boolean;
+	container: HTMLElement;
+
+	constructor(container: HTMLElement, update: (container: HTMLElement) => boolean, success: () => MarkdownRenderChild) {
+		super();
+
+		this.container = container;
+		this.update = update;
+		this.success = success;
+		this.dead = false;
+	}
+
+	async onload() {
+		// Wait for the given predicate to finally pass...
+		await waitFor(EnsurePredicateRenderer.CHECK_INTERVAL_MS, () => this.update(this.container), () => this.dead);
+		// And then pass off rendering to a child context.
+		this.addChild(this.success());
+	}
+
+	onunload() {
+		this.dead = true;
+	}
 }
 
-/** Pretifies YAML keys like 'time-played' into 'Time Played' */
-function prettifyYamlKey(key: string): string {
-	if (key.length == 0) return key;
-	let result = key[0].toUpperCase();
+/** Renders a list dataview for the given query. */
+class DataviewListRenderer extends MarkdownRenderChild {
+	// If true, kill any waiting / pending operations since this view was killed.
+	query: Query;
+	container: HTMLElement;
+	index: FullIndex;
 
-	// Hacky camel case detection. Will do unwanted things for stuff like 'LaTeX'.
-	// May remove in the future, dunno.
-	for (let index = 1; index < key.length; index++) {
-		let isNewWord = key[index].toUpperCase() == key[index]
-			&& key[index - 1].toLowerCase() == key[index - 1];
-		isNewWord = isNewWord || (key[index - 1] == "_");
-		isNewWord = isNewWord || (key[index - 1] == "-");
-		
-		if (isNewWord) {
-			result += " " + key[index].toUpperCase();
+	constructor(query: Query, container: HTMLElement, index: FullIndex) {
+		super();
+
+		this.query = query;
+		this.container = container;
+		this.index = index;
+	}
+
+	onload() {
+		let result = execute(this.query, this.index);
+		if (typeof result === 'string') {
+			renderErrorPre(this.container, "Dataview: " + result);
 		} else {
-			result += key[index];
+			renderList(this.container, result.data.map(e => {
+				let cleanName = getFileName(e.file).replace(".md", "");
+				return createAnchor(cleanName, e.file.replace(".md", ""), true);
+			}));
 		}
 	}
-
-	return result.replace("-", "").replace("_", "");
 }
 
-/** Create a list inside the given container, with the given data. */
-function renderList(container: HTMLElement, elements: (string | HTMLElement)[]) {
-	let listEl = container.createEl('ul', { cls: 'list-view-ul' });
-	for (let elem of elements) {
-		let li = listEl.createEl('li');
-		if (typeof elem == "string") {
-			li.appendText(elem);
-		} else {
-			li.appendChild(elem);
+class DataviewTableRenderer extends MarkdownRenderChild {
+	query: Query;
+	container: HTMLElement;
+	index: FullIndex;
+
+	constructor(query: Query, container: HTMLElement, index: FullIndex) {
+		super();
+
+		this.query = query;
+		this.container = container;
+		this.index = index;
+	}
+
+	onload() {
+		let result = execute(this.query, this.index);
+		if (typeof result === 'string') {
+			renderErrorPre(this.container, "Dataview: " + result);
+			return;
 		}
-	}
-}
 
-/** Create a table inside the given container, with the given data. */
-function renderTable(container: HTMLElement, headers: string[], values: (string | HTMLElement)[][]) {
-	let tableEl = container.createEl('table', { cls: 'table-view-table' });
+		let prettyFields = result.names.map(prettifyYamlKey);
+		renderTable(this.container, ["Name"].concat(prettyFields), result.data.map(row => {
+			let filename = getFileName(row.file).replace(".md", "");
+			let result: (string | HTMLElement)[] =
+				[createAnchor(filename, row.file.replace(".md", ""), true)];
 
-	let headerEl = tableEl.createEl('tr');
-	for (let header of headers) {
-		headerEl.createEl('th', { text: header });
-	}
-
-	for (let row of values) {
-		let rowEl = tableEl.createEl('tr');
-		for (let value of row) {
-			if (typeof value == "string") {
-				rowEl.createEl('td', { text: value });
-			} else {
-				rowEl.appendChild(value);
+			for (let elem of row.data) {
+				result.push("" + elem.value);
 			}
+
+			return result;
+		}));
+	}
+}
+
+class DataviewTaskRenderer extends MarkdownRenderChild {
+	query: Query;
+	container: HTMLElement;
+	index: FullIndex;
+	tasks: TaskCache;
+	vault: Vault;
+
+	constructor(query: Query, container: HTMLElement, index: FullIndex, tasks: TaskCache, vault: Vault) {
+		super();
+
+		this.query = query;
+		this.container = container;
+
+		this.index = index;
+		this.tasks = tasks;
+		this.vault = vault;
+	}
+
+	onload() {
+		let result = executeTask(this.query, this.index, this.tasks);
+		if (typeof result === 'string') {
+			renderErrorPre(this.container, "Dataview: " + result);
+		} else {
+			Tasks.renderFileTasks(this.container, result);
+			// TODO: Merge this into this renderer.
+			this.addChild(new Tasks.TaskViewLifecycle(this.vault, this.container));
 		}
 	}
+}
+
+/** Wait for a given predicate (querying at the given interval). */
+async function waitFor(interval: number, predicate: () => boolean, cancel: () => boolean): Promise<boolean> {
+	if (cancel()) return false;
+
+	const wait = (ms: number) => new Promise((re, rj) => setTimeout(re, ms));
+	while (!predicate()) {
+		if (cancel()) return false;
+		await wait(interval);
+	}
+	
+	return true;
 }

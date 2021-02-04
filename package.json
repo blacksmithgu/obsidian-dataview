@@ -1,6 +1,6 @@
 {
   "name": "obsidian-dataview",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Advanced data views for Obsidian.md.",
   "main": "main.js",
   "scripts": {
@@ -25,6 +25,7 @@
   "dependencies": {
     "@types/jest": "^26.0.20",
     "@types/parsimmon": "^1.10.6",
+    "luxon": "^1.25.0",
     "parsimmon": "^1.16.0",
     "ts-jest": "^26.4.4"
   }
