@@ -102,20 +102,34 @@ export class TagIndex {
 
         // First time load...
         for (let file of vault.getMarkdownFiles()) {
-            let tagCache = cache.getFileCache(file).tags;
-            if (!tagCache) continue;
-
+            let fileCache = cache.getFileCache(file);
             let allTags = new Set<string>();
-            for (let tag of tagCache) {
-                for (let subtag of this.parseSubtags(tag.tag)) {
-                    allTags.add(subtag);
 
-                    if (!initialMap.has(subtag)) initialMap.set(subtag, new Set<string>());
-                    initialMap.get(subtag).add(file.path);
+            let tagCache = fileCache.tags;
+            if (tagCache) {
+                for (let tag of tagCache) {
+                    this.parseSubtags(tag.tag).forEach(t => allTags.add(t));
+                    for (let subtag of this.parseSubtags(tag.tag)) {
+                        allTags.add(subtag);
+
+                    }
+                }
+            }
+
+            let frontCache = fileCache.frontmatter;
+            if (frontCache && frontCache["tags"] && Array.isArray(frontCache["tags"])) {
+                for (let tag of frontCache["tags"]) {
+                    if (!tag.startsWith("#")) tag = "#" + tag;
+                    this.parseSubtags(tag).forEach(t => allTags.add(t));
                 }
             }
 
             initialInvMap.set(file.path, allTags);
+            
+            for (let subtag of allTags) {
+                if (!initialMap.has(subtag)) initialMap.set(subtag, new Set<string>());
+                initialMap.get(subtag).add(file.path);
+            }
         }
 
         let totalTimeMs = new Date().getTime() - timeStart;
@@ -164,17 +178,26 @@ export class TagIndex {
     async reloadFile(file: TFile) {
         this.clearFile(file.path);
 
-        let tagCache = this.cache.getFileCache(file).tags;
-        if (!tagCache) return;
-
+        let fileCache = this.cache.getFileCache(file);
         let allTags = new Set<string>();
-        for (let tag of tagCache) {
-            for (let subtag of TagIndex.parseSubtags(tag.tag)) {
-                allTags.add(subtag);
 
-                if (!this.map.has(subtag)) this.map.set(subtag, new Set<string>());
-                this.map.get(subtag).add(file.path);
+        if (fileCache.tags) {
+            for (let tag of fileCache.tags) {
+                TagIndex.parseSubtags(tag.tag).forEach(t => allTags.add(t));
             }
+        }
+
+        if (fileCache.frontmatter && fileCache.frontmatter["tags"]
+            && Array.isArray(fileCache.frontmatter["tags"])) {
+            for (let tag of fileCache.frontmatter["tags"]) {
+                if (!tag.startsWith("#")) tag = "#" + tag;
+                TagIndex.parseSubtags(tag).forEach(t => allTags.add(t));
+            }
+        }
+
+        for (let subtag of allTags) {
+            if (!this.map.has(subtag)) this.map.set(subtag, new Set<string>());
+            this.map.get(subtag).add(file.path);
         }
 
         this.invMap.set(file.path, allTags);

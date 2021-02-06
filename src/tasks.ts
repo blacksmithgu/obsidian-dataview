@@ -1,4 +1,4 @@
-import { Vault, App, TFile, MarkdownRenderChild } from 'obsidian';
+import { Vault, App, TFile, MarkdownRenderChild, MarkdownRenderer } from 'obsidian';
 import { createAnchor } from './render';
 
 /**
@@ -105,7 +105,7 @@ export async function findTasksInFile(vault: Vault, file: TFile): Promise<Task[]
 }
 
 /** Render tasks from multiple files. */
-export function renderFileTasks(container: HTMLElement, tasks: Map<string, Task[]>) {
+export async function renderFileTasks(container: HTMLElement, tasks: Map<string, Task[]>) {
 	for (let path of tasks.keys()) {
 		let basepath = path.replace(".md", "");
 
@@ -113,23 +113,32 @@ export function renderFileTasks(container: HTMLElement, tasks: Map<string, Task[
 		header.appendChild(createAnchor(basepath, basepath, true));
 		let div = container.createDiv();
 
-		renderTasks(div, path, tasks.get(path));
+		await renderTasks(div, path, tasks.get(path));
 	}
 }
 
 /** Render a list of tasks as a single list. */
-export function renderTasks(container: HTMLElement, path: string, tasks: Task[]) {
+export async function renderTasks(container: HTMLElement, path: string, tasks: Task[]) {
 	let ul = container.createEl('ul', { cls: 'contains-task-list' });
 	for (let task of tasks) {
 		let li = ul.createEl('li', { cls: 'task-list-item' });
-		let check = createCheckbox(path, task.line, task.text, task.completed);
 
 		if (task.completed) {
 			li.addClass('is-checked');
 		}
 
-		li.appendChild(check);
-		li.insertAdjacentText("beforeend", task.text);
+		// Render the text as markdown so that bolds, links, and other things work properly.
+		await MarkdownRenderer.renderMarkdown(task.text, li, path, null);
+
+		// Unwrap the paragraph element that is created.
+		let paragraph = li.querySelector("p");
+		if (paragraph) {
+			li.innerHTML = paragraph.innerHTML;
+			paragraph.remove();
+		}
+
+		let check = createCheckbox(path, task.line, task.text, task.completed);
+		li.prepend(check);
 
 		if (task.subtasks.length > 0) {
 			renderTasks(li, path, task.subtasks);

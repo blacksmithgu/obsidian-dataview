@@ -1,4 +1,4 @@
-import { MarkdownRenderChild, Plugin, Workspace, Vault } from 'obsidian';
+import { MarkdownRenderChild, Plugin, Workspace, Vault, MarkdownPostProcessorContext } from 'obsidian';
 import { createAnchor, prettifyYamlKey, renderErrorPre, renderList, renderTable } from './render';
 import { FullIndex, TaskCache } from './index';
 import * as Tasks from './tasks';
@@ -19,8 +19,10 @@ export default class DataviewPlugin extends Plugin {
 	async onload() {
 		this.settings = Object.assign(DEFAULT_SETTINGS, await this.loadData());
 		this.workspace = this.app.workspace;
+		this.index = null;
+		this.tasks = null;
 		
-		console.log("Dataview Plugin - Version 0.1.0 Loaded");
+		console.log("Dataview Plugin - Version 0.1.2 Loaded");
 
 		if (!this.workspace.layoutReady) {
 			this.workspace.on("layout-ready", async () => this.prepareIndexes());
@@ -50,13 +52,13 @@ export default class DataviewPlugin extends Plugin {
 
 			switch (query.type) {
 				case 'task':
-					ctx.addChild(this.wrapWithEnsureTaskIndex(el, () => new DataviewTaskRenderer(query as Query, el, this.index, this.tasks, this.app.vault)));
+					ctx.addChild(this.wrapWithEnsureTaskIndex(ctx, el, () => new DataviewTaskRenderer(query as Query, el, this.index, this.tasks, this.app.vault)));
 					break;
 				case 'list':
-					ctx.addChild(this.wrapWithEnsureIndex(el, () => new DataviewListRenderer(query as Query, el, this.index)));
+					ctx.addChild(this.wrapWithEnsureIndex(ctx, el, () => new DataviewListRenderer(query as Query, el, this.index)));
 					break;
 				case 'table':
-					ctx.addChild(this.wrapWithEnsureIndex(el, () => new DataviewTableRenderer(query as Query, el, this.index)));
+					ctx.addChild(this.wrapWithEnsureIndex(ctx, el, () => new DataviewTableRenderer(query as Query, el, this.index)));
 					break;
 			}
 		});
@@ -73,15 +75,13 @@ export default class DataviewPlugin extends Plugin {
 		this.index.on("reload", file => this.tasks.reloadFile(file));
 	}
 
-	wrapWithEnsureIndex(container: HTMLElement, success: () => MarkdownRenderChild): EnsurePredicateRenderer {
-		return new EnsurePredicateRenderer(container,
-			el => this.index !== null || this.index !== undefined,
-			success);
+	wrapWithEnsureIndex(ctx: MarkdownPostProcessorContext, container: HTMLElement, success: () => MarkdownRenderChild): EnsurePredicateRenderer {
+		return new EnsurePredicateRenderer(ctx, container, () => this.index != null, success);
 	}
 
-	wrapWithEnsureTaskIndex(container: HTMLElement, success: () => MarkdownRenderChild): EnsurePredicateRenderer {
-		return new EnsurePredicateRenderer(container,
-			el => (this.index !== null || this.index !== undefined) && (this.tasks !== null || this.tasks !== undefined),
+	wrapWithEnsureTaskIndex(ctx: MarkdownPostProcessorContext, container: HTMLElement, success: () => MarkdownRenderChild): EnsurePredicateRenderer {
+		return new EnsurePredicateRenderer(ctx, container,
+			() => (this.index != null) && (this.tasks != null),
 			success);
 	}
 }
@@ -90,15 +90,20 @@ export default class DataviewPlugin extends Plugin {
 class EnsurePredicateRenderer extends MarkdownRenderChild {
 	static CHECK_INTERVAL_MS = 1_000;
 
-	update: (container: HTMLElement) => boolean;
+	update: () => boolean;
 	success: () => MarkdownRenderChild;
 
+	ctx: MarkdownPostProcessorContext;
 	dead: boolean;
 	container: HTMLElement;
 
-	constructor(container: HTMLElement, update: (container: HTMLElement) => boolean, success: () => MarkdownRenderChild) {
+	constructor(ctx: MarkdownPostProcessorContext,
+		container: HTMLElement,
+		update: () => boolean,
+		success: () => MarkdownRenderChild) {
 		super();
 
+		this.ctx = ctx;
 		this.container = container;
 		this.update = update;
 		this.success = success;
@@ -106,10 +111,18 @@ class EnsurePredicateRenderer extends MarkdownRenderChild {
 	}
 
 	async onload() {
+		let loadContainer = renderErrorPre(this.container, "Dataview indices are loading");
+
 		// Wait for the given predicate to finally pass...
-		await waitFor(EnsurePredicateRenderer.CHECK_INTERVAL_MS, () => this.update(this.container), () => this.dead);
+		await waitFor(EnsurePredicateRenderer.CHECK_INTERVAL_MS,
+			() => { loadContainer.innerText += "."; return this.update(); },
+			() => this.dead);
+
+		// Clear the container before passing it off to the child.
+		this.container.innerHTML = "";
+
 		// And then pass off rendering to a child context.
-		this.addChild(this.success());
+		this.ctx.addChild(this.success());
 	}
 
 	onunload() {
@@ -198,7 +211,7 @@ class DataviewTaskRenderer extends MarkdownRenderChild {
 		this.vault = vault;
 	}
 
-	onload() {
+	async onload() {
 		let result = executeTask(this.query, this.index, this.tasks);
 		if (typeof result === 'string') {
 			renderErrorPre(this.container, "Dataview: " + result);
