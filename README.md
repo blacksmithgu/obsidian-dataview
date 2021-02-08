@@ -61,7 +61,7 @@ The first word in a query is always the view type - currently, either:
 You can query from either `#tags`, or from `"folder"`. You can freely combine these filters into more
 complicated boolean expressions using `and` and `or`; if precedence is importance, use parenthesis.
 
-Fields can be any YAML front-matter field (currently, strings and numbers are supported, with support for ratings, links, dates, durations, and intervals forthcoming), any custom defined field (using the `field as field2` syntax) or the special fields `filename` or `filepath`. They can also be functions of other fields - for example, `rating + offset`, is a valid field.
+Fields can be any YAML front-matter field (currently, strings and numbers are supported, with support for ratings, links, dates, durations, and intervals forthcoming), any custom defined field (using the `field as field2` syntax) or the special fields `filename` or `filepath`. You can obtain fields inside of YAML objects using the `.` operator - i.e., `Dates.Birthday` for example. Fields can also be functions of other fields - for example, `rating + offset`, is a valid field.
 
 ## Roadmap
 
