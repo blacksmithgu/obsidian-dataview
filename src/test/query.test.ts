@@ -106,6 +106,11 @@ test("Fat Query", () => {
     expect(fat.sortBy.length).toBe(2);
 });
 
+test("Nested Identifier", () => {
+    let q = QUERY_LANGUAGE.identifier.tryParse("Dates.Birthday");
+    expect(q).toEqual("Dates.Birthday");
+});
+
 test("Task query with no fields", () => {
     let q = parseQuery("task from #games") as Query;
     console.log(q);
@@ -113,3 +118,19 @@ test("Task query with no fields", () => {
     expect(q.type).toBe('task');
     expect(q.source).toEqual(Sources.tag("#games"));
 });
+
+// Pending date support.
+/*
+test("Parse Year-Month date", () => {
+    let date = QUERY_LANGUAGE.date.tryParse("2020-04");
+    expect(date.year).toBe(2020);
+    expect(date.month).toBe(4);
+});
+
+test("Parse Year-Month-Day date", () => {
+    let date = QUERY_LANGUAGE.date.tryParse("1984-08-15");
+    expect(date.year).toBe(1984);
+    expect(date.month).toBe(8);
+    expect(date.day).toBe(15);
+});
+*/

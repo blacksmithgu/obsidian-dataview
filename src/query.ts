@@ -1,5 +1,6 @@
 /** Provides query parsing from plain-text. */
 import 'parsimmon';
+import { DateTime } from 'luxon';
 import * as Parsimmon from 'parsimmon';
 
 /** The supported query types (corresponding to view types). */
@@ -186,6 +187,7 @@ interface QueryLanguageTypes {
     bool: boolean;
     tag: string;
     identifier: string;
+    date: DateTime;
     binaryPlusMinus: BinaryOp;
     binaryCompareOp: BinaryOp;
     binaryBooleanOp: BinaryOp;
@@ -251,7 +253,7 @@ export const QUERY_LANGUAGE = Parsimmon.createLanguage<QueryLanguageTypes>({
         .desc("boolean ('true' or 'false')"),
     tag: q => Parsimmon.regexp(/-?#[\w/]+/)
         .desc("tag ('#hello')"),
-    identifier: q => Parsimmon.regexp(/[a-zA-Z][\w_-]+/)
+    identifier: q => Parsimmon.regexp(/[a-zA-Z][\.\w_-]+/)
         .desc("variable identifier"),
     binaryPlusMinus: q => Parsimmon.regexp(/\+|-/).map(str => str as BinaryOp),
     binaryCompareOp: q => Parsimmon.regexp(/>=|<=|!=|>|<|=/).map(str => str as BinaryOp),
@@ -260,6 +262,14 @@ export const QUERY_LANGUAGE = Parsimmon.createLanguage<QueryLanguageTypes>({
         else if (str == 'or') return '|';
         else return str as BinaryOp;
     }),
+    // TODO: Add time-zone support.
+    // TODO: Will probably want a custom combinator for optional parsing.
+    date: q => Parsimmon.seqMap(q.number, Parsimmon.string("-"), q.number, (year, _, month) => DateTime.fromObject({ year, month }))
+        .chain(ym => Parsimmon.seqMap(Parsimmon.string("-"), q.number, (_, day) => ym.set({ day })))
+        .chain(ymd => Parsimmon.seqMap(Parsimmon.string("T"), q.number, (_, hour) => ymd.set({ hour })))
+        .chain(ymdh => Parsimmon.seqMap(Parsimmon.string(":"), q.number, (_, minute) => ymdh.set({ minute })))
+        .chain(ymdhm => Parsimmon.seqMap(Parsimmon.string(":"), q.number, (_, second) => ymdhm.set({ second })))
+        .chain(ymdhms => Parsimmon.seqMap(Parsimmon.string("."), q.number, (_, millisecond) => ymdhms.set({ millisecond }))),
 
     // Source parsing.
     tagSource: q => q.tag.map(tag => Sources.tag(tag)),

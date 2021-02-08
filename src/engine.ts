@@ -153,6 +153,36 @@ export function collectFromSource(source: Source, index: FullIndex): Set<string>
     }
 }
 
+export function populateContextFrontmatter(context: Map<string, LiteralField>, prefix: string, node: Record<string, any>) {
+    for (let key of Object.keys(node)) {
+        let value = node[key];
+
+        // TODO: Handle lists. Need special operators like 'contains' or 'in'.
+        if (typeof value === 'number') {
+            context.set(prefix + key, Fields.literal('number', value));
+        } else if (typeof value === 'string') {
+            context.set(prefix + key, Fields.literal('string', value));
+        } else if (typeof value === 'object') {
+            populateContextFrontmatter(context, prefix + key + ".", value as any);
+        }
+    }
+}
+
+/** Populate the initial context for the given file. */
+export function populateContextFromMeta(file: string, index: FullIndex): Map<string, LiteralField> {
+    let context = new Map<string, LiteralField>();
+    // TODO: Add 'ctime', 'mtime' to fields. Make 'file' a link type.
+    context.set("filepath", Fields.literal('string', file));
+    context.set("filename", Fields.literal('string', getFileName(file)));
+
+    let fileData = index.metadataCache.getCache(file);
+    if (fileData && fileData.frontmatter) {
+        populateContextFrontmatter(context, "", fileData.frontmatter);
+    }
+
+    return context;
+}
+
 /** Execute a query over the given index, returning  */
 export function execute(query: Query, index: FullIndex): QueryResult | string {
     // Start by collecting all of the files that match the 'from' queries.
@@ -164,27 +194,7 @@ export function execute(query: Query, index: FullIndex): QueryResult | string {
     let errors: [string, string][] = [];
     let rows: QueryRow[] = [];
     outer: for (let file of fileset) {
-        let context = new Map<string, LiteralField>();
-        // TODO: Add 'ctime', 'mtime' to fields. Make 'file' a link type.
-        context.set("filepath", Fields.literal('string', file));
-        context.set("filename", Fields.literal('string', getFileName(file)));
-
-        let fileData = index.metadataCache.getCache(file);
-        if (fileData && fileData.frontmatter) {
-            for (let key of Object.keys(fileData.frontmatter)) {
-                if (key === 'position') continue;
-
-                let value = fileData.frontmatter[key];
-                // TODO: Handle lists and dicts.
-                // For dicts, just recurse (so stuff like 'dict.element.thing' whatever).
-                // For lists, need special operators (probably 'has'/'in'/other predicates).
-                if (typeof value === 'number') {
-                    context.set(key, Fields.literal('number', value));
-                } else if (typeof value === 'string') {
-                    context.set(key, Fields.literal('string', value));
-                }
-            }
-        }
+        let context = populateContextFromMeta(file, index);
 
         for (let nfield of query.fields) {
             let value = evaluate(nfield.field, context);

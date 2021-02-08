@@ -323,6 +323,11 @@ export class PrefixIndex {
         this.vault.on("create", file => {
             PrefixIndexNode.add(this.root, file.path);
         });
+
+        this.vault.on("rename", (file, old) => {
+            PrefixIndexNode.remove(this.root, old);
+            PrefixIndexNode.add(this.root, file.path);
+        });
     }
 
     public get(prefix: string): Set<string> {
