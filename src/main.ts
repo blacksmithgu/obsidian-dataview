@@ -22,7 +22,7 @@ export default class DataviewPlugin extends Plugin {
 		this.index = null;
 		this.tasks = null;
 		
-		console.log("Dataview Plugin - Version 0.1.3 Loaded");
+		console.log("Dataview Plugin - Version 0.1.4 Loaded");
 
 		if (!this.workspace.layoutReady) {
 			this.workspace.on("layout-ready", async () => this.prepareIndexes());

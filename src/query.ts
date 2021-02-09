@@ -187,6 +187,7 @@ interface QueryLanguageTypes {
     bool: boolean;
     tag: string;
     identifier: string;
+    rootDate: DateTime;
     date: DateTime;
     binaryPlusMinus: BinaryOp;
     binaryCompareOp: BinaryOp;
@@ -240,6 +241,22 @@ export function createBinaryParser<T, U>(child: Parsimmon.Parser<T>, sep: Parsim
         });
 }
 
+export function chainOpt<T>(base: Parsimmon.Parser<T>, ...funcs: ((r: T) => Parsimmon.Parser<T>)[]): Parsimmon.Parser<T> {
+    return Parsimmon((input, i) => {
+        let result = (base as any)._(input, i);
+        if (!result.status) return result;
+
+        for (let func of funcs) {
+            let next = (func(result.value as T) as any)._(input, result.index);
+            if (!next.status) return result;
+            
+            result = next;
+        }
+
+        return result;
+    });
+}
+
 /** A parsimmon-powered parser-combinator implementation of the query language. */
 export const QUERY_LANGUAGE = Parsimmon.createLanguage<QueryLanguageTypes>({
     // Simple atom parsing, like words, identifiers, numbers.
@@ -264,12 +281,17 @@ export const QUERY_LANGUAGE = Parsimmon.createLanguage<QueryLanguageTypes>({
     }),
     // TODO: Add time-zone support.
     // TODO: Will probably want a custom combinator for optional parsing.
-    date: q => Parsimmon.seqMap(q.number, Parsimmon.string("-"), q.number, (year, _, month) => DateTime.fromObject({ year, month }))
-        .chain(ym => Parsimmon.seqMap(Parsimmon.string("-"), q.number, (_, day) => ym.set({ day })))
-        .chain(ymd => Parsimmon.seqMap(Parsimmon.string("T"), q.number, (_, hour) => ymd.set({ hour })))
-        .chain(ymdh => Parsimmon.seqMap(Parsimmon.string(":"), q.number, (_, minute) => ymdh.set({ minute })))
-        .chain(ymdhm => Parsimmon.seqMap(Parsimmon.string(":"), q.number, (_, second) => ymdhm.set({ second })))
-        .chain(ymdhms => Parsimmon.seqMap(Parsimmon.string("."), q.number, (_, millisecond) => ymdhms.set({ millisecond }))),
+    rootDate: q => Parsimmon.seqMap(Parsimmon.regexp(/\d{4}/), Parsimmon.string("-"), Parsimmon.regexp(/\d{2}/), (year, _, month) => {
+        return DateTime.fromObject({ year: Number.parseInt(year), month: Number.parseInt(month) })
+    }),
+    date: q => chainOpt<DateTime>(q.rootDate,
+        (ym: DateTime) => Parsimmon.seqMap(Parsimmon.string("-"), q.number, (_, day) => ym.set({ day })),
+        (ymd: DateTime) => Parsimmon.seqMap(Parsimmon.string("T"), q.number, (_, hour) => ymd.set({ hour })),
+        (ymdh: DateTime) => Parsimmon.seqMap(Parsimmon.string(":"), q.number, (_, minute) => ymdh.set({ minute })),
+        (ymdhm: DateTime) => Parsimmon.seqMap(Parsimmon.string(":"), q.number, (_, second) => ymdhm.set({ second })),
+        (ymdhms: DateTime) => Parsimmon.seqMap(Parsimmon.string("."), q.number, (_, millisecond) => ymdhms.set({ millisecond }))
+    ),
+    
 
     // Source parsing.
     tagSource: q => q.tag.map(tag => Sources.tag(tag)),

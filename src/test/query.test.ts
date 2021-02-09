@@ -120,7 +120,6 @@ test("Task query with no fields", () => {
 });
 
 // Pending date support.
-/*
 test("Parse Year-Month date", () => {
     let date = QUERY_LANGUAGE.date.tryParse("2020-04");
     expect(date.year).toBe(2020);
@@ -133,4 +132,13 @@ test("Parse Year-Month-Day date", () => {
     expect(date.month).toBe(8);
     expect(date.day).toBe(15);
 });
-*/
+
+test("Parse Year-Month-DayTHour:Minute:Second", () => {
+    let date = QUERY_LANGUAGE.date.tryParse("1984-08-15T12:42:59");
+    expect(date.year).toBe(1984);
+    expect(date.month).toBe(8);
+    expect(date.day).toBe(15);
+    expect(date.hour).toBe(12);
+    expect(date.minute).toBe(42);
+    expect(date.second).toBe(59);
+});
