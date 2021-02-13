@@ -218,7 +218,9 @@ export function populateContextFrontmatter(context: Map<string, LiteralField>, p
         let value = node[key];
 
         // TODO: Handle lists. Need special operators like 'contains' or 'in'.
-        if (typeof value === 'number') {
+        if (value == null) {
+            context.set(prefix + key, Fields.literal('null', null));
+        } else if (typeof value === 'number') {
             context.set(prefix + key, Fields.literal('number', value));
         } else if (typeof value === 'string') {
             context.set(prefix + key, parseFrontmatterString(value));
