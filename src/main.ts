@@ -185,7 +185,11 @@ class DataviewTableRenderer extends MarkdownRenderChild {
 				[createAnchor(filename, row.file.replace(".md", ""), true)];
 
 			for (let elem of row.data) {
-				result.push("" + elem.value);
+				if (elem.valueType == 'date') {
+					result.push("" + elem.value.toISO());
+				} else {
+					result.push("" + elem.value);
+				}
 			}
 
 			return result;

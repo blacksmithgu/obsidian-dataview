@@ -1,19 +1,21 @@
 /** Provides query parsing from plain-text. */
 import 'parsimmon';
-import { DateTime } from 'luxon';
+import { DateTime, Duration } from 'luxon';
 import * as Parsimmon from 'parsimmon';
+
 
 /** The supported query types (corresponding to view types). */
 export type QueryType = 'list' | 'table' | 'task';
 
 /** The literal types supported by the query engine. */
-export type LiteralType = 'boolean' | 'number' | 'string' | 'duration' | 'date' | 'null';
+export type LiteralType = 'boolean' | 'number' | 'string' | 'date' | 'duration' | 'null';
+/** Maps the string type to it's actual javascript representation. */
 export type LiteralTypeRepr<T extends LiteralType> =
     T extends 'boolean' ? boolean :
     T extends 'number' ? number :
     T extends 'string' ? string :
-    T extends 'duration' ? number :
-    T extends 'date' ? number :
+    T extends 'duration' ? Duration :
+    T extends 'date' ? DateTime :
     T extends 'null' ? null :
     any;
 
@@ -26,6 +28,8 @@ export type LiteralField =
     LiteralFieldRepr<'string'>
     | LiteralFieldRepr<'number'>
     | LiteralFieldRepr<'boolean'>
+    | LiteralFieldRepr<'date'>
+    | LiteralFieldRepr<'duration'>
     | LiteralFieldRepr<'null'>;
 
 /** Literal representation of some field type. */
@@ -124,6 +128,14 @@ export namespace Fields {
                 return field.value.length > 0;
             case "boolean":
                 return field.value;
+            case "null":
+                return false;
+            case "date":
+                return field.value.toMillis() != 0;
+            case "duration":
+                return field.value.as("seconds") != 0;
+            default:
+                return false;
         }
     }
 }
@@ -178,6 +190,20 @@ interface FromClause {
 /** A clause that can be parsed; allows for order of clauses to vary. */
 type Clause = SortByClause | WhereClause | FromClause;
 
+/** Provides a lookup table for unit durations of the given type. */
+export const DURATION_TYPES = {
+    "year": Duration.fromObject({ years: 1 }),
+    "month": Duration.fromObject({ months: 1 }),
+    "week": Duration.fromObject({ weeks: 1 }),
+    "day": Duration.fromObject({ days: 1 }),
+    "hour": Duration.fromObject({ hours: 1 }),
+    "hr": Duration.fromObject({ hours: 1 }),
+    "minute": Duration.fromObject({ minute: 1 }),
+    "min": Duration.fromObject({ minute: 1 }),
+    "second": Duration.fromObject({ seconds: 1 }),
+    "sec": Duration.fromObject({ seconds: 1 }),
+};
+
 /** Typings for the outputs of all of the parser combinators. */
 interface QueryLanguageTypes {
     queryType: QueryType;
@@ -189,6 +215,10 @@ interface QueryLanguageTypes {
     identifier: string;
     rootDate: DateTime;
     date: DateTime;
+    datePlus: DateTime;
+    durationType: keyof typeof DURATION_TYPES;
+    duration: Duration;
+
     binaryPlusMinus: BinaryOp;
     binaryCompareOp: BinaryOp;
     binaryBooleanOp: BinaryOp;
@@ -206,6 +236,8 @@ interface QueryLanguageTypes {
     numberField: Field;
     boolField: Field;
     stringField: Field;
+    dateField: Field;
+    durationField: Field;
     atomField: Field;
 
     binaryPlusMinusField: Field;
@@ -242,19 +274,21 @@ export function createBinaryParser<T, U>(child: Parsimmon.Parser<T>, sep: Parsim
 }
 
 export function chainOpt<T>(base: Parsimmon.Parser<T>, ...funcs: ((r: T) => Parsimmon.Parser<T>)[]): Parsimmon.Parser<T> {
-    return Parsimmon((input, i) => {
-        let result = (base as any)._(input, i);
-        if (!result.status) return result;
+    return Parsimmon.custom((success, failure) => {
+        return (input, i) => {
+            let result = (base as any)._(input, i);
+            if (!result.status) return result;
 
-        for (let func of funcs) {
-            let next = (func(result.value as T) as any)._(input, result.index);
-            if (!next.status) return result;
-            
-            result = next;
-        }
+            for (let func of funcs) {
+                let next = (func(result.value as T) as any)._(input, result.index);
+                if (!next.status) return result;
+                
+                result = next;
+            }
 
-        return result;
-    });
+            return result;
+        };
+    })
 }
 
 /** A parsimmon-powered parser-combinator implementation of the query language. */
@@ -268,9 +302,9 @@ export const QUERY_LANGUAGE = Parsimmon.createLanguage<QueryLanguageTypes>({
         .desc("string"),
     bool: q => Parsimmon.regexp(/true|false/).map(str => str == "true")
         .desc("boolean ('true' or 'false')"),
-    tag: q => Parsimmon.regexp(/-?#[\w/]+/)
+    tag: q => Parsimmon.regexp(/-?#[\w/-]+/)
         .desc("tag ('#hello')"),
-    identifier: q => Parsimmon.regexp(/[a-zA-Z][\.\w_-]+/)
+    identifier: q => Parsimmon.regexp(/[a-zA-Z][\.\w_-]*/)
         .desc("variable identifier"),
     binaryPlusMinus: q => Parsimmon.regexp(/\+|-/).map(str => str as BinaryOp),
     binaryCompareOp: q => Parsimmon.regexp(/>=|<=|!=|>|<|=/).map(str => str as BinaryOp),
@@ -291,8 +325,15 @@ export const QUERY_LANGUAGE = Parsimmon.createLanguage<QueryLanguageTypes>({
         (ymdhm: DateTime) => Parsimmon.seqMap(Parsimmon.string(":"), q.number, (_, second) => ymdhm.set({ second })),
         (ymdhms: DateTime) => Parsimmon.seqMap(Parsimmon.string("."), q.number, (_, millisecond) => ymdhms.set({ millisecond }))
     ),
+    datePlus: q => Parsimmon.alt<DateTime>(
+        Parsimmon.string("today").map(_ => DateTime.local()),
+        Parsimmon.string("tommorow").map(_ => DateTime.local().plus(Duration.fromObject({ day: 1 }))),
+        q.date
+    ),
+    durationType: q => Parsimmon.alt(... Object.keys(DURATION_TYPES).map(Parsimmon.string)) as Parsimmon.Parser<keyof typeof DURATION_TYPES>,
+    duration: q => Parsimmon.seqMap(q.number, Parsimmon.optWhitespace, q.durationType, Parsimmon.string("s").atMost(1), (count, _, t, _2) =>
+        DURATION_TYPES[t].mapUnits(x => x * count)),
     
-
     // Source parsing.
     tagSource: q => q.tag.map(tag => Sources.tag(tag)),
     folderSource: q => q.string.map(str => Sources.folder(str)),
@@ -310,7 +351,11 @@ export const QUERY_LANGUAGE = Parsimmon.createLanguage<QueryLanguageTypes>({
         .desc("string field"),
     boolField: q => q.bool.map(val => Fields.literal('boolean', val))
         .desc("boolean field"),
-    atomField: q => Parsimmon.alt(q.parensField, q.boolField, q.variableField, q.numberField, q.stringField),
+    dateField: q => Parsimmon.seqMap(Parsimmon.string("date("), Parsimmon.optWhitespace, q.datePlus, Parsimmon.optWhitespace, Parsimmon.string(")"),
+        (prefix, _1, date, _2, postfix) => Fields.literal('date', date)),
+    durationField: q => Parsimmon.seqMap(Parsimmon.string("dur("), Parsimmon.optWhitespace, q.duration, Parsimmon.optWhitespace, Parsimmon.string(")"),
+        (prefix, _1, dur, _2, postfix) => Fields.literal('duration', dur)),
+    atomField: q => Parsimmon.alt(q.parensField, q.boolField, q.dateField, q.durationField, q.variableField, q.numberField, q.stringField),
     binaryPlusMinusField: q => createBinaryParser(q.atomField, q.binaryPlusMinus, Fields.binaryOp),
     binaryCompareField: q => createBinaryParser(q.binaryPlusMinusField, q.binaryCompareOp, Fields.binaryOp),
     binaryBooleanField: q => createBinaryParser(q.binaryCompareField, q.binaryBooleanOp, Fields.binaryOp),

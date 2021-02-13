@@ -1,4 +1,5 @@
 import { Query, QUERY_LANGUAGE, parseQuery, QueryType, BinaryOpField, Fields, Sources, NamedField, QuerySortBy } from "../query";
+import { Duration } from 'luxon';
 import { Success, Failure, Result } from "parsimmon";
 
 test("Parse Query Type", () => {
@@ -23,6 +24,8 @@ test("Parse Identifier", () => {
     expect(badIdent.status).toBe(false);
 });
 
+// Literal Parsing.
+
 test("Parse Number Literal", () => {
     expect(QUERY_LANGUAGE.number.parse("0no").status).toBe(false);
 
@@ -39,6 +42,52 @@ test("Parse String Literal", () => {
     expect(goodResult.status).toBe(true);
     expect(goodResult.value).toBe("hello");
 });
+
+// Date Parsing.
+
+test("Parse Year-Month date", () => {
+    let date = QUERY_LANGUAGE.date.tryParse("2020-04");
+    expect(date.year).toBe(2020);
+    expect(date.month).toBe(4);
+});
+
+test("Parse Year-Month-Day date", () => {
+    let date = QUERY_LANGUAGE.date.tryParse("1984-08-15");
+    expect(date.year).toBe(1984);
+    expect(date.month).toBe(8);
+    expect(date.day).toBe(15);
+});
+
+test("Parse Year-Month-DayTHour:Minute:Second", () => {
+    let date = QUERY_LANGUAGE.date.tryParse("1984-08-15T12:42:59");
+    expect(date.year).toBe(1984);
+    expect(date.month).toBe(8);
+    expect(date.day).toBe(15);
+    expect(date.hour).toBe(12);
+    expect(date.minute).toBe(42);
+    expect(date.second).toBe(59);
+});
+
+// Duration parsing.
+test("Duration day parsing", () => {
+    let day = QUERY_LANGUAGE.duration.tryParse("6 days");
+    let day2 = QUERY_LANGUAGE.duration.tryParse("6day");
+
+    expect(day).toEqual(day2);
+    expect(day).toEqual(Duration.fromObject({ days: 6 }));
+});
+
+test("Duration minute parsing", () => {
+    let min = QUERY_LANGUAGE.duration.tryParse("4min");
+    let min2 = QUERY_LANGUAGE.duration.tryParse("4 minutes");
+    let min3 = QUERY_LANGUAGE.duration.tryParse("4 minute");
+
+    expect(min).toEqual(min2);
+    expect(min).toEqual(min3);
+    expect(min).toEqual(Duration.fromObject({ minutes: 4 }));
+});
+
+// Binary op parsing.
 
 test("Parse Simple Binary", () => {
     let result = QUERY_LANGUAGE.binaryOpField.parse("16 + \"what\"") as Success<BinaryOpField>;
@@ -117,28 +166,4 @@ test("Task query with no fields", () => {
     expect(typeof q).toBe('object');
     expect(q.type).toBe('task');
     expect(q.source).toEqual(Sources.tag("#games"));
-});
-
-// Pending date support.
-test("Parse Year-Month date", () => {
-    let date = QUERY_LANGUAGE.date.tryParse("2020-04");
-    expect(date.year).toBe(2020);
-    expect(date.month).toBe(4);
-});
-
-test("Parse Year-Month-Day date", () => {
-    let date = QUERY_LANGUAGE.date.tryParse("1984-08-15");
-    expect(date.year).toBe(1984);
-    expect(date.month).toBe(8);
-    expect(date.day).toBe(15);
-});
-
-test("Parse Year-Month-DayTHour:Minute:Second", () => {
-    let date = QUERY_LANGUAGE.date.tryParse("1984-08-15T12:42:59");
-    expect(date.year).toBe(1984);
-    expect(date.month).toBe(8);
-    expect(date.day).toBe(15);
-    expect(date.hour).toBe(12);
-    expect(date.minute).toBe(42);
-    expect(date.second).toBe(59);
 });
