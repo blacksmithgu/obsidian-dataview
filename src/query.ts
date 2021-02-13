@@ -328,6 +328,8 @@ export const QUERY_LANGUAGE = Parsimmon.createLanguage<QueryLanguageTypes>({
     datePlus: q => Parsimmon.alt<DateTime>(
         Parsimmon.string("today").map(_ => DateTime.local()),
         Parsimmon.string("tommorow").map(_ => DateTime.local().plus(Duration.fromObject({ day: 1 }))),
+        Parsimmon.string("eom").map(_ => DateTime.local().endOf("month")),
+        Parsimmon.string("eoy").map(_ => DateTime.local().endOf("year")),
         q.date
     ),
     durationType: q => Parsimmon.alt(... Object.keys(DURATION_TYPES).map(Parsimmon.string)) as Parsimmon.Parser<keyof typeof DURATION_TYPES>,

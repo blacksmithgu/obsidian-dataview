@@ -103,7 +103,7 @@ If the file has a date inside it's title (of form `yyyy-mm-dd`), it also obtains
 Additionally, all of the fields defined in the YAML front-matter are available for querying. You can query inside nested objects using dot notation (so `dates.birthday` would get the `birthday` object inside the `dates` field). Fields can currently have four types:
 
 - `number`: A number like `0` or `18` or `19.37`.
-- `date`: A date and time in ISO8601 format - `yyyy-mm-ddThh:mm:ss`. Everything after the year and month is optional, so you can just write `yyyy-mm` or `yyyy-mm-dd` or `yyyy-mm-ddThh`. If you want to use a date in a query, use `date(<date>)` where `<date>` is either a date, `today`, or `tommorow`.
+- `date`: A date and time in ISO8601 format - `yyyy-mm-ddThh:mm:ss`. Everything after the year and month is optional, so you can just write `yyyy-mm` or `yyyy-mm-dd` or `yyyy-mm-ddThh`. If you want to use a date in a query, use `date(<date>)` where `<date>` is either a date, `today`, `tommorow`, `eom` (end of month), or `eoy` (end of year).
 - `duration`: A length of time - can be added/subtracted from dates. Has the format `<number> years/months/.../seconds`, where the unit can be years, months, weeks, days, hours, minutes, or seconds. If you want to use a duration in a query, use `dur(<duration>)`.
 - `string`: Generic fallback; if a field is not a more specific type, it is a string, which is just text. To use a string in a query, use quotes - so `"string"`.
 
@@ -111,10 +111,10 @@ Additionally, all of the fields defined in the YAML front-matter are available f
 
 There is a lot of potential for a generic query system; here is the upcoming features (roughly sorted in order in which I'll work on them):
 
-- [ ] **Query/frontmatter date and duration support**
-    - [ ] Expose folder creation time and last modified time as date fields `ctime` and `mtime`.
-    - [ ] Expose daily note days as date field `day`.
-    - [ ] Add shorthands for various times - `today`, `tommorow`, `eom` (end-of-month), `som` (start-of-month).
+- [X] **Query/frontmatter date and duration support**
+    - [X] Expose folder creation time and last modified time as date fields `ctime` and `mtime`.
+    - [X] Expose daily note days as date field `day`.
+    - [X] Add shorthands for some date constants - `today`, `tommorow`, `eom` (end-of-month), `som` (start-of-month).
 - [ ] **Improved query debuggability**:
     - [ ] Show query parse + execute time on views.
     - [ ] Show errors for every file that failed to be selected due to query syntax error.
@@ -125,8 +125,8 @@ There is a lot of potential for a generic query system; here is the upcoming fea
     - [ ] Filter tasks by completion.
     - [ ] Include nearby context with tasks - the header they are under, the preceding paragraph, etc.
 - [ ] **More query fields**:
-    - [ ] Select file title
-    - [ ] Select file length (in words, in bytes, etc).
+    - [X] Select file title. See `file.name`.
+    - [X] Select file length (in words, in bytes, etc). See `file.size`.
     - [ ] Select from CSV (data is selected from CSV).
 - [ ] **Responsive views**:
     - [ ] Allow automatic sorting by clicking on headers.

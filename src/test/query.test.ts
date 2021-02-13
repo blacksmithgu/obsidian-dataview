@@ -69,6 +69,7 @@ test("Parse Year-Month-DayTHour:Minute:Second", () => {
 });
 
 // Duration parsing.
+
 test("Duration day parsing", () => {
     let day = QUERY_LANGUAGE.duration.tryParse("6 days");
     let day2 = QUERY_LANGUAGE.duration.tryParse("6day");
@@ -85,6 +86,12 @@ test("Duration minute parsing", () => {
     expect(min).toEqual(min2);
     expect(min).toEqual(min3);
     expect(min).toEqual(Duration.fromObject({ minutes: 4 }));
+});
+
+// Tags with dashes.
+test("Tag Parsing", () => {
+    let tag = QUERY_LANGUAGE.tag.tryParse("#hello-from-marketing/yes");
+    expect(tag).toEqual("#hello-from-marketing/yes");
 });
 
 // Binary op parsing.
@@ -162,7 +169,6 @@ test("Nested Identifier", () => {
 
 test("Task query with no fields", () => {
     let q = parseQuery("task from #games") as Query;
-    console.log(q);
     expect(typeof q).toBe('object');
     expect(q.type).toBe('task');
     expect(q.source).toEqual(Sources.tag("#games"));

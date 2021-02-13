@@ -1,5 +1,5 @@
 import { MarkdownRenderChild, Plugin, Workspace, Vault, MarkdownPostProcessorContext } from 'obsidian';
-import { createAnchor, prettifyYamlKey, renderErrorPre, renderList, renderTable } from './render';
+import { createAnchor, prettifyYamlKey, renderErrorPre, renderList, renderMinimalDate, renderTable } from './render';
 import { FullIndex, TaskCache } from './index';
 import * as Tasks from './tasks';
 import { parseQuery, Query } from './query';
@@ -22,7 +22,7 @@ export default class DataviewPlugin extends Plugin {
 		this.index = null;
 		this.tasks = null;
 		
-		console.log("Dataview Plugin - Version 0.1.4 Loaded");
+		console.log("Dataview Plugin - Version 0.1.5 Loaded");
 
 		if (!this.workspace.layoutReady) {
 			this.workspace.on("layout-ready", async () => this.prepareIndexes());
@@ -186,7 +186,7 @@ class DataviewTableRenderer extends MarkdownRenderChild {
 
 			for (let elem of row.data) {
 				if (elem.valueType == 'date') {
-					result.push("" + elem.value.toISO());
+					result.push(renderMinimalDate(elem.value));
 				} else {
 					result.push("" + elem.value);
 				}

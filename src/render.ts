@@ -1,3 +1,5 @@
+import { DateTime } from 'luxon';
+
 /** Make an Obsidian-friendly internal link. */
 export function createAnchor(text: string, target: string, internal: boolean) {
 	let a = document.createElement("a");
@@ -73,4 +75,14 @@ export function renderErrorPre(container: HTMLElement, error: string): HTMLEleme
 	let pre = container.createEl('pre');
 	pre.appendText(error);
 	return pre;
+}
+
+/** Render a DateTime in a minimal format to save space. */
+export function renderMinimalDate(time: DateTime): string {
+	// If there is no relevant time specified, fall back to just rendering the date.
+	if (time.second == 0 && time.minute == 0 && time.hour == 0) {
+		return time.toLocaleString(DateTime.DATE_MED_WITH_WEEKDAY);
+	}
+
+	return time.toLocaleString(DateTime.DATETIME_MED);
 }
