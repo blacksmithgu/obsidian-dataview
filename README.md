@@ -112,8 +112,8 @@ Additionally, all of the fields defined in the YAML front-matter are available f
 There is a lot of potential for a generic query system; here is the upcoming features (roughly sorted in order in which I'll work on them):
 
 - [X] **Query/frontmatter date and duration support**
-    - [X] Expose folder creation time and last modified time as date fields `ctime` and `mtime`.
-    - [X] Expose daily note days as date field `day`.
+    - [X] Expose folder creation time and last modified time as date fields `file.ctime` and `file.mtime`.
+    - [X] Expose daily note days as date field `file.day`.
     - [X] Add shorthands for some date constants - `today`, `tommorow`, `eom` (end-of-month), `som` (start-of-month).
 - [ ] **Improved query debuggability**:
     - [ ] Show query parse + execute time on views.
