@@ -1,6 +1,8 @@
 # Obsidian Dataview
 
-Treat your obsidian vault as a database which you can query from. Provides several advanced views for viewing pages, objects, and other data in your vault. You can filter by folders and tags (or combinations of folders & tags) and by YAML front-matter fields; more functionality forthcoming.
+Treat your obsidian vault as a database which you can query from. Provides a fully-fledged query language for filtering,
+sorting, and extracting data from your pages. See the Examples section below for some quick examples, or the Usage
+section for a more in-detail explanation.
 
 ## Examples
 
@@ -107,7 +109,7 @@ Additionally, all of the fields defined in the YAML front-matter are available f
 - `duration`: A length of time - can be added/subtracted from dates. Has the format `<number> years/months/.../seconds`, where the unit can be years, months, weeks, days, hours, minutes, or seconds. If you want to use a duration in a query, use `dur(<duration>)`.
 - `string`: Generic fallback; if a field is not a more specific type, it is a string, which is just text. To use a string in a query, use quotes - so `"string"`.
 
-## Roadmap
+# Roadmap
 
 There is a lot of potential for a generic query system; here is the upcoming features (roughly sorted in order in which I'll work on them):
 
@@ -115,11 +117,15 @@ There is a lot of potential for a generic query system; here is the upcoming fea
     - [X] Expose folder creation time and last modified time as date fields `file.ctime` and `file.mtime`.
     - [X] Expose daily note days as date field `file.day`.
     - [X] Add shorthands for some date constants - `today`, `tommorow`, `eom` (end-of-month), `som` (start-of-month).
+- [ ] **Embedded Metadata, Embedded Queries**:
+    - [ ] Embed shorthand queries using something like `dv: page.value`.
+    - [ ] Embed metadata outside the YAML block using customizable notation.
+    - [ ] Add additional metadata about the current page (call it 'this') to ease templating support.
 - [ ] **Improved query debuggability**:
     - [ ] Show query parse + execute time on views.
     - [ ] Show errors for every file that failed to be selected due to query syntax error.
     - [ ] Improve parsimmon error reporting (possibly rewrite into custom recursive descent parser?)
-    - [ ] More parser tests
+    - [ ] More parser tests.
 - [ ] **More complex task queries**:
     - [ ] Filter on a per-task, rather than per-file basis.
     - [ ] Filter tasks by completion.
@@ -142,3 +148,15 @@ There is a lot of potential for a generic query system; here is the upcoming fea
     - [ ] Gallery view (primarily for images)
     - [ ] Heirarchical view
     - [ ] Object view (create custom objects anywhere in a file & collect them into a list)
+
+# Contributing
+
+Contributions via bug reports, bug fixes, documentation, and general improvements are always welcome. For more major
+feature work, make an issue about the feature idea / reach out to me so we can judge feasibility and how best to
+implement it.
+
+# Support
+
+Have you found the Dataview plugin helpful, and want to support it? I accept donations which go towards future development efforts.
+
+[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/donate?business=Y9SKV24R5A8BQ&item_name=Open+source+software+development&currency_code=USD)

@@ -52,7 +52,7 @@ export class BinaryOpHandler {
     /** Add a new handler for the specified types to this handler. */
     public add<T1 extends LiteralTypeOrAll, T2 extends LiteralTypeOrAll>(op: BinaryOp, first: T1, second: T2,
         func: BinaryOpImpl<T1, T2>): BinaryOpHandler {
-        this.map.set(this.repr(op, first, second), func);
+        this.map.set(BinaryOpHandler.repr(op, first, second), func);
         return this;
     }
 
@@ -62,30 +62,33 @@ export class BinaryOpHandler {
      */
     public addComm<T1 extends LiteralTypeOrAll, T2 extends LiteralTypeOrAll>(op: BinaryOp, first: T1, second: T2,
         func: BinaryOpImpl<T1, T2>): BinaryOpHandler {
-        this.map.set(this.repr(op, first, second), func);
-        this.map.set(this.repr(op, second, first), ((a, b) => func(b, a)) as BinaryOpImpl<T2, T1>);
+        this.map.set(BinaryOpHandler.repr(op, first, second), func);
+        this.map.set(BinaryOpHandler.repr(op, second, first), ((a, b) => func(b, a)) as BinaryOpImpl<T2, T1>);
 
         return this;
     }
 
     /** Attempt to evaluate the given binary operator on the two literal fields. */
     public evaluate(op: BinaryOp, left: LiteralField, right: LiteralField): LiteralField | string {
-        let handler = this.map.get(this.repr(op, left.valueType, right.valueType));
+        let handler = this.map.get(BinaryOpHandler.repr(op, left.valueType, right.valueType));
         if (handler) return handler(left, right);
 
         // Left-'*' fallback:
-        let handler2 = this.map.get(this.repr(op, '*', right.valueType));
+        let handler2 = this.map.get(BinaryOpHandler.repr(op, '*', right.valueType));
         if (handler2) return handler2(left, right);
 
         // Right-'*' fallback:
-        let handler3 = this.map.get(this.repr(op, left.valueType, '*'));
+        let handler3 = this.map.get(BinaryOpHandler.repr(op, left.valueType, '*'));
         if (handler3) return handler3(left, right);
+
+        // Double '*' fallback.
+        let handler4 = this.map.get(BinaryOpHandler.repr(op, '*', '*'));
+        if (handler4) return handler4(left, right);
 
         return `Operator '${op}' is not supported for '${left.valueType}' and '${right.valueType}`;
     }
 
-    // TODO: Worthwhile making this a static?
-    private repr(op: BinaryOp, left: LiteralTypeOrAll, right: LiteralTypeOrAll) {
+    private static repr(op: BinaryOp, left: LiteralTypeOrAll, right: LiteralTypeOrAll) {
         return `${op},${left},${right}`
     }
 }
@@ -99,6 +102,7 @@ export const BINARY_OPS = BinaryOpHandler.create()
     .add('>=', 'number', 'number', (a, b) => Fields.literal('boolean', a.value >= b.value))
     .add('>', 'number', 'number', (a, b) => Fields.literal('boolean', a.value > b.value))
     .add('=', 'number', 'number', (a, b) => Fields.literal('boolean', a.value == b.value))
+    .add('!=', 'number', 'number', (a, b) => Fields.literal('boolean', a.value != b.value))
     // String operations.
     .addComm('+', 'string', '*', (a, b) => Fields.literal('string', a.value + b.value))
     .add('-', 'string', 'string', (a, b) => "String subtraction is not defined")
@@ -107,6 +111,7 @@ export const BINARY_OPS = BinaryOpHandler.create()
     .add('>=', 'string', 'string', (a, b) => Fields.literal('boolean', a.value >= b.value))
     .add('>', 'string', 'string', (a, b) => Fields.literal('boolean', a.value > b.value))
     .add('=', 'string', 'string', (a, b) => Fields.literal('boolean', a.value == b.value))
+    .add('!=', 'string', 'string', (a, b) => Fields.literal('boolean', a.value != b.value))
     // Date Operations.
     .add("-", 'date', 'date', (a, b) => Fields.literal('duration', b.value.until(a.value).toDuration("seconds")))
     .add('<', 'date', 'date', (a, b) => Fields.literal('boolean', a.value < b.value))
@@ -114,6 +119,7 @@ export const BINARY_OPS = BinaryOpHandler.create()
     .add('>=', 'date', 'date', (a, b) => Fields.literal('boolean', a.value >= b.value))
     .add('>', 'date', 'date', (a, b) => Fields.literal('boolean', a.value > b.value))
     .add('=', 'date', 'date', (a, b) => Fields.literal('boolean', a.value.equals(b.value)))
+    .add('!=', 'date', 'date' , (a, b) => Fields.literal('boolean', !a.value.equals(b.value)))
     // Duration operations.
     .add('+', 'duration', 'duration', (a, b) => Fields.literal('duration', a.value.plus(b.value)))
     .add('-', 'duration', 'duration', (a, b) => Fields.literal('duration', a.value.minus(b.value)))
@@ -122,6 +128,7 @@ export const BINARY_OPS = BinaryOpHandler.create()
     .add('>=', 'duration', 'duration', (a, b) => Fields.literal('boolean', a.value < b.value))
     .add('>', 'duration', 'duration', (a, b) => Fields.literal('boolean', a.value < b.value))
     .add('=', 'duration', 'duration', (a, b) => Fields.literal('boolean', a.value.equals(b.value)))
+    .add('!=', 'duration', 'duration', (a, b) => Fields.literal('boolean', !a.value.equals(b.value)))
     // Date-Duration operations.
     .addComm('+', 'date', 'duration', (a, b) => Fields.literal('date', a.value.plus(b.value)))
     .add('-', 'date', 'duration', (a, b) => Fields.literal('date', a.value.minus(b.value)))
@@ -130,6 +137,7 @@ export const BINARY_OPS = BinaryOpHandler.create()
     .add('|', '*', '*', (a, b) => Fields.literal('boolean', Fields.isTruthy(a) || Fields.isTruthy(b)))
     // Null comparisons.
     .add('=', 'null', 'null', (a, b) => Fields.literal('boolean', true))
+    .add('!=', 'null', 'null', (a, b) => Fields.literal('boolean', false))
     .add('<', 'null', 'null', (a, b) => Fields.literal('boolean', false))
     .add('<=', 'null', 'null', (a, b) => Fields.literal('boolean', true))
     .add('>=', 'null', 'null', (a, b) => Fields.literal('boolean', true))
@@ -263,7 +271,7 @@ export function populateContextFromMeta(file: string, index: FullIndex): Map<str
     return context;
 }
 
-/** Execute a query over the given index, returning  */
+/** Execute a query over the given index, returning all matching rows. */
 export function execute(query: Query, index: FullIndex): QueryResult | string {
     // Start by collecting all of the files that match the 'from' queries.
     let fileset = collectFromSource(query.source, index);

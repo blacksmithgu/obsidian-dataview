@@ -3,13 +3,13 @@
     width: 100%;
 }
 
-.table-view-table > tr {
+.table-view-table > thead > tr, .table-view-table > tbody > tr {
     margin-top: 1em;
     margin-bottom: 1em;
     text-align: left;
 }
 
-.table-view-table > tr > th {
+.table-view-table > thead > tr > th {
     font-weight: 700;
     font-size: larger;
     border-top: none;
@@ -18,7 +18,7 @@
     border-bottom: solid;
 }
 
-.table-view-table > tr > td {
+.table-view-table > tbody > tr > td {
     text-align: left;
     border: none;
     font-weight: 400;

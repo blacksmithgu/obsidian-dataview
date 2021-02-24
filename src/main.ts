@@ -1,13 +1,18 @@
-import { MarkdownRenderChild, Plugin, Workspace, Vault, MarkdownPostProcessorContext } from 'obsidian';
+import { MarkdownRenderChild, Plugin, Workspace, Vault, MarkdownPostProcessorContext, PluginSettingTab, App, Setting } from 'obsidian';
 import { createAnchor, prettifyYamlKey, renderErrorPre, renderList, renderMinimalDate, renderTable } from './render';
 import { FullIndex, TaskCache } from './index';
 import * as Tasks from './tasks';
 import { parseQuery, Query } from './query';
 import { execute, executeTask, getFileName } from './engine';
 
-interface DataviewSettings { }
+interface DataviewSettings {
+	/** What to render 'null' as in tables. Defaults to '-'. */
+	renderNullAs: string;
+}
 
-const DEFAULT_SETTINGS: DataviewSettings = { }
+const DEFAULT_SETTINGS: DataviewSettings = {
+	renderNullAs: "-"
+}
 
 export default class DataviewPlugin extends Plugin {
 	settings: DataviewSettings;
@@ -21,7 +26,9 @@ export default class DataviewPlugin extends Plugin {
 		this.workspace = this.app.workspace;
 		this.index = null;
 		this.tasks = null;
-		
+
+		this.addSettingTab(new DataviewSettingsTab(this.app, this));
+
 		console.log("Dataview Plugin - Version 0.1.5 Loaded");
 
 		if (!this.workspace.layoutReady) {
@@ -38,7 +45,7 @@ export default class DataviewPlugin extends Plugin {
 			if (!dataviewCode) return;
 			el.removeChild(el.firstChild);
 
-			let query = parseQuery(dataviewCode.innerText);
+			let query = tryOrPropogate(() => parseQuery(dataviewCode.innerText));
 
 			// In case of parse error, just render the error.
 			if (typeof query === 'string') {
@@ -58,7 +65,7 @@ export default class DataviewPlugin extends Plugin {
 					ctx.addChild(this.wrapWithEnsureIndex(ctx, el, () => new DataviewListRenderer(query as Query, el, this.index)));
 					break;
 				case 'table':
-					ctx.addChild(this.wrapWithEnsureIndex(ctx, el, () => new DataviewTableRenderer(query as Query, el, this.index)));
+					ctx.addChild(this.wrapWithEnsureIndex(ctx, el, () => new DataviewTableRenderer(query as Query, el, this.index, this.settings)));
 					break;
 			}
 		});
@@ -66,8 +73,8 @@ export default class DataviewPlugin extends Plugin {
 
 	onunload() { }
 
+	/** Prepare all dataview indices. */
 	async prepareIndexes() {
-		// Workspace is already ready, generate indices immediately.
 		this.index = await FullIndex.generate(this.app.vault, this.app.metadataCache);
 		this.tasks = await TaskCache.generate(this.app.vault);
 
@@ -75,14 +82,40 @@ export default class DataviewPlugin extends Plugin {
 		this.index.on("reload", file => this.tasks.reloadFile(file));
 	}
 
-	wrapWithEnsureIndex(ctx: MarkdownPostProcessorContext, container: HTMLElement, success: () => MarkdownRenderChild): EnsurePredicateRenderer {
+	/** Update plugin settings. */
+	async updateSettings(settings: Partial<DataviewSettings>) {
+		this.settings = Object.assign(this.settings, settings);
+		await this.saveData(this.settings);
+	}
+
+	private wrapWithEnsureIndex(ctx: MarkdownPostProcessorContext, container: HTMLElement, success: () => MarkdownRenderChild): EnsurePredicateRenderer {
 		return new EnsurePredicateRenderer(ctx, container, () => this.index != null, success);
 	}
 
-	wrapWithEnsureTaskIndex(ctx: MarkdownPostProcessorContext, container: HTMLElement, success: () => MarkdownRenderChild): EnsurePredicateRenderer {
+	private wrapWithEnsureTaskIndex(ctx: MarkdownPostProcessorContext, container: HTMLElement, success: () => MarkdownRenderChild): EnsurePredicateRenderer {
 		return new EnsurePredicateRenderer(ctx, container,
 			() => (this.index != null) && (this.tasks != null),
 			success);
+	}
+}
+
+class DataviewSettingsTab extends PluginSettingTab {
+	constructor(app: App, private plugin: DataviewPlugin) {
+		super(app, plugin);
+	}
+
+	display(): void {
+		this.containerEl.empty();
+		this.containerEl.createEl("h2", { text: "Dataview Settings" });
+
+		new Setting(this.containerEl)
+			.setName("Render Null As")
+			.setDesc("What null/non-existent should show up as in tables, by default.")
+			.addText(text =>
+				text.setPlaceholder("-")
+					.setValue(this.plugin.settings.renderNullAs)
+					.onChange(async (value) => await this.plugin.updateSettings({ renderNullAs: value })));
+
 	}
 }
 
@@ -146,9 +179,11 @@ class DataviewListRenderer extends MarkdownRenderChild {
 	}
 
 	onload() {
-		let result = execute(this.query, this.index);
+		let result = tryOrPropogate(() => execute(this.query, this.index));
 		if (typeof result === 'string') {
 			renderErrorPre(this.container, "Dataview: " + result);
+		} else if (result.data.length == 0) {
+			renderErrorPre(this.container, "Dataview: Query returned 0 results.");
 		} else {
 			renderList(this.container, result.data.map(e => {
 				let cleanName = getFileName(e.file).replace(".md", "");
@@ -162,17 +197,19 @@ class DataviewTableRenderer extends MarkdownRenderChild {
 	query: Query;
 	container: HTMLElement;
 	index: FullIndex;
+	settings: DataviewSettings;
 
-	constructor(query: Query, container: HTMLElement, index: FullIndex) {
+	constructor(query: Query, container: HTMLElement, index: FullIndex, settings: DataviewSettings) {
 		super();
 
 		this.query = query;
 		this.container = container;
 		this.index = index;
+		this.settings = settings;
 	}
 
 	onload() {
-		let result = execute(this.query, this.index);
+		let result = tryOrPropogate(() => execute(this.query, this.index));
 		if (typeof result === 'string') {
 			renderErrorPre(this.container, "Dataview: " + result);
 			return;
@@ -187,6 +224,8 @@ class DataviewTableRenderer extends MarkdownRenderChild {
 			for (let elem of row.data) {
 				if (elem.valueType == 'date') {
 					result.push(renderMinimalDate(elem.value));
+				} else if (elem.valueType == 'null') {
+					result.push(this.settings.renderNullAs);
 				} else {
 					result.push("" + elem.value);
 				}
@@ -194,6 +233,11 @@ class DataviewTableRenderer extends MarkdownRenderChild {
 
 			return result;
 		}));
+
+		// Render after the empty table, so the table header still renders.
+		if (result.data.length == 0) {
+			renderErrorPre(this.container, "Dataview: Query returned 0 results.");
+		}
 	}
 }
 
@@ -216,9 +260,11 @@ class DataviewTaskRenderer extends MarkdownRenderChild {
 	}
 
 	async onload() {
-		let result = executeTask(this.query, this.index, this.tasks);
+		let result = tryOrPropogate(() => executeTask(this.query, this.index, this.tasks));
 		if (typeof result === 'string') {
 			renderErrorPre(this.container, "Dataview: " + result);
+		} else if (result.size == 0) {
+			renderErrorPre(this.container, "Query returned 0 results.");
 		} else {
 			Tasks.renderFileTasks(this.container, result);
 			// TODO: Merge this into this renderer.
@@ -238,4 +284,13 @@ async function waitFor(interval: number, predicate: () => boolean, cancel: () =>
 	}
 	
 	return true;
+}
+
+/** Try calling the given function; on failure, return the error message.  */
+function tryOrPropogate<T>(func: () => T): T | string {
+	try {
+		return func();
+	} catch (error) {
+		return "" + error;
+	}
 }

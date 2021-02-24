@@ -20,7 +20,7 @@ export type LiteralTypeRepr<T extends LiteralType> =
     any;
 
 /** Valid binary operators. */
-export type BinaryOp = '+' | '-' | '>' | '>=' | '<=' | '<' | '=' | '&' | '|';
+export type BinaryOp = '+' | '-' | '>' | '>=' | '<=' | '<' | '=' | '!=' | '&' | '|';
 
 /** A (potentially computed) field to select or compare against. */
 export type Field = BinaryOpField | VariableField | LiteralField;
@@ -298,7 +298,7 @@ export const QUERY_LANGUAGE = Parsimmon.createLanguage<QueryLanguageTypes>({
         .desc("query type ('TABLE', 'LIST', or 'TASK')"),
     number: q => Parsimmon.regexp(/[0-9]+/).map(str => Number.parseFloat(str))
         .desc("number"),
-    string: q => Parsimmon.regexp(/"(.*)"/, 1)
+    string: q => Parsimmon.regexp(/"(.*?[^\\])"/, 1)
         .desc("string"),
     bool: q => Parsimmon.regexp(/true|false/).map(str => str == "true")
         .desc("boolean ('true' or 'false')"),
@@ -326,8 +326,11 @@ export const QUERY_LANGUAGE = Parsimmon.createLanguage<QueryLanguageTypes>({
         (ymdhms: DateTime) => Parsimmon.seqMap(Parsimmon.string("."), q.number, (_, millisecond) => ymdhms.set({ millisecond }))
     ),
     datePlus: q => Parsimmon.alt<DateTime>(
-        Parsimmon.string("today").map(_ => DateTime.local()),
-        Parsimmon.string("tommorow").map(_ => DateTime.local().plus(Duration.fromObject({ day: 1 }))),
+        Parsimmon.string("now").map(_ => DateTime.local()),
+        Parsimmon.string("today").map(_ => DateTime.local().startOf("day")),
+        Parsimmon.string("tommorow").map(_ => DateTime.local().startOf("day").plus(Duration.fromObject({ day: 1 }))),
+        Parsimmon.string("som").map(_ => DateTime.local().startOf("month")),
+        Parsimmon.string("soy").map(_ => DateTime.local().startOf("year")),
         Parsimmon.string("eom").map(_ => DateTime.local().endOf("month")),
         Parsimmon.string("eoy").map(_ => DateTime.local().endOf("year")),
         q.date
@@ -427,7 +430,7 @@ export const QUERY_LANGUAGE = Parsimmon.createLanguage<QueryLanguageTypes>({
         return {
             type: select.type,
             fields: select.fields,
-            source: source ?? Sources.empty(),
+            source: source ?? Sources.folder(""),
             where: compoundWhere ?? Fields.literal('boolean', true),
             sortBy: sortBy
         } as Query;

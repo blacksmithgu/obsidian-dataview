@@ -1,3 +1,4 @@
+import { table } from 'console';
 import { DateTime } from 'luxon';
 
 /** Make an Obsidian-friendly internal link. */
@@ -53,18 +54,21 @@ export function renderList(container: HTMLElement, elements: (string | HTMLEleme
 export function renderTable(container: HTMLElement, headers: string[], values: (string | HTMLElement)[][]) {
 	let tableEl = container.createEl('table', { cls: 'table-view-table' });
 
-	let headerEl = tableEl.createEl('tr');
+	let theadEl = tableEl.createEl('thead');
+	let headerEl = theadEl.createEl('tr');
 	for (let header of headers) {
 		headerEl.createEl('th', { text: header });
 	}
 
+	let tbodyEl = tableEl.createEl('tbody');
 	for (let row of values) {
-		let rowEl = tableEl.createEl('tr');
+		let rowEl = tbodyEl.createEl('tr');
 		for (let value of row) {
 			if (typeof value == "string") {
 				rowEl.createEl('td', { text: value });
 			} else {
-				rowEl.appendChild(value);
+				let wrapper = rowEl.createEl('td');
+				wrapper.appendChild(value);
 			}
 		}
 	}

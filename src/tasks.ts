@@ -30,9 +30,9 @@ export class TaskViewLifecycle extends MarkdownRenderChild {
 
 	onload() {
 		let checkboxes = this.containerEl.querySelectorAll("input");
-
 		for (let index = 0; index < checkboxes.length; index++) {
 			const checkbox = checkboxes.item(index);
+			console.log(checkbox);
 			this.registerHandler(checkbox);
 		}
 	}
