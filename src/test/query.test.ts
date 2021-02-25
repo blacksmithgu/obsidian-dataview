@@ -1,5 +1,5 @@
-import { Query, QUERY_LANGUAGE, parseQuery, QueryType, BinaryOpField, Fields, Sources, NamedField, QuerySortBy } from "../query";
-import { Duration } from 'luxon';
+import { Query, QUERY_LANGUAGE, parseQuery, QueryType, BinaryOpField, Fields, Sources, NamedField, QuerySortBy, LiteralFieldRepr } from "../query";
+import { DateTime, Duration } from 'luxon';
 import { Success, Failure, Result } from "parsimmon";
 
 test("Parse Query Type", () => {
@@ -24,7 +24,7 @@ test("Parse Identifier", () => {
     expect(badIdent.status).toBe(false);
 });
 
-// Literal Parsing.
+// <-- Literals -->
 
 test("Parse Number Literal", () => {
     expect(QUERY_LANGUAGE.number.parse("0no").status).toBe(false);
@@ -43,7 +43,37 @@ test("Parse String Literal", () => {
     expect(goodResult.value).toBe("hello");
 });
 
-// Date Parsing.
+test("Parse Empty String Literal", () => {
+    let result = QUERY_LANGUAGE.string.tryParse("\"\"");
+    expect(result).toBe("");
+});
+
+test("Parse String Escape", () => {
+    let result = QUERY_LANGUAGE.string.tryParse("\"\\\"\"");
+    expect(result).toBe("\"");
+});
+
+test("Parse String Escape Escape", () => {
+    let result = QUERY_LANGUAGE.string.tryParse("\"\\\\\"");
+    expect(result).toBe("\\");
+})
+
+test("Parse Multiple Strings", () => {
+    let result = QUERY_LANGUAGE.field.tryParse("\"\" or \"yes\"") as BinaryOpField;
+    expect(result.type).toBe("binaryop");
+
+    let left = result.left as LiteralFieldRepr<'string'>;
+    expect(left.type).toBe("literal");
+    expect(left.valueType).toBe("string");
+    expect(left.value).toBe("");
+
+    let right = result.right as LiteralFieldRepr<'string'>;
+    expect(right.type).toBe("literal");
+    expect(right.valueType).toBe("string");
+    expect(right.value).toBe("yes");
+});
+
+// <-- Dates -->
 
 test("Parse Year-Month date", () => {
     let date = QUERY_LANGUAGE.date.tryParse("2020-04");
@@ -68,7 +98,13 @@ test("Parse Year-Month-DayTHour:Minute:Second", () => {
     expect(date.second).toBe(59);
 });
 
-// Duration parsing.
+test("Parse Today", () => {
+    let date = QUERY_LANGUAGE.dateField.tryParse("date(today)") as LiteralFieldRepr<'date'>;
+    expect(date.valueType).toEqual('date');
+    expect(date.value).toEqual(DateTime.local().startOf("day"));
+})
+
+// <-- Durations -->
 
 test("Duration day parsing", () => {
     let day = QUERY_LANGUAGE.duration.tryParse("6 days");
@@ -88,13 +124,14 @@ test("Duration minute parsing", () => {
     expect(min).toEqual(Duration.fromObject({ minutes: 4 }));
 });
 
-// Tags with dashes.
+// <-- TAGS -->
+
 test("Tag Parsing", () => {
     let tag = QUERY_LANGUAGE.tag.tryParse("#hello-from-marketing/yes");
     expect(tag).toEqual("#hello-from-marketing/yes");
 });
 
-// Binary op parsing.
+// <-- Binary Ops -->
 
 test("Parse Simple Binary", () => {
     let result = QUERY_LANGUAGE.binaryOpField.parse("16 + \"what\"") as Success<BinaryOpField>;
@@ -118,6 +155,8 @@ test("Order of Operations", () => {
     ));
 });
 
+// <-- Fields -->
+
 test("Named Fields", () => {
     let simple = QUERY_LANGUAGE.namedField.parse("time-played") as Success<NamedField>;
     expect(simple.status).toBe(true);
@@ -139,6 +178,8 @@ test("Sort Fields", () => {
         Fields.binaryOp(Fields.variable('time-played'), '-', Fields.literal('string', "where")),
         'ascending'));
 });
+
+// <-- Full Queries -->
 
 test("Minimal Query", () => {
     let simple = parseQuery("TABLE time-played, rating, length FROM #games") as Query;

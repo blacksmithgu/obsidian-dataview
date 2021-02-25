@@ -298,7 +298,9 @@ export const QUERY_LANGUAGE = Parsimmon.createLanguage<QueryLanguageTypes>({
         .desc("query type ('TABLE', 'LIST', or 'TASK')"),
     number: q => Parsimmon.regexp(/[0-9]+/).map(str => Number.parseFloat(str))
         .desc("number"),
-    string: q => Parsimmon.regexp(/"(.*?[^\\])"/, 1)
+    string: q => Parsimmon.regexp(/"(.*?)(?<!(?<!\\)\\)"/, 1)
+        .map(str => str.replace(/(?<!\\)\\"/, "\""))
+        .map(str => str.replace(/\\\\/, "\\"))
         .desc("string"),
     bool: q => Parsimmon.regexp(/true|false/).map(str => str == "true")
         .desc("boolean ('true' or 'false')"),
@@ -306,18 +308,18 @@ export const QUERY_LANGUAGE = Parsimmon.createLanguage<QueryLanguageTypes>({
         .desc("tag ('#hello')"),
     identifier: q => Parsimmon.regexp(/[a-zA-Z][\.\w_-]*/)
         .desc("variable identifier"),
-    binaryPlusMinus: q => Parsimmon.regexp(/\+|-/).map(str => str as BinaryOp),
-    binaryCompareOp: q => Parsimmon.regexp(/>=|<=|!=|>|<|=/).map(str => str as BinaryOp),
+    binaryPlusMinus: q => Parsimmon.regexp(/\+|-/).map(str => str as BinaryOp).desc("'+' or '-'"),
+    binaryCompareOp: q => Parsimmon.regexp(/>=|<=|!=|>|<|=/).map(str => str as BinaryOp).desc("'>=' or '<=' or '!=' or '=' or '>' or '<'"),
     binaryBooleanOp: q => Parsimmon.regexp(/and|or|&|\|/i).map(str => {
         if (str == 'and') return '&';
         else if (str == 'or') return '|';
         else return str as BinaryOp;
-    }),
+    }).desc("'and' or 'or' or '&' or '|'"),
     // TODO: Add time-zone support.
     // TODO: Will probably want a custom combinator for optional parsing.
     rootDate: q => Parsimmon.seqMap(Parsimmon.regexp(/\d{4}/), Parsimmon.string("-"), Parsimmon.regexp(/\d{2}/), (year, _, month) => {
         return DateTime.fromObject({ year: Number.parseInt(year), month: Number.parseInt(month) })
-    }),
+    }).desc("date in format YYYY-MM[-DDTHH-MM-SS]"),
     date: q => chainOpt<DateTime>(q.rootDate,
         (ym: DateTime) => Parsimmon.seqMap(Parsimmon.string("-"), q.number, (_, day) => ym.set({ day })),
         (ymd: DateTime) => Parsimmon.seqMap(Parsimmon.string("T"), q.number, (_, hour) => ymd.set({ hour })),
