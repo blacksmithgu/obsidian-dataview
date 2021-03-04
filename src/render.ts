@@ -77,7 +77,11 @@ export function renderTable(container: HTMLElement, headers: string[], values: (
 /** Render a pre block with an error in it; returns the element to allow for dynamic updating. */
 export function renderErrorPre(container: HTMLElement, error: string): HTMLElement {
 	let pre = container.createEl('pre');
-	pre.appendText(error);
+    pre.appendText(error);
+	pre.addClass("dataview");
+    if (error.includes("returned 0")) {
+      pre.addClass("empty")
+    }
 	return pre;
 }
 
