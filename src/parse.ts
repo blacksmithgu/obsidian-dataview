@@ -191,7 +191,7 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
     tagSource: q => q.tag.map(tag => Sources.tag(tag)),
     folderSource: q => q.string.map(str => Sources.folder(str)),
     parensSource: q => P.seqMap(P.string("("), P.optWhitespace, q.source, P.optWhitespace, P.string(")"), (_1, _2, field, _3, _4) => field),
-    negateSource: q => P.seqMap(P.string("-"), q.source, (_, source) => Sources.negate(source)),
+    negateSource: q => P.seqMap(P.string("-"), q.atomSource, (_, source) => Sources.negate(source)),
     atomSource: q => P.alt<Source>(q.parensSource, q.negateSource, q.folderSource, q.tagSource),
     binaryOpSource: q => createBinaryParser(q.atomSource, q.binaryBooleanOp, Sources.binaryOp),
     source: q => q.binaryOpSource,
@@ -210,7 +210,7 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
     functionField: q => P.seqMap(q.identifier, P.optWhitespace, P.string("("), q.field.sepBy(P.string(",").trim(P.optWhitespace)), P.optWhitespace, P.string(")"),
         (name, _1, _2, fields, _3, _4) => Fields.func(name, fields)),
     linkField: q => q.link.map(f => Fields.link(f)),
-    negatedField: q => P.seqMap(P.string("!"), q.field, (_, field) => Fields.negate(field)).desc("negated field"),
+    negatedField: q => P.seqMap(P.string("!"), q.atomField, (_, field) => Fields.negate(field)).desc("negated field"),
     atomField: q => P.alt(q.negatedField, q.parensField, q.boolField, q.numberField, q.stringField, q.linkField, q.dateField, q.durationField, q.functionField, q.variableField),
     parensField: q => P.seqMap(P.string("("), P.optWhitespace, q.field, P.optWhitespace, P.string(")"), (_1, _2, field, _3, _4) => field),
 

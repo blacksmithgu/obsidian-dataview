@@ -1,7 +1,7 @@
-import { BinaryOpField, Fields, Sources, NamedField, QuerySortBy, LiteralFieldRepr } from "../query";
+import { BinaryOpField, Fields, LiteralFieldRepr, Sources } from "../query";
 import { EXPRESSION } from "../parse";
 import { DateTime, Duration } from 'luxon';
-import { Success, Failure, Result } from "parsimmon";
+import { Success } from "parsimmon";
 
 // <-- Integer Literals -->
 
@@ -180,13 +180,61 @@ test("Parse Parenthesis", () => {
 });
 
 test("Parse Order of Operations", () => {
-    let result = EXPRESSION.field.parse("14 + 6 >= 19 - 2") as Success<BinaryOpField>;
-    expect(result.status).toBe(true);
-    expect(result.value).toEqual(Fields.binaryOp(
+    expect(EXPRESSION.field.tryParse("14 + 6 >= 19 - 2")).toEqual(Fields.binaryOp(
         Fields.binaryOp(Fields.literal('number', 14), '+', Fields.literal('number', 6)),
         '>=',
         Fields.binaryOp(Fields.literal('number', 19), '-', Fields.literal('number', 2)),
     ));
+});
+
+// <-- Negation -->
+
+test("Parse Negated field", () => {
+    expect(EXPRESSION.field.tryParse("!true")).toEqual(Fields.negate(Fields.bool(true)));
+    expect(EXPRESSION.field.tryParse("!14")).toEqual(Fields.negate(Fields.number(14)));
+    expect(EXPRESSION.field.tryParse("!neat(0)")).toEqual(Fields.negate(Fields.func("neat", [Fields.number(0)])));
+    expect(EXPRESSION.field.tryParse("!!what")).toEqual(Fields.negate(Fields.negate(Fields.variable("what"))));
+});
+
+test("Parse binaryop negated field", () => {
+    expect(EXPRESSION.field.tryParse("!(true & false)")).toEqual(Fields.negate(
+        Fields.binaryOp(Fields.bool(true), '&', Fields.bool(false))
+    ));
+    expect(EXPRESSION.field.tryParse("true & !false")).toEqual(
+        Fields.binaryOp(Fields.bool(true), '&', Fields.negate(Fields.bool(false))));
+});
+
+// <-- Sources -->
+
+test("Parse simple sources", () => {
+    expect(EXPRESSION.source.tryParse("\"hello\"")).toEqual(Sources.folder("hello"));
+    expect(EXPRESSION.source.tryParse("#neat")).toEqual(Sources.tag("#neat"));
+});
+
+test("Parse negated source", () => {
+    expect(EXPRESSION.source.tryParse("-\"hello\"")).toEqual(Sources.negate(Sources.folder("hello")));
+    expect(EXPRESSION.source.tryParse("-#neat")).toEqual(Sources.negate(Sources.tag("#neat")));
+});
+
+test("Parse parens source", () => {
+    expect(EXPRESSION.source.tryParse("(\"lma0\")")).toEqual(Sources.folder("lma0"));
+    expect(EXPRESSION.source.tryParse("(#neat0)")).toEqual(Sources.tag("#neat0"));
+})
+
+test("Parse binary source", () => {
+    expect(EXPRESSION.source.tryParse("\"lma0\" or #neat")).toEqual(
+        Sources.binaryOp(Sources.folder("lma0"), '|', Sources.tag("#neat")));
+
+    expect(EXPRESSION.source.tryParse("\"meme\" & #dirty")).toEqual(
+        Sources.binaryOp(Sources.folder("meme"), '&', Sources.tag("#dirty")));
+});
+
+test("Parse negated parens source", () => {
+    expect(EXPRESSION.source.tryParse("-(#neat)")).toEqual(Sources.negate(Sources.tag("#neat")));
+    expect(EXPRESSION.source.tryParse("-(\"meme\" & #dirty)")).toEqual(
+        Sources.negate(Sources.binaryOp(Sources.folder("meme"), '&', Sources.tag("#dirty"))));
+    expect(EXPRESSION.source.tryParse("-\"meme\" & #dirty")).toEqual(
+        Sources.binaryOp(Sources.negate(Sources.folder("meme")), '&', Sources.tag("#dirty")));
 });
 
 // <-- Stress Tests -->

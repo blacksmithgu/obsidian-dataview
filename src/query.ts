@@ -18,8 +18,8 @@ export type LiteralTypeRepr<T extends LiteralType> =
     T extends 'date' ? DateTime :
     T extends 'null' ? null :
     T extends 'link'? string :
-    T extends 'array' ? Array<Field> :
-    T extends 'object' ? Record<string, Field> :
+    T extends 'array' ? Array<LiteralField> :
+    T extends 'object' ? Map<string, LiteralField> :
     any;
 
 /** Valid binary operators. */
@@ -134,30 +134,42 @@ export namespace Fields {
         return { type: 'variable', name };
     }
 
-    export function literal<T extends LiteralType>(vtype: T, val: LiteralTypeRepr<T>): LiteralField {
-        return { type: 'literal', valueType: vtype, value: val } as LiteralFieldRepr<T> as LiteralField;
+    export function literal<T extends LiteralType>(vtype: T, val: LiteralTypeRepr<T>): LiteralFieldRepr<T> {
+        return { type: 'literal', valueType: vtype, value: val };
     }
 
-    export function bool(value: boolean): LiteralField {
+    export function bool(value: boolean): LiteralFieldRepr<'boolean'> {
         return Fields.literal('boolean', value);
     }
 
-    export function string(value: string): LiteralField {
+    export function string(value: string): LiteralFieldRepr<'string'> {
         return Fields.literal('string', value);
     }
     
-    export function number(value: number): LiteralField {
+    export function number(value: number): LiteralFieldRepr<'number'> {
         return Fields.literal('number', value);
     }
 
-    export function duration(value: Duration): LiteralField {
+    export function duration(value: Duration): LiteralFieldRepr<'duration'> {
         return Fields.literal('duration', value);
     }
 
-    export function link(target: string): LiteralField {
+    export function link(target: string): LiteralFieldRepr<'link'> {
         return Fields.literal('link', target);
     }
-    
+
+    export function array(target: LiteralField[]): LiteralFieldRepr<'array'> {
+        return Fields.literal('array', target);
+    }
+
+    export function object(value: Map<string, LiteralField>): LiteralFieldRepr<'object'> {
+        return Fields.literal('object', value);
+    }
+
+    export function emptyObject(): LiteralFieldRepr<'object'> {
+        return object(new Map());
+    }
+
     export function binaryOp(left: Field, op: BinaryOp, right: Field): Field {
         return { type: 'binaryop', left, op, right } as BinaryOpField;
     }
@@ -196,6 +208,8 @@ export namespace Fields {
                 return false;
         }
     }
+
+    export const NULL = Fields.literal('null', null);
 }
 
 export namespace Sources {
@@ -232,127 +246,4 @@ export interface Query {
     where: Field;
     /** */
     sortBy: QuerySortBy[];
-}
-
-interface SortByClause {
-    type: 'sort-by';
-    fields: QuerySortBy[];
-}
-
-interface WhereClause {
-    type: 'where';
-    field: Field;
-}
-
-interface FromClause {
-    type: 'from';
-    source: Source;
-}
-
-/** A clause that can be parsed; allows for order of clauses to vary. */
-type Clause = SortByClause | WhereClause | FromClause;
-
-/** Typings for the outputs of all of the parser combinators. */
-interface QueryLanguageTypes {
-    queryType: QueryType;
-
-    explicitNamedField: NamedField;
-    namedField: NamedField;
-    sortField: QuerySortBy;
-
-    // Entire clauses in queries.
-    selectClause: { type: QueryType; fields: NamedField[] };
-    fromClause: FromClause;
-    whereClause: WhereClause;
-    sortByClause: SortByClause;
-    clause: Clause;
-    query: Query;
-}
-
-/** A parsimmon-powered parser-combinator implementation of the query language. */
-export const QUERY_LANGUAGE = Parsimmon.createLanguage<QueryLanguageTypes>({
-    // Simple atom parsing, like words, identifiers, numbers.
-    queryType: q => Parsimmon.alt<string>(Parsimmon.regexp(/TABLE|LIST|TASK/i)).map(str => str.toLowerCase() as QueryType)
-        .desc("query type ('TABLE', 'LIST', or 'TASK')"),
-    explicitNamedField: q => Parsimmon.seqMap(EXPRESSION.field, Parsimmon.whitespace, Parsimmon.regexp(/AS/i), Parsimmon.whitespace, EXPRESSION.identifier,
-        (field, _1, _2, _3, ident) => Fields.named(ident, field)),
-    namedField: q => Parsimmon.alt<NamedField>(
-        q.explicitNamedField,
-        EXPRESSION.variableField.map(field => Fields.named(field.name, field))
-    ),
-    sortField: q => Parsimmon.seqMap(Parsimmon.optWhitespace,
-        EXPRESSION.field, Parsimmon.optWhitespace, Parsimmon.regexp(/ASCENDING|DESCENDING|ASC|DESC/i).atMost(1),
-            (_1, field, _2, dir) => {
-                let direction = dir.length == 0 ? 'ascending' : dir[0].toLowerCase();
-                if (direction == 'desc') direction = 'descending';
-                if (direction == 'asc') direction = 'ascending';
-                return {
-                    field: field,
-                    direction: direction as 'ascending' | 'descending'
-                };
-            }),
-
-    selectClause: q => Parsimmon.seqMap(q.queryType, Parsimmon.whitespace, Parsimmon.sepBy(q.namedField.notFollowedBy(Parsimmon.whitespace.then(EXPRESSION.source)), Parsimmon.string(',').trim(Parsimmon.optWhitespace)),
-        (qtype, _, fields) => {
-            return { type: qtype, fields }
-        }),
-    fromClause: q => Parsimmon.seqMap(Parsimmon.regexp(/FROM/i), Parsimmon.whitespace, EXPRESSION.source,
-        (from, space, source) => {
-            return {
-                type: 'from',
-                source
-            }
-        }),
-    whereClause: q => Parsimmon.seqMap(Parsimmon.regexp(/WHERE/i), Parsimmon.whitespace, EXPRESSION.field, (where, _, field) => {
-        return { type: 'where', field };
-    }),
-    sortByClause: q => Parsimmon.seqMap(Parsimmon.regexp(/SORT/i), Parsimmon.whitespace, q.sortField.sepBy1(Parsimmon.string(',').trim(Parsimmon.optWhitespace)),
-        (sort, _1, fields) => {
-            return { type: 'sort-by', fields };
-        }),
-    // Full query parsing.
-    clause: q => Parsimmon.alt(q.fromClause, q.whereClause, q.sortByClause),
-    query: q => Parsimmon.seqMap(q.selectClause, q.clause.trim(Parsimmon.optWhitespace).many(), (select, clauses) => {
-        let fromClauses = clauses.filter((c): c is FromClause => c.type == 'from');
-        let whereClauses = clauses.filter((c): c is WhereClause => c.type == 'where');
-        let sortClauses = clauses.filter((c): c is SortByClause => c.type == 'sort-by');
-
-        let source: Source = null;
-        for (let clause of fromClauses) {
-            if (source == null) source = clause.source;
-            else source = Sources.binaryOp(source, '|', clause.source);
-        }
-
-        let compoundWhere: Field = null;
-        for (let clause of whereClauses) {
-            if (compoundWhere == null) compoundWhere = clause.field;
-            else compoundWhere = Fields.binaryOp(compoundWhere, '&', clause.field);
-        }
-
-        let sortBy: QuerySortBy[] = [];
-        for (let clause of sortClauses) {
-            clause.fields.forEach(entry => sortBy.push(entry));
-        }
-
-        return {
-            type: select.type,
-            fields: select.fields,
-            source: source ?? Sources.folder(""),
-            where: compoundWhere ?? Fields.literal('boolean', true),
-            sortBy: sortBy
-        } as Query;
-    })
-});
-
-/**
- * Attempt to parse a query from the given query text, returning a string error
- * if the parse failed.
- */
-export function parseQuery(text: string): Query | string {
-    let result = QUERY_LANGUAGE.query.parse(text);
-    if (result.status == true) {
-        return result.value;
-    } else {
-        return `Failed to parse query (line ${result.index.line}, column ${result.index.column}): expected ${result.expected}`;
-    }
 }

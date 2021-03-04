@@ -1,4 +1,5 @@
-import { Query, QUERY_LANGUAGE, parseQuery, QueryType, BinaryOpField, Fields, Sources, NamedField, QuerySortBy, LiteralFieldRepr } from "../query";
+import { Query, QueryType, BinaryOpField, Fields, Sources, NamedField, QuerySortBy, LiteralFieldRepr } from "../query";
+import { QUERY_LANGUAGE, parseQuery } from "../legacy-parse";
 import { DateTime, Duration } from 'luxon';
 import { Success, Failure, Result } from "parsimmon";
 

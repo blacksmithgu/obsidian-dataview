@@ -2,16 +2,21 @@ import { MarkdownRenderChild, Plugin, Workspace, Vault, MarkdownPostProcessorCon
 import { createAnchor, prettifyYamlKey, renderErrorPre, renderList, renderMinimalDate, renderTable } from './render';
 import { FullIndex, TaskCache } from './index';
 import * as Tasks from './tasks';
-import { parseQuery, Query } from './query';
+import { Query } from './query';
+import { parseQuery } from "./legacy-parse";
 import { execute, executeTask, getFileName } from './engine';
 
 interface DataviewSettings {
 	/** What to render 'null' as in tables. Defaults to '-'. */
 	renderNullAs: string;
+	/** If true, render a modal which shows no results were returned. */
+	warnOnEmptyResult: boolean;
 }
 
+/** Default settings for dataview on install. */
 const DEFAULT_SETTINGS: DataviewSettings = {
-	renderNullAs: "-"
+	renderNullAs: "-",
+	warnOnEmptyResult: true
 }
 
 export default class DataviewPlugin extends Plugin {
@@ -59,13 +64,16 @@ export default class DataviewPlugin extends Plugin {
 
 			switch (query.type) {
 				case 'task':
-					ctx.addChild(this.wrapWithEnsureTaskIndex(ctx, el, () => new DataviewTaskRenderer(query as Query, el, this.index, this.tasks, this.app.vault)));
+					ctx.addChild(this.wrapWithEnsureTaskIndex(ctx, el,
+						() => new DataviewTaskRenderer(query as Query, el, this.index, this.tasks, this.app.vault, this.settings)));
 					break;
 				case 'list':
-					ctx.addChild(this.wrapWithEnsureIndex(ctx, el, () => new DataviewListRenderer(query as Query, el, this.index)));
+					ctx.addChild(this.wrapWithEnsureIndex(ctx, el,
+						() => new DataviewListRenderer(query as Query, el, this.index, this.settings)));
 					break;
 				case 'table':
-					ctx.addChild(this.wrapWithEnsureIndex(ctx, el, () => new DataviewTableRenderer(query as Query, el, this.index, this.settings)));
+					ctx.addChild(this.wrapWithEnsureIndex(ctx, el,
+						() => new DataviewTableRenderer(query as Query, el, this.index, this.settings)));
 					break;
 			}
 		});
@@ -116,6 +124,12 @@ class DataviewSettingsTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.renderNullAs)
 					.onChange(async (value) => await this.plugin.updateSettings({ renderNullAs: value })));
 
+		new Setting(this.containerEl)
+			.setName("Warn on Empty Result")
+			.setDesc("If set, queries which return 0 results will render a warning message.")
+			.addToggle(toggle =>
+				toggle.setValue(this.plugin.settings.warnOnEmptyResult)
+					.onChange(async (value) => await this.plugin.updateSettings({ warnOnEmptyResult: value })));
 	}
 }
 
@@ -169,20 +183,22 @@ class DataviewListRenderer extends MarkdownRenderChild {
 	query: Query;
 	container: HTMLElement;
 	index: FullIndex;
+	settings: DataviewSettings;
 
-	constructor(query: Query, container: HTMLElement, index: FullIndex) {
+	constructor(query: Query, container: HTMLElement, index: FullIndex, settings: DataviewSettings) {
 		super();
 
 		this.query = query;
 		this.container = container;
 		this.index = index;
+		this.settings = settings;
 	}
 
 	onload() {
 		let result = tryOrPropogate(() => execute(this.query, this.index));
 		if (typeof result === 'string') {
 			renderErrorPre(this.container, "Dataview: " + result);
-		} else if (result.data.length == 0) {
+		} else if (result.data.length == 0 && this.settings.warnOnEmptyResult) {
 			renderErrorPre(this.container, "Dataview: Query returned 0 results.");
 		} else {
 			renderList(this.container, result.data.map(e => {
@@ -235,7 +251,7 @@ class DataviewTableRenderer extends MarkdownRenderChild {
 		}));
 
 		// Render after the empty table, so the table header still renders.
-		if (result.data.length == 0) {
+		if (result.data.length == 0 && this.settings.warnOnEmptyResult) {
 			renderErrorPre(this.container, "Dataview: Query returned 0 results.");
 		}
 	}
@@ -247,8 +263,9 @@ class DataviewTaskRenderer extends MarkdownRenderChild {
 	index: FullIndex;
 	tasks: TaskCache;
 	vault: Vault;
+	settings: DataviewSettings;
 
-	constructor(query: Query, container: HTMLElement, index: FullIndex, tasks: TaskCache, vault: Vault) {
+	constructor(query: Query, container: HTMLElement, index: FullIndex, tasks: TaskCache, vault: Vault, settings: DataviewSettings) {
 		super();
 
 		this.query = query;
@@ -257,13 +274,14 @@ class DataviewTaskRenderer extends MarkdownRenderChild {
 		this.index = index;
 		this.tasks = tasks;
 		this.vault = vault;
+		this.settings = settings;
 	}
 
 	async onload() {
 		let result = tryOrPropogate(() => executeTask(this.query, this.index, this.tasks));
 		if (typeof result === 'string') {
 			renderErrorPre(this.container, "Dataview: " + result);
-		} else if (result.size == 0) {
+		} else if (result.size == 0 && this.settings.warnOnEmptyResult) {
 			renderErrorPre(this.container, "Query returned 0 results.");
 		} else {
 			Tasks.renderFileTasks(this.container, result);
@@ -291,6 +309,6 @@ function tryOrPropogate<T>(func: () => T): T | string {
 	try {
 		return func();
 	} catch (error) {
-		return "" + error;
+		return "" + error + "\n\n" + error.stack;
 	}
 }

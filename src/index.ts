@@ -106,7 +106,7 @@ export class TagIndex {
         let tagCache = fileCache.tags;
         if (tagCache) {
             for (let tag of tagCache) {
-                if (!tag.tag) continue;
+                if (!tag.tag || !(typeof tag.tag == 'string')) continue;
                 this.parseSubtags(tag.tag).forEach(t => allTags.add(t));
             }
         }
@@ -116,6 +116,8 @@ export class TagIndex {
         if (frontCache && frontCache["tags"]) {
             if (Array.isArray(frontCache["tags"])) {
                 for (let tag of frontCache["tags"]) {
+                    if (!(typeof tag == 'string')) continue;
+
                     if (!tag.startsWith("#")) tag = "#" + tag;
                     this.parseSubtags(tag).forEach(t => allTags.add(t));
                 }

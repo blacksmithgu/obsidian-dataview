@@ -1,11 +1,14 @@
 /**
  * Takes a full query and a set of indices, and (hopefully quickly) returns all relevant files.
  */
-import { LiteralType, LiteralTypeRepr, Field, LiteralField, LiteralFieldRepr, Query, BinaryOp, Fields, Source, Sources, QUERY_LANGUAGE } from './query';
+import { LiteralType, Field, LiteralField, LiteralFieldRepr, Query, BinaryOp, Fields, Source, Sources } from './query';
 import { FullIndex, TaskCache } from './index';
 import { Task } from './tasks';
 import { DateTime, Duration } from 'luxon';
 import { TFile } from 'obsidian';
+import { EXPRESSION } from './parse';
+import { Context, BINARY_OPS } from './eval';
+import { create } from 'domain';
 
 /** The result of executing a query over an index. */
 export interface QueryResult {
@@ -25,175 +28,10 @@ export interface QueryRow {
     sort: LiteralField[];
 }
 
-/** A literal type or a catch-all '*'. */
-type LiteralTypeOrAll = LiteralType | '*';
-/** Maps a literal type or the catch-all '*'. */
-type LiteralFieldReprAll<T extends LiteralTypeOrAll> =
-    T extends '*' ? LiteralField :
-    T extends LiteralType ? LiteralFieldRepr<T> :
-    any;
-
-/** A handler function which handles combining two fields with an operator. */
-export type BinaryOpImpl<T1 extends LiteralTypeOrAll, T2 extends LiteralTypeOrAll> =
-    (a: LiteralFieldReprAll<T1>, b: LiteralFieldReprAll<T2>) => LiteralField | string;
-
-/** Negate a binary operation; i.e., if op(a, b) = true, then negateOp(op)(a, b) = false. */
-function negateOp<T1 extends LiteralTypeOrAll, T2 extends LiteralTypeOrAll>(op: BinaryOpImpl<T1, T2>): BinaryOpImpl<T1, T2> {
-    return (a, b) => {
-        let res = op(a, b);
-        if (typeof res == 'string') return res;
-
-        return Fields.bool(!Fields.isTruthy(res));
-    }
-}
-
-/** Class which allows for type-safe implementation of binary ops. */
-export class BinaryOpHandler {
-    map: Map<string, BinaryOpImpl<LiteralTypeOrAll, LiteralTypeOrAll>>;
-
-    static create() {
-        return new BinaryOpHandler();
-    }
-
-    constructor() {
-        this.map = new Map();
-    }
-
-    /** Add a new handler for the specified types to this handler. */
-    public add<T1 extends LiteralTypeOrAll, T2 extends LiteralTypeOrAll>(op: BinaryOp, first: T1, second: T2,
-        func: BinaryOpImpl<T1, T2>): BinaryOpHandler {
-        this.map.set(BinaryOpHandler.repr(op, first, second), func);
-        return this;
-    }
-
-    public addComparison<T extends LiteralTypeOrAll>(type: T, ops: {
-        equals: BinaryOpImpl<T, T>,
-        le: BinaryOpImpl<T, T>
-    }): BinaryOpHandler {
-        this.add('=', type, type, ops.equals);
-        this.add('!=', type, type, negateOp(ops.equals));
-
-        this.add('<', type, type, ops.le);
-        this.add('<=', type, type, negateOp((a, b) => ops.le(b, a)));
-        this.add('>', type, type, (a, b) => ops.le(b, a));
-        this.add('>=', type, type, negateOp(ops.le));
-
-        return this;
-    }
-
-    /**
-     * Add a commutative operator for the specified types to this handler; in addition to adding the normal
-     * (op, T1, T2) mapping, it additionally adds (op, T2, T1). Only needed if T1 and T2 are different types.
-     */
-    public addComm<T1 extends LiteralTypeOrAll, T2 extends LiteralTypeOrAll>(op: BinaryOp, first: T1, second: T2,
-        func: BinaryOpImpl<T1, T2>): BinaryOpHandler {
-        this.map.set(BinaryOpHandler.repr(op, first, second), func);
-        this.map.set(BinaryOpHandler.repr(op, second, first), ((a, b) => func(b, a)) as BinaryOpImpl<T2, T1>);
-
-        return this;
-    }
-
-    /** Attempt to evaluate the given binary operator on the two literal fields. */
-    public evaluate(op: BinaryOp, left: LiteralField, right: LiteralField): LiteralField | string {
-        let handler = this.map.get(BinaryOpHandler.repr(op, left.valueType, right.valueType));
-        if (handler) return handler(left, right);
-
-        // Left-'*' fallback:
-        let handler2 = this.map.get(BinaryOpHandler.repr(op, '*', right.valueType));
-        if (handler2) return handler2(left, right);
-
-        // Right-'*' fallback:
-        let handler3 = this.map.get(BinaryOpHandler.repr(op, left.valueType, '*'));
-        if (handler3) return handler3(left, right);
-
-        // Double '*' fallback.
-        let handler4 = this.map.get(BinaryOpHandler.repr(op, '*', '*'));
-        if (handler4) return handler4(left, right);
-
-        return `Operator '${op}' is not supported for '${left.valueType}' and '${right.valueType}`;
-    }
-
-    private static repr(op: BinaryOp, left: LiteralTypeOrAll, right: LiteralTypeOrAll) {
-        return `${op},${left},${right}`
-    }
-}
-
-export const BINARY_OPS = BinaryOpHandler.create()
-    // Numeric operations.
-    .add('+', 'number', 'number', (a, b) => Fields.literal('number', a.value + b.value))
-    .add('-', 'number', 'number', (a, b) => Fields.literal('number', a.value - b.value))
-    .addComparison('number', {
-        equals: (a, b) => Fields.bool(a.value == b.value),
-        le: (a, b) => Fields.bool(a.value < b.value)
-    })
-    // String operations.
-    .addComm('+', 'string', '*', (a, b) => Fields.literal('string', a.value + b.value))
-    .add('-', 'string', 'string', (a, b) => "String subtraction is not defined")
-    .addComparison('string', {
-        equals: (a, b) => Fields.bool(a.value == b.value),
-        le: (a, b) => Fields.bool(a.value < b.value)
-    })
-    // Date Operations.
-    .add("-", 'date', 'date', (a, b) => Fields.literal('duration', b.value.until(a.value).toDuration("seconds")))
-    .add('<', 'date', 'date', (a, b) => Fields.literal('boolean', a.value < b.value))
-    .addComparison('date', {
-        equals: (a, b) => Fields.bool(a.value.equals(b.value)),
-        le: (a, b) => Fields.bool(a.value < b.value)
-    })
-    // Duration operations.
-    .add('+', 'duration', 'duration', (a, b) => Fields.literal('duration', a.value.plus(b.value)))
-    .add('-', 'duration', 'duration', (a, b) => Fields.literal('duration', a.value.minus(b.value)))
-    .addComparison('duration', {
-        equals: (a, b) => Fields.bool(a.value.equals(b.value)),
-        le: (a, b) => Fields.bool(a.value < b.value)
-    })
-    // Date-Duration operations.
-    .addComm('+', 'date', 'duration', (a, b) => Fields.literal('date', a.value.plus(b.value)))
-    .add('-', 'date', 'duration', (a, b) => Fields.literal('date', a.value.minus(b.value)))
-    // Boolean operations.
-    .add('&', '*', '*', (a, b) => Fields.literal('boolean', Fields.isTruthy(a) && Fields.isTruthy(b)))
-    .add('|', '*', '*', (a, b) => Fields.literal('boolean', Fields.isTruthy(a) || Fields.isTruthy(b)))
-    .addComparison('*', {
-        equals: (a, b) => Fields.bool(false),
-        le: (a, b) => Fields.bool(false)
-    })
-    // Null comparisons.
-    .addComparison('null', {
-        equals: (a, b) => Fields.bool(true),
-        le: (a, b) => Fields.bool(false)
-    })
-    // Fall-back comparisons-to-null (assumes null is less than anything else).
-    .add('<', 'null', '*', (a, b) => Fields.literal('boolean', true))
-    .add('<', '*', 'null', (a, b) => Fields.literal('boolean', false))
-    .add('>', 'null', '*', (a, b) => Fields.literal('boolean', false))
-    .add('>', '*', 'null', (a, b) => Fields.literal('boolean', true))
-    .add('>=', 'null', '*', (a, b) => Fields.literal('boolean', false))
-    .add('>=', '*', 'null', (a, b) => Fields.literal('boolean', true))
-    .add('<=', 'null', '*', (a, b) => Fields.literal('boolean', true))
-    .add('<=', '*', 'null', (a, b) => Fields.literal('boolean', false))
-    ;
-
 /** Get the file name for the file, without any parent directories. */
 export function getFileName(path: string): string {
     if (path.contains("/")) return path.substring(path.lastIndexOf("/") + 1);
     else return path;
-}
-
-/** Evaluate a field in the given context. */
-export function evaluate(field: Field, context: Map<string, LiteralField>): LiteralField | string {
-    if (field.type === 'literal') return field;
-    else if (field.type === 'variable') {
-        let value = context.get(field.name);
-        if (value == undefined || value == null) return Fields.literal('null', null);
-        else return value;
-    } else if (field.type === 'binaryop') {
-        let left = evaluate(field.left, context);
-        if (typeof left === 'string') return left;
-        let right = evaluate(field.right, context);
-        if (typeof right === 'string') return right;
-
-        return BINARY_OPS.evaluate(field.op, left, right);
-    }
 }
 
 /** Recursively collect target files from the given source. */
@@ -224,44 +62,84 @@ export function collectFromSource(source: Source, index: FullIndex): Set<string>
         } else {
             return `Unrecognized operator '${source.op}'.`;
         }
-    }
-}
+    } else if (source.type === 'negate') {
+        let child = collectFromSource(source.child, index);
+        if (typeof child === 'string') return child;
 
-export function parseFrontmatterString(value: string): LiteralField {
-    let dateParse = QUERY_LANGUAGE.date.parse(value);
-    if (dateParse.status) {
-        return Fields.literal('date', dateParse.value);
-    }
+        // TODO: This is obviously very inefficient.
+        let allFiles = new Set<string>(index.vault.getMarkdownFiles().map(f => f.path));
 
-    let durationParse = QUERY_LANGUAGE.duration.parse(value);
-    if (durationParse.status) {
-        return Fields.literal('duration', durationParse.value);
-    }
-
-    return Fields.literal('string', value);
-}
-
-export function populateContextFrontmatter(context: Map<string, LiteralField>, prefix: string, node: Record<string, any>) {
-    for (let key of Object.keys(node)) {
-        let value = node[key];
-
-        // TODO: Handle lists. Need special operators like 'contains' or 'in'.
-        if (value == null) {
-            context.set(prefix + key, Fields.literal('null', null));
-        } else if (typeof value === 'number') {
-            context.set(prefix + key, Fields.literal('number', value));
-        } else if (typeof value === 'string') {
-            context.set(prefix + key, parseFrontmatterString(value));
-        } else if (typeof value === 'object') {
-            populateContextFrontmatter(context, prefix + key + ".", value as any);
+        for (let file of child) {
+            allFiles.delete(file);
         }
+
+        return allFiles;
     }
 }
 
-/** Populate the initial context for the given file. */
-export function populateContextFromMeta(file: string, index: FullIndex): Map<string, LiteralField> {
-    let context = new Map<string, LiteralField>();
-    // TODO: Add 'ctime', 'mtime' to fields. Make 'file' a link type.
+/** Recursively convert frontmatter into fields. */
+export function parseFrontmatter(value: any): LiteralField {
+    if (value == null) {
+        return Fields.NULL;
+    } else if (typeof value === 'object') {
+        if (Array.isArray(value)) {
+            let object = (value as Array<any>);
+            let result = [];
+            for (let child of object) {
+                result.push(parseFrontmatter(child));
+            }
+
+            return Fields.array(result);
+        } else {
+            let object = (value as Record<string, any>);
+            let result = new Map<string, LiteralField>();
+            for (let key in object) {
+                result.set(key, parseFrontmatter(object[key]));
+            }
+
+            return Fields.object(result);
+        }
+    } else if (typeof value === 'number') {
+        return Fields.number(value);
+    } else if (typeof value === 'string') {
+        let dateParse = EXPRESSION.date.parse(value);
+        if (dateParse.status) {
+            return Fields.literal('date', dateParse.value);
+        }
+
+        let durationParse = EXPRESSION.duration.parse(value);
+        if (durationParse.status) {
+            return Fields.literal('duration', durationParse.value);
+        }
+
+        let linkParse = EXPRESSION.link.parse(value);
+        if (linkParse.status) {
+            return Fields.literal('link', linkParse.value);
+        }
+
+        return Fields.literal('string', value);
+    }
+
+    // Backup if we don't understand the type.
+    return Fields.NULL;
+}
+
+export function createContext(file: string, index: FullIndex): Context {
+    // Parse the frontmatter if present.
+    let frontmatterData = Fields.emptyObject();
+    let fileData = index.metadataCache.getCache(file);
+    if (fileData && fileData.frontmatter) {
+        frontmatterData = parseFrontmatter(fileData.frontmatter) as LiteralFieldRepr<'object'>;
+    }
+
+    // Create a context which uses the cache to look up link info.
+    let context = new Context((file) => {
+        let meta = index.metadataCache.getCache(file);
+        if (meta && meta.frontmatter) return parseFrontmatter(meta.frontmatter) as LiteralFieldRepr<'object'>;
+        else return Fields.NULL;
+    }, frontmatterData);
+
+    // TODO: Make this a real object instead of a fake one.
     context.set("file.path", Fields.literal('string', file));
     context.set("file.name", Fields.literal('string', getFileName(file)));
 
@@ -282,12 +160,6 @@ export function populateContextFromMeta(file: string, index: FullIndex): Map<str
         context.set('file.size', Fields.literal('number', afile.stat.size));
     }
 
-    // Populate from frontmatter.
-    let fileData = index.metadataCache.getCache(file);
-    if (fileData && fileData.frontmatter) {
-        populateContextFrontmatter(context, "", fileData.frontmatter);
-    }
-
     return context;
 }
 
@@ -302,10 +174,10 @@ export function execute(query: Query, index: FullIndex): QueryResult | string {
     let errors: [string, string][] = [];
     let rows: QueryRow[] = [];
     outer: for (let file of fileset) {
-        let context = populateContextFromMeta(file, index);
+        let context = createContext(file, index);
 
         for (let nfield of query.fields) {
-            let value = evaluate(nfield.field, context);
+            let value = context.evaluate(nfield.field);
             if (typeof value === 'string') {
                 errors.push([file, value]);
                 continue outer;
@@ -315,7 +187,7 @@ export function execute(query: Query, index: FullIndex): QueryResult | string {
         }
 
         // Then check if this file passes the filter.
-        let passes = evaluate(query.where, context);
+        let passes = context.evaluate(query.where);
         if (typeof passes === 'string') {
             errors.push([file, passes]);
             continue outer;
@@ -326,7 +198,7 @@ export function execute(query: Query, index: FullIndex): QueryResult | string {
         // Finally, compute the sort fields for later sorting.
         let sorts = [];
         for (let sort of query.sortBy) {
-            let value = evaluate(sort.field, context);
+            let value = context.evaluate(sort.field);
             if (typeof value === 'string') {
                 errors.push([file, value]);
                 continue outer;
