@@ -1,14 +1,14 @@
-/** Provides query parsing from plain-text. */
+/** Provides an AST for complex queries. */
 import 'parsimmon';
 import { DateTime, Duration } from 'luxon';
+import { EXPRESSION } from './parse';
 import * as Parsimmon from 'parsimmon';
-
 
 /** The supported query types (corresponding to view types). */
 export type QueryType = 'list' | 'table' | 'task';
 
 /** The literal types supported by the query engine. */
-export type LiteralType = 'boolean' | 'number' | 'string' | 'date' | 'duration' | 'null';
+export type LiteralType = 'boolean' | 'number' | 'string' | 'date' | 'duration' | 'link' | 'array' | 'object' | 'null';
 /** Maps the string type to it's actual javascript representation. */
 export type LiteralTypeRepr<T extends LiteralType> =
     T extends 'boolean' ? boolean :
@@ -17,19 +17,25 @@ export type LiteralTypeRepr<T extends LiteralType> =
     T extends 'duration' ? Duration :
     T extends 'date' ? DateTime :
     T extends 'null' ? null :
+    T extends 'link'? string :
+    T extends 'array' ? Array<Field> :
+    T extends 'object' ? Record<string, Field> :
     any;
 
 /** Valid binary operators. */
-export type BinaryOp = '+' | '-' | '>' | '>=' | '<=' | '<' | '=' | '!=' | '&' | '|';
+export type BinaryOp = '+' | '-' | '*' | '/' | '>' | '>=' | '<=' | '<' | '=' | '!=' | '&' | '|';
 
 /** A (potentially computed) field to select or compare against. */
-export type Field = BinaryOpField | VariableField | LiteralField;
+export type Field = BinaryOpField | VariableField | LiteralField | FunctionField | NegatedField;
 export type LiteralField =
     LiteralFieldRepr<'string'>
     | LiteralFieldRepr<'number'>
     | LiteralFieldRepr<'boolean'>
     | LiteralFieldRepr<'date'>
     | LiteralFieldRepr<'duration'>
+    | LiteralFieldRepr<'link'>
+    | LiteralFieldRepr<'array'>
+    | LiteralFieldRepr<'object'>
     | LiteralFieldRepr<'null'>;
 
 /** Literal representation of some field type. */
@@ -53,6 +59,22 @@ export interface BinaryOpField {
     op: BinaryOp;
 }
 
+/** A function field which calls a function on 0 or more arguments. */
+export interface FunctionField {
+    type: 'function';
+    /** The name of the function being called. */
+    func: string;
+    /** The arguments being passed to the function. */
+    arguments: Field[];
+}
+
+/** A field which negates the value of the original field. */
+export interface NegatedField {
+    type: 'negated';
+    /** The child field to negated. */
+    child: Field;
+}
+
 /** Fields used in the query portion. */
 export interface NamedField {
     /** The effective name of this field. */
@@ -70,7 +92,7 @@ export interface QuerySortBy {
 }
 
 /** The source of files for a query. */
-export type Source = TagSource | FolderSource | EmptySource | BinaryOpSource;
+export type Source = TagSource | FolderSource | EmptySource | NegatedSource | BinaryOpSource;
 
 /** A tag as a source of data. */
 export interface TagSource {
@@ -86,6 +108,13 @@ export interface FolderSource {
     folder: string;
 }
 
+/** A source which is everything EXCEPT the files returned by the given source. */
+export interface NegatedSource {
+    type: 'negate';
+    /** The source to negate. */
+    child: Source;
+}
+
 /** A source which yields nothing. */
 export interface EmptySource {
     type: 'empty';
@@ -99,6 +128,7 @@ export interface BinaryOpSource {
     right: Source;
 }
 
+/** Utility functions for quickly creating fields. */
 export namespace Fields {
     export function variable(name: string): VariableField {
         return { type: 'variable', name };
@@ -107,9 +137,37 @@ export namespace Fields {
     export function literal<T extends LiteralType>(vtype: T, val: LiteralTypeRepr<T>): LiteralField {
         return { type: 'literal', valueType: vtype, value: val } as LiteralFieldRepr<T> as LiteralField;
     }
+
+    export function bool(value: boolean): LiteralField {
+        return Fields.literal('boolean', value);
+    }
+
+    export function string(value: string): LiteralField {
+        return Fields.literal('string', value);
+    }
+    
+    export function number(value: number): LiteralField {
+        return Fields.literal('number', value);
+    }
+
+    export function duration(value: Duration): LiteralField {
+        return Fields.literal('duration', value);
+    }
+
+    export function link(target: string): LiteralField {
+        return Fields.literal('link', target);
+    }
     
     export function binaryOp(left: Field, op: BinaryOp, right: Field): Field {
         return { type: 'binaryop', left, op, right } as BinaryOpField;
+    }
+
+    export function func(func: string, args: Field[]): FunctionField {
+        return { type: 'function', func, arguments: args };
+    }
+
+    export function negate(child: Field): NegatedField {
+        return { type: 'negated', child };
     }
 
     export function named(name: string, field: Field): NamedField {
@@ -153,6 +211,10 @@ export namespace Sources {
         return { type: 'binaryop', left, op, right };
     }
 
+    export function negate(child: Source): NegatedSource {
+        return { type: 'negate', child };
+    }
+
     export function empty(): EmptySource {
         return { type: 'empty' };
     }
@@ -190,62 +252,10 @@ interface FromClause {
 /** A clause that can be parsed; allows for order of clauses to vary. */
 type Clause = SortByClause | WhereClause | FromClause;
 
-/** Provides a lookup table for unit durations of the given type. */
-export const DURATION_TYPES = {
-    "year": Duration.fromObject({ years: 1 }),
-    "month": Duration.fromObject({ months: 1 }),
-    "week": Duration.fromObject({ weeks: 1 }),
-    "day": Duration.fromObject({ days: 1 }),
-    "hour": Duration.fromObject({ hours: 1 }),
-    "hr": Duration.fromObject({ hours: 1 }),
-    "minute": Duration.fromObject({ minute: 1 }),
-    "min": Duration.fromObject({ minute: 1 }),
-    "second": Duration.fromObject({ seconds: 1 }),
-    "sec": Duration.fromObject({ seconds: 1 }),
-};
-
 /** Typings for the outputs of all of the parser combinators. */
 interface QueryLanguageTypes {
     queryType: QueryType;
 
-    number: number;
-    string: string;
-    bool: boolean;
-    tag: string;
-    identifier: string;
-    rootDate: DateTime;
-    date: DateTime;
-    datePlus: DateTime;
-    durationType: keyof typeof DURATION_TYPES;
-    duration: Duration;
-
-    binaryPlusMinus: BinaryOp;
-    binaryCompareOp: BinaryOp;
-    binaryBooleanOp: BinaryOp;
-
-    // Source-related parsers.
-    tagSource: TagSource;
-    folderSource: FolderSource;
-    parensSource: Source;
-    atomSource: Source;
-    binaryOpSource: Source;
-    source: Source;
-
-    // Field-related parsers.
-    variableField: VariableField;
-    numberField: Field;
-    boolField: Field;
-    stringField: Field;
-    dateField: Field;
-    durationField: Field;
-    atomField: Field;
-
-    binaryPlusMinusField: Field;
-    binaryCompareField: Field;
-    binaryBooleanField: Field;
-    binaryOpField: Field;
-    parensField: Field;
-    field: Field;
     explicitNamedField: NamedField;
     namedField: NamedField;
     sortField: QuerySortBy;
@@ -259,124 +269,19 @@ interface QueryLanguageTypes {
     query: Query;
 }
 
-/** Create a left-associative binary parser which parses the given sub-element and separator. Handles whitespace. */
-export function createBinaryParser<T, U>(child: Parsimmon.Parser<T>, sep: Parsimmon.Parser<U>, combine: (a: T, b: U, c: T) => T): Parsimmon.Parser<T> {
-    return Parsimmon.seqMap(child, Parsimmon.seq(Parsimmon.optWhitespace, sep, Parsimmon.optWhitespace, child).many(),
-        (first, rest) => {
-            if (rest.length == 0) return first;
-
-            let node = combine(first, rest[0][1], rest[0][3]);
-            for (let index = 1; index < rest.length; index++) {
-                node = combine(node, rest[index][1], rest[index][3]);
-            }
-            return node;
-        });
-}
-
-export function chainOpt<T>(base: Parsimmon.Parser<T>, ...funcs: ((r: T) => Parsimmon.Parser<T>)[]): Parsimmon.Parser<T> {
-    return Parsimmon.custom((success, failure) => {
-        return (input, i) => {
-            let result = (base as any)._(input, i);
-            if (!result.status) return result;
-
-            for (let func of funcs) {
-                let next = (func(result.value as T) as any)._(input, result.index);
-                if (!next.status) return result;
-                
-                result = next;
-            }
-
-            return result;
-        };
-    })
-}
-
 /** A parsimmon-powered parser-combinator implementation of the query language. */
 export const QUERY_LANGUAGE = Parsimmon.createLanguage<QueryLanguageTypes>({
     // Simple atom parsing, like words, identifiers, numbers.
     queryType: q => Parsimmon.alt<string>(Parsimmon.regexp(/TABLE|LIST|TASK/i)).map(str => str.toLowerCase() as QueryType)
         .desc("query type ('TABLE', 'LIST', or 'TASK')"),
-    number: q => Parsimmon.regexp(/[0-9]+/).map(str => Number.parseFloat(str))
-        .desc("number"),
-    string: q => Parsimmon.regexp(/"(.*?)(?<!(?<!\\)\\)"/, 1)
-        .map(str => str.replace(/(?<!\\)\\"/, "\""))
-        .map(str => str.replace(/\\\\/, "\\"))
-        .desc("string"),
-    bool: q => Parsimmon.regexp(/true|false/).map(str => str == "true")
-        .desc("boolean ('true' or 'false')"),
-    tag: q => Parsimmon.regexp(/-?#[\w/-]+/)
-        .desc("tag ('#hello')"),
-    identifier: q => Parsimmon.regexp(/[a-zA-Z][\.\w_-]*/)
-        .desc("variable identifier"),
-    binaryPlusMinus: q => Parsimmon.regexp(/\+|-/).map(str => str as BinaryOp).desc("'+' or '-'"),
-    binaryCompareOp: q => Parsimmon.regexp(/>=|<=|!=|>|<|=/).map(str => str as BinaryOp).desc("'>=' or '<=' or '!=' or '=' or '>' or '<'"),
-    binaryBooleanOp: q => Parsimmon.regexp(/and|or|&|\|/i).map(str => {
-        if (str == 'and') return '&';
-        else if (str == 'or') return '|';
-        else return str as BinaryOp;
-    }).desc("'and' or 'or' or '&' or '|'"),
-    // TODO: Add time-zone support.
-    // TODO: Will probably want a custom combinator for optional parsing.
-    rootDate: q => Parsimmon.seqMap(Parsimmon.regexp(/\d{4}/), Parsimmon.string("-"), Parsimmon.regexp(/\d{2}/), (year, _, month) => {
-        return DateTime.fromObject({ year: Number.parseInt(year), month: Number.parseInt(month) })
-    }).desc("date in format YYYY-MM[-DDTHH-MM-SS]"),
-    date: q => chainOpt<DateTime>(q.rootDate,
-        (ym: DateTime) => Parsimmon.seqMap(Parsimmon.string("-"), q.number, (_, day) => ym.set({ day })),
-        (ymd: DateTime) => Parsimmon.seqMap(Parsimmon.string("T"), q.number, (_, hour) => ymd.set({ hour })),
-        (ymdh: DateTime) => Parsimmon.seqMap(Parsimmon.string(":"), q.number, (_, minute) => ymdh.set({ minute })),
-        (ymdhm: DateTime) => Parsimmon.seqMap(Parsimmon.string(":"), q.number, (_, second) => ymdhm.set({ second })),
-        (ymdhms: DateTime) => Parsimmon.seqMap(Parsimmon.string("."), q.number, (_, millisecond) => ymdhms.set({ millisecond }))
-    ),
-    datePlus: q => Parsimmon.alt<DateTime>(
-        Parsimmon.string("now").map(_ => DateTime.local()),
-        Parsimmon.string("today").map(_ => DateTime.local().startOf("day")),
-        Parsimmon.string("tommorow").map(_ => DateTime.local().startOf("day").plus(Duration.fromObject({ day: 1 }))),
-        Parsimmon.string("som").map(_ => DateTime.local().startOf("month")),
-        Parsimmon.string("soy").map(_ => DateTime.local().startOf("year")),
-        Parsimmon.string("eom").map(_ => DateTime.local().endOf("month")),
-        Parsimmon.string("eoy").map(_ => DateTime.local().endOf("year")),
-        q.date
-    ),
-    durationType: q => Parsimmon.alt(... Object.keys(DURATION_TYPES).map(Parsimmon.string)) as Parsimmon.Parser<keyof typeof DURATION_TYPES>,
-    duration: q => Parsimmon.seqMap(q.number, Parsimmon.optWhitespace, q.durationType, Parsimmon.string("s").atMost(1), (count, _, t, _2) =>
-        DURATION_TYPES[t].mapUnits(x => x * count)),
-    
-    // Source parsing.
-    tagSource: q => q.tag.map(tag => Sources.tag(tag)),
-    folderSource: q => q.string.map(str => Sources.folder(str)),
-    parensSource: q => Parsimmon.seqMap(Parsimmon.string("("), Parsimmon.optWhitespace, q.source, Parsimmon.optWhitespace, Parsimmon.string(")"), (_1, _2, field, _3, _4) => field),
-    atomSource: q => Parsimmon.alt<Source>(q.parensSource, q.folderSource, q.tagSource),
-    binaryOpSource: q => createBinaryParser(q.atomSource, q.binaryBooleanOp, Sources.binaryOp),
-    source: q => q.binaryOpSource,
-
-    // Field parsing.
-    variableField: q => q.identifier.map(Fields.variable)
-        .desc("variable field"),
-    numberField: q => q.number.map(val => Fields.literal('number', val))
-        .desc("number field"),
-    stringField: q => q.string.map(val => Fields.literal('string', val))
-        .desc("string field"),
-    boolField: q => q.bool.map(val => Fields.literal('boolean', val))
-        .desc("boolean field"),
-    dateField: q => Parsimmon.seqMap(Parsimmon.string("date("), Parsimmon.optWhitespace, q.datePlus, Parsimmon.optWhitespace, Parsimmon.string(")"),
-        (prefix, _1, date, _2, postfix) => Fields.literal('date', date)),
-    durationField: q => Parsimmon.seqMap(Parsimmon.string("dur("), Parsimmon.optWhitespace, q.duration, Parsimmon.optWhitespace, Parsimmon.string(")"),
-        (prefix, _1, dur, _2, postfix) => Fields.literal('duration', dur)),
-    atomField: q => Parsimmon.alt(q.parensField, q.boolField, q.dateField, q.durationField, q.variableField, q.numberField, q.stringField),
-    binaryPlusMinusField: q => createBinaryParser(q.atomField, q.binaryPlusMinus, Fields.binaryOp),
-    binaryCompareField: q => createBinaryParser(q.binaryPlusMinusField, q.binaryCompareOp, Fields.binaryOp),
-    binaryBooleanField: q => createBinaryParser(q.binaryCompareField, q.binaryBooleanOp, Fields.binaryOp),
-    binaryOpField: q => q.binaryBooleanField,
-    parensField: q => Parsimmon.seqMap(Parsimmon.string("("), Parsimmon.optWhitespace, q.field, Parsimmon.optWhitespace, Parsimmon.string(")"), (_1, _2, field, _3, _4) => field),
-    field: q => q.binaryOpField,
-    explicitNamedField: q => Parsimmon.seqMap(q.field, Parsimmon.whitespace, Parsimmon.regexp(/AS/i), Parsimmon.whitespace, q.identifier,
+    explicitNamedField: q => Parsimmon.seqMap(EXPRESSION.field, Parsimmon.whitespace, Parsimmon.regexp(/AS/i), Parsimmon.whitespace, EXPRESSION.identifier,
         (field, _1, _2, _3, ident) => Fields.named(ident, field)),
     namedField: q => Parsimmon.alt<NamedField>(
         q.explicitNamedField,
-        q.variableField.map(field => Fields.named(field.name, field))
+        EXPRESSION.variableField.map(field => Fields.named(field.name, field))
     ),
     sortField: q => Parsimmon.seqMap(Parsimmon.optWhitespace,
-        q.field, Parsimmon.optWhitespace, Parsimmon.regexp(/ASCENDING|DESCENDING|ASC|DESC/i).atMost(1),
+        EXPRESSION.field, Parsimmon.optWhitespace, Parsimmon.regexp(/ASCENDING|DESCENDING|ASC|DESC/i).atMost(1),
             (_1, field, _2, dir) => {
                 let direction = dir.length == 0 ? 'ascending' : dir[0].toLowerCase();
                 if (direction == 'desc') direction = 'descending';
@@ -387,18 +292,18 @@ export const QUERY_LANGUAGE = Parsimmon.createLanguage<QueryLanguageTypes>({
                 };
             }),
 
-    selectClause: q => Parsimmon.seqMap(q.queryType, Parsimmon.whitespace, Parsimmon.sepBy(q.namedField.notFollowedBy(Parsimmon.whitespace.then(q.source)), Parsimmon.string(',').trim(Parsimmon.optWhitespace)),
+    selectClause: q => Parsimmon.seqMap(q.queryType, Parsimmon.whitespace, Parsimmon.sepBy(q.namedField.notFollowedBy(Parsimmon.whitespace.then(EXPRESSION.source)), Parsimmon.string(',').trim(Parsimmon.optWhitespace)),
         (qtype, _, fields) => {
             return { type: qtype, fields }
         }),
-    fromClause: q => Parsimmon.seqMap(Parsimmon.regexp(/FROM/i), Parsimmon.whitespace, q.source,
+    fromClause: q => Parsimmon.seqMap(Parsimmon.regexp(/FROM/i), Parsimmon.whitespace, EXPRESSION.source,
         (from, space, source) => {
             return {
                 type: 'from',
                 source
             }
         }),
-    whereClause: q => Parsimmon.seqMap(Parsimmon.regexp(/WHERE/i), Parsimmon.whitespace, q.field, (where, _, field) => {
+    whereClause: q => Parsimmon.seqMap(Parsimmon.regexp(/WHERE/i), Parsimmon.whitespace, EXPRESSION.field, (where, _, field) => {
         return { type: 'where', field };
     }),
     sortByClause: q => Parsimmon.seqMap(Parsimmon.regexp(/SORT/i), Parsimmon.whitespace, q.sortField.sepBy1(Parsimmon.string(',').trim(Parsimmon.optWhitespace)),

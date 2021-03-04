@@ -37,6 +37,16 @@ type LiteralFieldReprAll<T extends LiteralTypeOrAll> =
 export type BinaryOpImpl<T1 extends LiteralTypeOrAll, T2 extends LiteralTypeOrAll> =
     (a: LiteralFieldReprAll<T1>, b: LiteralFieldReprAll<T2>) => LiteralField | string;
 
+/** Negate a binary operation; i.e., if op(a, b) = true, then negateOp(op)(a, b) = false. */
+function negateOp<T1 extends LiteralTypeOrAll, T2 extends LiteralTypeOrAll>(op: BinaryOpImpl<T1, T2>): BinaryOpImpl<T1, T2> {
+    return (a, b) => {
+        let res = op(a, b);
+        if (typeof res == 'string') return res;
+
+        return Fields.bool(!Fields.isTruthy(res));
+    }
+}
+
 /** Class which allows for type-safe implementation of binary ops. */
 export class BinaryOpHandler {
     map: Map<string, BinaryOpImpl<LiteralTypeOrAll, LiteralTypeOrAll>>;
@@ -53,6 +63,21 @@ export class BinaryOpHandler {
     public add<T1 extends LiteralTypeOrAll, T2 extends LiteralTypeOrAll>(op: BinaryOp, first: T1, second: T2,
         func: BinaryOpImpl<T1, T2>): BinaryOpHandler {
         this.map.set(BinaryOpHandler.repr(op, first, second), func);
+        return this;
+    }
+
+    public addComparison<T extends LiteralTypeOrAll>(type: T, ops: {
+        equals: BinaryOpImpl<T, T>,
+        le: BinaryOpImpl<T, T>
+    }): BinaryOpHandler {
+        this.add('=', type, type, ops.equals);
+        this.add('!=', type, type, negateOp(ops.equals));
+
+        this.add('<', type, type, ops.le);
+        this.add('<=', type, type, negateOp((a, b) => ops.le(b, a)));
+        this.add('>', type, type, (a, b) => ops.le(b, a));
+        this.add('>=', type, type, negateOp(ops.le));
+
         return this;
     }
 
@@ -97,52 +122,47 @@ export const BINARY_OPS = BinaryOpHandler.create()
     // Numeric operations.
     .add('+', 'number', 'number', (a, b) => Fields.literal('number', a.value + b.value))
     .add('-', 'number', 'number', (a, b) => Fields.literal('number', a.value - b.value))
-    .add('<', 'number', 'number', (a, b) => Fields.literal('boolean', a.value < b.value))
-    .add('<=', 'number', 'number', (a, b) => Fields.literal('boolean', a.value <= b.value))
-    .add('>=', 'number', 'number', (a, b) => Fields.literal('boolean', a.value >= b.value))
-    .add('>', 'number', 'number', (a, b) => Fields.literal('boolean', a.value > b.value))
-    .add('=', 'number', 'number', (a, b) => Fields.literal('boolean', a.value == b.value))
-    .add('!=', 'number', 'number', (a, b) => Fields.literal('boolean', a.value != b.value))
+    .addComparison('number', {
+        equals: (a, b) => Fields.bool(a.value == b.value),
+        le: (a, b) => Fields.bool(a.value < b.value)
+    })
     // String operations.
     .addComm('+', 'string', '*', (a, b) => Fields.literal('string', a.value + b.value))
     .add('-', 'string', 'string', (a, b) => "String subtraction is not defined")
-    .add('<', 'string', 'string', (a, b) => Fields.literal('boolean', a.value < b.value))
-    .add('<=', 'string', 'string', (a, b) => Fields.literal('boolean', a.value <= b.value))
-    .add('>=', 'string', 'string', (a, b) => Fields.literal('boolean', a.value >= b.value))
-    .add('>', 'string', 'string', (a, b) => Fields.literal('boolean', a.value > b.value))
-    .add('=', 'string', 'string', (a, b) => Fields.literal('boolean', a.value == b.value))
-    .add('!=', 'string', 'string', (a, b) => Fields.literal('boolean', a.value != b.value))
+    .addComparison('string', {
+        equals: (a, b) => Fields.bool(a.value == b.value),
+        le: (a, b) => Fields.bool(a.value < b.value)
+    })
     // Date Operations.
     .add("-", 'date', 'date', (a, b) => Fields.literal('duration', b.value.until(a.value).toDuration("seconds")))
     .add('<', 'date', 'date', (a, b) => Fields.literal('boolean', a.value < b.value))
-    .add('<=', 'date', 'date', (a, b) => Fields.literal('boolean', a.value <= b.value))
-    .add('>=', 'date', 'date', (a, b) => Fields.literal('boolean', a.value >= b.value))
-    .add('>', 'date', 'date', (a, b) => Fields.literal('boolean', a.value > b.value))
-    .add('=', 'date', 'date', (a, b) => Fields.literal('boolean', a.value.equals(b.value)))
-    .add('!=', 'date', 'date' , (a, b) => Fields.literal('boolean', !a.value.equals(b.value)))
+    .addComparison('date', {
+        equals: (a, b) => Fields.bool(a.value.equals(b.value)),
+        le: (a, b) => Fields.bool(a.value < b.value)
+    })
     // Duration operations.
     .add('+', 'duration', 'duration', (a, b) => Fields.literal('duration', a.value.plus(b.value)))
     .add('-', 'duration', 'duration', (a, b) => Fields.literal('duration', a.value.minus(b.value)))
-    .add('<', 'duration', 'duration', (a, b) => Fields.literal('boolean', a.value < b.value))
-    .add('<=', 'duration', 'duration', (a, b) => Fields.literal('boolean', a.value < b.value))
-    .add('>=', 'duration', 'duration', (a, b) => Fields.literal('boolean', a.value < b.value))
-    .add('>', 'duration', 'duration', (a, b) => Fields.literal('boolean', a.value < b.value))
-    .add('=', 'duration', 'duration', (a, b) => Fields.literal('boolean', a.value.equals(b.value)))
-    .add('!=', 'duration', 'duration', (a, b) => Fields.literal('boolean', !a.value.equals(b.value)))
+    .addComparison('duration', {
+        equals: (a, b) => Fields.bool(a.value.equals(b.value)),
+        le: (a, b) => Fields.bool(a.value < b.value)
+    })
     // Date-Duration operations.
     .addComm('+', 'date', 'duration', (a, b) => Fields.literal('date', a.value.plus(b.value)))
     .add('-', 'date', 'duration', (a, b) => Fields.literal('date', a.value.minus(b.value)))
     // Boolean operations.
     .add('&', '*', '*', (a, b) => Fields.literal('boolean', Fields.isTruthy(a) && Fields.isTruthy(b)))
     .add('|', '*', '*', (a, b) => Fields.literal('boolean', Fields.isTruthy(a) || Fields.isTruthy(b)))
+    .addComparison('*', {
+        equals: (a, b) => Fields.bool(false),
+        le: (a, b) => Fields.bool(false)
+    })
     // Null comparisons.
-    .add('=', 'null', 'null', (a, b) => Fields.literal('boolean', true))
-    .add('!=', 'null', 'null', (a, b) => Fields.literal('boolean', false))
-    .add('<', 'null', 'null', (a, b) => Fields.literal('boolean', false))
-    .add('<=', 'null', 'null', (a, b) => Fields.literal('boolean', true))
-    .add('>=', 'null', 'null', (a, b) => Fields.literal('boolean', true))
-    .add('>', 'null', 'null', (a, b) => Fields.literal('boolean', false))
-    // Fall-back comparisons-to-null.
+    .addComparison('null', {
+        equals: (a, b) => Fields.bool(true),
+        le: (a, b) => Fields.bool(false)
+    })
+    // Fall-back comparisons-to-null (assumes null is less than anything else).
     .add('<', 'null', '*', (a, b) => Fields.literal('boolean', true))
     .add('<', '*', 'null', (a, b) => Fields.literal('boolean', false))
     .add('>', 'null', '*', (a, b) => Fields.literal('boolean', false))
