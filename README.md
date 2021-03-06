@@ -16,7 +16,7 @@ sort rating desc
 ```
 ~~~
 
-![Game Example](images/game.png)
+![Game Example](docs/images/game.png)
 
 ---
 
@@ -28,7 +28,7 @@ list from #game/moba or #game/crpg
 ```
 ~~~
 
-![Game List](images/game-list.png)
+![Game List](docs/images/game-list.png)
 
 ---
 
@@ -40,7 +40,7 @@ task from #projects/active
 ```
 ~~~
 
-![Task List](images/project-task.png)
+![Task List](docs/images/project-task.png)
 
 ---
 
@@ -102,11 +102,25 @@ If the file has a date inside it's title (of form `yyyy-mm-dd`), it also obtains
 
 - `file.day`: The date contained in the file title.
 
-Additionally, all of the fields defined in the YAML front-matter are available for querying. You can query inside nested objects using dot notation (so `dates.birthday` would get the `birthday` object inside the `dates` field). Fields can currently have four types:
+Additionally, all of the fields defined in the YAML front-matter are available for querying. You can query inside nested
+objects using dot notation (so `dates.birthday` would get the `birthday` object inside the `dates` field). Fields can
+have the following types:
 
 - `number`: A number like `0` or `18` or `19.37`.
-- `date`: A date and time in ISO8601 format - `yyyy-mm-ddThh:mm:ss`. Everything after the year and month is optional, so you can just write `yyyy-mm` or `yyyy-mm-dd` or `yyyy-mm-ddThh`. If you want to use a date in a query, use `date(<date>)` where `<date>` is either a date, `today`, `tommorow`, `eom` (end of month), or `eoy` (end of year).
-- `duration`: A length of time - can be added/subtracted from dates. Has the format `<number> years/months/.../seconds`, where the unit can be years, months, weeks, days, hours, minutes, or seconds. If you want to use a duration in a query, use `dur(<duration>)`.
+- `date`: A date and time in ISO8601 format - `yyyy-mm-ddThh:mm:ss`. Everything after the year and month is optional, so
+  you can just write `yyyy-mm` or `yyyy-mm-dd` or `yyyy-mm-ddThh`. If you want to use a date in a query, use
+  `date(<date>)` where `<date>` is either a date, `today`, `tommorow`, `eom` (end of month), or `eoy` (end of year).
+    - You can access date fields like 'years' and so on via dot-notation (i.e., `date(today).year`).
+- `duration`: A length of time - can be added/subtracted from dates. Has the format `<number> years/months/.../seconds`,
+  where the unit can be years, months, weeks, days, hours, minutes, or seconds. If you want to use a duration in a
+  query, use `dur(<duration>)`.
+    - You can access duration fields like 'years' and so on via dot-notation (i.e., `dur(<duration>).years`).
+- `link`: An obsidian link (in the same format); you can use dot-notation to get fields in the linked file. For example,
+  `[[2020-09-20]].file.ctime` would get the creation time of the `2020-09-20` note.
+- `array`: A list of elements. Automatically created by YAML lists in the frontmatter; can manually be created using
+  `list(elem1, elem2, ...)`.
+- `object`: A mapping of name -> value. Automatically created from YAML objects. You can access elements inside an
+  object using dot-notation or array notation (`object.field` or `object["field"]`).
 - `string`: Generic fallback; if a field is not a more specific type, it is a string, which is just text. To use a string in a query, use quotes - so `"string"`.
 
 # Roadmap
@@ -124,8 +138,8 @@ There is a lot of potential for a generic query system; here is the upcoming fea
 - [ ] **Improved query debuggability**:
     - [ ] Show query parse + execute time on views.
     - [ ] Show errors for every file that failed to be selected due to query syntax error.
-    - [ ] Improve parsimmon error reporting (possibly rewrite into custom recursive descent parser?)
-    - [ ] More parser tests.
+    - [X] Improve parsimmon error reporting (possibly rewrite into custom recursive descent parser?)
+    - [X] More parser tests.
 - [ ] **More complex task queries**:
     - [ ] Filter on a per-task, rather than per-file basis.
     - [ ] Filter tasks by completion.
