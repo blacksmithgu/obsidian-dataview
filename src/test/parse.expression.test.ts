@@ -76,11 +76,6 @@ test("Parse Identifier", () => {
     expect(EXPRESSION.identifier.parse("0no").status).toBe(false);
 });
 
-test("Parse Nested Identifier", () => {
-    expect(EXPRESSION.identifier.tryParse("Dates.Birthday")).toEqual("Dates.Birthday");
-});
-
-
 // <-- Dates -->
 
 test("Parse Year-Month date", () => {
@@ -141,23 +136,54 @@ test("Parse Link", () => {
     expect(EXPRESSION.field.tryParse("[[2020-08-15]]")).toEqual(Fields.link("2020-08-15"));
 });
 
+// <-- Indexes -->
+
+test("Parse Dot Notation", () => {
+    expect(EXPRESSION.field.tryParse("Dates.Birthday")).toEqual(Fields.index(Fields.variable("Dates"), Fields.string("Birthday")));
+    expect(EXPRESSION.field.tryParse("a.b.c3")).toEqual(Fields.index(Fields.index(Fields.variable("a"), Fields.string("b")), Fields.string("c3")));
+});
+
+test("Parse Index Notation", () => {
+    expect(EXPRESSION.field.tryParse("a[0]")).toEqual(Fields.index(Fields.variable("a"), Fields.number(0)));
+    expect(EXPRESSION.field.tryParse("\"hello\"[0]")).toEqual(Fields.index(Fields.string("hello"), Fields.number(0)));
+    expect(EXPRESSION.field.tryParse("hello[brain]")).toEqual(Fields.index(Fields.variable("hello"), Fields.variable("brain")));
+});
+
+test("Parse Mixed Index/Dot Notation", () => {
+    expect(EXPRESSION.field.tryParse("a.b[0]")).toEqual(Fields.index(Fields.index(Fields.variable("a"), Fields.string("b")), Fields.number(0)));
+    expect(EXPRESSION.field.tryParse("\"hello\".what[yes]")).toEqual(Fields.index(Fields.index(
+        Fields.string("hello"), Fields.string("what")
+    ), Fields.variable("yes")));
+});
+
+test("Parse negated index", () => {
+    expect(EXPRESSION.field.tryParse("!a[b]")).toEqual(Fields.negate(Fields.index(Fields.variable("a"), Fields.variable("b"))));
+    expect(EXPRESSION.field.tryParse("!a.b")).toEqual(Fields.negate(Fields.index(Fields.variable("a"), Fields.string("b"))));
+});
+
+
 // <-- Functions -->
 
 test("Parse function with no arguments", () => {
-    expect(EXPRESSION.field.tryParse("hello()")).toEqual(Fields.func('hello', []));
-    expect(EXPRESSION.field.tryParse("lma0()")).toEqual(Fields.func('lma0', []));
+    expect(EXPRESSION.field.tryParse("hello()")).toEqual(Fields.func(Fields.variable('hello'), []));
+    expect(EXPRESSION.field.tryParse("lma0()")).toEqual(Fields.func(Fields.variable('lma0'), []));
 });
 
 test("Parse function with arguments", () => {
     expect(EXPRESSION.field.tryParse("list(1, 2, 3)"))
-        .toEqual(Fields.func('list', [Fields.number(1), Fields.number(2), Fields.number(3)]));
+        .toEqual(Fields.func(Fields.variable('list'), [Fields.number(1), Fields.number(2), Fields.number(3)]));
     expect(EXPRESSION.field.tryParse("object(\"a\", 1, \"b\", 2)"))
-        .toEqual(Fields.func('object', [Fields.string("a"), Fields.number(1), Fields.string("b"), Fields.number(2)]));
+        .toEqual(Fields.func(Fields.variable('object'), [Fields.string("a"), Fields.number(1), Fields.string("b"), Fields.number(2)]));
 });
 
 test("Parse function with duration", () => {
     expect(EXPRESSION.field.tryParse("today() + dur(4hr)"))
-        .toEqual(Fields.binaryOp(Fields.func('today', []), '+', Fields.duration(Duration.fromObject({ hours: 4 }))));
+        .toEqual(Fields.binaryOp(Fields.func(Fields.variable('today'), []), '+', Fields.duration(Duration.fromObject({ hours: 4 }))));
+});
+
+test("Parse function with mixed dot, index, and function call", () => {
+    expect(EXPRESSION.field.tryParse("list().parts[0]")).toEqual(Fields.index(Fields.index(
+        Fields.func(Fields.variable("list"), []), Fields.string("parts")), Fields.number(0)));
 });
 
 // <-- Binary Ops -->
@@ -192,7 +218,7 @@ test("Parse Order of Operations", () => {
 test("Parse Negated field", () => {
     expect(EXPRESSION.field.tryParse("!true")).toEqual(Fields.negate(Fields.bool(true)));
     expect(EXPRESSION.field.tryParse("!14")).toEqual(Fields.negate(Fields.number(14)));
-    expect(EXPRESSION.field.tryParse("!neat(0)")).toEqual(Fields.negate(Fields.func("neat", [Fields.number(0)])));
+    expect(EXPRESSION.field.tryParse("!neat(0)")).toEqual(Fields.negate(Fields.func(Fields.variable("neat"), [Fields.number(0)])));
     expect(EXPRESSION.field.tryParse("!!what")).toEqual(Fields.negate(Fields.negate(Fields.variable("what"))));
 });
 
@@ -241,5 +267,5 @@ test("Parse negated parens source", () => {
 
 test("Parse Various Fields", () => {
     expect(EXPRESSION.field.tryParse("list(a, \"b\", 3, [[4]])")).toEqual(
-        Fields.func('list', [Fields.variable("a"), Fields.string("b"), Fields.number(3), Fields.link("4")]));
+        Fields.func(Fields.variable('list'), [Fields.variable("a"), Fields.string("b"), Fields.number(3), Fields.link("4")]));
 });

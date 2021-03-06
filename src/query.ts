@@ -26,7 +26,7 @@ export type LiteralTypeRepr<T extends LiteralType> =
 export type BinaryOp = '+' | '-' | '*' | '/' | '>' | '>=' | '<=' | '<' | '=' | '!=' | '&' | '|';
 
 /** A (potentially computed) field to select or compare against. */
-export type Field = BinaryOpField | VariableField | LiteralField | FunctionField | NegatedField;
+export type Field = BinaryOpField | VariableField | LiteralField | FunctionField | IndexField | NegatedField;
 export type LiteralField =
     LiteralFieldRepr<'string'>
     | LiteralFieldRepr<'number'>
@@ -63,9 +63,18 @@ export interface BinaryOpField {
 export interface FunctionField {
     type: 'function';
     /** The name of the function being called. */
-    func: string;
+    func: Field;
     /** The arguments being passed to the function. */
     arguments: Field[];
+}
+
+/** A field which indexes a variable into another variable. */
+export interface IndexField {
+    type: 'index';
+    /** The field to index into. */
+    object: Field;
+    /** The index. */
+    index: Field;
 }
 
 /** A field which negates the value of the original field. */
@@ -174,7 +183,22 @@ export namespace Fields {
         return { type: 'binaryop', left, op, right } as BinaryOpField;
     }
 
-    export function func(func: string, args: Field[]): FunctionField {
+    export function index(obj: Field, index: Field): IndexField {
+        return { type: 'index', object: obj, index };
+    }
+
+    /** Converts a string in dot-notation-format into a variable which indexes. */
+    export function indexVariable(name: string): Field {
+        let parts = name.split(".");
+        let result: Field = Fields.variable(parts[0]);
+        for (let index = 1; index < parts.length; index++) {
+            result = Fields.index(result, Fields.string(parts[index]));
+        }
+        
+        return result;
+    }
+
+    export function func(func: Field, args: Field[]): FunctionField {
         return { type: 'function', func, arguments: args };
     }
 

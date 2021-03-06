@@ -67,8 +67,8 @@ test("Evaluate simple object resolution", () => {
     let context = simpleContext().set("obj", Fields.object(rawObject));
 
     expect(context.get("obj").valueType).toEqual("object");
-    expect(context.get("obj.inner").valueType).toEqual("object");
-    expect(context.get("obj.inner.final")).toEqual(Fields.number(6));
+    expect(context.evaluate(Fields.indexVariable("obj.inner"))).toEqual(Fields.object(rawRawObject));
+    expect(context.evaluate(Fields.indexVariable("obj.inner.final"))).toEqual(Fields.number(6));
 });
 
 test("Evaluate simple link resolution", () => {
@@ -80,8 +80,8 @@ test("Evaluate simple link resolution", () => {
 
     let context = new Context(_ => Fields.object(rawObject)).set("link", Fields.link("test"));
     expect(context.get("link").valueType).toEqual("link");
-    expect(context.get("link.inner").valueType).toEqual("object");
-    expect(context.get("link.inner.final")).toEqual(Fields.number(6));
+    expect(context.evaluate(Fields.indexVariable("link.inner"))).toEqual(Fields.object(rawRawObject));
+    expect(context.evaluate(Fields.indexVariable("link.inner.final"))).toEqual(Fields.number(6));
 });
 
 // <-- Functions -->
@@ -90,40 +90,22 @@ test("Evaluate simple link resolution", () => {
 test("Evaluate length(array)", () => {
     let array = Fields.array([Fields.number(1), Fields.number(2)]);
 
-    expect(simpleContext().evaluate(Fields.func("length", [array]))).toEqual(Fields.number(2));
+    expect(simpleContext().evaluate(Fields.func(Fields.variable("length"), [array]))).toEqual(Fields.number(2));
 });
 
 test("Evaluate length(object)", () => {
     let obj = Fields.object(new Map().set("a", Fields.number(1)));
-    expect(simpleContext().evaluate(Fields.func("length", [obj]))).toEqual(Fields.number(1));
+    expect(simpleContext().evaluate(Fields.func(Fields.variable("length"), [obj]))).toEqual(Fields.number(1));
 });
 
 test("Evaluate length(string)", () => {
-    expect(simpleContext().evaluate(Fields.func("length", [Fields.string("hello")]))).toEqual(Fields.number(5));
+    expect(simpleContext().evaluate(Fields.func(Fields.variable("length"), [Fields.string("hello")]))).toEqual(Fields.number(5));
 });
 
 // <-- list() -->
 
 test("Evaluate list()", () => {
     expect(parseEval("list(1, 2, 3)")).toEqual(Fields.array([Fields.number(1), Fields.number(2), Fields.number(3)]));
-});
-
-// <-- get() -->
-
-test("Evaluate get(object)", () => {
-    let context = simpleContext()
-        .set("test", Fields.string("test"))
-        .set("obj", Fields.object(new Map<string, LiteralField>().set("test", Fields.number(4))));
-    
-    expect(context.evaluate(Fields.func("get", [Fields.variable("obj"), Fields.variable("test")]))).toEqual(Fields.number(4));
-});
-
-test("Evaluate get(string)", () => {
-    expect(parseEval("get(\"hello\", 2)")).toEqual(Fields.string("l"));
-});
-
-test("Evaluate get(array)", () => {
-    expect(parseEval("get(list(1, 2, 3), 0)")).toEqual(Fields.number(1));
 });
 
 /** Parse a field expression and evaluate it in the simple context. */

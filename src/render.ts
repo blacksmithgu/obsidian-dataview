@@ -1,5 +1,6 @@
 import { table } from 'console';
-import { DateTime } from 'luxon';
+import { DateTime, Duration } from 'luxon';
+import { Field, LiteralField } from './query';
 
 /** Make an Obsidian-friendly internal link. */
 export function createAnchor(text: string, target: string, internal: boolean) {
@@ -76,7 +77,7 @@ export function renderTable(container: HTMLElement, headers: string[], values: (
 
 /** Render a pre block with an error in it; returns the element to allow for dynamic updating. */
 export function renderErrorPre(container: HTMLElement, error: string): HTMLElement {
-	let pre = container.createEl('pre');
+	let pre = container.createEl('pre', { cls: ["dataview", "dataview-error"] });
 	pre.appendText(error);
 	return pre;
 }
@@ -89,4 +90,32 @@ export function renderMinimalDate(time: DateTime): string {
 	}
 
 	return time.toLocaleString(DateTime.DATETIME_MED);
+}
+
+/** Render a duration in a minimal format to save space. */
+export function renderMinimalDuration(dur: Duration): string {
+	return dur.toISO();
+}
+
+export function renderField(field: LiteralField, nullField: string): HTMLElement | string {
+	switch (field.valueType) {
+		case "date":
+			return renderMinimalDate(field.value);
+		case "duration":
+			return renderMinimalDuration(field.value);
+		case "array":
+			return "[" + field.value.map(f => renderField(f, nullField)).join(", ") + "]";
+		case "object":
+			let entries: string[] = [];
+			for (let entry of field.value) {
+				entries.push(entry[0] + ": " + renderField(entry[1], nullField));
+			}
+			return "{ " + entries.join(", ") + " }";
+		case "null":
+			return nullField;
+		case "link":
+			return createAnchor(field.value.replace(".md", ""), field.value.replace(".md", ""), true);
+		default:
+			return "" + field.value;
+	}
 }

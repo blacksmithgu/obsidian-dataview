@@ -11,7 +11,7 @@ export type LinkResolverImpl = (file: string) => LiteralFieldRepr<'object'> | Li
 /** The context in which expressions are evaluated in. */
 export class Context {
     /** Direct variable fields in the context. */
-    private namespace: LiteralFieldRepr<'object'>;
+    public namespace: LiteralFieldRepr<'object'>;
     /** Registry of binary operation handlers. */
     public readonly binaryOps: BinaryOpHandler;
     /** Registry of function handlers. */
@@ -33,33 +33,9 @@ export class Context {
         return this;
     }
 
-    /** Attempts to resolve a field name relative to the given field. */
-    public get(name: string, root: LiteralField = this.namespace): LiteralField {
-        let parts = name.split(".");
-
-        let current: LiteralField = root;
-        for (let index = 0; index < parts.length; index++) {
-            let next: LiteralField | undefined = undefined;
-
-            switch (current.valueType) {
-                case "object":
-                    next = current.value.get(parts[index]);
-                    break;
-                case "link":
-                    let data = this.linkResolver(current.value);
-                    if (data.valueType == 'null') return Fields.NULL;
-                    next = data.value.get(parts[index]);
-                    break;
-                default:
-                    // Trying to subindex into a non-container type.
-                    return Fields.NULL;
-            }
-
-            if (next == undefined) return Fields.NULL;
-            current = next;
-        }
-
-        return current;
+    /** Attempts to resolve a variable name in the context. */
+    public get(name: string): LiteralField {
+        return this.namespace.value.get(name) ?? Fields.NULL;
     }
 
     /** Evaluate a field in this context, returning the final resolved value. */
@@ -85,10 +61,65 @@ export class Context {
                     args.push(resolved);
                 }
 
-                let func = this.functions.get(field.func);
-                if (!func) return `Function ${field.func} does not exist.`;
+                // TODO: Add later support for lambdas as an additional thing you can call.
+                switch (field.func.type) {
+                    case "variable":
+                        let func = this.functions.get(field.func.name);
+                        if (!func) return `Function ${field.func} does not exist.`;
+                        return func(args, this);
+                    default:
+                        return `Cannot call field '${field.func}' as a function`;
+                }
+            case "index":
+                let obj = this.evaluate(field.object);
+                if (typeof obj === 'string') return obj;
+                let index = this.evaluate(field.index);
+                if (typeof index === 'string') return index;
 
-                return func(args, this);
+                switch (obj.valueType) {
+                    case "object":
+                        if (index.valueType != 'string') return "can only index into objects with strings (a.b or a[\"b\"])";
+                        return obj.value.get(index.value) ?? Fields.NULL;
+                    case "link":
+                        if (index.valueType != 'string') return "can only index into links with strings (a.b or a[\"b\"])";
+                        let linkValue = this.linkResolver(obj.value);
+                        if (linkValue.valueType == 'null') return Fields.NULL;
+                        return linkValue.value.get(index.value) ?? Fields.NULL;
+                    case "array":
+                        if (index.valueType != 'number') return "array indexing requires a numeric index (array[index])";
+                        if (index.value >= obj.value.length || index.value < 0) return Fields.NULL;
+                        return obj.value[index.value];
+                    case "string":
+                        if (index.valueType != 'number') return "string indexing requires a numeric index (string[index])";
+                        if (index.value >= obj.value.length || index.value < 0) return Fields.NULL;
+                        return Fields.string(obj.value[index.value]);
+                    case "date":
+                        if (index.valueType != 'string') return "date indexing requires a string representing the unit";
+                        switch (index.value) {
+                            case "year": return Fields.number(obj.value.year);
+                            case "month": return Fields.number(obj.value.month);
+                            case "day": return Fields.number(obj.value.day);
+                            case "hour": return Fields.number(obj.value.hour);
+                            case "minute": return Fields.number(obj.value.minute);
+                            case "second": return Fields.number(obj.value.second);
+                            case "millisecond": return Fields.number(obj.value.millisecond);
+                            default: return Fields.NULL;
+                        }
+                    case "duration":
+                        if (index.valueType != 'string') return "duration indexing requires a string representing the unit";
+                        switch (index.value) {
+                            case "year": case "years": return Fields.number(obj.value.years);
+                            case "month": case "months": return Fields.number(obj.value.months);
+                            case "day": case "days": return Fields.number(obj.value.days);
+                            case "hour": case "hours": return Fields.number(obj.value.hours);
+                            case "minute": case "minutes": return Fields.number(obj.value.minutes);
+                            case "second": case "seconds": return Fields.number(obj.value.seconds);
+                            case "millisecond": case "milliseconds": return Fields.number(obj.value.milliseconds);
+                            default: return Fields.NULL;
+                        }
+                    default:
+                        return Fields.NULL;
+                }
         }
     }
 }
@@ -226,8 +257,8 @@ export const BINARY_OPS = BinaryOpHandler.create()
     .add('-', 'date', 'duration', (a, b) => Fields.literal('date', a.value.minus(b.value)))
     // Link operations.
     .addComparison('link', {
-        equals: (a, b) => Fields.bool(a.value == b.value),
-        le: (a, b) => Fields.bool(a.value < b.value)
+        equals: (a, b) => Fields.bool(a.value.replace(".md", "") == b.value.replace(".md", "")),
+        le: (a, b) => Fields.bool(a.value.replace(".md", "") < b.value.replace(".md", ""))
     })
     // Array operations.
     .add('+', 'array', 'array', (a, b) => Fields.array([].concat(a.value).concat(b.value)))
@@ -278,6 +309,7 @@ export const FUNCTIONS = new Map<string, FunctionImpl>()
         if (args.length == 0 || args.length > 1) return "length() requires exactly 1 argument";
         let value = args[0];
 
+        // TODO: Add links to this.
         switch (value.valueType) {
             case "array": return Fields.number(value.value.length);
             case "object": return Fields.number(value.value.size);
@@ -286,28 +318,4 @@ export const FUNCTIONS = new Map<string, FunctionImpl>()
         }
     })
     .set("list", (args, context) => Fields.array(args))
-    .set("array", (args, context) => Fields.array(args))
-    .set("get", (args, context) => {
-        if (args.length != 2) return "get() requires exactly 2 arguments";
-        let object = args[0];
-        let index = args[1];
-
-        switch (object.valueType) {
-            case "object":
-                if (index.valueType != 'string') return "get(object, index) requires a string index";
-                return context.get(index.value, object);
-            case "link":
-                if (index.valueType != 'string') return "get(link, index) requires a string index";
-                return context.get(index.value, object);
-            case "array":
-                if (index.valueType != 'number') return "get(array, index) requires a numeric index";
-                if (index.value >= object.value.length || index.value < 0) return Fields.NULL;
-                return object.value[index.value];
-            case "string":
-                if (index.valueType != 'number') return "get(string, index) requires a numeric index";
-                if (index.value >= object.value.length || index.value < 0) return Fields.NULL;
-                return Fields.string(object.value[index.value]);
-        }
-
-        return "get() can only be used on an object, link, array, or string";
-    });
+    .set("array", (args, context) => Fields.array(args));

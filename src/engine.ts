@@ -8,7 +8,6 @@ import { DateTime, Duration } from 'luxon';
 import { TFile } from 'obsidian';
 import { EXPRESSION } from './parse';
 import { Context, BINARY_OPS } from './eval';
-import { create } from 'domain';
 
 /** The result of executing a query over an index. */
 export interface QueryResult {
@@ -84,6 +83,11 @@ export function parseFrontmatter(value: any): LiteralField {
     } else if (typeof value === 'object') {
         if (Array.isArray(value)) {
             let object = (value as Array<any>);
+            // Special case for link syntax, which shows up as double-nested arrays.
+            if (object.length == 1 && Array.isArray(object[0]) && (object[0].length == 1) && typeof object[0][0] === 'string') {
+                return Fields.link(object[0][0]);
+            }
+
             let result = [];
             for (let child of object) {
                 result.push(parseFrontmatter(child));
@@ -135,13 +139,21 @@ export function createContext(file: string, index: FullIndex): Context {
     // Create a context which uses the cache to look up link info.
     let context = new Context((file) => {
         let meta = index.metadataCache.getCache(file);
-        if (meta && meta.frontmatter) return parseFrontmatter(meta.frontmatter) as LiteralFieldRepr<'object'>;
+        if (!meta) {
+            file += ".md";
+            meta = index.metadataCache.getCache(file);
+        }
+
+        // TODO: Hacky, change this later.
+        if (meta && meta.frontmatter) return createContext(file, index).namespace;
         else return Fields.NULL;
     }, frontmatterData);
 
-    // TODO: Make this a real object instead of a fake one.
-    context.set("file.path", Fields.literal('string', file));
-    context.set("file.name", Fields.literal('string', getFileName(file)));
+    // Fill out per-file metadata.
+    let fileMeta = new Map<string, LiteralField>();
+    fileMeta.set("path", Fields.literal('string', file));
+    fileMeta.set("name", Fields.literal('string', getFileName(file)));
+    fileMeta.set("link", Fields.link(file));
 
     // If the file has a date name, add it as the 'day' field.
     let dateMatch = /(\d{4})-(\d{2})-(\d{2})/.exec(getFileName(file));
@@ -149,16 +161,18 @@ export function createContext(file: string, index: FullIndex): Context {
         let year = Number.parseInt(dateMatch[1]);
         let month = Number.parseInt(dateMatch[2]);
         let day = Number.parseInt(dateMatch[3]);
-        context.set("file.day", Fields.literal('date', DateTime.fromObject({ year, month, day })))
+        fileMeta.set("day", Fields.literal('date', DateTime.fromObject({ year, month, day })))
     }
 
     // Populate file metadata.
     let afile = index.vault.getAbstractFileByPath(file);
     if (afile && afile instanceof TFile) {
-        context.set('file.ctime', Fields.literal('date', DateTime.fromMillis(afile.stat.ctime)));
-        context.set('file.mtime', Fields.literal('date', DateTime.fromMillis(afile.stat.mtime)));
-        context.set('file.size', Fields.literal('number', afile.stat.size));
+        fileMeta.set('ctime', Fields.literal('date', DateTime.fromMillis(afile.stat.ctime)));
+        fileMeta.set('mtime', Fields.literal('date', DateTime.fromMillis(afile.stat.mtime)));
+        fileMeta.set('size', Fields.literal('number', afile.stat.size));
     }
+
+    context.set("file", Fields.object(fileMeta));
 
     return context;
 }

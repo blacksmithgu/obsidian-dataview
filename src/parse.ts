@@ -69,12 +69,18 @@ export function chainOpt<T>(base: P.Parser<T>, ...funcs: ((r: T) => P.Parser<T>)
 // Expression Parsing //
 ////////////////////////
 
+type PostfixFragment =
+    { 'type': 'dot'; field: Field; }
+    | { 'type': 'index'; field: Field; }
+    | { 'type': 'function'; fields: Field[]; };
+
 interface ExpressionLanguage {
     number: number;
     string: string;
     bool: boolean;
     tag: string;
     identifier: string;
+    identifierDot: string;
     link: string;
     rootDate: DateTime;
     date: DateTime;
@@ -104,10 +110,16 @@ interface ExpressionLanguage {
     dateField: Field;
     durationField: Field;
     linkField: Field;
-    functionField: Field;
     negatedField: Field;
     atomField: Field;
+    indexField: Field;
 
+    // Postfix parsers for function calls & the like.
+    dotPostfix: PostfixFragment;
+    indexPostfix: PostfixFragment;
+    functionPostfix: PostfixFragment;
+
+    // Binary op parsers.
     binaryMulDivField: Field;
     binaryPlusMinusField: Field;
     binaryCompareField: Field;
@@ -135,7 +147,10 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
     tag: q => P.regexp(/#[\p{Letter}\w/-]+/u).desc("tag ('#hello/stuff')"),
 
     // A variable identifier, which is alphanumeric and must start with a letter.
-    identifier: q => P.regexp(/[\p{Letter}][\.\p{Letter}\w_-]*/u).desc("variable identifier"),
+    identifier: q => P.regexp(/[\p{Letter}][\p{Letter}\w_-]*/u).desc("variable identifier"),
+
+    // A variable identifier, which is alphanumeric and must start with a letter. Can include dots.
+    identifierDot: q => P.regexp(/[\p{Letter}][\p{Letter}\.\w_-]*/u).desc("variable identifier"),
 
     // An Obsidian link of the form [[<link>]].
     link: q => P.regexp(/\[\[([\p{Letter}\w./-]+)\]\]/u, 1).desc("file link"),
@@ -207,15 +222,35 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
     durationField: q => P.seqMap(P.string("dur("), P.optWhitespace, q.duration, P.optWhitespace, P.string(")"),
         (prefix, _1, dur, _2, postfix) => Fields.literal('duration', dur))
         .desc("duration"),
-    functionField: q => P.seqMap(q.identifier, P.optWhitespace, P.string("("), q.field.sepBy(P.string(",").trim(P.optWhitespace)), P.optWhitespace, P.string(")"),
-        (name, _1, _2, fields, _3, _4) => Fields.func(name, fields)),
     linkField: q => q.link.map(f => Fields.link(f)),
-    negatedField: q => P.seqMap(P.string("!"), q.atomField, (_, field) => Fields.negate(field)).desc("negated field"),
-    atomField: q => P.alt(q.negatedField, q.parensField, q.boolField, q.numberField, q.stringField, q.linkField, q.dateField, q.durationField, q.functionField, q.variableField),
+    atomField: q => P.alt(q.negatedField, q.parensField, q.boolField, q.numberField, q.stringField, q.linkField, q.dateField, q.durationField, q.variableField),
+    indexField: q => P.seqMap(q.atomField, P.alt(q.dotPostfix, q.indexPostfix, q.functionPostfix).many(), (obj, postfixes) => {
+        let result = obj;
+        for (let post of postfixes) {
+            switch (post.type) {
+                case "dot":
+                case "index":
+                    result = Fields.index(result, post.field);
+                    break;
+                case "function":
+                    result = Fields.func(result, post.fields);
+                    break;
+            }
+        }
+
+        return result;
+    }),
+    negatedField: q => P.seqMap(P.string("!"), q.indexField, (_, field) => Fields.negate(field)).desc("negated field"),
     parensField: q => P.seqMap(P.string("("), P.optWhitespace, q.field, P.optWhitespace, P.string(")"), (_1, _2, field, _3, _4) => field),
+    
+    dotPostfix: q => P.seqMap(P.string("."), q.variableField, (_, field) => { return { type: 'dot', field: Fields.string(field.name) } }),
+    indexPostfix: q => P.seqMap(P.string("["), P.optWhitespace, q.field, P.optWhitespace, P.string("]"),
+        (_, _2, field, _3, _4) => { return { type: 'index', field }}),
+    functionPostfix: q => P.seqMap(P.string("("), P.optWhitespace, q.field.sepBy(P.string(",").trim(P.optWhitespace)), P.optWhitespace, P.string(")"),
+        (_, _1, fields, _2, _3) => { return { type: 'function', fields }}),
 
     // The precedence hierarchy of operators - multiply/divide, add/subtract, compare, and then boolean operations.
-    binaryMulDivField: q => createBinaryParser(q.atomField, q.binaryMulDiv, Fields.binaryOp),
+    binaryMulDivField: q => createBinaryParser(q.indexField, q.binaryMulDiv, Fields.binaryOp),
     binaryPlusMinusField: q => createBinaryParser(q.binaryMulDivField, q.binaryPlusMinus, Fields.binaryOp),
     binaryCompareField: q => createBinaryParser(q.binaryPlusMinusField, q.binaryCompareOp, Fields.binaryOp),
     binaryBooleanField: q => createBinaryParser(q.binaryCompareField, q.binaryBooleanOp, Fields.binaryOp),

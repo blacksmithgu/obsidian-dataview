@@ -45,7 +45,7 @@ export const QUERY_LANGUAGE = P.createLanguage<QueryLanguageTypes>({
         (field, _1, _2, _3, ident) => Fields.named(ident, field)),
     namedField: q => P.alt<NamedField>(
         q.explicitNamedField,
-        EXPRESSION.variableField.map(field => Fields.named(field.name, field))
+        EXPRESSION.identifierDot.map(ident => Fields.named(ident, Fields.indexVariable(ident)))
     ),
     sortField: q => P.seqMap(P.optWhitespace,
         EXPRESSION.field, P.optWhitespace, P.regexp(/ASCENDING|DESCENDING|ASC|DESC/i).atMost(1),
@@ -116,10 +116,9 @@ export const QUERY_LANGUAGE = P.createLanguage<QueryLanguageTypes>({
  * if the parse failed.
  */
 export function parseQuery(text: string): Query | string {
-    let result = QUERY_LANGUAGE.query.parse(text);
-    if (result.status == true) {
-        return result.value;
-    } else {
-        return `Failed to parse query (line ${result.index.line}, column ${result.index.column}): expected ${result.expected}`;
+    try {
+        return QUERY_LANGUAGE.query.tryParse(text);
+    } catch (error) {
+        return "" + error;
     }
 }

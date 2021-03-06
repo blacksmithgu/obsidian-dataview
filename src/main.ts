@@ -1,5 +1,5 @@
 import { MarkdownRenderChild, Plugin, Workspace, Vault, MarkdownPostProcessorContext, PluginSettingTab, App, Setting } from 'obsidian';
-import { createAnchor, prettifyYamlKey, renderErrorPre, renderList, renderMinimalDate, renderTable } from './render';
+import { createAnchor, prettifyYamlKey, renderErrorPre, renderField, renderList, renderMinimalDate, renderTable } from './render';
 import { FullIndex, TaskCache } from './index';
 import * as Tasks from './tasks';
 import { Query } from './query';
@@ -238,13 +238,7 @@ class DataviewTableRenderer extends MarkdownRenderChild {
 				[createAnchor(filename, row.file.replace(".md", ""), true)];
 
 			for (let elem of row.data) {
-				if (elem.valueType == 'date') {
-					result.push(renderMinimalDate(elem.value));
-				} else if (elem.valueType == 'null') {
-					result.push(this.settings.renderNullAs);
-				} else {
-					result.push("" + elem.value);
-				}
+				result.push(renderField(elem, this.settings.renderNullAs));
 			}
 
 			return result;
