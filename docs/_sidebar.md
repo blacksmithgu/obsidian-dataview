@@ -1,3 +1,4 @@
 - [**Dataview**](README.md)
 - Queries
     - [Literal Values](literal-values.md)
+    - [Functions](functions.md)

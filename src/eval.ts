@@ -278,7 +278,7 @@ export const BINARY_OPS = BinaryOpHandler.create()
     .add('|', '*', '*', (a, b) => Fields.literal('boolean', Fields.isTruthy(a) || Fields.isTruthy(b)))
     .addComparison('*', {
         equals: (a, b) => Fields.bool(false),
-        le: (a, b) => Fields.bool(false)
+        le: (a, b) => Fields.bool(a.valueType < b.valueType)
     })
     // Null comparisons.
     .addComparison('null', {
@@ -318,4 +318,107 @@ export const FUNCTIONS = new Map<string, FunctionImpl>()
         }
     })
     .set("list", (args, context) => Fields.array(args))
-    .set("array", (args, context) => Fields.array(args));
+    .set("array", (args, context) => Fields.array(args))
+    .set("object", (args, context) => {
+        if (args.length % 2 != 0) return "object(key1, value1, ...) requires an even number of arguments";
+        let result = new Map<string, LiteralField>();
+        for (let index = 0; index < args.length; index += 2) {
+            let key = args[index];
+            if (key.valueType != "string") return "keys should be of type string for object(key1, value1, ...)";
+            result.set(key.value, args[index + 1]);
+        }
+
+        return Fields.object(result);
+    })
+    .set("contains", (args, context) => {
+        if (args.length != 2) return "contains(object|array|string, field) requires exactly 2 arguments";
+        let object = args[0];
+        let value = args[1];
+
+        switch (object.valueType) {
+            case "object":
+                if (value.valueType != "string") return "contains(object, field) requires a string argument";
+                return Fields.bool(object.value.has(value.value));
+            case "link":
+                if (value.valueType != "string") return "contains(object, field) requires a string argument";
+                let linkValue = context.linkResolver(object.value);
+                if (linkValue.valueType == 'null') return Fields.bool(false);
+                return Fields.bool(linkValue.value.has(value.value));
+            case "array":
+                for (let entry of object.value) {
+                    let matches = context.evaluate(Fields.binaryOp(entry, "=", value));
+                    if (typeof matches == 'string') continue;
+
+                    if (Fields.isTruthy(matches)) return Fields.bool(true);
+                }
+
+                return Fields.bool(false);
+            case "string":
+                if (value.valueType != "string") return "contains(string, field) requires a string field";
+                return Fields.bool(object.value.includes(value.value));
+            default:
+                return "contains(object|array|string, field) requires an object, array, or string for it's first argument";
+        }
+    })
+    .set("extract", (args, context) => {
+        if (args.length == 0) return "extract(object, key1, ...) requires at least 1 argument";
+        let object = args[0];
+
+        switch (object.valueType) {
+            case "link":
+                object = context.linkResolver(object.value);
+                if (object.valueType == 'null') return Fields.NULL;
+            case "object":
+                let result = new Map<string, LiteralField>();
+                for (let index = 1; index < args.length; index++) {
+                    let key = args[index];
+                    if (key.valueType != "string") return "extract(object, key1, ...) requires string arguments";
+                    result.set(key.value, object.value.get(key.value));
+                }
+                return Fields.object(result);
+            default:
+                return "extract(object, key1, ...) must be called on an object";
+        }
+    })
+    .set("reverse", (args, context) => {
+        if (args.length != 1) return "reverse(array) takes exactly 1 argument";
+        if (args[0].valueType != 'array') return "reverse(array) can only be called on lists";
+
+        let array = args[0].value;
+        let result = [];
+        for (let index = array.length - 1; index >= 0; index--) {
+            result.push(array[index]);
+        }
+
+        return Fields.array(result);
+    })
+    .set("sort", (args, context) => {
+        if (args.length != 1) return "sort(array) takes exactly 1 argument";
+        if (args[0].valueType != 'array') return "sort(array) can only be called on lists";
+
+        let result = [].concat(args[0].value);
+        result.sort((a, b) => {
+            let le = context.evaluate(Fields.binaryOp(a, "<", b));
+            if (typeof le == "string") return 0;
+            if (Fields.isTruthy(le)) return -1;
+
+            let eq = context.evaluate(Fields.binaryOp(a, "=", b));
+            if (typeof eq == "string") return 0;
+            if (Fields.isTruthy(eq)) return 0;
+
+            return 1;
+        });
+
+        return Fields.array(result);
+    })
+    .set("regexmatch", (args, context) => {
+        if (args.length != 2) return "matches(pattern, field) requires exactly 2 arguments";
+        if (args[0].value != "string" || args[1].value != "string") return "matches(pattern, field) requires string arguments";
+        
+        let pattern = args[0].value;
+        let value = args[1].value;
+
+        if (!pattern.startsWith("^") && !pattern.endsWith("$")) pattern = "^" + pattern + "$";
+        
+        return Fields.bool(!!value.match(pattern));
+    });

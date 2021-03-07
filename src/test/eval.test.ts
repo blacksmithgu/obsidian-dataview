@@ -108,6 +108,45 @@ test("Evaluate list()", () => {
     expect(parseEval("list(1, 2, 3)")).toEqual(Fields.array([Fields.number(1), Fields.number(2), Fields.number(3)]));
 });
 
+// <-- object() -->
+
+test("Evaluate object()", () => {
+    expect(parseEval("object()")).toEqual(Fields.object(new Map<string, LiteralField>()));
+    expect(parseEval("object(\"hello\", 1)")).toEqual(Fields.object(new Map<string, LiteralField>().set("hello", Fields.number(1))));
+});
+
+// <-- contains() -->
+
+test("Evaluate contains(object)", () => {
+    expect(parseEval("contains(object(\"hello\", 1), \"hello\")")).toEqual(Fields.bool(true));
+    expect(parseEval("contains(object(\"hello\", 1), \"no\")")).toEqual(Fields.bool(false));
+});
+
+test("Evaluate contains(array)", () => {
+    expect(parseEval("contains(list(\"hello\", 1), \"hello\")")).toEqual(Fields.bool(true));
+    expect(parseEval("contains(list(\"hello\", 1), 6)")).toEqual(Fields.bool(false));
+});
+
+test("Evaluate contains(string)", () => {
+    expect(parseEval("contains(\"hello\", \"hello\")")).toEqual(Fields.bool(true));
+    expect(parseEval("contains(\"meep\", \"me\")")).toEqual(Fields.bool(true));
+    expect(parseEval("contains(\"hello\", \"xd\")")).toEqual(Fields.bool(false));
+});
+
+// <-- reverse() -->
+
+test("Evaluate reverse(list)", () => {
+    expect(parseEval("reverse(list(1, 2, 3))")).toEqual(parseEval("list(3, 2, 1)"));
+    expect(parseEval('reverse(list("a", "b", "c"))')).toEqual(parseEval('list("c", "b", "a")'));
+});
+
+// <-- sort() -->
+
+test("Evaluate sort(list)", () => {
+    expect(parseEval("sort(list(2, 3, 1))")).toEqual(parseEval("list(1, 2, 3)"));
+    expect(parseEval('sort(list("a", "c", "b"))')).toEqual(parseEval('list("a", "b", "c")'));
+});
+
 /** Parse a field expression and evaluate it in the simple context. */
 function parseEval(text: string): LiteralField {
     let field = EXPRESSION.field.tryParse(text);
