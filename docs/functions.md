@@ -3,7 +3,36 @@
 Functions provide various procedures and operations beyond simple arithmetic and comparisons. A list of all function
 references, sorted by general purpose, is shown below:
 
+## Constructors
+
+Constructors which create values.
+
+##### `object(key1, value1, ...)`
+
+Creates a new object with the given keys and values. Keys and values should alternate in the call, and keys should
+always be strings/text.
+
+```
+object() => empty object
+object("a", 6) => object which maps "a" to 6
+object("a", 4, "c", "yes") => object which maps a to 4, and c to "yes"
+```
+
+##### `list(value1, value2, ...)`
+
+Creates a new list with the given values in it.
+
+```
+list() => empty list
+list(1, 2, 3) => list with 1, 2, and 3
+list("a", "b", "c") => list with "a", "b", and "c"
+```
+
+---
+
 ## Objects, Arrays, and String Operations
+
+Operations that manipulate values inside of container objects.
 
 ##### `contains(object|list|string, value)`
 
@@ -25,7 +54,6 @@ the first argument is an object, a list, or a string.
     contains("hello", "lo") = true
     contains("yes", "no") = false
     ```
-
 
 ##### `extract(object, key1, key2, ...)`
 
@@ -53,6 +81,8 @@ Reverses a list, returning a new list in reversed order.
 reverse(list(1, 2, 3)) = list(3, 2, 1)
 reverse(list("a", "b", "c")) = list("c", "b", "a")
 ```
+
+---
 
 ## String Operations
 
