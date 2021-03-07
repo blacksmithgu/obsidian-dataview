@@ -147,6 +147,17 @@ test("Evaluate sort(list)", () => {
     expect(parseEval('sort(list("a", "c", "b"))')).toEqual(parseEval('list("a", "b", "c")'));
 });
 
+// <-- regexmatch() -->
+
+test("Evaluate regexmatch()", () => {
+    expect(parseEval('regexmatch(".+", "stuff")')).toEqual(Fields.bool(true));
+    expect(parseEval('regexmatch(".+", "")')).toEqual(Fields.bool(false));
+    expect(parseEval('regexmatch(".*", "")')).toEqual(Fields.bool(true));
+    expect(parseEval('regexmatch("\\w+", "m3me")')).toEqual(Fields.bool(true));
+    expect(parseEval('regexmatch("\\s+", "  ")')).toEqual(Fields.bool(true));
+    expect(parseEval('regexmatch("what", "what")')).toEqual(Fields.bool(true));
+});
+
 /** Parse a field expression and evaluate it in the simple context. */
 function parseEval(text: string): LiteralField {
     let field = EXPRESSION.field.tryParse(text);

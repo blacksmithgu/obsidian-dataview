@@ -412,8 +412,8 @@ export const FUNCTIONS = new Map<string, FunctionImpl>()
         return Fields.array(result);
     })
     .set("regexmatch", (args, context) => {
-        if (args.length != 2) return "matches(pattern, field) requires exactly 2 arguments";
-        if (args[0].value != "string" || args[1].value != "string") return "matches(pattern, field) requires string arguments";
+        if (args.length != 2) return "regexmatch(pattern, field) requires exactly 2 arguments";
+        if (args[0].valueType != "string" || args[1].valueType != "string") return "matches(pattern, field) requires string arguments";
         
         let pattern = args[0].value;
         let value = args[1].value;
