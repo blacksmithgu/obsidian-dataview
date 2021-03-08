@@ -1,5 +1,5 @@
 /** A imperative query which operates via a series of sequential operations. */
-import { Source, Field, NamedField } from './query';
+import { Source, Field, NamedField } from 'src/query';
 
 /** The source of rows that will go through the pipeline. */
 export type SourceType = 'pages' | 'tasks';

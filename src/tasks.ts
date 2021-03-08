@@ -1,5 +1,5 @@
 import { Vault, App, TFile, MarkdownRenderChild, MarkdownRenderer } from 'obsidian';
-import { createAnchor } from './render';
+import { createAnchor } from 'src/render';
 
 /**
  * This is work-in-progress, and not currently used anywhere. Enables a special task view

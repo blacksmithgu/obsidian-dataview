@@ -1,10 +1,10 @@
 import { MarkdownRenderChild, Plugin, Workspace, Vault, MarkdownPostProcessorContext, PluginSettingTab, App, Setting } from 'obsidian';
-import { createAnchor, prettifyYamlKey, renderErrorPre, renderField, renderList, renderMinimalDate, renderTable } from './render';
-import { FullIndex, TaskCache } from './index';
-import * as Tasks from './tasks';
-import { Query } from './query';
-import { parseQuery } from "./legacy-parse";
-import { execute, executeTask, getFileName } from './engine';
+import { createAnchor, prettifyYamlKey, renderErrorPre, renderField, renderList, renderMinimalDate, renderTable } from 'src/render';
+import { FullIndex, TaskCache } from 'src/index';
+import * as Tasks from 'src/tasks';
+import { Query } from 'src/query';
+import { parseQuery } from "src/legacy-parse";
+import { execute, executeTask, getFileName } from 'src/engine';
 
 interface DataviewSettings {
 	/** What to render 'null' as in tables. Defaults to '-'. */

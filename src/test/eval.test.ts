@@ -1,8 +1,8 @@
 /** Various tests for evaluating fields in context. */
 
-import { EXPRESSION } from "../parse";
-import { Context } from "../eval";
-import { LiteralField, Fields } from "../query";
+import { EXPRESSION } from "src/parse";
+import { Context } from "src/eval";
+import { LiteralField, Fields } from "src/query";
 
 // <-- Simple Operations -->
 

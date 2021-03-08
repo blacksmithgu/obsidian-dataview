@@ -1,8 +1,5 @@
 /** Provides an AST for complex queries. */
-import 'parsimmon';
 import { DateTime, Duration } from 'luxon';
-import { EXPRESSION } from './parse';
-import * as Parsimmon from 'parsimmon';
 
 /** The supported query types (corresponding to view types). */
 export type QueryType = 'list' | 'table' | 'task';

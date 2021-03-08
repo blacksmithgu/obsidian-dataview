@@ -1,6 +1,5 @@
-import { table } from 'console';
 import { DateTime, Duration } from 'luxon';
-import { Field, LiteralField } from './query';
+import { Field, LiteralField } from 'src/query';
 
 /** Make an Obsidian-friendly internal link. */
 export function createAnchor(text: string, target: string, internal: boolean) {

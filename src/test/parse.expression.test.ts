@@ -1,5 +1,5 @@
-import { BinaryOpField, Fields, LiteralFieldRepr, Sources } from "../query";
-import { EXPRESSION } from "../parse";
+import { BinaryOpField, Fields, LiteralFieldRepr, Sources } from "src/query";
+import { EXPRESSION } from "src/parse";
 import { DateTime, Duration } from 'luxon';
 import { Success } from "parsimmon";
 

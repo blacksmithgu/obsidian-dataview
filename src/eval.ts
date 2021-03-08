@@ -1,5 +1,5 @@
 /** Evaluates fields in the expression language. */
-import { BinaryOp, LiteralType, LiteralField, LiteralFieldRepr, Field, Fields } from './query';
+import { BinaryOp, LiteralType, LiteralField, LiteralFieldRepr, Field, Fields } from 'src/query';
 
 /////////////////////////////////
 // Core Context Implementation //

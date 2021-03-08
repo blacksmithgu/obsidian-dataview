@@ -1,5 +1,5 @@
-import { QueryType, NamedField, Field, QuerySortBy, Query, Source, Sources, Fields } from "./query";
-import { EXPRESSION } from "./parse";
+import { QueryType, NamedField, Field, QuerySortBy, Query, Source, Sources, Fields } from "src/query";
+import { EXPRESSION } from "src/parse";
 import * as P from 'parsimmon';
 
 interface SortByClause {

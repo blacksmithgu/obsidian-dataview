@@ -1,6 +1,5 @@
-import 'parsimmon';
 import { DateTime, Duration } from 'luxon';
-import { BinaryOp, TagSource, FolderSource, Source, VariableField, Field, Fields, Sources, NegatedSource } from './query';
+import { BinaryOp, TagSource, FolderSource, Source, VariableField, Field, Fields, Sources, NegatedSource } from 'src/query';
 import * as P from 'parsimmon';
 
 ///////////

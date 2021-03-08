@@ -1,41 +1,33 @@
-import { Query, QueryType, BinaryOpField, Fields, Sources, NamedField, QuerySortBy, LiteralFieldRepr } from "../query";
-import { QUERY_LANGUAGE, parseQuery } from "../legacy-parse";
-import { DateTime, Duration } from 'luxon';
-import { Success, Failure, Result } from "parsimmon";
+import { Query, Fields, Sources } from "src/query";
+import { QUERY_LANGUAGE, parseQuery } from "src/legacy-parse";
 
 test("Parse Query Type", () => {
     let unknown = QUERY_LANGUAGE.queryType.parse("vehicle");
     expect(unknown.status).toBe(false);
 
-    let list = QUERY_LANGUAGE.queryType.parse("list") as Success<QueryType>;
-    expect(list.status).toBe(true);
-    expect(list.value).toBe('list');
+    let list = QUERY_LANGUAGE.queryType.tryParse("list");
+    expect(list).toEqual('list');
 
-    let listUpper = QUERY_LANGUAGE.queryType.parse("lIsT") as Success<QueryType>;
-    expect(listUpper.status).toBe(true);
-    expect(listUpper.value).toBe('list');
+    let listUpper = QUERY_LANGUAGE.queryType.tryParse("lIsT");
+    expect(listUpper).toEqual('list');
 });
 
 // <-- Fields -->
 
 test("Named Fields", () => {
-    let simple = QUERY_LANGUAGE.namedField.parse("time-played") as Success<NamedField>;
-    expect(simple.status).toBe(true);
-    expect(simple.value).toEqual(Fields.named("time-played", Fields.variable("time-played")));
+    let simple = QUERY_LANGUAGE.namedField.tryParse("time-played");
+    expect(simple).toEqual(Fields.named("time-played", Fields.variable("time-played")));
 
-    let complex = QUERY_LANGUAGE.namedField.parse("(time-played + 4) as something") as Success<NamedField>;
-    expect(complex.status).toBe(true);
-    expect(complex.value).toEqual(Fields.named("something", Fields.binaryOp(Fields.variable("time-played"), '+', Fields.literal('number', 4))));
+    let complex = QUERY_LANGUAGE.namedField.tryParse("(time-played + 4) as something");
+    expect(complex).toEqual(Fields.named("something", Fields.binaryOp(Fields.variable("time-played"), '+', Fields.literal('number', 4))));
 });
 
 test("Sort Fields", () => {
-    let simple = QUERY_LANGUAGE.sortField.parse("time-played DESC") as Success<QuerySortBy>;
-    expect(simple.status).toBe(true);
-    expect(simple.value).toEqual(Fields.sortBy(Fields.variable('time-played'), 'descending'));
+    let simple = QUERY_LANGUAGE.sortField.tryParse("time-played DESC");
+    expect(simple).toEqual(Fields.sortBy(Fields.variable('time-played'), 'descending'));
 
-    let complex = QUERY_LANGUAGE.sortField.parse("(time-played - \"where\")") as Success<QuerySortBy>;
-    expect(complex.status).toBe(true);
-    expect(complex.value).toEqual(Fields.sortBy(
+    let complex = QUERY_LANGUAGE.sortField.tryParse("(time-played - \"where\")");
+    expect(complex).toEqual(Fields.sortBy(
         Fields.binaryOp(Fields.variable('time-played'), '-', Fields.literal('string', "where")),
         'ascending'));
 });

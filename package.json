@@ -15,19 +15,19 @@
     "@rollup/plugin-commonjs": "^15.1.0",
     "@rollup/plugin-node-resolve": "^9.0.0",
     "@rollup/plugin-typescript": "^6.0.0",
+    "@types/jest": "^26.0.20",
     "@types/luxon": "^1.25.1",
     "@types/node": "^14.14.2",
+    "@types/parsimmon": "^1.10.6",
     "jest": "^26.6.3",
     "obsidian": "https://github.com/obsidianmd/obsidian-api/tarball/master",
     "rollup": "^2.32.1",
+    "ts-jest": "^26.4.4",
     "tslib": "^2.0.3",
     "typescript": "^4.0.3"
   },
   "dependencies": {
-    "@types/jest": "^26.0.20",
-    "@types/parsimmon": "^1.10.6",
     "luxon": "^1.25.0",
-    "parsimmon": "^1.16.0",
-    "ts-jest": "^26.4.4"
+    "parsimmon": "^1.16.0"
   }
 }

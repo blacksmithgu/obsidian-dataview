@@ -1,7 +1,7 @@
 /** Stores various indices on all files in the vault to make dataview generation fast. */
 import { MetadataCache, Vault, TFile } from 'obsidian';
-import { Task } from './tasks';
-import * as Tasks from './tasks';
+import { Task } from 'src/tasks';
+import * as Tasks from 'src/tasks';
 
 /** Aggregate index which has several sub-indices and will initialize all of them. */
 export class FullIndex {

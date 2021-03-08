@@ -1,13 +1,13 @@
 /**
  * Takes a full query and a set of indices, and (hopefully quickly) returns all relevant files.
  */
-import { LiteralType, Field, LiteralField, LiteralFieldRepr, Query, BinaryOp, Fields, Source, Sources } from './query';
-import { FullIndex, TaskCache } from './index';
-import { Task } from './tasks';
+import { LiteralType, Field, LiteralField, LiteralFieldRepr, Query, BinaryOp, Fields, Source, Sources } from 'src/query';
+import { FullIndex, TaskCache } from 'src/index';
+import { Task } from 'src/tasks';
 import { DateTime, Duration } from 'luxon';
 import { TFile } from 'obsidian';
-import { EXPRESSION } from './parse';
-import { Context, BINARY_OPS } from './eval';
+import { EXPRESSION } from 'src/parse';
+import { Context, BINARY_OPS } from 'src/eval';
 
 /** The result of executing a query over an index. */
 export interface QueryResult {
@@ -29,8 +29,9 @@ export interface QueryRow {
 
 /** Get the file name for the file, without any parent directories. */
 export function getFileName(path: string): string {
-    if (path.contains("/")) return path.substring(path.lastIndexOf("/") + 1);
-    else return path;
+    if (path.includes("/")) path = path.substring(path.lastIndexOf("/") + 1);
+    if (path.endsWith(".md")) path = path.substring(0, path.length - 3);
+    return path;
 }
 
 /** Recursively collect target files from the given source. */
