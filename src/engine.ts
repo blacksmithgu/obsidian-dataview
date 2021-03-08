@@ -1,10 +1,10 @@
 /**
  * Takes a full query and a set of indices, and (hopefully quickly) returns all relevant files.
  */
-import { LiteralType, Field, LiteralField, LiteralFieldRepr, Query, BinaryOp, Fields, Source, Sources } from 'src/query';
+import { LiteralField, LiteralFieldRepr, Query, Fields, Source, Sources } from 'src/query';
 import { FullIndex, TaskCache } from 'src/index';
 import { Task } from 'src/tasks';
-import { DateTime, Duration } from 'luxon';
+import { DateTime } from 'luxon';
 import { TFile } from 'obsidian';
 import { EXPRESSION } from 'src/parse';
 import { Context, BINARY_OPS } from 'src/eval';
