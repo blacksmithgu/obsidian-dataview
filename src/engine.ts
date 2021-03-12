@@ -138,16 +138,11 @@ export function createContext(file: string, index: FullIndex): Context {
     }
 
     // Create a context which uses the cache to look up link info.
-    let context = new Context((file) => {
-        let meta = index.metadataCache.getCache(file);
-        if (!meta) {
-            file += ".md";
-            meta = index.metadataCache.getCache(file);
-        }
+    let context = new Context((link) => {
+        let realFile = index.metadataCache.getFirstLinkpathDest(link, file);
+        if (!realFile) return Fields.NULL;
 
-        // TODO: Hacky, change this later.
-        if (meta && meta.frontmatter) return createContext(file, index).namespace;
-        else return Fields.NULL;
+        return createContext(realFile.path, index).namespace;
     }, frontmatterData);
 
     // Fill out per-file metadata.
