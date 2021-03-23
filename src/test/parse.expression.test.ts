@@ -255,7 +255,9 @@ test("Parse simple sources", () => {
 
 test("Parse negated source", () => {
     expect(EXPRESSION.source.tryParse("-\"hello\"")).toEqual(Sources.negate(Sources.folder("hello")));
+    expect(EXPRESSION.source.tryParse("!\"hello\"")).toEqual(Sources.negate(Sources.folder("hello")));
     expect(EXPRESSION.source.tryParse("-#neat")).toEqual(Sources.negate(Sources.tag("#neat")));
+    expect(EXPRESSION.source.tryParse("!#neat")).toEqual(Sources.negate(Sources.tag("#neat")));
 });
 
 test("Parse parens source", () => {

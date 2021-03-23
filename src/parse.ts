@@ -212,7 +212,7 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
         (_1, link, _2) => Sources.link(link, false)),
     folderSource: q => q.string.map(str => Sources.folder(str)),
     parensSource: q => P.seqMap(P.string("("), P.optWhitespace, q.source, P.optWhitespace, P.string(")"), (_1, _2, field, _3, _4) => field),
-    negateSource: q => P.seqMap(P.string("-"), q.atomSource, (_, source) => Sources.negate(source)),
+    negateSource: q => P.seqMap(P.alt(P.string("-"), P.string("!")), q.atomSource, (_, source) => Sources.negate(source)),
     atomSource: q => P.alt<Source>(q.parensSource, q.negateSource, q.linkOutgoingSource, q.linkIncomingSource, q.folderSource, q.tagSource),
     binaryOpSource: q => createBinaryParser(q.atomSource, q.binaryBooleanOp, Sources.binaryOp),
     source: q => q.binaryOpSource,
