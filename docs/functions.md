@@ -137,3 +137,9 @@ Convert a string to all upper case.
 upper("Test") = "TEST"
 upper("test") = "TEST"
 ```
+
+## Utility Functions
+
+##### `default(field, value)`
+
+If `field` is null, return `value`; otherwise return `field`. Useful for replacing null values with defaults.

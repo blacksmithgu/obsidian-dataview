@@ -72,7 +72,7 @@ export class Context {
                         if (!func) return `Function ${field.func} does not exist.`;
                         return func(args, this);
                     default:
-                        return `Cannot call field '${field.func}' as a function`;
+                        return `Cannot call field type '${field.func}' as a function`;
                 }
             case "index":
                 let obj = this.evaluate(field.object);
@@ -113,6 +113,9 @@ export class Context {
                         switch (index.value) {
                             case "year": return Fields.number(obj.value.year);
                             case "month": return Fields.number(obj.value.month);
+                            case "weekyear": return Fields.number(obj.value.weekNumber);
+                            case "week": return Fields.number(Math.floor(obj.value.day / 7) + 1);
+                            case "weekday": return Fields.number(obj.value.weekday);
                             case "day": return Fields.number(obj.value.day);
                             case "hour": return Fields.number(obj.value.hour);
                             case "minute": return Fields.number(obj.value.minute);
@@ -125,6 +128,7 @@ export class Context {
                         switch (index.value) {
                             case "year": case "years": return Fields.number(obj.value.years);
                             case "month": case "months": return Fields.number(obj.value.months);
+                            case "weeks": return Fields.number(obj.value.weeks);
                             case "day": case "days": return Fields.number(obj.value.days);
                             case "hour": case "hours": return Fields.number(obj.value.hours);
                             case "minute": case "minutes": return Fields.number(obj.value.minutes);
@@ -468,17 +472,34 @@ export const FUNCTIONS = new Map<string, FunctionImpl>()
 
         return Fields.string(args[0].value.toLocaleUpperCase());
     })
-    .set("sum", (args, context) => {
-        if (args.length != 1) return "sum(array) takes exactly 1 array argument";
-        if (args[0].valueType != "array") return "sum(array) takes exactly 1 array argument";
-        
+    .set("default", (args, context) => {
+        if (args.length != 2) return "default(field, defaultvalue) requires 2 arguments";
+
+        if (args[0].valueType == 'null') return args[1];
+        return args[0];
+    })
+    .set("reduce", (args, context) => {
+        if (args.length != 2) return "reduce(array, op) takes 2 arguments";
+        if (args[0].valueType != "array") return "reduce(array, op) requires an array as the first argument";
+        if (args[1].valueType != "string") return "reduce(array, op) requires a string operator (like '+') as an argument";
         if (args[0].value.length == 0) return Fields.NULL;
+
+        let op = args[1].value;
+        if (op != '+' && op != '-' && op != '*' && op != '/' && op != '&' && op != '|')
+            return "reduce(array, op) supports '+', '-', '/', '*', '&', and '|'";
+
         let value = args[0].value[0];
         for (let index = 1; index < args[0].value.length; index++) {
-            let next = context.evaluate(Fields.binaryOp(value, '+', args[0].value[index]));
-            if (typeof next == "string") continue;
+            let next = context.evaluate(Fields.binaryOp(value, op, args[0].value[index]));
+            if (typeof next == "string") return next;
             value = next;
         }
 
         return value;
+    })
+    .set("sum", (args, context) => {
+        if (args.length != 1) return "sum(array) takes exactly 1 array argument";
+        if (args[0].valueType != "array") return "sum(array) takes exactly 1 array argument";
+
+        return context.evaluate(Fields.func(Fields.variable("reduce"), [args[0], Fields.string("+")]));
     });

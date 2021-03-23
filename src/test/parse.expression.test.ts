@@ -142,6 +142,14 @@ test("Parse Link", () => {
     expect(EXPRESSION.field.tryParse("[[test/Main.md]]")).toEqual(Fields.link("test/Main.md"));
     expect(EXPRESSION.field.tryParse("[[simple0]]")).toEqual(Fields.link("simple0"));
     expect(EXPRESSION.field.tryParse("[[2020-08-15]]")).toEqual(Fields.link("2020-08-15"));
+    expect(EXPRESSION.field.tryParse("[[%Man & Machine + Mind%]]")).toEqual(Fields.link("%Man & Machine + Mind%"));
+});
+
+// <-- Null ->
+
+test("Parse Null", () => {
+    expect(EXPRESSION.field.tryParse("null")).toEqual(Fields.NULL);
+    expect(EXPRESSION.field.tryParse("\"null\"")).toEqual(Fields.string("null"));
 });
 
 // <-- Indexes -->

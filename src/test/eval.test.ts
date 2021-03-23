@@ -181,6 +181,13 @@ test("Evaluate lower()/upper()", () => {
     expect(parseEval("upper(\"hello\")")).toEqual(Fields.string("HELLO"));
 })
 
+// <-- default() -->
+
+test("Evaluate default()", () => {
+    expect(parseEval("default(null, 1)")).toEqual(Fields.number(1));
+    expect(parseEval("default(2, 1)")).toEqual(Fields.number(2));
+});
+
 /** Parse a field expression and evaluate it in the simple context. */
 function parseEval(text: string): LiteralField {
     let field = EXPRESSION.field.tryParse(text);

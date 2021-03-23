@@ -112,6 +112,7 @@ interface ExpressionLanguage {
     dateField: Field;
     durationField: Field;
     linkField: Field;
+    nullField: Field;
     negatedField: Field;
     atomField: Field;
     indexField: Field;
@@ -155,7 +156,7 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
     identifierDot: q => P.regexp(/[\p{Letter}\p{Emoji_Presentation}][\p{Letter}\p{Emoji_Presentation}\.\w_-]*/u).desc("variable identifier"),
 
     // An Obsidian link of the form [[<link>]].
-    link: q => P.regexp(/\[\[([\p{Letter}\w\s./-]+)\]\]/u, 1).desc("file link"),
+    link: q => P.regexp(/\[\[(.*)\]\]/u, 1).desc("file link"),
 
     // Binary plus or minus operator.
     binaryPlusMinus: q => P.regexp(/\+|-/).map(str => str as BinaryOp).desc("'+' or '-'"),
@@ -227,8 +228,9 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
     durationField: q => P.seqMap(P.string("dur("), P.optWhitespace, q.duration, P.optWhitespace, P.string(")"),
         (prefix, _1, dur, _2, postfix) => Fields.literal('duration', dur))
         .desc("duration"),
+    nullField: q => P.string("null").map(_ => Fields.NULL),
     linkField: q => q.link.map(f => Fields.link(f)),
-    atomField: q => P.alt(q.negatedField, q.parensField, q.boolField, q.numberField, q.stringField, q.linkField, q.dateField, q.durationField, q.variableField),
+    atomField: q => P.alt(q.negatedField, q.parensField, q.boolField, q.numberField, q.stringField, q.linkField, q.dateField, q.durationField, q.nullField, q.variableField),
     indexField: q => P.seqMap(q.atomField, P.alt(q.dotPostfix, q.indexPostfix, q.functionPostfix).many(), (obj, postfixes) => {
         let result = obj;
         for (let post of postfixes) {
