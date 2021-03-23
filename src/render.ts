@@ -2,7 +2,7 @@ import { DateTime, Duration } from 'luxon';
 import { Field, LiteralField } from 'src/query';
 
 /** Make an Obsidian-friendly internal link. */
-export function createAnchor(text: string, target: string, internal: boolean) {
+export function createAnchor(text: string, target: string, internal: boolean): HTMLAnchorElement {
 	let a = document.createElement("a");
 	a.dataset.href = target;
 	a.href = target;
@@ -26,6 +26,7 @@ export function prettifyYamlKey(key: string): string {
 			&& key[index - 1].toLowerCase() == key[index - 1];
 		isNewWord = isNewWord || (key[index - 1] == "_");
 		isNewWord = isNewWord || (key[index - 1] == "-");
+		isNewWord = isNewWord || (key[index - 1] == ".");
 		
 		if (isNewWord) {
 			result += " " + key[index].toUpperCase();
@@ -34,7 +35,7 @@ export function prettifyYamlKey(key: string): string {
 		}
 	}
 
-	return result.replace("-", "").replace("_", "");
+	return result.replace("-", "").replace("_", "").replace(".", "");
 }
 
 /** Create a list inside the given container, with the given data. */
@@ -81,6 +82,13 @@ export function renderErrorPre(container: HTMLElement, error: string): HTMLEleme
 	return pre;
 }
 
+/** Get the file name for the file, without any parent directories. */
+export function getFileName(path: string): string {
+    if (path.includes("/")) path = path.substring(path.lastIndexOf("/") + 1);
+    if (path.endsWith(".md")) path = path.substring(0, path.length - 3);
+    return path;
+}
+
 /** Render a DateTime in a minimal format to save space. */
 export function renderMinimalDate(time: DateTime): string {
 	// If there is no relevant time specified, fall back to just rendering the date.
@@ -93,27 +101,80 @@ export function renderMinimalDate(time: DateTime): string {
 
 /** Render a duration in a minimal format to save space. */
 export function renderMinimalDuration(dur: Duration): string {
-	return dur.toISO();
+	dur = dur.shiftTo("years", "months", "weeks", "days", "hours", "minutes", "seconds", "milliseconds").normalize();
+
+	let result = "";
+	if (dur.years) result += `${dur.years} years, `;
+	if (dur.months) result += `${dur.months} months, `;
+	if (dur.weeks) result += `${dur.weeks} weeks, `;
+	if (dur.days) result += `${dur.days} days, `;
+	if (dur.hours) result += `${dur.hours} hours, `;
+	if (dur.minutes) result += `${dur.minutes} minutes, `;
+	if (dur.seconds) result += `${Math.round(dur.seconds)} seconds, `;
+	if (dur.milliseconds) result += `${Math.round(dur.milliseconds)} ms, `;
+	
+	if (result.endsWith(", ")) result = result.substring(0, result.length - 2);
+	return result;
 }
 
-export function renderField(field: LiteralField, nullField: string): HTMLElement | string {
+/** Prettily render a field with the given settings. */
+export function renderField(field: LiteralField, nullField: string, expandList: boolean = false): HTMLElement | string {
 	switch (field.valueType) {
 		case "date":
 			return renderMinimalDate(field.value);
 		case "duration":
 			return renderMinimalDuration(field.value);
 		case "array":
-			return "[" + field.value.map(f => renderField(f, nullField)).join(", ") + "]";
-		case "object":
-			let entries: string[] = [];
-			for (let entry of field.value) {
-				entries.push(entry[0] + ": " + renderField(entry[1], nullField));
+			if (expandList) {
+				if (field.value.length == 0) return "";
+				else if (field.value.length == 1) return renderField(field.value[0], nullField, expandList);
+
+				let list = document.createElement('ul');
+				list.classList.add('dataview', 'dataview-ul');
+				for (let child of field.value) {
+					let li = list.createEl('li');
+					let value = renderField(child, nullField, expandList);
+					if (typeof value == 'string') {
+						li.textContent = value;
+					} else {
+						li.appendChild(value);
+					}
+				}
+
+				return list;
+			} else {
+				return "[" + field.value.map(f => renderField(f, nullField, expandList)).join(", ") + "]";
 			}
-			return "{ " + entries.join(", ") + " }";
+		case "object":
+			if (expandList) {
+				if (field.value.size == 0) return "";
+				else if (field.value.size == 1) return field.value.keys().next().value + ": " + renderField(field.value.values().next().value, nullField, expandList);
+
+				let list = document.createElement('ul');
+				list.classList.add('dataview', 'dataview-ul');
+				for (let entry of field.value) {
+					let li = list.createEl('li');
+					let value = renderField(entry[1], nullField, expandList);
+					if (typeof value == 'string') {
+						li.textContent = `${entry[0]}: ${value}`;
+					} else {
+						li.appendText(entry[0] + ":");
+						li.appendChild(value);
+					}
+				}
+
+				return list;
+			} else {
+				let entries: string[] = [];
+				for (let entry of field.value) {
+					entries.push(entry[0] + ": " + renderField(entry[1], nullField, expandList));
+				}
+				return "{ " + entries.join(", ") + " }";
+			}
 		case "null":
 			return nullField;
 		case "link":
-			return createAnchor(field.value.replace(".md", ""), field.value.replace(".md", ""), true);
+			return createAnchor(getFileName(field.value), field.value.replace(".md", ""), true);
 		default:
 			return "" + field.value;
 	}

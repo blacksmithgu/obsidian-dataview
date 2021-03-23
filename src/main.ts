@@ -3,8 +3,8 @@ import { createAnchor, prettifyYamlKey, renderErrorPre, renderField, renderList,
 import { FullIndex, TaskCache } from 'src/index';
 import * as Tasks from 'src/tasks';
 import { Query } from 'src/query';
-import { parseQuery } from "src/legacy-parse";
-import { execute, executeTask, getFileName } from 'src/engine';
+import { parseQuery } from "src/parse";
+import { execute, executeTask } from 'src/engine';
 
 interface DataviewSettings {
 	/** What to render 'null' as in tables. Defaults to '-'. */
@@ -34,7 +34,7 @@ export default class DataviewPlugin extends Plugin {
 
 		this.addSettingTab(new DataviewSettingsTab(this.app, this));
 
-		console.log("Dataview Plugin - Version 0.1.9 Loaded");
+		console.log("Dataview Plugin - Version 0.2.0 Loaded");
 
 		if (!this.workspace.layoutReady) {
 			this.workspace.on("layout-ready", async () => this.prepareIndexes());
@@ -44,13 +44,8 @@ export default class DataviewPlugin extends Plugin {
 
 		// Main entry point for dataview.
 		// TODO: Replace w/ code post processor & raise minimum version.
-		this.registerMarkdownPostProcessor(async (el, ctx) => {
-			// Look for a <code> element with a 'language-dataview' class.
-			let dataviewCode = el.find('code.language-dataview');
-			if (!dataviewCode) return;
-			el.removeChild(el.firstChild);
-
-			let query = tryOrPropogate(() => parseQuery(dataviewCode.innerText));
+		this.registerMarkdownCodeBlockProcessor("dataview", async (source: string, el, ctx) => {
+			let query = tryOrPropogate(() => parseQuery(source));
 
 			// In case of parse error, just render the error.
 			if (typeof query === 'string') {
@@ -58,22 +53,21 @@ export default class DataviewPlugin extends Plugin {
 				return;
 			}
 
-			// TODO: Look into cleaner ways to ensure the indices are initialized before rendering.
-			// We currently use a dummy render child which passes off to another render child upon success;
-			// perhaps we can pass the ctx along?
+			// TODO: I need a way to get the current file from within a markdown processor... all I can get is a docId
+			// which I'm unsure of how it relates.
 
-			switch (query.type) {
+			switch (query.header.type) {
 				case 'task':
 					ctx.addChild(this.wrapWithEnsureTaskIndex(ctx, el,
-						() => new DataviewTaskRenderer(query as Query, el, this.index, this.tasks, this.app.vault, this.settings)));
+						() => new DataviewTaskRenderer(query as Query, el, this.index, this.tasks, "", this.app.vault, this.settings)));
 					break;
 				case 'list':
 					ctx.addChild(this.wrapWithEnsureIndex(ctx, el,
-						() => new DataviewListRenderer(query as Query, el, this.index, this.settings)));
+						() => new DataviewListRenderer(query as Query, el, this.index, "", this.settings)));
 					break;
 				case 'table':
 					ctx.addChild(this.wrapWithEnsureIndex(ctx, el,
-						() => new DataviewTableRenderer(query as Query, el, this.index, this.settings)));
+						() => new DataviewTableRenderer(query as Query, el, this.index, "", this.settings)));
 					break;
 			}
 		});
@@ -184,27 +178,48 @@ class DataviewListRenderer extends MarkdownRenderChild {
 	container: HTMLElement;
 	index: FullIndex;
 	settings: DataviewSettings;
+	origin: string;
 
-	constructor(query: Query, container: HTMLElement, index: FullIndex, settings: DataviewSettings) {
+	constructor(query: Query, container: HTMLElement, index: FullIndex, origin: string, settings: DataviewSettings) {
 		super();
 
 		this.query = query;
 		this.container = container;
 		this.index = index;
 		this.settings = settings;
+		this.origin = origin;
 	}
 
 	onload() {
-		let result = tryOrPropogate(() => execute(this.query, this.index));
+		let result = tryOrPropogate(() => execute(this.query, this.index, this.origin));
 		if (typeof result === 'string') {
 			renderErrorPre(this.container, "Dataview: " + result);
 		} else if (result.data.length == 0 && this.settings.warnOnEmptyResult) {
 			renderErrorPre(this.container, "Dataview: Query returned 0 results.");
 		} else {
-			renderList(this.container, result.data.map(e => {
-				let cleanName = getFileName(e.file).replace(".md", "");
-				return createAnchor(cleanName, e.file.replace(".md", ""), true);
-			}));
+			if (result.names.length == 2) {
+				renderList(this.container, result.data.map(e => {
+					let span = document.createElement('span');
+					let renderedFile = renderField(e[0], this.settings.renderNullAs, true);
+					if (typeof renderedFile == "string") {
+						span.appendText(renderedFile + ": ");
+					} else {
+						span.appendChild(renderedFile);
+						span.appendText(": ");
+					}
+
+					let renderedValue = renderField(e[1], this.settings.renderNullAs, true);
+					if (typeof renderedValue == "string") {
+						span.appendText(renderedValue);
+					} else {
+						span.appendChild(renderedValue);
+					}
+
+					return span;
+				}))
+			} else {
+				renderList(this.container, result.data.map(e => renderField(e[0], this.settings.renderNullAs, true)));
+			}
 		}
 	}
 }
@@ -213,32 +228,31 @@ class DataviewTableRenderer extends MarkdownRenderChild {
 	query: Query;
 	container: HTMLElement;
 	index: FullIndex;
+	origin: string;
 	settings: DataviewSettings;
 
-	constructor(query: Query, container: HTMLElement, index: FullIndex, settings: DataviewSettings) {
+	constructor(query: Query, container: HTMLElement, index: FullIndex, origin: string, settings: DataviewSettings) {
 		super();
 
 		this.query = query;
 		this.container = container;
 		this.index = index;
 		this.settings = settings;
+		this.origin = origin;
 	}
 
 	onload() {
-		let result = tryOrPropogate(() => execute(this.query, this.index));
+		let result = tryOrPropogate(() => execute(this.query, this.index, this.origin));
 		if (typeof result === 'string') {
 			renderErrorPre(this.container, "Dataview: " + result);
 			return;
 		}
 
-		let prettyFields = result.names.map(prettifyYamlKey);
-		renderTable(this.container, ["Name"].concat(prettyFields), result.data.map(row => {
-			let filename = getFileName(row.file).replace(".md", "");
-			let result: (string | HTMLElement)[] =
-				[createAnchor(filename, row.file.replace(".md", ""), true)];
+		renderTable(this.container, result.names, result.data.map(row => {
+			let result: (string | HTMLElement)[] = [];
 
-			for (let elem of row.data) {
-				result.push(renderField(elem, this.settings.renderNullAs));
+			for (let elem of row) {
+				result.push(renderField(elem, this.settings.renderNullAs, true));
 			}
 
 			return result;
@@ -257,9 +271,10 @@ class DataviewTaskRenderer extends MarkdownRenderChild {
 	index: FullIndex;
 	tasks: TaskCache;
 	vault: Vault;
+	origin: string;
 	settings: DataviewSettings;
 
-	constructor(query: Query, container: HTMLElement, index: FullIndex, tasks: TaskCache, vault: Vault, settings: DataviewSettings) {
+	constructor(query: Query, container: HTMLElement, index: FullIndex, tasks: TaskCache, origin: string, vault: Vault, settings: DataviewSettings) {
 		super();
 
 		this.query = query;
@@ -272,7 +287,7 @@ class DataviewTaskRenderer extends MarkdownRenderChild {
 	}
 
 	async onload() {
-		let result = tryOrPropogate(() => executeTask(this.query, this.index, this.tasks));
+		let result = tryOrPropogate(() => executeTask(this.query, this.origin, this.index, this.tasks));
 		if (typeof result === 'string') {
 			renderErrorPre(this.container, "Dataview: " + result);
 		} else if (result.size == 0 && this.settings.warnOnEmptyResult) {

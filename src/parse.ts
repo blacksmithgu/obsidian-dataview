@@ -1,5 +1,6 @@
 import { DateTime, Duration } from 'luxon';
-import { BinaryOp, TagSource, FolderSource, Source, VariableField, Field, Fields, Sources, NegatedSource } from 'src/query';
+import { BinaryOp, TagSource, FolderSource, Source, VariableField, Field, Fields, Sources, NegatedSource, WhereStep, SortByStep, LimitStep, QueryHeader, QueryOperation, FlattenStep, GroupStep } from 'src/query';
+import { QueryType, NamedField, QuerySortBy, Query } from "src/query";
 import * as P from 'parsimmon';
 
 ///////////
@@ -97,6 +98,8 @@ interface ExpressionLanguage {
     folderSource: FolderSource;
     parensSource: Source;
     atomSource: Source;
+    linkIncomingSource: Source;
+    linkOutgoingSource: Source;
     negateSource: NegatedSource;
     binaryOpSource: Source;
     source: Source;
@@ -143,16 +146,16 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
         .desc("boolean ('true' or 'false')"),
 
     // A tag of the form '#stuff/hello-there'.
-    tag: q => P.regexp(/#[\p{Letter}\w/-]+/u).desc("tag ('#hello/stuff')"),
+    tag: q => P.regexp(/#[\p{Letter}\p{Emoji_Presentation}\w/-]+/u).desc("tag ('#hello/stuff')"),
 
     // A variable identifier, which is alphanumeric and must start with a letter.
-    identifier: q => P.regexp(/[\p{Letter}][\p{Letter}\w_-]*/u).desc("variable identifier"),
+    identifier: q => P.regexp(/[\p{Letter}\p{Emoji_Presentation}][\p{Letter}\p{Emoji_Presentation}\w_-]*/u).desc("variable identifier"),
 
     // A variable identifier, which is alphanumeric and must start with a letter. Can include dots.
-    identifierDot: q => P.regexp(/[\p{Letter}][\p{Letter}\.\w_-]*/u).desc("variable identifier"),
+    identifierDot: q => P.regexp(/[\p{Letter}\p{Emoji_Presentation}][\p{Letter}\p{Emoji_Presentation}\.\w_-]*/u).desc("variable identifier"),
 
     // An Obsidian link of the form [[<link>]].
-    link: q => P.regexp(/\[\[([\p{Letter}\w./-]+)\]\]/u, 1).desc("file link"),
+    link: q => P.regexp(/\[\[([\p{Letter}\w\s./-]+)\]\]/u, 1).desc("file link"),
 
     // Binary plus or minus operator.
     binaryPlusMinus: q => P.regexp(/\+|-/).map(str => str as BinaryOp).desc("'+' or '-'"),
@@ -203,10 +206,13 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
     
     // Source parsing.
     tagSource: q => q.tag.map(tag => Sources.tag(tag)),
+    linkIncomingSource: q => q.link.map(link => Sources.link(link, true)),
+    linkOutgoingSource: q => P.seqMap(P.string("outgoing(").skip(P.optWhitespace), q.link, P.string(")"),
+        (_1, link, _2) => Sources.link(link, false)),
     folderSource: q => q.string.map(str => Sources.folder(str)),
     parensSource: q => P.seqMap(P.string("("), P.optWhitespace, q.source, P.optWhitespace, P.string(")"), (_1, _2, field, _3, _4) => field),
     negateSource: q => P.seqMap(P.string("-"), q.atomSource, (_, source) => Sources.negate(source)),
-    atomSource: q => P.alt<Source>(q.parensSource, q.negateSource, q.folderSource, q.tagSource),
+    atomSource: q => P.alt<Source>(q.parensSource, q.negateSource, q.linkOutgoingSource, q.linkIncomingSource, q.folderSource, q.tagSource),
     binaryOpSource: q => createBinaryParser(q.atomSource, q.binaryBooleanOp, Sources.binaryOp),
     source: q => q.binaryOpSource,
 
@@ -257,3 +263,98 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
 
     field: q => q.binaryOpField
 });
+
+
+///////////////////
+// Query Parsing //
+///////////////////
+
+/** Typings for the outputs of all of the parser combinators. */
+interface QueryLanguageTypes {
+    queryType: QueryType;
+
+    explicitNamedField: NamedField;
+    namedField: NamedField;
+    sortField: QuerySortBy;
+
+    // Entire clauses in queries.
+    headerClause: QueryHeader;
+    fromClause: Source;
+    whereClause: WhereStep;
+    sortByClause: SortByStep;
+    limitClause: LimitStep;
+    flattenClause: FlattenStep;
+    groupByClause: GroupStep;
+    clause: QueryOperation;
+    query: Query;
+}
+
+/** A parsimmon-powered parser-combinator implementation of the query language. */
+export const QUERY_LANGUAGE = P.createLanguage<QueryLanguageTypes>({
+    // Simple atom parsing, like words, identifiers, numbers.
+    queryType: q => P.alt<string>(P.regexp(/TABLE|LIST|TASK/i)).map(str => str.toLowerCase() as QueryType)
+        .desc("query type ('TABLE', 'LIST', or 'TASK')"),
+    explicitNamedField: q => P.seqMap(EXPRESSION.field.skip(P.whitespace), P.regexp(/AS/i).skip(P.whitespace), EXPRESSION.identifier.or(EXPRESSION.string),
+        (field, as, ident) => Fields.named(ident, field)),
+    namedField: q => P.alt<NamedField>(
+        q.explicitNamedField,
+        EXPRESSION.identifierDot.map(ident => Fields.named(ident, Fields.indexVariable(ident)))
+    ),
+    sortField: q => P.seqMap(EXPRESSION.field.skip(P.optWhitespace), P.regexp(/ASCENDING|DESCENDING|ASC|DESC/i).atMost(1),
+            (field, dir) => {
+                let direction = dir.length == 0 ? 'ascending' : dir[0].toLowerCase();
+                if (direction == 'desc') direction = 'descending';
+                if (direction == 'asc') direction = 'ascending';
+                return {
+                    field: field,
+                    direction: direction as 'ascending' | 'descending'
+                };
+            }),
+
+    headerClause: q => q.queryType.skip(P.whitespace).chain(qtype => {
+        switch (qtype) {
+            case "table":
+                return P.sepBy(q.namedField.notFollowedBy(P.whitespace.then(EXPRESSION.source)), P.string(',').trim(P.optWhitespace))
+                    .map(fields => { return { type: 'table', fields } as QueryHeader });
+            case "list":
+                return EXPRESSION.field.notFollowedBy(P.whitespace.then(EXPRESSION.source)).atMost(1)
+                    .map(format => { return { type: 'list', format: format.length == 1 ? format[0] : undefined }});
+            case "task":
+                return P.succeed({ type: 'task' });
+            default:
+                return P.fail(`Unrecognized query type '${qtype}'`);
+        }
+    }),
+    fromClause: q => P.seqMap(P.regexp(/FROM/i), P.whitespace, EXPRESSION.source, (_1, _2, source) => source),
+    whereClause: q => P.seqMap(P.regexp(/WHERE/i), P.whitespace, EXPRESSION.field,
+        (where, _, field) => { return { type: 'where', clause: field }}),
+    sortByClause: q => P.seqMap(P.regexp(/SORT/i), P.whitespace, q.sortField.sepBy1(P.string(',').trim(P.optWhitespace)),
+        (sort, _1, fields) => { return { type: 'sort', fields }}),
+    limitClause: q => P.seqMap(P.regexp(/LIMIT/i), P.whitespace, EXPRESSION.field,
+        (limit, _1, field) => { return { type: 'limit', amount: field }}),
+    flattenClause: q => P.seqMap(P.regexp(/FLATTEN/i).skip(P.whitespace), q.namedField,
+        (_, field) => { return { type: 'flatten', field }}),
+    groupByClause: q => P.seqMap(P.regexp(/GROUP BY/i).skip(P.whitespace), q.namedField,
+        (_, field) => { return { type: 'group', field }}),
+    // Full query parsing.
+    clause: q => P.alt(q.fromClause, q.whereClause, q.sortByClause, q.limitClause, q.groupByClause, q.flattenClause),
+    query: q => P.seqMap(q.headerClause.trim(P.optWhitespace), q.fromClause.trim(P.optWhitespace), q.clause.trim(P.optWhitespace).many(), (header, from, clauses) => {
+        return {
+            header,
+            source: from,
+            operations: clauses
+        } as Query;
+    })
+});
+
+/**
+ * Attempt to parse a query from the given query text, returning a string error
+ * if the parse failed.
+ */
+export function parseQuery(text: string): Query | string {
+    try {
+        return QUERY_LANGUAGE.query.tryParse(text);
+    } catch (error) {
+        return "" + error;
+    }
+}

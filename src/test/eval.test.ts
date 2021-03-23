@@ -147,6 +147,13 @@ test("Evaluate sort(list)", () => {
     expect(parseEval('sort(list("a", "c", "b"))')).toEqual(parseEval('list("a", "b", "c")'));
 });
 
+// <-- sum() -->
+test("Evaluate sum(list)", () => {
+    expect(parseEval("sum(list(2, 3, 1))")).toEqual(Fields.number(6));
+    expect(parseEval("sum(list(\"a\", \"b\", \"c\"))")).toEqual(Fields.string("abc"));
+    expect(parseEval("sum(list())")).toEqual(Fields.NULL);
+});
+
 // <-- regexmatch() -->
 
 test("Evaluate regexmatch()", () => {
@@ -157,6 +164,22 @@ test("Evaluate regexmatch()", () => {
     expect(parseEval('regexmatch("\\s+", "  ")')).toEqual(Fields.bool(true));
     expect(parseEval('regexmatch("what", "what")')).toEqual(Fields.bool(true));
 });
+
+// <-- replace() -- >
+
+test("Evaluate replace()", () => {
+    expect(parseEval("replace(\"hello\", \"h\", \"me\")")).toEqual(Fields.string("meello"));
+    expect(parseEval("replace(\"meep\", \"meep\", \"pleh\")")).toEqual(Fields.string("pleh"));
+});
+
+// <-- lower/upper() -->
+
+test("Evaluate lower()/upper()", () => {
+    expect(parseEval("lower(\"Hello\")")).toEqual(Fields.string("hello"));
+    expect(parseEval("lower(\"hello\")")).toEqual(Fields.string("hello"));
+    expect(parseEval("upper(\"Hello\")")).toEqual(Fields.string("HELLO"));
+    expect(parseEval("upper(\"hello\")")).toEqual(Fields.string("HELLO"));
+})
 
 /** Parse a field expression and evaluate it in the simple context. */
 function parseEval(text: string): LiteralField {

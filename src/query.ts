@@ -98,7 +98,7 @@ export interface QuerySortBy {
 }
 
 /** The source of files for a query. */
-export type Source = TagSource | FolderSource | EmptySource | NegatedSource | BinaryOpSource;
+export type Source = TagSource | FolderSource | LinkSource | EmptySource | NegatedSource | BinaryOpSource;
 
 /** A tag as a source of data. */
 export interface TagSource {
@@ -112,6 +112,18 @@ export interface FolderSource {
     type: 'folder';
     /** The folder prefix to source from. */
     folder: string;
+}
+
+/** Either incoming or outgoing links to a given file. */
+export interface LinkSource {
+    type: 'link';
+    /** The file to look for links to/from.  */
+    file: string;
+    /**
+     * The direction to look - if incoming, then all files linking to the target file. If outgoing, then all files
+     * which the file links to.
+     */
+    direction: 'incoming' | 'outgoing';
 }
 
 /** A source which is everything EXCEPT the files returned by the given source. */
@@ -230,6 +242,46 @@ export namespace Fields {
         }
     }
 
+    /** Deep copy a field. */
+    export function deepCopy(field: Field): Field {
+        switch (field.type) {
+            case "literal":
+                if (field.valueType == 'array') {
+                    return Fields.array(field.value.map(deepCopy) as LiteralField[]);
+                } else if (field.valueType == 'object') {
+                    let newMap = new Map<string, LiteralField>();
+                    for (let [key, value] of field.value.entries()) {
+                        newMap.set(key, deepCopy(value) as LiteralField);
+                    }
+                    return Fields.object(newMap);
+                } else {
+                    return field;
+                }
+            case "variable": return field;
+            case "binaryop": return Fields.binaryOp(deepCopy(field.left), field.op, deepCopy(field.right));
+            case "negated": return Fields.negate(deepCopy(field.child));
+            case "index": return Fields.index(deepCopy(field.object), deepCopy(field.index));
+            case "function": return Fields.func(field.func, field.arguments.map(deepCopy));
+        }
+    }
+
+    /** Renders an object as a string. */
+    export function toLiteralKey(field: LiteralField): string {
+        switch (field.valueType) {
+            case "string":
+            case "number":
+            case "null":
+            case "link":
+            case "date":
+            case "boolean":
+                return `${field.valueType}:${field.value}`;
+            case "array":
+                return `array:[${field.value.map(toLiteralKey).join(", ")}]`;
+            case "object":
+                return `object:[${Object.entries(field.value).map(val => `${val[0]}:${toLiteralKey(val[1])}`).join(", ")}]`
+        }
+    }
+
     export const NULL = Fields.literal('null', null);
 }
 
@@ -240,6 +292,10 @@ export namespace Sources {
 
     export function folder(prefix: string): FolderSource {
         return { type: 'folder', folder: prefix };
+    }
+
+    export function link(file: string, incoming: boolean): LinkSource {
+        return { type: 'link', file, direction: incoming ? 'incoming' : 'outgoing' };
     }
 
     export function binaryOp(left: Source, op: BinaryOp, right: Source): Source {
@@ -255,16 +311,70 @@ export namespace Sources {
     }
 }
 
-/** A query over the Obsidian database. */
-export interface Query {
-    /** The view type to render this query in. */
-    type: QueryType;
+//////////////////////
+// Query Definition //
+//////////////////////
+
+/** A query which should render a list of elements. */
+export interface ListQuery {
+    type: 'list';
+    /** What should be rendered in the list. */
+    format?: Field;
+}
+
+/** A query which renders a table of elements. */
+export interface TableQuery {
+    type: 'table';
     /** The fields (computed or otherwise) to select. */
     fields: NamedField[];
+}
+
+/** A query which renders a collection of tasks. */
+export interface TaskQuery {
+    type: 'task';
+}
+
+export type QueryHeader = ListQuery | TableQuery | TaskQuery;
+
+export interface WhereStep {
+    type: 'where';
+    clause: Field;
+}
+
+export interface SortByStep {
+    type: 'sort';
+    fields: QuerySortBy[];
+}
+
+export interface LimitStep {
+    type: 'limit';
+    amount: Field;
+}
+
+export interface FlattenStep {
+    type: 'flatten';
+    field: NamedField;
+}
+
+export interface GroupStep {
+    type: 'group';
+    field: NamedField;
+}
+
+export type QueryOperation = WhereStep | SortByStep | LimitStep | FlattenStep | GroupStep;
+
+/**
+ * A query over the Obsidian database. Queries have a specific and deterministic execution order:
+ */
+export interface Query {
+    /** The view type to render this query in. */
+    header: QueryHeader;
     /** The source that file candidates will come from. */
     source: Source;
-    /** A boolean field which determines if a given entry should be included. */
-    where: Field;
-    /** */
-    sortBy: QuerySortBy[];
+    /** The operations to apply to the data to produce the final result that will be rendered. */
+    operations: QueryOperation[];
+}
+
+export namespace Queries {
+
 }

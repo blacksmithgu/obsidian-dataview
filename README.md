@@ -1,8 +1,8 @@
 # Obsidian Dataview
 
 Treat your obsidian vault as a database which you can query from. Provides a fully-fledged query language for filtering,
-sorting, and extracting data from your pages. See the Examples section below for some quick examples, or the Usage
-section for a more in-detail explanation.
+sorting, and extracting data from your pages. See the Examples section below for some quick examples, or the full
+[reference](https://blacksmithgu.github.io/obsidian-dataview/).
 
 ## Examples
 
@@ -67,12 +67,14 @@ sort file.day desc
 
 # Usage
 
+**Note**: See the full documentation [here](https://blacksmithgu.github.io/obsidian-dataview/).
+
 Dataview allows you to write queries over markdown files which can be filtered by folder, tag, and markdown YAML fields; it can then display the resulting data in various formats. All dataviews are embedded code blocks with the general form
 
 ~~~
 ```dataview
 [list|table|task] field1, (field2 + field3) as myfield, ..., fieldN
-from #tag or "folder"
+from #tag or "folder" or [[link]] or outgoing([[link]])
 where field [>|>=|<|<=|=|&|'|'] [field2|literal value] (and field2 ...) (or field3...)
 sort field [ascending|descending|asc|desc] (ascending is implied if not provided)
 ```

@@ -82,6 +82,20 @@ reverse(list(1, 2, 3)) = list(3, 2, 1)
 reverse(list("a", "b", "c")) = list("c", "b", "a")
 ```
 
+##### `length(object|array)`
+
+Returns the number of fields in an object, or the number of entries in an array.
+
+```
+length(list()) = 0
+length(list(1, 2, 3)) = 3
+length(object("hello", 1, "goodbye", 2)) = 2
+```
+
+##### `sum(array)`
+
+Sums all numeric values in the array1
+
 ---
 
 ## String Operations
@@ -94,4 +108,32 @@ Checks if the given string matches the given pattern (using the JavaScript regex
 regexmatch("\w+", "hello") = true
 regexmatch(".", "a") = true
 regexmatch("yes|no", "maybe") = false
+```
+
+##### `replace(string, pattern, replacement)`
+
+Replace all instances of `pattern` in `string` with `replacement`.
+
+```
+replace("what", "wh", "h") = "hat"
+replace("The big dog chased the big cat.", "big", "small") = "The small dog chased the small cat."
+replace("test", "test", "no") = "no"
+```
+
+##### `lower(string)`
+
+Convert a string to all lower case.
+
+```
+lower("Test") = "test"
+lower("TEST") = "test"
+```
+
+##### `upper(string)`
+
+Convert a string to all upper case.
+
+```
+upper("Test") = "TEST"
+upper("test") = "TEST"
 ```

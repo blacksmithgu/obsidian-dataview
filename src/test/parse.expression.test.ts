@@ -50,6 +50,10 @@ test("Parse Multiple Strings", () => {
     expect(right.value).toBe("yes");
 });
 
+test("Parse string with emoji", () => {
+    expect(EXPRESSION.string.tryParse("\"📷\"")).toEqual("📷");
+});
+
 // <-- Booleans -->
 
 test("Parse boolean literal", () => {
@@ -67,6 +71,10 @@ test("Parse tag literal", () => {
 
 test("Parse unicode tag", () => {
     expect(EXPRESSION.tag.tryParse("#début")).toEqual("#début");
+});
+
+test("Parse tag with emoji", () => {
+    expect(EXPRESSION.tag.tryParse("#📷")).toEqual("#📷");
 });
 
 // <-- Identifiers -->

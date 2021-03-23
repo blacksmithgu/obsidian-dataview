@@ -18,10 +18,13 @@ export class Context {
     public readonly functions: Map<string, FunctionImpl>;
     /** Resolves links into the metadata for the linked file. */
     public readonly linkResolver: LinkResolverImpl;
+    /** The parent context which this context will lookup variables from if they are not present here. */
+    public readonly parent?: Context;
 
-    public constructor(linkResolver: LinkResolverImpl, namespace: LiteralFieldRepr<'object'> = Fields.emptyObject(),
+    public constructor(linkResolver: LinkResolverImpl, parent: Context = null, namespace: LiteralFieldRepr<'object'> = Fields.emptyObject(),
         binaryOps: BinaryOpHandler = BINARY_OPS, functions: Map<string, FunctionImpl> = FUNCTIONS) {
         this.namespace = namespace;
+        this.parent = parent;
         this.binaryOps = binaryOps;
         this.functions = functions;
         this.linkResolver = linkResolver;
@@ -35,6 +38,7 @@ export class Context {
 
     /** Attempts to resolve a variable name in the context. */
     public get(name: string): LiteralField {
+        if (!this.namespace.value.has(name) && this.parent != null) return this.parent.get(name);
         return this.namespace.value.get(name) ?? Fields.NULL;
     }
 
@@ -86,9 +90,20 @@ export class Context {
                         if (linkValue.valueType == 'null') return Fields.NULL;
                         return linkValue.value.get(index.value) ?? Fields.NULL;
                     case "array":
-                        if (index.valueType != 'number') return "array indexing requires a numeric index (array[index])";
-                        if (index.value >= obj.value.length || index.value < 0) return Fields.NULL;
-                        return obj.value[index.value];
+                        if (index.valueType == 'number') {
+                            if (index.value >= obj.value.length || index.value < 0) return Fields.NULL;
+                            return obj.value[index.value];
+                        } else if (index.valueType == 'string') {
+                            let result = [];
+                            for (let value of obj.value) {
+                                let next = this.evaluate(Fields.index(value, index));
+                                if (typeof next == "string") continue;
+                                result.push(next);
+                            }
+                            return Fields.array(result);
+                        } else {
+                            return "Array indexing requires either a number (to get a specific element), or a string (to map all elements inside the array)";
+                        }
                     case "string":
                         if (index.valueType != 'number') return "string indexing requires a numeric index (string[index])";
                         if (index.value >= obj.value.length || index.value < 0) return Fields.NULL;
@@ -121,6 +136,15 @@ export class Context {
                         return Fields.NULL;
                 }
         }
+    }
+
+    /** Deep copy a context. */
+    public copy(): Context {
+        return new Context(this.linkResolver,
+            this.parent,
+            Fields.deepCopy(this.namespace) as LiteralFieldRepr<'object'>,
+            this.binaryOps,
+            this.functions);
     }
 }
 
@@ -421,4 +445,40 @@ export const FUNCTIONS = new Map<string, FunctionImpl>()
         if (!pattern.startsWith("^") && !pattern.endsWith("$")) pattern = "^" + pattern + "$";
         
         return Fields.bool(!!value.match(pattern));
+    })
+    .set("replace", (args, context) => {
+        if (args.length != 3) return "replace(string, pattern, replacement) requires exactly 3 arguments";
+        if (args[0].valueType != "string" || args[1].valueType != "string" || args[2].valueType != "string") return "replace(string, pattern, replacement) requires string arguments";
+        
+        let str = args[0].value;
+        let toReplace = args[1].value;
+        let replacement = args[2].value;
+        
+        return Fields.string(str.replace(toReplace, replacement));
+    })
+    .set("lower", (args, context) => {
+        if (args.length != 1) return "lower(string) requires exactly 1 string argument";
+        if (args[0].valueType != "string") return "lower(string) requires exactly 1 string argument";
+
+        return Fields.string(args[0].value.toLocaleLowerCase());
+    })
+    .set("upper", (args, context) => {
+        if (args.length != 1) return "upper(string) requires exactly 1 string argument";
+        if (args[0].valueType != "string") return "upper(string) requires exactly 1 string argument";
+
+        return Fields.string(args[0].value.toLocaleUpperCase());
+    })
+    .set("sum", (args, context) => {
+        if (args.length != 1) return "sum(array) takes exactly 1 array argument";
+        if (args[0].valueType != "array") return "sum(array) takes exactly 1 array argument";
+        
+        if (args[0].value.length == 0) return Fields.NULL;
+        let value = args[0].value[0];
+        for (let index = 1; index < args[0].value.length; index++) {
+            let next = context.evaluate(Fields.binaryOp(value, '+', args[0].value[index]));
+            if (typeof next == "string") continue;
+            value = next;
+        }
+
+        return value;
     });
