@@ -275,9 +275,14 @@ test("Parse binary source", () => {
 
 test("Parse negated parens source", () => {
     expect(EXPRESSION.source.tryParse("-(#neat)")).toEqual(Sources.negate(Sources.tag("#neat")));
+    expect(EXPRESSION.source.tryParse("!(#neat)")).toEqual(Sources.negate(Sources.tag("#neat")));
     expect(EXPRESSION.source.tryParse("-(\"meme\" & #dirty)")).toEqual(
         Sources.negate(Sources.binaryOp(Sources.folder("meme"), '&', Sources.tag("#dirty"))));
+    expect(EXPRESSION.source.tryParse("!(\"meme\" & #dirty)")).toEqual(
+        Sources.negate(Sources.binaryOp(Sources.folder("meme"), '&', Sources.tag("#dirty"))));
     expect(EXPRESSION.source.tryParse("-\"meme\" & #dirty")).toEqual(
+        Sources.binaryOp(Sources.negate(Sources.folder("meme")), '&', Sources.tag("#dirty")));
+    expect(EXPRESSION.source.tryParse("!\"meme\" & #dirty")).toEqual(
         Sources.binaryOp(Sources.negate(Sources.folder("meme")), '&', Sources.tag("#dirty")));
 });
 
