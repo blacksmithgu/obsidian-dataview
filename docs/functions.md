@@ -39,7 +39,7 @@ Operations that manipulate values inside of container objects.
 Checks if the given container type has the given value in it. This function behave slightly differently based on whether
 the first argument is an object, a list, or a string.
 
-- For objects, checks if the object has an entry with the given name. For example,
+- For objects, checks if the object has a key with the given name. For example,
     ```
     contains(file, "ctime") = true
     contains(file, "day") = true (if file has a date in it's title, false otherwise)
@@ -94,7 +94,11 @@ length(object("hello", 1, "goodbye", 2)) = 2
 
 ##### `sum(array)`
 
-Sums all numeric values in the array1
+Sums all numeric values in the array
+
+```
+sum(list(1, 2, 3)) = 6
+```
 
 ---
 
@@ -143,3 +147,9 @@ upper("test") = "TEST"
 ##### `default(field, value)`
 
 If `field` is null, return `value`; otherwise return `field`. Useful for replacing null values with defaults.
+
+- For example, to show projects which haven't been completed yet, use `"incomplete"` as their defualt value: 
+
+```
+default(dateCompleted, "incomplete")
+```
