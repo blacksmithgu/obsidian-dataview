@@ -39,6 +39,10 @@ If the file has a date inside it's title (of form `yyyy-mm-dd` or `yyyymmdd`), i
 
 - `file.day`: The date contained in the file title (a date).
 
+If a file has tags (anywhere in the note, not just the `tags:` yaml field), it has the following attribute:
+
+- `file.tags`: An array of all tags in the note. Subtags are broken down by each level, so `#Tag/1/A` will be stored in the array as `[#Tag, #Tag/1, #Tag/1/A]`
+
 ## Calculated Fields
 
 You can add and subtract, multiply and divide, as well as compare fields. For example `"/" + file.name` is a computed
