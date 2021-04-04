@@ -156,7 +156,7 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
     identifierDot: q => P.regexp(/[\p{Letter}\p{Emoji_Presentation}][\p{Letter}\p{Emoji_Presentation}\.\w_-]*/u).desc("variable identifier"),
 
     // An Obsidian link of the form [[<link>]].
-    link: q => P.regexp(/\[\[(.*)\]\]/u, 1).desc("file link"),
+    link: q => P.regexp(/\[\[(.*?)\]\]/u, 1).desc("file link"),
 
     // Binary plus or minus operator.
     binaryPlusMinus: q => P.regexp(/\+|-/).map(str => str as BinaryOp).desc("'+' or '-'"),

@@ -1,5 +1,6 @@
 import { DateTime, Duration } from 'luxon';
 import { Field, LiteralField } from 'src/query';
+import { normalizeDuration } from './util/normalize';
 
 /** Make an Obsidian-friendly internal link. */
 export function createAnchor(text: string, target: string, internal: boolean): HTMLAnchorElement {
@@ -101,7 +102,7 @@ export function renderMinimalDate(time: DateTime): string {
 
 /** Render a duration in a minimal format to save space. */
 export function renderMinimalDuration(dur: Duration): string {
-	dur = dur.shiftTo("years", "months", "weeks", "days", "hours", "minutes", "seconds", "milliseconds").normalize();
+	dur = normalizeDuration(dur);
 
 	let result = "";
 	if (dur.years) result += `${dur.years} years, `;

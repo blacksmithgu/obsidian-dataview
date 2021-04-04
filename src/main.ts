@@ -23,14 +23,12 @@ export default class DataviewPlugin extends Plugin {
 	settings: DataviewSettings;
 	workspace: Workspace;
 
-	index: FullIndex;
-	tasks: TaskCache;
+	index: FullIndex = null;
+	tasks: TaskCache = null;
 
 	async onload() {
 		this.settings = Object.assign(DEFAULT_SETTINGS, await this.loadData());
 		this.workspace = this.app.workspace;
-		this.index = null;
-		this.tasks = null;
 
 		this.addSettingTab(new DataviewSettingsTab(this.app, this));
 
@@ -96,7 +94,7 @@ export default class DataviewPlugin extends Plugin {
 
 	private wrapWithEnsureTaskIndex(ctx: MarkdownPostProcessorContext, container: HTMLElement, success: () => MarkdownRenderChild): EnsurePredicateRenderer {
 		return new EnsurePredicateRenderer(ctx, container,
-			() => (this.index != null) && (this.tasks != null),
+			() => (this.index != null) && (this.tasks != null) && (this.index != undefined) && (this.tasks != undefined),
 			success);
 	}
 }

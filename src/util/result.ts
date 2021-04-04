@@ -24,8 +24,18 @@ export class Result<T, E> {
         else return Result.failure<U, E>(this.error);
     }
 
+    public mapErr<U>(func: (err: E) => U): Result<T, U> {
+        if (this.success) return Result.success<T, U>(this.result);
+        else return Result.failure<T, U>(func(this.error));
+    }
+
     public flatMap<U>(func: (res: T) => Result<U, E>): Result<U, E> {
         if (this.success) return func(this.result);
         else return Result.failure<U, E>(this.error);
+    }
+
+    public flatMapErr<U>(func: (err: E) => Result<T, U>): Result<T, U> {
+        if (this.success) return Result.success<T, U>(this.result);
+        else return func(this.error);
     }
 }

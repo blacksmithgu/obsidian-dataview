@@ -1,5 +1,6 @@
 /** Evaluates fields in the expression language. */
 import { BinaryOp, LiteralType, LiteralField, LiteralFieldRepr, Field, Fields } from 'src/query';
+import { normalizeDuration } from "src/util/normalize";
 
 /////////////////////////////////
 // Core Context Implementation //
@@ -268,14 +269,14 @@ export const BINARY_OPS = BinaryOpHandler.create()
         le: (a, b) => Fields.bool(a.value < b.value)
     })
     // Date Operations.
-    .add("-", 'date', 'date', (a, b) => Fields.literal('duration', b.value.until(a.value).toDuration("seconds")))
+    .add("-", 'date', 'date', (a, b) => Fields.literal('duration', normalizeDuration(b.value.until(a.value).toDuration("seconds"))))
     .addComparison('date', {
         equals: (a, b) => Fields.bool(a.value.equals(b.value)),
         le: (a, b) => Fields.bool(a.value < b.value)
     })
     // Duration operations.
-    .add('+', 'duration', 'duration', (a, b) => Fields.literal('duration', a.value.plus(b.value)))
-    .add('-', 'duration', 'duration', (a, b) => Fields.literal('duration', a.value.minus(b.value)))
+    .add('+', 'duration', 'duration', (a, b) => Fields.literal('duration', normalizeDuration(a.value.plus(b.value))))
+    .add('-', 'duration', 'duration', (a, b) => Fields.literal('duration', normalizeDuration(a.value.minus(b.value))))
     .addComparison('duration', {
         equals: (a, b) => Fields.bool(a.value.equals(b.value)),
         le: (a, b) => Fields.bool(a.value < b.value)
@@ -300,6 +301,11 @@ export const BINARY_OPS = BinaryOpHandler.create()
             result.set(key, value);
         }
         return Fields.object(result);
+    })
+    // Link operations.
+    .addComparison('link', {
+        equals: (a, b) => Fields.bool(a.value == b.value),
+        le: (a, b) => Fields.bool(a.value < b.value)
     })
     // Boolean operations.
     .add('&', '*', '*', (a, b) => Fields.literal('boolean', Fields.isTruthy(a) && Fields.isTruthy(b)))
