@@ -1,11 +1,13 @@
 /** Monadic utility class for handling potentially failing computations. */
 export class Result<T, E> {
 
-    static success<T, E>(result: T) {
+    /** Create a successful result. */
+    public static success<T, E>(result: T) {
         return new Result<T, E>(true, result, null);
     }
 
-    static failure<T, E>(error: E) {
+    /** Create a failing result. */
+    public static failure<T, E>(error: E) {
         return new Result<T, E>(false, null, error);
     }
 

@@ -16,14 +16,14 @@ export class Context {
     /** Registry of binary operation handlers. */
     public readonly binaryOps: BinaryOpHandler;
     /** Registry of function handlers. */
-    public readonly functions: Map<string, FunctionImpl>;
+    public readonly functions: FunctionHandler;
     /** Resolves links into the metadata for the linked file. */
     public readonly linkResolver: LinkResolverImpl;
     /** The parent context which this context will lookup variables from if they are not present here. */
     public readonly parent?: Context;
 
     public constructor(linkResolver: LinkResolverImpl, parent: Context = null, namespace: LiteralFieldRepr<'object'> = Fields.emptyObject(),
-        binaryOps: BinaryOpHandler = BINARY_OPS, functions: Map<string, FunctionImpl> = FUNCTIONS) {
+        binaryOps: BinaryOpHandler = BINARY_OPS, functions: FunctionHandler = FUNCTIONS) {
         this.namespace = namespace;
         this.parent = parent;
         this.binaryOps = binaryOps;
@@ -69,9 +69,7 @@ export class Context {
                 // TODO: Add later support for lambdas as an additional thing you can call.
                 switch (field.func.type) {
                     case "variable":
-                        let func = this.functions.get(field.func.name);
-                        if (!func) return `Function ${field.func} does not exist.`;
-                        return func(args, this);
+                        return this.functions.evaluate(field.func.name, args, this);
                     default:
                         return `Cannot call field type '${field.func}' as a function`;
                 }
@@ -337,23 +335,119 @@ export const BINARY_OPS = BinaryOpHandler.create()
 /** A function implementation which maps arguments to some output result. */
 export type FunctionImpl = (args: LiteralField[], context: Context) => LiteralField | string;
 
-/** A map of function name -> function implementation. */
-export const FUNCTIONS = new Map<string, FunctionImpl>()
-    .set("length", (args, context) => {
-        if (args.length == 0 || args.length > 1) return "length() requires exactly 1 argument";
-        let value = args[0];
+export interface Function {
+    /** The name of the function. Functions can have the same name as long as their  */
+    name: string;
+    /** The function */
+    impl: FunctionImpl;
+    /** The argument types this function accepts. */
+    args?: LiteralTypeOrAll[];
+}
 
-        // TODO: Add links to this.
-        switch (value.valueType) {
-            case "array": return Fields.number(value.value.length);
-            case "object": return Fields.number(value.value.size);
-            case "string": return Fields.number(value.value.length);
-            default: return Fields.number(0);
+export class FunctionHandler {
+    /** Maps function names -> list of function implementations. */
+    private map: Map<string, Function[]>;
+    /** Maps function names -> variable positions which should be vectorized. */
+    private vectorized: Map<string, number[]>;
+
+    public constructor() {
+        this.map = new Map();
+        this.vectorized = new Map();
+    }
+
+    public addFunction(func: Function): FunctionHandler {
+        if (!this.map.has(func.name)) this.map.set(func.name, []);
+        this.map.get(func.name).push(func);
+        return this;
+    }
+
+    public add1<T extends LiteralTypeOrAll>(name: string, arg: LiteralTypeOrAll,
+        impl: (arg: LiteralFieldReprAll<T>, context: Context) => LiteralField | string): FunctionHandler {
+        return this.addFunction({
+            name,
+            args: [arg],
+            impl: (args, context) => impl(args[0] as LiteralFieldReprAll<T>, context)
+        });
+    }
+
+    public add2<T extends LiteralTypeOrAll, U extends LiteralTypeOrAll>(name: string, arg1: T, arg2: U,
+        impl: (arg1: LiteralFieldReprAll<T>, arg2: LiteralFieldReprAll<U>, context: Context) => LiteralField | string): FunctionHandler {
+        return this.addFunction({
+            name,
+            args: [arg1, arg2],
+            impl: (args, context) => impl(args[0] as LiteralFieldReprAll<T>, args[1] as LiteralFieldReprAll<U>, context)
+        });
+    }
+
+    public add3<T extends LiteralTypeOrAll, U extends LiteralTypeOrAll, V extends LiteralTypeOrAll>(name: string,
+        arg1: T, arg2: U, arg3: V,
+        impl: (arg1: LiteralFieldReprAll<T>, arg2: LiteralFieldReprAll<U>, arg3: LiteralFieldReprAll<V>, context: Context) => LiteralField | string): FunctionHandler {
+        return this.addFunction({
+            name,
+            args: [arg1, arg2, arg3],
+            impl: (args, context) => impl(args[0] as LiteralFieldReprAll<T>, args[1] as LiteralFieldReprAll<U>, args[2] as LiteralFieldReprAll<V>, context)
+        });
+    }
+
+    public addVararg(name: string, impl: FunctionImpl): FunctionHandler {
+        return this.addFunction({ name, impl });
+    }
+
+    public vectorize(name: string, positions: number[]): FunctionHandler {
+        this.vectorized.set(name, positions);
+        return this;
+    }
+
+    public evaluate(name: string, args: LiteralField[], context: Context): LiteralField | string {
+        if (!this.map.has(name)) return `Unrecognized function '${name}'`;
+        let vectorize = this.vectorized.has(name) ? this.vectorized.get(name) : [];
+
+        // Check for lists in vectorize positions.
+        for (let pos of vectorize) {
+            if (pos > args.length) continue;
+            let value = args[pos];
+            if (value.valueType != "array") continue;
+
+            let array = [];
+            let copy = [].concat(args);
+            for (let val of value.value) {
+                copy[pos] = val;
+                let result = this.evaluate(name, copy, context);
+                if (typeof result == "string") return result;
+                array.push(result);
+            }
+
+            return Fields.array(array);
         }
-    })
-    .set("list", (args, context) => Fields.array(args))
-    .set("array", (args, context) => Fields.array(args))
-    .set("object", (args, context) => {
+
+        // Vectorizing is done, we can just typecheck now.
+        outer: for (let func of this.map.get(name)) {
+            if (!func.args) return func.impl(args, context);
+
+            if (args.length != func.args.length) continue;
+            for (let index = 0; index < args.length; index++) {
+                if (func.args[index] == '*') continue;
+                if (func.args[index] != args[index].valueType) continue outer;
+            }
+
+            return func.impl(args, context);
+        }
+
+        return `Failed to find implementation of '${name}' for arguments: ${args.map(e => e.valueType).join(", ")}`;
+    }
+}
+
+// Shorthand for convienence.
+export type LFR<T extends LiteralTypeOrAll> = LiteralFieldReprAll<T>;
+
+export const FUNCTIONS = new FunctionHandler()
+    .add1("length", "array", (field: LFR<'array'>, context) => Fields.number(field.value.length))
+    .add1("length", "object", (field: LFR<'object'>, context) => Fields.number(field.value.size))
+    .add1("length", "string", (field: LFR<'string'>, context) => Fields.number(field.value.length))
+    .add1("length", "*", (field: LFR<'*'>, context) => Fields.number(0))
+    .addVararg("list", (args, context) => Fields.array(args))
+    .addVararg("array", (args, context) => Fields.array(args))
+    .addVararg("object", (args, context) => {
         if (args.length % 2 != 0) return "object(key1, value1, ...) requires an even number of arguments";
         let result = new Map<string, LiteralField>();
         for (let index = 0; index < args.length; index += 2) {
@@ -364,37 +458,24 @@ export const FUNCTIONS = new Map<string, FunctionImpl>()
 
         return Fields.object(result);
     })
-    .set("contains", (args, context) => {
-        if (args.length != 2) return "contains(object|array|string, field) requires exactly 2 arguments";
-        let object = args[0];
-        let value = args[1];
-
-        switch (object.valueType) {
-            case "object":
-                if (value.valueType != "string") return "contains(object, field) requires a string argument";
-                return Fields.bool(object.value.has(value.value));
-            case "link":
-                if (value.valueType != "string") return "contains(object, field) requires a string argument";
-                let linkValue = context.linkResolver(object.value);
-                if (linkValue.valueType == 'null') return Fields.bool(false);
-                return Fields.bool(linkValue.value.has(value.value));
-            case "array":
-                for (let entry of object.value) {
-                    let matches = context.evaluate(Fields.binaryOp(entry, "=", value));
-                    if (typeof matches == 'string') continue;
-
-                    if (Fields.isTruthy(matches)) return Fields.bool(true);
-                }
-
-                return Fields.bool(false);
-            case "string":
-                if (value.valueType != "string") return "contains(string, field) requires a string field";
-                return Fields.bool(object.value.includes(value.value));
-            default:
-                return "contains(object|array|string, field) requires an object, array, or string for it's first argument";
-        }
+    .add2("contains", "object", "string", (obj: LFR<"object">, key: LFR<"string">, context) => Fields.bool(obj.value.has(key.value)))
+    .add2("contains", "link", "string", (link: LFR<"link">, key: LFR<'string'>, context) => {
+        let linkValue = context.linkResolver(link.value);
+        if (linkValue.valueType == 'null') return Fields.bool(false);
+        return Fields.bool(linkValue.value.has(key.value));
     })
-    .set("extract", (args, context) => {
+    .add2("contains", "array", "*", (array: LFR<"array">, value: LFR<"*">, context) => {
+        for (let entry of array.value) {
+            let matches = context.evaluate(Fields.binaryOp(entry, "=", value));
+            if (typeof matches == 'string') continue;
+            if (Fields.isTruthy(matches)) return Fields.bool(true);
+        }
+        return Fields.bool(false);
+    })
+    .add2("contains", "string", "string", (haystack: LFR<"string">, needle: LFR<"string">, context) => {
+        return Fields.bool(haystack.value.includes(needle.value));
+    })
+    .addVararg("extract", (args, context) => {
         if (args.length == 0) return "extract(object, key1, ...) requires at least 1 argument";
         let object = args[0];
 
@@ -414,11 +495,9 @@ export const FUNCTIONS = new Map<string, FunctionImpl>()
                 return "extract(object, key1, ...) must be called on an object";
         }
     })
-    .set("reverse", (args, context) => {
-        if (args.length != 1) return "reverse(array) takes exactly 1 argument";
-        if (args[0].valueType != 'array') return "reverse(array) can only be called on lists";
-
-        let array = args[0].value;
+    .vectorize("extract", [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]) // lol
+    .add1("reverse", "array", (list: LFR<"array">, context) => {
+        let array = list.value;
         let result = [];
         for (let index = array.length - 1; index >= 0; index--) {
             result.push(array[index]);
@@ -426,11 +505,8 @@ export const FUNCTIONS = new Map<string, FunctionImpl>()
 
         return Fields.array(result);
     })
-    .set("sort", (args, context) => {
-        if (args.length != 1) return "sort(array) takes exactly 1 argument";
-        if (args[0].valueType != 'array') return "sort(array) can only be called on lists";
-
-        let result = [].concat(args[0].value);
+    .add1("sort", "array", (list: LFR<"array">, context) => {
+        let result = [].concat(list.value);
         result.sort((a, b) => {
             let le = context.evaluate(Fields.binaryOp(a, "<", b));
             if (typeof le == "string") return 0;
@@ -445,67 +521,41 @@ export const FUNCTIONS = new Map<string, FunctionImpl>()
 
         return Fields.array(result);
     })
-    .set("regexmatch", (args, context) => {
-        if (args.length != 2) return "regexmatch(pattern, field) requires exactly 2 arguments";
-        if (args[0].valueType != "string" || args[1].valueType != "string") return "matches(pattern, field) requires string arguments";
-        
-        let pattern = args[0].value;
-        let value = args[1].value;
-
+    .add2("regexmatch", "string", "string", (patternf: LFR<"string">, fieldf: LFR<"string">, context) => {
+        let pattern = patternf.value, field = fieldf.value;
         if (!pattern.startsWith("^") && !pattern.endsWith("$")) pattern = "^" + pattern + "$";
-        
-        return Fields.bool(!!value.match(pattern));
-    })
-    .set("replace", (args, context) => {
-        if (args.length != 3) return "replace(string, pattern, replacement) requires exactly 3 arguments";
-        if (args[0].valueType != "string" || args[1].valueType != "string" || args[2].valueType != "string") return "replace(string, pattern, replacement) requires string arguments";
-        
-        let str = args[0].value;
-        let toReplace = args[1].value;
-        let replacement = args[2].value;
-        
-        return Fields.string(str.replace(toReplace, replacement));
-    })
-    .set("lower", (args, context) => {
-        if (args.length != 1) return "lower(string) requires exactly 1 string argument";
-        if (args[0].valueType != "string") return "lower(string) requires exactly 1 string argument";
+        return Fields.bool(!!field.match(pattern));
+    }).vectorize("regexmatch", [0, 1])
+    .add1("lower", "string", (str: LFR<"string">, context) => Fields.string(str.value.toLocaleLowerCase())).vectorize("lower", [0])
+    .add1("upper", "string", (str: LFR<"string">, context) => Fields.string(str.value.toLocaleUpperCase())).vectorize("upper", [0])
+    .add3("replace", "string", "string", "string", (str: LFR<'string'>, pat: LFR<'string'>, repr: LFR<'string'>) => {
+        return Fields.string(str.value.replace(pat.value, repr.value));
+    }).vectorize("replace", [0, 1, 2])
+    // default being vectorized is nice, but maybe you want to use it on a list to default it... in that case use ldefault().
+    .add2("default", "*", "*", (f: LFR<'*'>, d: LFR<'*'>, context) => f.valueType == 'null' ? d : f).vectorize("default", [0])
+    .add2("ldefault", "array", "*", (f: LFR<'array'>, d: LFR<'*'>, context) => f)
+    // reduction operators.
+    .add2("reduce", "array", "string", (list: LFR<'array'>, opf: LFR<'string'>, context) => {
+        if (list.value.length == 0) return Fields.NULL;
 
-        return Fields.string(args[0].value.toLocaleLowerCase());
-    })
-    .set("upper", (args, context) => {
-        if (args.length != 1) return "upper(string) requires exactly 1 string argument";
-        if (args[0].valueType != "string") return "upper(string) requires exactly 1 string argument";
-
-        return Fields.string(args[0].value.toLocaleUpperCase());
-    })
-    .set("default", (args, context) => {
-        if (args.length != 2) return "default(field, defaultvalue) requires 2 arguments";
-
-        if (args[0].valueType == 'null') return args[1];
-        return args[0];
-    })
-    .set("reduce", (args, context) => {
-        if (args.length != 2) return "reduce(array, op) takes 2 arguments";
-        if (args[0].valueType != "array") return "reduce(array, op) requires an array as the first argument";
-        if (args[1].valueType != "string") return "reduce(array, op) requires a string operator (like '+') as an argument";
-        if (args[0].value.length == 0) return Fields.NULL;
-
-        let op = args[1].value;
+        let op = opf.value;
         if (op != '+' && op != '-' && op != '*' && op != '/' && op != '&' && op != '|')
             return "reduce(array, op) supports '+', '-', '/', '*', '&', and '|'";
 
-        let value = args[0].value[0];
-        for (let index = 1; index < args[0].value.length; index++) {
-            let next = context.evaluate(Fields.binaryOp(value, op, args[0].value[index]));
+        let value = list.value[0];
+        for (let index = 1; index < list.value.length; index++) {
+            let next = context.evaluate(Fields.binaryOp(value, op, list.value[index]));
             if (typeof next == "string") return next;
             value = next;
         }
 
         return value;
     })
-    .set("sum", (args, context) => {
-        if (args.length != 1) return "sum(array) takes exactly 1 array argument";
-        if (args[0].valueType != "array") return "sum(array) takes exactly 1 array argument";
-
-        return context.evaluate(Fields.func(Fields.variable("reduce"), [args[0], Fields.string("+")]));
-    });
+    .vectorize("reduce", [1])
+    .add1("sum", "array", (list: LFR<'array'>, context) => {
+        return context.evaluate(Fields.func(Fields.variable("reduce"), [list, Fields.string("+")]));
+    })
+    .add1("any", "array", (list: LFR<"array">, context) => Fields.bool(list.value.some(v => Fields.isTruthy(v))))
+    .addVararg("any", (args, context) => Fields.bool(args.some(v => Fields.isTruthy(v))))
+    .add1("all", "array", (list: LFR<"array">, context) => Fields.bool(list.value.every(v => Fields.isTruthy(v))))
+    .addVararg("all", (args, context) => Fields.bool(args.every(v => Fields.isTruthy(v))));

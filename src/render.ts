@@ -15,30 +15,6 @@ export function createAnchor(text: string, target: string, internal: boolean): H
 	return a;
 }
 
-/** Pretifies YAML keys like 'time-played' into 'Time Played' */
-export function prettifyYamlKey(key: string): string {
-	if (key.length == 0) return key;
-	let result = key[0].toUpperCase();
-
-	// Hacky camel case detection. Will do unwanted things for stuff like 'LaTeX'.
-	// May remove in the future, dunno.
-	for (let index = 1; index < key.length; index++) {
-		let isNewWord = key[index].toUpperCase() == key[index]
-			&& key[index - 1].toLowerCase() == key[index - 1];
-		isNewWord = isNewWord || (key[index - 1] == "_");
-		isNewWord = isNewWord || (key[index - 1] == "-");
-		isNewWord = isNewWord || (key[index - 1] == ".");
-		
-		if (isNewWord) {
-			result += " " + key[index].toUpperCase();
-		} else {
-			result += key[index];
-		}
-	}
-
-	return result.replace("-", "").replace("_", "").replace(".", "");
-}
-
 /** Create a list inside the given container, with the given data. */
 export function renderList(container: HTMLElement, elements: (string | HTMLElement)[]) {
 	let listEl = container.createEl('ul', { cls: 'list-view-ul' });
@@ -172,10 +148,12 @@ export function renderField(field: LiteralField, nullField: string, expandList: 
 				}
 				return "{ " + entries.join(", ") + " }";
 			}
-		case "null":
-			return nullField;
 		case "link":
 			return createAnchor(getFileName(field.value), field.value.replace(".md", ""), true);
+		case "null":
+			return nullField;
+		case "html":
+			return field.value;
 		default:
 			return "" + field.value;
 	}

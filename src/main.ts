@@ -1,5 +1,5 @@
 import { MarkdownRenderChild, Plugin, Workspace, Vault, MarkdownPostProcessorContext, PluginSettingTab, App, Setting } from 'obsidian';
-import { createAnchor, prettifyYamlKey, renderErrorPre, renderField, renderList, renderMinimalDate, renderTable } from 'src/render';
+import { createAnchor, renderErrorPre, renderField, renderList, renderMinimalDate, renderTable } from 'src/render';
 import { FullIndex, TaskCache } from 'src/index';
 import * as Tasks from 'src/tasks';
 import { Query } from 'src/query';

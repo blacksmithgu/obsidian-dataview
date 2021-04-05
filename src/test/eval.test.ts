@@ -85,6 +85,18 @@ test("Evaluate simple link resolution", () => {
 });
 
 // <-- Functions -->
+// <-- Function vectorization -->
+
+test("Evaluate lower(list)", () => {
+    expect(parseEval("lower(list(\"A\", \"B\"))")).toEqual(Fields.array([Fields.string("a"), Fields.string("b")]));
+})
+
+test("Evaluate replace(list, string, string)", () => {
+    expect(parseEval("replace(list(\"yes\", \"re\"), \"e\", \"a\")")).toEqual(Fields.array([
+        Fields.string("yas"), Fields.string("ra")
+    ]));
+})
+
 // <-- Length -->
 
 test("Evaluate length(array)", () => {
@@ -186,6 +198,26 @@ test("Evaluate lower()/upper()", () => {
 test("Evaluate default()", () => {
     expect(parseEval("default(null, 1)")).toEqual(Fields.number(1));
     expect(parseEval("default(2, 1)")).toEqual(Fields.number(2));
+});
+
+// <-- any/all() -->
+
+test("Evaluate any()", () => {
+    expect(parseEval("any(true, false)")).toEqual(Fields.bool(true));
+    expect(parseEval("any(list(true, false))")).toEqual(Fields.bool(true));
+})
+
+test("Evaluate all()", () => {
+    expect(parseEval("all(true, false)")).toEqual(Fields.bool(false));
+    expect(parseEval("all(true, list(false))")).toEqual(Fields.bool(true));
+    expect(parseEval("all(list(true, false))")).toEqual(Fields.bool(false));
+    expect(parseEval("all(list(true, list(false)))")).toEqual(Fields.bool(true));
+})
+
+test("Evaluate vectorized all()", () => {
+    expect(parseEval("all(regexmatch(\"a+\", list(\"a\", \"aaaa\")))")).toEqual(Fields.bool(true));
+    expect(parseEval("all(regexmatch(\"a+\", list(\"a\", \"aaab\")))")).toEqual(Fields.bool(false));
+    expect(parseEval("any(regexmatch(\"a+\", list(\"a\", \"aaab\")))")).toEqual(Fields.bool(true));
 });
 
 /** Parse a field expression and evaluate it in the simple context. */

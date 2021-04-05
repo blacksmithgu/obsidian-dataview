@@ -5,7 +5,7 @@ import { DateTime, Duration } from 'luxon';
 export type QueryType = 'list' | 'table' | 'task';
 
 /** The literal types supported by the query engine. */
-export type LiteralType = 'boolean' | 'number' | 'string' | 'date' | 'duration' | 'link' | 'array' | 'object' | 'null';
+export type LiteralType = 'boolean' | 'number' | 'string' | 'date' | 'duration' | 'link' | 'array' | 'object' | 'html' | 'null';
 /** Maps the string type to it's actual javascript representation. */
 export type LiteralTypeRepr<T extends LiteralType> =
     T extends 'boolean' ? boolean :
@@ -17,6 +17,7 @@ export type LiteralTypeRepr<T extends LiteralType> =
     T extends 'link'? string :
     T extends 'array' ? Array<LiteralField> :
     T extends 'object' ? Map<string, LiteralField> :
+    T extends 'html' ? HTMLElement :
     any;
 
 /** Valid binary operators. */
@@ -33,6 +34,7 @@ export type LiteralField =
     | LiteralFieldRepr<'link'>
     | LiteralFieldRepr<'array'>
     | LiteralFieldRepr<'object'>
+    | LiteralFieldRepr<'html'>
     | LiteralFieldRepr<'null'>;
 
 /** Literal representation of some field type. */
@@ -188,6 +190,10 @@ export namespace Fields {
         return object(new Map());
     }
 
+    export function html(elem: HTMLElement): LiteralFieldRepr<'html'> {
+        return Fields.literal('html', elem);
+    }
+
     export function binaryOp(left: Field, op: BinaryOp, right: Field): Field {
         return { type: 'binaryop', left, op, right } as BinaryOpField;
     }
@@ -237,6 +243,12 @@ export namespace Fields {
                 return field.value.toMillis() != 0;
             case "duration":
                 return field.value.as("seconds") != 0;
+            case "object":
+                return field.value.size > 0;
+            case "array":
+                return field.value.length > 0;
+            case "html":
+                return true;
             default:
                 return false;
         }
@@ -279,6 +291,8 @@ export namespace Fields {
                 return `array:[${field.value.map(toLiteralKey).join(", ")}]`;
             case "object":
                 return `object:[${Object.entries(field.value).map(val => `${val[0]}:${toLiteralKey(val[1])}`).join(", ")}]`
+            case "html":
+                return "" + field.value;
         }
     }
 
