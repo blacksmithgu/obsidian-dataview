@@ -33,7 +33,7 @@ export const DURATION_TYPES = {
  * Keywords which cannot be used as variables directly. Use `row.<thing>` if it is a variable you have defined and want
  * to access.
  */
-export const KEYWORDS = ["FROM", "WHERE", "LIMIT", "GROUP", "SORT", "FLATTEN", "TABLE", "LIST", "TASK"];
+export const KEYWORDS = ["FROM", "WHERE", "LIMIT", "GROUP", "FLATTEN"];
 
 ///////////////
 // Utilities //
@@ -225,7 +225,7 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
 
     // Field parsing.
     variableField: q => q.identifier.chain(r => {
-        if (KEYWORDS.contains(r.toUpperCase())) {
+        if (KEYWORDS.includes(r.toUpperCase())) {
             return P.fail("Variable fields cannot be a keyword (" + KEYWORDS.join(" or ") + ")");
         } else {
             return P.succeed(Fields.variable(r));
