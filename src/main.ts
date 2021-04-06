@@ -277,6 +277,7 @@ class DataviewTaskRenderer extends MarkdownRenderChild {
 
 		this.index = index;
 		this.tasks = tasks;
+		this.origin = origin;
 		this.vault = vault;
 		this.settings = settings;
 	}

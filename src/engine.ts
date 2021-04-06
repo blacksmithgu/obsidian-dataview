@@ -196,7 +196,9 @@ export function execute(query: Query, index: FullIndex, origin: string): QueryRe
     let rootContext = new Context(defaultLinkResolver(index, origin));
 
     // Collect file metadata about the file this query is running in.
-    rootContext.set("this", createContext(origin, index, null).namespace);
+    if (origin) {
+        rootContext.set("this", createContext(origin, index, null).namespace);
+    }
 
     // Then, map all of the files to their corresponding contexts.
     let rows: Context[] = [];
