@@ -22,7 +22,14 @@ There are 7 basic field types, corresponding to different types of values:
   `list(elem1, elem2, ...)`.
 - `object`: A mapping of name -> value. Automatically created from YAML objects. You can access elements inside an
   object using dot-notation or array notation (`object.field` or `object["field"]`).
-- `string`: Generic fallback; if a field is not a more specific type, it is a string, which is just text. To use a string in a query, use quotes - so `"string"`.
+- `string`: Generic fallback; if a field is not a more specific type, it is a string, which is just text. To use a
+  string in a query, use quotes - so `"string"`.
+
+## Keywords
+
+You cannot use command words (like `LIMIT`, `GROUP`, `SORT`) in queries directly as variables, in order to avoid parsing
+ambiguity. However, if you have fields with those names in frontmatter, you can still access them by referencing through
+the `row` virtual object - i.e., `row.limit` will obtain the `limit` variable from the frontmatter.
 
 ## Implicit Fields
 
@@ -34,14 +41,11 @@ All files have the following implicit attributes:
 - `file.size`: The size (in bytes) of the file (a number).
 - `file.ctime`: The date that the file was created (a date).
 - `file.mtime`: The date that the file was last modified (a date).
+- `file.tags`: An array of all tags in the note. Subtags are broken down by each level, so `#Tag/1/A` will be stored in the array as `[#Tag, #Tag/1, #Tag/1/A]`.
 
 If the file has a date inside it's title (of form `yyyy-mm-dd` or `yyyymmdd`), it also obtains the following attributes:
 
 - `file.day`: The date contained in the file title (a date).
-
-If a file has tags (anywhere in the note, not just the `tags:` yaml field), it has the following attribute:
-
-- `file.tags`: An array of all tags in the note. Subtags are broken down by each level, so `#Tag/1/A` will be stored in the array as `[#Tag, #Tag/1, #Tag/1/A]`
 
 ## Calculated Fields
 

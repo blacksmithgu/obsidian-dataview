@@ -32,7 +32,7 @@ export default class DataviewPlugin extends Plugin {
 
 		this.addSettingTab(new DataviewSettingsTab(this.app, this));
 
-		console.log("Dataview Plugin - Version 0.2.1 Loaded");
+		console.log("Dataview Plugin - Version 0.2.x Loaded");
 
 		if (!this.workspace.layoutReady) {
 			this.workspace.on("layout-ready", async () => this.prepareIndexes());
@@ -51,21 +51,18 @@ export default class DataviewPlugin extends Plugin {
 				return;
 			}
 
-			// TODO: I need a way to get the current file from within a markdown processor... all I can get is a docId
-			// which I'm unsure of how it relates.
-
 			switch (query.header.type) {
 				case 'task':
 					ctx.addChild(this.wrapWithEnsureTaskIndex(ctx, el,
-						() => new DataviewTaskRenderer(query as Query, el, this.index, this.tasks, "", this.app.vault, this.settings)));
+						() => new DataviewTaskRenderer(query as Query, el, this.index, this.tasks, ctx.sourcePath, this.app.vault, this.settings)));
 					break;
 				case 'list':
 					ctx.addChild(this.wrapWithEnsureIndex(ctx, el,
-						() => new DataviewListRenderer(query as Query, el, this.index, "", this.settings)));
+						() => new DataviewListRenderer(query as Query, el, this.index, ctx.sourcePath, this.settings)));
 					break;
 				case 'table':
 					ctx.addChild(this.wrapWithEnsureIndex(ctx, el,
-						() => new DataviewTableRenderer(query as Query, el, this.index, "", this.settings)));
+						() => new DataviewTableRenderer(query as Query, el, this.index, ctx.sourcePath, this.settings)));
 					break;
 			}
 		});

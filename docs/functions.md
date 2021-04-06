@@ -1,7 +1,21 @@
 # Functions
 
 Functions provide various procedures and operations beyond simple arithmetic and comparisons. A list of all function
-references, sorted by general purpose, is shown below:
+references, sorted by general purpose, is shown below.
+
+## Function Vectorization
+
+Most functions can be applied either to single values (like `number`, `string`, `date`, etc.) OR to lists of those
+values. If a function is applied to a list, it also returns a list, where the the function is applied to each element
+in the list. I.e.,
+
+```
+lower("YES") = "yes"
+lower(list("YES", "NO")) = list("yes", "yes")
+
+replace("yes", "e", "a") = "yas"
+replace(list("yes", "ree"), "e", "a") = list("yas", "raa")
+```
 
 ## Constructors
 
@@ -99,6 +113,36 @@ Sums all numeric values in the array
 ```
 sum(list(1, 2, 3)) = 6
 ```
+
+##### `all(array)`
+
+Returns `true` only if all values in the array are truthy. You can also pass multiple arguments to this function, in
+which case it returns `true` only if all arguments are truthy.
+
+```
+all(list(1, 2, 3)) = true
+all(list(true, false)) = false
+all(true, false) = false
+all(true, true, true) = true
+```
+
+##### `any(array)`
+
+Returns `true` if ANY of the values in the array are truthy. You can also pass multiple arguments to this function, in
+which case it returns `true` if any of the arguments are truthy.
+
+```
+any(list(1, 2, 3)) = true
+any(list(true, false)) = true
+any(list(false, false, false)) = false
+all(true, false) = true
+all(false, false) = false
+```
+
+
+##### `none(array)`
+
+Returns `true` if NONE of the values in the array are truthy.
 
 ---
 

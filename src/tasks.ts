@@ -176,7 +176,6 @@ export async function setTaskCheckedInFile(vault: Vault, path: string, taskLine:
 	let match = TASK_REGEX.exec(splitText[taskLine - 1]);
 	if (!match) return;
 
-	let indent = match[1].replace("\t" , "    ").length;
 	let foundText = match[3];
 	let foundCompleted = match[2] == 'X' || match[2] == 'x';
 

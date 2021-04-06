@@ -74,7 +74,8 @@ export class Context {
                         return `Cannot call field type '${field.func}' as a function`;
                 }
             case "index":
-                let obj = this.evaluate(field.object);
+                // Special-case "row" to refer to the namespace itself, to bypass keyword restrictions.
+                let obj = field.object.type == "variable" && field.object.name == "row" ? this.namespace : this.evaluate(field.object);
                 if (typeof obj === 'string') return obj;
                 let index = this.evaluate(field.index);
                 if (typeof index === 'string') return index;
@@ -555,7 +556,12 @@ export const FUNCTIONS = new FunctionHandler()
     .add1("sum", "array", (list: LFR<'array'>, context) => {
         return context.evaluate(Fields.func(Fields.variable("reduce"), [list, Fields.string("+")]));
     })
+    .add1("product", "array", (list: LFR<'array'>, context) => {
+        return context.evaluate(Fields.func(Fields.variable("reduce"), [list, Fields.string("*")]));
+    })
     .add1("any", "array", (list: LFR<"array">, context) => Fields.bool(list.value.some(v => Fields.isTruthy(v))))
     .addVararg("any", (args, context) => Fields.bool(args.some(v => Fields.isTruthy(v))))
     .add1("all", "array", (list: LFR<"array">, context) => Fields.bool(list.value.every(v => Fields.isTruthy(v))))
-    .addVararg("all", (args, context) => Fields.bool(args.every(v => Fields.isTruthy(v))));
+    .addVararg("all", (args, context) => Fields.bool(args.every(v => Fields.isTruthy(v))))
+    .add1("none", "array", (list: LFR<"array">, context) => Fields.bool(!list.value.some(v => Fields.isTruthy(v))))
+    .addVararg("none", (args, context) => Fields.bool(!args.some(v => Fields.isTruthy(v))));

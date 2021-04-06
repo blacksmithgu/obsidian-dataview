@@ -29,6 +29,12 @@ export const DURATION_TYPES = {
     "s": Duration.fromObject({ seconds: 1 })
 };
 
+/**
+ * Keywords which cannot be used as variables directly. Use `row.<thing>` if it is a variable you have defined and want
+ * to access.
+ */
+export const KEYWORDS = ["FROM", "WHERE", "LIMIT", "GROUP", "SORT", "FLATTEN", "TABLE", "LIST", "TASK"];
+
 ///////////////
 // Utilities //
 ///////////////
@@ -218,7 +224,13 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
     source: q => q.binaryOpSource,
 
     // Field parsing.
-    variableField: q => q.identifier.map(Fields.variable).desc("variable"),
+    variableField: q => q.identifier.chain(r => {
+        if (KEYWORDS.contains(r.toUpperCase())) {
+            return P.fail("Variable fields cannot be a keyword (" + KEYWORDS.join(" or ") + ")");
+        } else {
+            return P.succeed(Fields.variable(r));
+        }
+    }).desc("variable"),
     numberField: q => q.number.map(val => Fields.literal('number', val)).desc("number"),
     stringField: q => q.string.map(val => Fields.literal('string', val)).desc("string"),
     boolField: q => q.bool.map(val => Fields.literal('boolean', val)).desc("boolean"),
@@ -250,7 +262,7 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
     negatedField: q => P.seqMap(P.string("!"), q.indexField, (_, field) => Fields.negate(field)).desc("negated field"),
     parensField: q => P.seqMap(P.string("("), P.optWhitespace, q.field, P.optWhitespace, P.string(")"), (_1, _2, field, _3, _4) => field),
     
-    dotPostfix: q => P.seqMap(P.string("."), q.variableField, (_, field) => { return { type: 'dot', field: Fields.string(field.name) } }),
+    dotPostfix: q => P.seqMap(P.string("."), q.identifier, (_, field) => { return { type: 'dot', field: Fields.string(field) } }),
     indexPostfix: q => P.seqMap(P.string("["), P.optWhitespace, q.field, P.optWhitespace, P.string("]"),
         (_, _2, field, _3, _4) => { return { type: 'index', field }}),
     functionPostfix: q => P.seqMap(P.string("("), P.optWhitespace, q.field.sepBy(P.string(",").trim(P.optWhitespace)), P.optWhitespace, P.string(")"),
@@ -316,10 +328,10 @@ export const QUERY_LANGUAGE = P.createLanguage<QueryLanguageTypes>({
     headerClause: q => q.queryType.skip(P.whitespace).chain(qtype => {
         switch (qtype) {
             case "table":
-                return P.sepBy(q.namedField.notFollowedBy(P.whitespace.then(EXPRESSION.source)), P.string(',').trim(P.optWhitespace))
+                return P.sepBy(q.namedField, P.string(',').trim(P.optWhitespace))
                     .map(fields => { return { type: 'table', fields } as QueryHeader });
             case "list":
-                return EXPRESSION.field.notFollowedBy(P.whitespace.then(EXPRESSION.source)).atMost(1)
+                return EXPRESSION.field.atMost(1)
                     .map(format => { return { type: 'list', format: format.length == 1 ? format[0] : undefined }});
             case "task":
                 return P.succeed({ type: 'task' });
@@ -340,10 +352,10 @@ export const QUERY_LANGUAGE = P.createLanguage<QueryLanguageTypes>({
         (_, field) => { return { type: 'group', field }}),
     // Full query parsing.
     clause: q => P.alt(q.fromClause, q.whereClause, q.sortByClause, q.limitClause, q.groupByClause, q.flattenClause),
-    query: q => P.seqMap(q.headerClause.trim(P.optWhitespace), q.fromClause.trim(P.optWhitespace), q.clause.trim(P.optWhitespace).many(), (header, from, clauses) => {
+    query: q => P.seqMap(q.headerClause.trim(P.optWhitespace), q.fromClause.trim(P.optWhitespace).atMost(1), q.clause.trim(P.optWhitespace).many(), (header, from, clauses) => {
         return {
             header,
-            source: from,
+            source: from.length == 0 ? Sources.folder("") : from[0],
             operations: clauses
         } as Query;
     })

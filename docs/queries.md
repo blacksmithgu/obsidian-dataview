@@ -15,12 +15,18 @@ COMMAND argument
 ```
 ~~~
 
-Only the select statement (the `TABLE/LIST/TASK` block which defines **what** to render), and the `FROM` block, which determines **where** to get data from, are required. 
-Queries are executed by fetching all of the data from the source described by the FROM block, and then applying all of the commands (like `WHERE`, `SORT`, etc) **in order**.
+Only the select statement (the `TABLE/LIST/TASK` block which defines **what**
+to render) is required. If the `FROM` statement is excluded, it implicitly
+fetches all pages. Queries are executed by fetching all of the data from the
+source described by the FROM block, and then applying all of the commands
+(like `WHERE`, `SORT`, etc) **in order**.
 
-Fields are selected from the YAML frontmatter of markdown pages, as well as special dataview fields (generally of the form `file.<field>`). For more details, see [Fields](fields.md).
+Fields are selected from the YAML frontmatter of markdown pages, as well as
+special dataview fields (generally of the form `file.<field>`). For more
+details, see [Fields](fields.md).
 
-The various commands, including the different query types and the `FROM` block, are described below.
+The various commands, including the different query types and the `FROM`
+block, are described below.
 
 ---
 

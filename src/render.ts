@@ -1,6 +1,6 @@
 import { DateTime, Duration } from 'luxon';
-import { Field, LiteralField } from 'src/query';
-import { normalizeDuration } from './util/normalize';
+import { LiteralField } from 'src/query';
+import { getFileName, normalizeDuration } from './util/normalize';
 
 /** Make an Obsidian-friendly internal link. */
 export function createAnchor(text: string, target: string, internal: boolean): HTMLAnchorElement {
@@ -57,13 +57,6 @@ export function renderErrorPre(container: HTMLElement, error: string): HTMLEleme
 	let pre = container.createEl('pre', { cls: ["dataview", "dataview-error"] });
 	pre.appendText(error);
 	return pre;
-}
-
-/** Get the file name for the file, without any parent directories. */
-export function getFileName(path: string): string {
-    if (path.includes("/")) path = path.substring(path.lastIndexOf("/") + 1);
-    if (path.endsWith(".md")) path = path.substring(0, path.length - 3);
-    return path;
 }
 
 /** Render a DateTime in a minimal format to save space. */

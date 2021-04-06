@@ -8,7 +8,7 @@ import { DateTime } from 'luxon';
 import { TFile } from 'obsidian';
 import { EXPRESSION } from 'src/parse';
 import { Context, BINARY_OPS } from 'src/eval';
-import { renderField, getFileName } from './render';
+import { getFileName } from "./util/normalize";
 
 /** The result of executing a query over an index. */
 export interface QueryResult {
@@ -165,7 +165,7 @@ export function createContext(file: string, index: FullIndex, rootContext: Conte
 
     // If the file has a date name, add it as the 'day' field.
     let dateMatch = /(\d{4})-(\d{2})-(\d{2})/.exec(getFileName(file));
-    if (!dateMatch) dateMatch = /\b(\d{4})(\d{2})(\d{2})\b/.exec(getFileName(file));
+    if (!dateMatch) dateMatch = /(\d{4})(\d{2})(\d{2})/.exec(getFileName(file));
     if (dateMatch) {
         let year = Number.parseInt(dateMatch[1]);
         let month = Number.parseInt(dateMatch[2]);
@@ -194,6 +194,9 @@ export function execute(query: Query, index: FullIndex, origin: string): QueryRe
     if (typeof fileset === 'string') return fileset;
 
     let rootContext = new Context(defaultLinkResolver(index, origin));
+
+    // Collect file metadata about the file this query is running in.
+    rootContext.set("this", createContext(origin, index, null).namespace);
 
     // Then, map all of the files to their corresponding contexts.
     let rows: Context[] = [];
@@ -347,12 +350,6 @@ export function executeTask(query: Query, origin: string, index: FullIndex, cach
     // This is a somewhat silly way to do this for now; call into regular execute on the full query,
     // yielding a list of files. Then map the files to their tasks.
     // TODO: Consider per-task or per-task-block filtering via a more nuanced algorithm.
-
-    // TODO: Hacky special-case for tasks; if no source provided, search everywhere.
-    if (query.source.type === 'empty') {
-        query.source = Sources.folder("");
-    }
-
     let result = execute(query, index, origin);
     if (typeof result === 'string') return result;
 
