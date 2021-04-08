@@ -1,4 +1,4 @@
-import { Vault, App, TFile, MarkdownRenderChild, MarkdownRenderer } from 'obsidian';
+import { Vault, TFile, MarkdownRenderChild, MarkdownRenderer, Component } from 'obsidian';
 import { createAnchor } from 'src/render';
 
 /**
@@ -32,35 +32,33 @@ export class TaskViewLifecycle extends MarkdownRenderChild {
 		let checkboxes = this.containerEl.querySelectorAll("input");
 		for (let index = 0; index < checkboxes.length; index++) {
 			const checkbox = checkboxes.item(index);
-			console.log(checkbox);
 			this.registerHandler(checkbox);
 		}
 	}
 
 	registerHandler(checkbox: HTMLInputElement) {
 		this.registerDomEvent(checkbox, "click", event => {
+			let file = checkbox.dataset["file"];
+			let lineno = checkbox.dataset["lineno"];
+			let text = checkbox.dataset["text"];
+			if (!file || !lineno || !text) return;
+
 			if (!checkbox.hasAttribute('checked')) {
-				let newCheckbox = createCheckbox(checkbox.dataset["file"],
-					parseInt(checkbox.dataset["lineno"]),
-					checkbox.dataset["text"], true);
+				let newCheckbox = createCheckbox(file, parseInt(lineno), text, true);
 
-				checkbox.parentElement.addClass('is-checked');
-				checkbox.parentElement.replaceChild(newCheckbox, checkbox);
+				checkbox.parentElement?.addClass('is-checked');
+				checkbox.parentElement?.replaceChild(newCheckbox, checkbox);
 				this.registerHandler(newCheckbox);
 
-				setTaskCheckedInFile(this.vault, checkbox.dataset["file"], parseInt(checkbox.dataset["lineno"]),
-					checkbox.dataset["text"], false, true);
+				setTaskCheckedInFile(this.vault, file, parseInt(lineno), text, false, true);
 			} else {
-				let newCheckbox = createCheckbox(checkbox.dataset["file"],
-					parseInt(checkbox.dataset["lineno"]),
-					checkbox.dataset["text"], false);
+				let newCheckbox = createCheckbox(file, parseInt(lineno), text, false);
 
-				checkbox.parentElement.removeClass('is-checked');
-				checkbox.parentElement.replaceChild(newCheckbox, checkbox);
+				checkbox.parentElement?.removeClass('is-checked');
+				checkbox.parentElement?.replaceChild(newCheckbox, checkbox);
 				this.registerHandler(newCheckbox);
 
-				setTaskCheckedInFile(this.vault, checkbox.dataset["file"], parseInt(checkbox.dataset["lineno"]),
-					checkbox.dataset["text"], true, false);
+				setTaskCheckedInFile(this.vault, file, parseInt(lineno), text, true, false);
 			}
 		});
 	}
@@ -95,8 +93,8 @@ export async function findTasksInFile(vault: Vault, file: TFile): Promise<Task[]
 			subtasks: []
 		};
 
-		while (indent <= stack.last()[1]) stack.pop();
-		stack.last()[0].subtasks.push(task);
+		while (indent <= (stack.last()?.[1] ?? -4)) stack.pop();
+		stack.last()?.[0].subtasks.push(task);
 		stack.push([task, indent]);
 	}
 
@@ -106,14 +104,14 @@ export async function findTasksInFile(vault: Vault, file: TFile): Promise<Task[]
 
 /** Render tasks from multiple files. */
 export async function renderFileTasks(container: HTMLElement, tasks: Map<string, Task[]>) {
-	for (let path of tasks.keys()) {
+	for (let [path, list] of tasks.entries()) {
 		let basepath = path.replace(".md", "");
 
 		let header = container.createEl('h4');
 		header.appendChild(createAnchor(basepath, basepath, true));
 		let div = container.createDiv();
 
-		await renderTasks(div, path, tasks.get(path));
+		await renderTasks(div, path, list);
 	}
 }
 
@@ -128,7 +126,7 @@ export async function renderTasks(container: HTMLElement, path: string, tasks: T
 		}
 
 		// Render the text as markdown so that bolds, links, and other things work properly.
-		await MarkdownRenderer.renderMarkdown(task.text, li, path, null);
+		await MarkdownRenderer.renderMarkdown(task.text, li, path, new Component());
 
 		// Unwrap the paragraph element that is created.
 		let paragraph = li.querySelector("p");

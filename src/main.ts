@@ -1,5 +1,5 @@
 import { MarkdownRenderChild, Plugin, Workspace, Vault, MarkdownPostProcessorContext, PluginSettingTab, App, Setting } from 'obsidian';
-import { createAnchor, renderErrorPre, renderField, renderList, renderMinimalDate, renderTable } from 'src/render';
+import { renderErrorPre, renderField, renderList, renderTable } from 'src/render';
 import { FullIndex, TaskCache } from 'src/index';
 import * as Tasks from 'src/tasks';
 import { Query } from 'src/query';
@@ -23,8 +23,8 @@ export default class DataviewPlugin extends Plugin {
 	settings: DataviewSettings;
 	workspace: Workspace;
 
-	index: FullIndex = null;
-	tasks: TaskCache = null;
+	index: FullIndex;
+	tasks: TaskCache;
 
 	async onload() {
 		this.settings = Object.assign(DEFAULT_SETTINGS, await this.loadData());
@@ -86,12 +86,12 @@ export default class DataviewPlugin extends Plugin {
 	}
 
 	private wrapWithEnsureIndex(ctx: MarkdownPostProcessorContext, container: HTMLElement, success: () => MarkdownRenderChild): EnsurePredicateRenderer {
-		return new EnsurePredicateRenderer(ctx, container, () => this.index != null, success);
+		return new EnsurePredicateRenderer(ctx, container, () => this.index != undefined, success);
 	}
 
 	private wrapWithEnsureTaskIndex(ctx: MarkdownPostProcessorContext, container: HTMLElement, success: () => MarkdownRenderChild): EnsurePredicateRenderer {
 		return new EnsurePredicateRenderer(ctx, container,
-			() => (this.index != null) && (this.tasks != null) && (this.index != undefined) && (this.tasks != undefined),
+			() => (this.index != undefined) && (this.tasks != undefined),
 			success);
 	}
 }
@@ -289,7 +289,7 @@ class DataviewTaskRenderer extends MarkdownRenderChild {
 		} else if (result.size == 0 && this.settings.warnOnEmptyResult) {
 			renderErrorPre(this.container, "Query returned 0 results.");
 		} else {
-			Tasks.renderFileTasks(this.container, result);
+			await Tasks.renderFileTasks(this.container, result);
 			// TODO: Merge this into this renderer.
 			this.addChild(new Tasks.TaskViewLifecycle(this.vault, this.container));
 		}

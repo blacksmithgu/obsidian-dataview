@@ -237,8 +237,8 @@ export namespace Fields {
                 return field.value.length > 0;
             case "boolean":
                 return field.value;
-            case "null":
-                return false;
+            case "link":
+                return field.value.length > 0;
             case "date":
                 return field.value.toMillis() != 0;
             case "duration":
@@ -247,10 +247,10 @@ export namespace Fields {
                 return field.value.size > 0;
             case "array":
                 return field.value.length > 0;
+            case "null":
+                return false;
             case "html":
                 return true;
-            default:
-                return false;
         }
     }
 
@@ -287,6 +287,8 @@ export namespace Fields {
             case "date":
             case "boolean":
                 return `${field.valueType}:${field.value}`;
+            case "duration":
+                return `${field.valueType}:${field.value.toISO()}`
             case "array":
                 return `array:[${field.value.map(toLiteralKey).join(", ")}]`;
             case "object":

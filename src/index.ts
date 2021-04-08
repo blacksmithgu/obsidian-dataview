@@ -113,17 +113,25 @@ export class TagIndex {
 
         // Parse tags from YAML frontmatter.
         let frontCache = fileCache.frontmatter;
-        if (frontCache && frontCache["tags"]) {
-            if (Array.isArray(frontCache["tags"])) {
-                for (let tag of frontCache["tags"]) {
+
+        // Search for the 'tags' field, since it may have wierd 
+        let tagsName: string | undefined = undefined;
+        for (let key of Object.keys(frontCache ?? {})) {
+            if (key.toLowerCase() == "tags" || key.toLowerCase() == "tag")
+                tagsName = key;
+        }
+
+        if (frontCache && tagsName && frontCache[tagsName]) {
+            if (Array.isArray(frontCache[tagsName])) {
+                for (let tag of frontCache[tagsName]) {
                     if (!(typeof tag == 'string')) continue;
 
                     if (!tag.startsWith("#")) tag = "#" + tag;
                     this.parseSubtags(tag).forEach(t => allTags.add(t));
                 }
-            } else if (typeof frontCache["tags"] === 'string') {
+            } else if (typeof frontCache[tagsName] === 'string') {
                 // Assume tags is a comma-separated list.
-                let tags = frontCache["tags"].split(",").map(elem => {
+                let tags = (frontCache[tagsName] as string).split(",").map(elem => {
                     elem = elem.trim();
                     if (!elem.startsWith("#")) elem = "#" + elem;
                     return elem;
@@ -150,7 +158,7 @@ export class TagIndex {
 
             for (let subtag of allTags) {
                 if (!initialMap.has(subtag)) initialMap.set(subtag, new Set<string>());
-                initialMap.get(subtag).add(file.path);
+                initialMap.get(subtag)?.add(file.path);
             }
         }
 
@@ -203,7 +211,7 @@ export class TagIndex {
 
         for (let subtag of allTags) {
             if (!this.map.has(subtag)) this.map.set(subtag, new Set<string>());
-            this.map.get(subtag).add(file.path);
+            this.map.get(subtag)?.add(file.path);
         }
 
         this.invMap.set(file.path, allTags);
@@ -216,7 +224,7 @@ export class TagIndex {
 
         this.invMap.delete(path);
         for (let tag of oldTags) {
-            this.map.get(tag).delete(path);
+            this.map.get(tag)?.delete(path);
         }
     }
 }
@@ -245,7 +253,7 @@ export class PrefixIndexNode {
             if (!node.children.has(parts[index])) node.children.set(parts[index], new PrefixIndexNode(parts[index]));
 
             node.totalCount += 1;
-            node = node.children.get(parts[index]);
+            node = node.children.get(parts[index]) as PrefixIndexNode;
         }
 
         node.totalCount += 1;
@@ -260,7 +268,7 @@ export class PrefixIndexNode {
             if (!node.children.has(parts[index])) return;
 
             nodes.push(node);
-            node = node.children.get(parts[index]);
+            node = node.children.get(parts[index]) as PrefixIndexNode;
         }
 
         if (!node.files.has(path)) return;
@@ -277,7 +285,7 @@ export class PrefixIndexNode {
         for (let index = 0; index < parts.length; index++) {
             if (!node.children.has(parts[index])) return null;
 
-            node = node.children.get(parts[index]);
+            node = node.children.get(parts[index]) as PrefixIndexNode;
         }
 
         return node;

@@ -1,13 +1,13 @@
 /**
  * Takes a full query and a set of indices, and (hopefully quickly) returns all relevant files.
  */
-import { LiteralField, LiteralFieldRepr, Query, Fields, Source, Sources, NamedField } from 'src/query';
+import { LiteralField, LiteralFieldRepr, Query, Fields, Source, NamedField } from 'src/query';
 import { FullIndex, TaskCache } from 'src/index';
 import { Task } from 'src/tasks';
 import { DateTime } from 'luxon';
 import { TFile } from 'obsidian';
 import { EXPRESSION } from 'src/parse';
-import { Context, BINARY_OPS } from 'src/eval';
+import { Context, BINARY_OPS, LinkHandler } from 'src/eval';
 import { getFileName } from "./util/normalize";
 
 /** The result of executing a query over an index. */
@@ -20,65 +20,63 @@ export interface QueryResult {
 
 /** Recursively collect target files from the given source. */
 export function collectFromSource(source: Source, index: FullIndex, origin: string): Set<string> | string {
-    if (source.type === 'empty') {
-        return new Set<string>();
-    } else if (source.type === 'tag') {
-        return index.tag.get(source.tag);
-    } else if (source.type === 'folder') {
-        return index.prefix.get(source.folder);
-    } else if (source.type === 'link') {
-        let fullPath = index.metadataCache.getFirstLinkpathDest(source.file, origin)?.path;
-        if (!fullPath) return `Could not resolve link "${source.file}" during link lookup - does it exist?`;
+    switch (source.type) {
+        case "empty": return new Set<string>();
+        case "tag": return index.tag.get(source.tag);
+        case "folder": return index.prefix.get(source.folder);
+        case "link":
+            let fullPath = index.metadataCache.getFirstLinkpathDest(source.file, origin)?.path;
+            if (!fullPath) return `Could not resolve link "${source.file}" during link lookup - does it exist?`;
 
-        if (source.direction === 'incoming') {
-            // To find all incoming links (i.e., things that link to this), use the index that Obsidian provides.
-            // TODO: Use an actual index so this isn't a fullscan.
-            let resolved = index.metadataCache.resolvedLinks;
-            let incoming = new Set<string>();
+            if (source.direction === 'incoming') {
+                // To find all incoming links (i.e., things that link to this), use the index that Obsidian provides.
+                // TODO: Use an actual index so this isn't a fullscan.
+                let resolved = index.metadataCache.resolvedLinks;
+                let incoming = new Set<string>();
 
-            for (let [key, value] of Object.entries(resolved)) {
-                if (fullPath in value) incoming.add(key);
+                for (let [key, value] of Object.entries(resolved)) {
+                    if (fullPath in value) incoming.add(key);
+                }
+
+                return incoming;
+            } else {
+                let resolved = index.metadataCache.resolvedLinks;
+                if (!(fullPath in resolved)) return `Could not find file "${source.file}" during link lookup - does it exist?`;
+
+                return new Set<string>(Object.keys(index.metadataCache.resolvedLinks[fullPath]));
+            }
+        case "binaryop":
+            let left = collectFromSource(source.left, index, origin);
+            if (typeof left === 'string') return left;
+            let right = collectFromSource(source.right, index, origin);
+            if (typeof right === 'string') return right;
+
+            if (source.op == '&') {
+                let result = new Set<string>();
+                for (let elem of right) {
+                    if (left.has(elem)) result.add(elem);
+                }
+
+                return result;
+            } else if (source.op == '|') {
+                let result = new Set(left);
+                for (let elem of right) result.add(elem);
+                return result;
+            } else {
+                return `Unrecognized operator '${source.op}'.`;
+            }
+        case "negate":
+            let child = collectFromSource(source.child, index, origin);
+            if (typeof child === 'string') return child;
+
+            // TODO: This is obviously very inefficient.
+            let allFiles = new Set<string>(index.vault.getMarkdownFiles().map(f => f.path));
+
+            for (let file of child) {
+                allFiles.delete(file);
             }
 
-            return incoming;
-        } else {
-            let resolved = index.metadataCache.resolvedLinks;
-            if (!(fullPath in resolved)) return `Could not find file "${source.file}" during link lookup - does it exist?`;
-
-            return new Set<string>(Object.keys(index.metadataCache.resolvedLinks[fullPath]));
-        }
-    } else if (source.type === 'binaryop') {
-        let left = collectFromSource(source.left, index, origin);
-        if (typeof left === 'string') return left;
-        let right = collectFromSource(source.right, index, origin);
-        if (typeof right === 'string') return right;
-
-        if (source.op == '&') {
-            let result = new Set<string>();
-            for (let elem of right) {
-                if (left.has(elem)) result.add(elem);
-            }
-
-            return result;
-        } else if (source.op == '|') {
-            let result = new Set(left);
-            for (let elem of right) result.add(elem);
-            return result;
-        } else {
-            return `Unrecognized operator '${source.op}'.`;
-        }
-    } else if (source.type === 'negate') {
-        let child = collectFromSource(source.child, index, origin);
-        if (typeof child === 'string') return child;
-
-        // TODO: This is obviously very inefficient.
-        let allFiles = new Set<string>(index.vault.getMarkdownFiles().map(f => f.path));
-
-        for (let file of child) {
-            allFiles.delete(file);
-        }
-
-        return allFiles;
+            return allFiles;
     }
 }
 
@@ -135,17 +133,27 @@ export function parseFrontmatter(value: any): LiteralField {
 }
 
 /** The default link resolver used when creating contexts. */
-export function defaultLinkResolver(index: FullIndex, origin: string): (link: string) => LiteralFieldRepr<'object'> | LiteralFieldRepr<'null'> {
-    return (link) => {
-        let realFile = index.metadataCache.getFirstLinkpathDest(link, origin);
-        if (!realFile) return Fields.NULL;
+export function defaultLinkHandler(index: FullIndex, origin: string): LinkHandler {
+    return {
+        resolve: (link) => {
+            let realFile = index.metadataCache.getFirstLinkpathDest(link, origin);
+            if (!realFile) return Fields.NULL;
 
-        return createContext(realFile.path, index).namespace;
-    };
+            return createContext(realFile.path, index).namespace;
+        },
+        normalize: (link) => {
+            let realFile = index.metadataCache.getFirstLinkpathDest(link, origin);
+            return realFile?.path ?? link;
+        },
+        exists: (link) => {
+            let realFile = index.metadataCache.getFirstLinkpathDest(link, origin);
+            return !!realFile;
+        }
+    }
 }
 
 /** Create a fully-filled context representing the given file. */
-export function createContext(file: string, index: FullIndex, rootContext: Context = null): Context {
+export function createContext(file: string, index: FullIndex, rootContext: Context | undefined = undefined): Context {
     // Parse the frontmatter if present.
     let frontmatterData = Fields.emptyObject();
     let fileData = index.metadataCache.getCache(file);
@@ -154,7 +162,7 @@ export function createContext(file: string, index: FullIndex, rootContext: Conte
     }
 
     // Create a context which uses the cache to look up link info.
-    let context = new Context(defaultLinkResolver(index, file), rootContext, frontmatterData);
+    let context = new Context(defaultLinkHandler(index, file), rootContext, frontmatterData);
 
     // Fill out per-file metadata.
     let fileMeta = new Map<string, LiteralField>();
@@ -193,11 +201,11 @@ export function execute(query: Query, index: FullIndex, origin: string): QueryRe
     let fileset = collectFromSource(query.source, index, origin);
     if (typeof fileset === 'string') return fileset;
 
-    let rootContext = new Context(defaultLinkResolver(index, origin));
+    let rootContext = new Context(defaultLinkHandler(index, origin));
 
     // Collect file metadata about the file this query is running in.
     if (origin) {
-        rootContext.set("this", createContext(origin, index, null).namespace);
+        rootContext.set("this", createContext(origin, index).namespace);
     }
 
     // Then, map all of the files to their corresponding contexts.
@@ -236,10 +244,10 @@ export function execute(query: Query, index: FullIndex, origin: string): QueryRe
                         let bValue = b.evaluate(sortFields[index].field);
                         if (typeof bValue == 'string') return -1;
 
-                        let le = BINARY_OPS.evaluate('<', aValue, bValue) as LiteralFieldRepr<'boolean'>;
+                        let le = BINARY_OPS.evaluate('<', aValue, bValue, a) as LiteralFieldRepr<'boolean'>;
                         if (le.value) return factor * -1;
 
-                        let ge = BINARY_OPS.evaluate('>', aValue, bValue) as LiteralFieldRepr<'boolean'>;
+                        let ge = BINARY_OPS.evaluate('>', aValue, bValue, a) as LiteralFieldRepr<'boolean'>;
                         if (ge.value) return factor * 1;
                     }
 
@@ -275,16 +283,16 @@ export function execute(query: Query, index: FullIndex, origin: string): QueryRe
                     let key = Fields.toLiteralKey(value);
                     if (!groupIndex.has(key)) groupIndex.set(key, [value, []]);
 
-                    groupIndex.get(key)[1].push(row);
+                    groupIndex.get(key)?.[1].push(row);
                 }
 
                 let groupedRows: Context[] = [];
-                for (let [key, value] of groupIndex.entries()) {
+                for (let [_, value] of groupIndex.entries()) {
                     // We are gaurunteed to have at least 1 object since the key was created.
                     let dummyFile = value[1][0].evaluate(Fields.indexVariable("file.path")) as LiteralFieldRepr<'string'>;
 
                     // Create a context, assign the grouped field and the 'rows'.
-                    let context = new Context(defaultLinkResolver(index, dummyFile.value), rootContext);
+                    let context = new Context(defaultLinkHandler(index, dummyFile.value), rootContext);
                     context.set(groupField.name, value[0]);
                     context.set("rows", Fields.array(value[1].map(c => c.namespace)));
 
@@ -337,13 +345,16 @@ export function execute(query: Query, index: FullIndex, origin: string): QueryRe
                 })
             };
         case "task":
+            let filtered: LiteralField[][] = [];
+            for (let row of rows) {
+                let file = row.evaluate(Fields.indexVariable("file.path"));
+                if (typeof file == "string") continue;
+                filtered.push([file]);
+            }
+
             return {
                 names: ["file"],
-                data: rows.map(row => {
-                    let file = row.evaluate(Fields.indexVariable("file.path"));
-                    if (typeof file == "string") return null;
-                    return [file];
-                }).filter(k => k)
+                data: filtered
             }
     }
 }

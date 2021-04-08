@@ -190,10 +190,26 @@ upper("test") = "TEST"
 
 ##### `default(field, value)`
 
-If `field` is null, return `value`; otherwise return `field`. Useful for replacing null values with defaults.
-
-- For example, to show projects which haven't been completed yet, use `"incomplete"` as their defualt value: 
+If `field` is null, return `value`; otherwise return `field`. Useful for replacing null values with defaults. For example, to show projects which haven't been completed yet, use `"incomplete"` as their defualt value: 
 
 ```
 default(dateCompleted, "incomplete")
+```
+
+Default is vectorized in both arguments; if you need to use default explicitly on a list argument, use `ldefault`, which
+is the same as default but is not vectorized.
+
+```
+default(list(1, 2, null), 3) = list(1, 2, 3)
+ldefault(list(1, 2, null), 3) = list(1, 2, null)
+```
+
+##### `choice(bool, left, right)`
+
+A primitive if statement - if the first argument is truthy, returns left; otherwise, returns right.
+
+```
+choice(true, "yes", "no") = "yes"
+choice(false, "yes", "no") = "no"
+choice(x > 4, y, z) = y if x > 4, else z
 ```

@@ -1,8 +1,6 @@
 # Obsidian Dataview
 
-Treat your obsidian vault as a database which you can query from. Provides a fully-fledged query language for filtering,
-sorting, and extracting data from your pages. See the Examples section below for some quick examples, or the full
-[reference](https://blacksmithgu.github.io/obsidian-dataview/).
+Treat your obsidian vault as a database which you can query from. Provides a fully-fledged query language for filtering, sorting, and extracting data from your pages. See the Examples section below for some quick examples, or the full [reference](https://blacksmithgu.github.io/obsidian-dataview/).
 
 ## Examples
 
@@ -59,8 +57,7 @@ List all files which have a date in their title (of the form `yyyy-mm-dd`), and 
 
 ~~~
 ```dataview
-list from ""
-where file.day
+list where file.day
 sort file.day desc
 ```
 ~~~
@@ -85,8 +82,7 @@ The first word in a query is always the view type - currently, either:
 - `table`, which renders files and any selected fields that pass the query filters.
 - `task`, which renders all tasks from any files that pass the query filters.
 
-You can query from either `#tags`, or from `"folder"`. You can freely combine these filters into more
-complicated boolean expressions using `and` and `or`; if precedence is importance, use parenthesis.
+You can query from either `#tags`, from `"folder"`, or from `[[link]]`. You can freely combine these filters into more complicated boolean expressions using `and` and `or`; if precedence is important, use parenthesis.
 
 Fields can be any YAML front-matter field (currently, strings, numbers, ISO dates and durations are supported, with support for ratings, links, and intervals forthcoming), any custom defined field (using the `field as field2` syntax). You can obtain fields inside of YAML objects using the `.` operator - i.e., `Dates.Birthday` for example. Fields can also be functions of other fields - for example, `rating + offset`, is a valid field.
 
@@ -136,7 +132,7 @@ There is a lot of potential for a generic query system; here is the upcoming fea
 - [ ] **Embedded Metadata, Embedded Queries**:
     - [ ] Embed shorthand queries using something like `dv: page.value`.
     - [ ] Embed metadata outside the YAML block using customizable notation.
-    - [ ] Add additional metadata about the current page (call it 'this') to ease templating support.
+    - [X] Add additional metadata about the current page (call it 'this') to ease templating support.
 - [ ] **Improved query debuggability**:
     - [ ] Show query parse + execute time on views.
     - [ ] Show errors for every file that failed to be selected due to query syntax error.

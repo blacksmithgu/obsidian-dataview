@@ -6,8 +6,18 @@ import { normalizeDuration } from "src/util/normalize";
 // Core Context Implementation //
 /////////////////////////////////
 
-/** A function which maps a file name to the metadata contained within that file. */
-export type LinkResolverImpl = (file: string) => LiteralFieldRepr<'object'> | LiteralFieldRepr<'null'>;
+/** Handles link resolution and normalization inside of a context. */
+export interface LinkHandler {
+    /** Resolve a link to the metadata it contains. */
+    resolve(path: string): LiteralFieldRepr<'object'> | LiteralFieldRepr<'null'>;
+    /**
+     * Normalize a link to it's fully-qualified path for comparison purposes.
+     * If the path does not exist, returns it unchanged.
+     */
+    normalize(path: string): string;
+    /** Return true if the given path actually exists, false otherwise. */
+    exists(path: string): boolean;
+}
 
 /** The context in which expressions are evaluated in. */
 export class Context {
@@ -18,17 +28,17 @@ export class Context {
     /** Registry of function handlers. */
     public readonly functions: FunctionHandler;
     /** Resolves links into the metadata for the linked file. */
-    public readonly linkResolver: LinkResolverImpl;
+    public readonly linkHandler: LinkHandler;
     /** The parent context which this context will lookup variables from if they are not present here. */
     public readonly parent?: Context;
 
-    public constructor(linkResolver: LinkResolverImpl, parent: Context = null, namespace: LiteralFieldRepr<'object'> = Fields.emptyObject(),
+    public constructor(linkHandler: LinkHandler, parent: Context | undefined = undefined, namespace: LiteralFieldRepr<'object'> = Fields.emptyObject(),
         binaryOps: BinaryOpHandler = BINARY_OPS, functions: FunctionHandler = FUNCTIONS) {
         this.namespace = namespace;
         this.parent = parent;
         this.binaryOps = binaryOps;
         this.functions = functions;
-        this.linkResolver = linkResolver;
+        this.linkHandler = linkHandler;
     }
 
     /** Add a field to the context. */
@@ -39,7 +49,7 @@ export class Context {
 
     /** Attempts to resolve a variable name in the context. */
     public get(name: string): LiteralField {
-        if (!this.namespace.value.has(name) && this.parent != null) return this.parent.get(name);
+        if (!this.namespace.value.has(name) && this.parent != undefined) return this.parent.get(name);
         return this.namespace.value.get(name) ?? Fields.NULL;
     }
 
@@ -53,7 +63,7 @@ export class Context {
                 if (typeof left === 'string') return left;
                 let right = this.evaluate(field.right);
                 if (typeof right === 'string') return right;
-                return this.binaryOps.evaluate(field.op, left, right);
+                return this.binaryOps.evaluate(field.op, left, right, this);
             case "negated":
                 let child = this.evaluate(field.child);
                 if (typeof child === 'string') return child;
@@ -86,7 +96,7 @@ export class Context {
                         return obj.value.get(index.value) ?? Fields.NULL;
                     case "link":
                         if (index.valueType != 'string') return "can only index into links with strings (a.b or a[\"b\"])";
-                        let linkValue = this.linkResolver(obj.value);
+                        let linkValue = this.linkHandler.resolve(obj.value);
                         if (linkValue.valueType == 'null') return Fields.NULL;
                         return linkValue.value.get(index.value) ?? Fields.NULL;
                     case "array":
@@ -144,7 +154,7 @@ export class Context {
 
     /** Deep copy a context. */
     public copy(): Context {
-        return new Context(this.linkResolver,
+        return new Context(this.linkHandler,
             this.parent,
             Fields.deepCopy(this.namespace) as LiteralFieldRepr<'object'>,
             this.binaryOps,
@@ -168,6 +178,9 @@ type LiteralFieldReprAll<T extends LiteralTypeOrAll> =
 export type BinaryOpImpl<T1 extends LiteralTypeOrAll, T2 extends LiteralTypeOrAll> =
     (a: LiteralFieldReprAll<T1>, b: LiteralFieldReprAll<T2>) => LiteralField | string;
 
+export type BinaryOpImplContext<T1 extends LiteralTypeOrAll, T2 extends LiteralTypeOrAll> =
+    (a: LiteralFieldReprAll<T1>, b: LiteralFieldReprAll<T2>, context: Context) => LiteralField | string;
+
 /** Negate a binary operation; i.e., if op(a, b) = true, then negateOp(op)(a, b) = false. */
 function negateOp<T1 extends LiteralTypeOrAll, T2 extends LiteralTypeOrAll>(op: BinaryOpImpl<T1, T2>): BinaryOpImpl<T1, T2> {
     return (a, b) => {
@@ -178,9 +191,18 @@ function negateOp<T1 extends LiteralTypeOrAll, T2 extends LiteralTypeOrAll>(op: 
     }
 }
 
+function negateOpContext<T1 extends LiteralTypeOrAll, T2 extends LiteralTypeOrAll>(op: BinaryOpImplContext<T1, T2>): BinaryOpImplContext<T1, T2> {
+    return (a, b, c) => {
+        let res = op(a, b, c);
+        if (typeof res == 'string') return res;
+
+        return Fields.bool(!Fields.isTruthy(res));
+    }
+}
+
 /** Class which allows for type-safe implementation of binary ops. */
 export class BinaryOpHandler {
-    map: Map<string, BinaryOpImpl<LiteralTypeOrAll, LiteralTypeOrAll>>;
+    map: Map<string, BinaryOpImplContext<'*', '*'>>;
 
     static create() {
         return new BinaryOpHandler();
@@ -193,7 +215,16 @@ export class BinaryOpHandler {
     /** Add a new handler for the specified types to this handler. */
     public add<T1 extends LiteralTypeOrAll, T2 extends LiteralTypeOrAll>(op: BinaryOp, first: T1, second: T2,
         func: BinaryOpImpl<T1, T2>): BinaryOpHandler {
-        this.map.set(BinaryOpHandler.repr(op, first, second), func);
+        return this.addContext<T1, T2>(op, first, second, (a, b, _c) => func(a, b));
+    }
+
+    public addContext<T1 extends LiteralTypeOrAll, T2 extends LiteralTypeOrAll>(op: BinaryOp, first: T1, second: T2,
+        func: BinaryOpImplContext<T1, T2>): BinaryOpHandler {
+        if (this.map.has(BinaryOpHandler.repr(op, first, second)))
+            throw Error(`Encountered duplicate handler for ${first} ${op} ${second}; remove one of them`);
+
+        // How's this for some gnarly type-check hackery.
+        this.map.set(BinaryOpHandler.repr(op, first, second), func as BinaryOpImplContext<'*', '*'>);
         return this;
     }
 
@@ -212,34 +243,49 @@ export class BinaryOpHandler {
         return this;
     }
 
+    public addComparisonContext<T extends LiteralTypeOrAll>(type: T, ops: {
+        equals: BinaryOpImplContext<T, T>,
+        le: BinaryOpImplContext<T, T>
+    }): BinaryOpHandler {
+        this.addContext('=', type, type, ops.equals);
+        this.addContext('!=', type, type, negateOpContext(ops.equals));
+
+        this.addContext('<', type, type, ops.le);
+        this.addContext('<=', type, type, negateOpContext((a, b, c) => ops.le(b, a, c)));
+        this.addContext('>', type, type, (a, b, c) => ops.le(b, a, c));
+        this.addContext('>=', type, type, negateOpContext(ops.le));
+
+        return this;
+    }
+
     /**
      * Add a commutative operator for the specified types to this handler; in addition to adding the normal
      * (op, T1, T2) mapping, it additionally adds (op, T2, T1). Only needed if T1 and T2 are different types.
      */
     public addComm<T1 extends LiteralTypeOrAll, T2 extends LiteralTypeOrAll>(op: BinaryOp, first: T1, second: T2,
         func: BinaryOpImpl<T1, T2>): BinaryOpHandler {
-        this.map.set(BinaryOpHandler.repr(op, first, second), func);
-        this.map.set(BinaryOpHandler.repr(op, second, first), ((a, b) => func(b, a)) as BinaryOpImpl<T2, T1>);
+        this.add(op, first, second, func);
+        this.add(op, second, first, (a, b) => func(b, a));
 
         return this;
     }
 
     /** Attempt to evaluate the given binary operator on the two literal fields. */
-    public evaluate(op: BinaryOp, left: LiteralField, right: LiteralField): LiteralField | string {
+    public evaluate(op: BinaryOp, left: LiteralField, right: LiteralField, context: Context): LiteralField | string {
         let handler = this.map.get(BinaryOpHandler.repr(op, left.valueType, right.valueType));
-        if (handler) return handler(left, right);
+        if (handler) return handler(left, right, context);
 
         // Right-'*' fallback:
         let handler2 = this.map.get(BinaryOpHandler.repr(op, left.valueType, '*'));
-        if (handler2) return handler2(left, right);
+        if (handler2) return handler2(left, right, context);
 
         // Left-'*' fallback:
         let handler3 = this.map.get(BinaryOpHandler.repr(op, '*', right.valueType));
-        if (handler3) return handler3(left, right);
+        if (handler3) return handler3(left, right, context);
 
         // Double '*' fallback.
         let handler4 = this.map.get(BinaryOpHandler.repr(op, '*', '*'));
-        if (handler4) return handler4(left, right);
+        if (handler4) return handler4(left, right, context);
 
         return `Operator '${op}' is not supported for '${left.valueType}' and '${right.valueType}`;
     }
@@ -261,7 +307,8 @@ export const BINARY_OPS = BinaryOpHandler.create()
         le: (a, b) => Fields.bool(a.value < b.value)
     })
     // String operations.
-    .addComm('+', 'string', '*', (a, b) => Fields.literal('string', a.value + b.value))
+    .add('+', 'string', '*', (a, b) => Fields.literal('string', a.value + b.value))
+    .add('+', '*', 'string', (a, b) => Fields.literal('string', a.value + b.value))
     .addComm("*", 'string', 'number', (a, b) => Fields.literal('string', a.value.repeat(Math.abs(b.value))))
     .addComparison('string', {
         equals: (a, b) => Fields.bool(a.value == b.value),
@@ -283,13 +330,8 @@ export const BINARY_OPS = BinaryOpHandler.create()
     // Date-Duration operations.
     .addComm('+', 'date', 'duration', (a, b) => Fields.literal('date', a.value.plus(b.value)))
     .add('-', 'date', 'duration', (a, b) => Fields.literal('date', a.value.minus(b.value)))
-    // Link operations.
-    .addComparison('link', {
-        equals: (a, b) => Fields.bool(a.value.replace(".md", "") == b.value.replace(".md", "")),
-        le: (a, b) => Fields.bool(a.value.replace(".md", "") < b.value.replace(".md", ""))
-    })
     // Array operations.
-    .add('+', 'array', 'array', (a, b) => Fields.array([].concat(a.value).concat(b.value)))
+    .add('+', 'array', 'array', (a, b) => Fields.array(([] as LiteralField[]).concat(a.value).concat(b.value)))
     // Object operations.
     .add('+', 'object', 'object', (a, b) => {
         let result = new Map<string, LiteralField>();
@@ -302,9 +344,9 @@ export const BINARY_OPS = BinaryOpHandler.create()
         return Fields.object(result);
     })
     // Link operations.
-    .addComparison('link', {
-        equals: (a, b) => Fields.bool(a.value == b.value),
-        le: (a, b) => Fields.bool(a.value < b.value)
+    .addComparisonContext('link', {
+        equals: (a, b, c) => Fields.bool(c.linkHandler.normalize(a.value) == c.linkHandler.normalize(b.value)),
+        le: (a, b, c) => Fields.bool(c.linkHandler.normalize(a.value) < c.linkHandler.normalize(b.value))
     })
     // Boolean operations.
     .add('&', '*', '*', (a, b) => Fields.literal('boolean', Fields.isTruthy(a) && Fields.isTruthy(b)))
@@ -358,7 +400,7 @@ export class FunctionHandler {
 
     public addFunction(func: Function): FunctionHandler {
         if (!this.map.has(func.name)) this.map.set(func.name, []);
-        this.map.get(func.name).push(func);
+        this.map.get(func.name)?.push(func);
         return this;
     }
 
@@ -401,7 +443,7 @@ export class FunctionHandler {
 
     public evaluate(name: string, args: LiteralField[], context: Context): LiteralField | string {
         if (!this.map.has(name)) return `Unrecognized function '${name}'`;
-        let vectorize = this.vectorized.has(name) ? this.vectorized.get(name) : [];
+        let vectorize: number[] = this.vectorized.get(name) ?? [];
 
         // Check for lists in vectorize positions.
         for (let pos of vectorize) {
@@ -409,8 +451,8 @@ export class FunctionHandler {
             let value = args[pos];
             if (value.valueType != "array") continue;
 
-            let array = [];
-            let copy = [].concat(args);
+            let array: LiteralField[] = [];
+            let copy = ([] as LiteralField[]).concat(args);
             for (let val of value.value) {
                 copy[pos] = val;
                 let result = this.evaluate(name, copy, context);
@@ -422,7 +464,7 @@ export class FunctionHandler {
         }
 
         // Vectorizing is done, we can just typecheck now.
-        outer: for (let func of this.map.get(name)) {
+        outer: for (let func of this.map.get(name) ?? []) {
             if (!func.args) return func.impl(args, context);
 
             if (args.length != func.args.length) continue;
@@ -459,9 +501,11 @@ export const FUNCTIONS = new FunctionHandler()
 
         return Fields.object(result);
     })
+    .add1("link", "string", (field: LFR<'string'>, context) => Fields.link(field.value)) // TODO: Normalize link here.
+    .add1("link", "null", (field, context) => Fields.NULL)
     .add2("contains", "object", "string", (obj: LFR<"object">, key: LFR<"string">, context) => Fields.bool(obj.value.has(key.value)))
     .add2("contains", "link", "string", (link: LFR<"link">, key: LFR<'string'>, context) => {
-        let linkValue = context.linkResolver(link.value);
+        let linkValue = context.linkHandler.resolve(link.value);
         if (linkValue.valueType == 'null') return Fields.bool(false);
         return Fields.bool(linkValue.value.has(key.value));
     })
@@ -476,20 +520,21 @@ export const FUNCTIONS = new FunctionHandler()
     .add2("contains", "string", "string", (haystack: LFR<"string">, needle: LFR<"string">, context) => {
         return Fields.bool(haystack.value.includes(needle.value));
     })
+    .add2("contains", "*", "*", (a: LFR<"*">, b: LFR<"*">, context) => Fields.bool(false))
     .addVararg("extract", (args, context) => {
         if (args.length == 0) return "extract(object, key1, ...) requires at least 1 argument";
         let object = args[0];
 
         switch (object.valueType) {
             case "link":
-                object = context.linkResolver(object.value);
+                object = context.linkHandler.resolve(object.value);
                 if (object.valueType == 'null') return Fields.NULL;
             case "object":
                 let result = new Map<string, LiteralField>();
                 for (let index = 1; index < args.length; index++) {
                     let key = args[index];
                     if (key.valueType != "string") return "extract(object, key1, ...) requires string arguments";
-                    result.set(key.value, object.value.get(key.value));
+                    result.set(key.value, object.value.get(key.value) ?? Fields.NULL);
                 }
                 return Fields.object(result);
             default:
@@ -506,8 +551,9 @@ export const FUNCTIONS = new FunctionHandler()
 
         return Fields.array(result);
     })
+    .add1("reverse", "null", (a: LFR<"null">, context) => Fields.NULL)
     .add1("sort", "array", (list: LFR<"array">, context) => {
-        let result = [].concat(list.value);
+        let result = ([] as LiteralField[]).concat(list.value);
         result.sort((a, b) => {
             let le = context.evaluate(Fields.binaryOp(a, "<", b));
             if (typeof le == "string") return 0;
@@ -522,19 +568,33 @@ export const FUNCTIONS = new FunctionHandler()
 
         return Fields.array(result);
     })
+    .add1("sort", "null", (a: LFR<"null">, context) => Fields.NULL)
     .add2("regexmatch", "string", "string", (patternf: LFR<"string">, fieldf: LFR<"string">, context) => {
         let pattern = patternf.value, field = fieldf.value;
         if (!pattern.startsWith("^") && !pattern.endsWith("$")) pattern = "^" + pattern + "$";
         return Fields.bool(!!field.match(pattern));
-    }).vectorize("regexmatch", [0, 1])
+    })
+    .add2("regexmatch", "null", "*", (a: LFR<"null">, b: LFR<"*">, context) => Fields.bool(false))
+    .add2("regexmatch", "*", "null", (a: LFR<"*">, b: LFR<"null">, context) => Fields.bool(false))
+    .vectorize("regexmatch", [0, 1])
     .add1("lower", "string", (str: LFR<"string">, context) => Fields.string(str.value.toLocaleLowerCase())).vectorize("lower", [0])
+    .add1("lower", "null", (str: LFR<"null">, context) => Fields.NULL)
     .add1("upper", "string", (str: LFR<"string">, context) => Fields.string(str.value.toLocaleUpperCase())).vectorize("upper", [0])
+    .add1("upper", "null", (str: LFR<"null">, context) => Fields.NULL)
     .add3("replace", "string", "string", "string", (str: LFR<'string'>, pat: LFR<'string'>, repr: LFR<'string'>) => {
         return Fields.string(str.value.replace(pat.value, repr.value));
-    }).vectorize("replace", [0, 1, 2])
+    })
+    .add3("replace", "null", "*", "*", (a: LFR<"null">, b: LFR<"*">, c: LFR<"*">, context) => Fields.NULL)
+    .add3("replace", "*", "null", "*", (a: LFR<"*">, b: LFR<"null">, c: LFR<"*">, context) => Fields.NULL)
+    .add3("replace", "*", "*", "null", (a: LFR<"*">, b: LFR<"*">, c: LFR<"null">, context) => Fields.NULL)
+    .vectorize("replace", [0, 1, 2])
     // default being vectorized is nice, but maybe you want to use it on a list to default it... in that case use ldefault().
     .add2("default", "*", "*", (f: LFR<'*'>, d: LFR<'*'>, context) => f.valueType == 'null' ? d : f).vectorize("default", [0])
-    .add2("ldefault", "array", "*", (f: LFR<'array'>, d: LFR<'*'>, context) => f)
+    .add2("ldefault", "*", "*", (f: LFR<'*'>, d: LFR<'*'>, context) => f.valueType == 'null' ? d : f)
+    .add3("choice", "*", "*", "*", (b: LFR<"*">, left: LFR<"*">, right: LFR<"*">, context) => {
+        if (Fields.isTruthy(b)) return left;
+        else return right;
+    }).vectorize("choice", [0])
     // reduction operators.
     .add2("reduce", "array", "string", (list: LFR<'array'>, opf: LFR<'string'>, context) => {
         if (list.value.length == 0) return Fields.NULL;
@@ -545,6 +605,9 @@ export const FUNCTIONS = new FunctionHandler()
 
         let value = list.value[0];
         for (let index = 1; index < list.value.length; index++) {
+            // Skip null values to reduce the pain of summing over fields that may or may not exist.
+            if (list.value[index].valueType == "null") continue;
+
             let next = context.evaluate(Fields.binaryOp(value, op, list.value[index]));
             if (typeof next == "string") return next;
             value = next;
@@ -552,13 +615,17 @@ export const FUNCTIONS = new FunctionHandler()
 
         return value;
     })
+    .add2("reduce", "null", "*", (a: LFR<"null">, b: LFR<'*'>, context) => Fields.NULL)
+    .add2("reduce", "*", "null", (a: LFR<"*">, b: LFR<'null'>, context) => Fields.NULL)
     .vectorize("reduce", [1])
     .add1("sum", "array", (list: LFR<'array'>, context) => {
         return context.evaluate(Fields.func(Fields.variable("reduce"), [list, Fields.string("+")]));
     })
+    .add1("sum", "null", (a: LFR<"null">, context) => Fields.NULL)
     .add1("product", "array", (list: LFR<'array'>, context) => {
         return context.evaluate(Fields.func(Fields.variable("reduce"), [list, Fields.string("*")]));
     })
+    .add1("product", "null", (a: LFR<"null">, context) => Fields.NULL)
     .add1("any", "array", (list: LFR<"array">, context) => Fields.bool(list.value.some(v => Fields.isTruthy(v))))
     .addVararg("any", (args, context) => Fields.bool(args.some(v => Fields.isTruthy(v))))
     .add1("all", "array", (list: LFR<"array">, context) => Fields.bool(list.value.every(v => Fields.isTruthy(v))))

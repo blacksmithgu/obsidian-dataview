@@ -1,7 +1,7 @@
 /** Various tests for evaluating fields in context. */
 
 import { EXPRESSION } from "src/parse";
-import { Context } from "src/eval";
+import { Context, LinkHandler } from "src/eval";
 import { LiteralField, Fields } from "src/query";
 
 // <-- Simple Operations -->
@@ -78,7 +78,8 @@ test("Evaluate simple link resolution", () => {
     let rawObject = new Map<string, LiteralField>()
         .set("inner", Fields.object(rawRawObject));
 
-    let context = new Context(_ => Fields.object(rawObject)).set("link", Fields.link("test"));
+    let context = new Context({ resolve: path => Fields.object(rawObject), normalize: path => path, exists: path => false })
+        .set("link", Fields.link("test"));
     expect(context.get("link").valueType).toEqual("link");
     expect(context.evaluate(Fields.indexVariable("link.inner"))).toEqual(Fields.object(rawRawObject));
     expect(context.evaluate(Fields.indexVariable("link.inner.final"))).toEqual(Fields.number(6));
@@ -198,7 +199,20 @@ test("Evaluate lower()/upper()", () => {
 test("Evaluate default()", () => {
     expect(parseEval("default(null, 1)")).toEqual(Fields.number(1));
     expect(parseEval("default(2, 1)")).toEqual(Fields.number(2));
+    expect(parseEval("default(list(1, null, null), 2)")).toEqual(Fields.array([Fields.number(1), Fields.number(2), Fields.number(2)]));
 });
+
+test("Evaluate ldefault()", () => {
+    expect(parseEval("ldefault(null, 1)")).toEqual(Fields.number(1));
+    expect(parseEval("ldefault(2, 1)")).toEqual(Fields.number(2));
+});
+
+// <-- choice() -->
+
+test("Evaluate choose()", () => {
+    expect(parseEval("choice(true, 1, 2)")).toEqual(Fields.number(1));
+    expect(parseEval("choice(false, 1, 2)")).toEqual(Fields.number(2));
+})
 
 // <-- any/all() -->
 
@@ -226,7 +240,15 @@ function parseEval(text: string): LiteralField {
     return simpleContext().evaluate(field) as LiteralField;
 }
 
+function simpleLinkHandler(): LinkHandler {
+    return {
+        resolve: path => Fields.NULL,
+        normalize: path => path,
+        exists: path => false
+    }
+}
+
 /** Create a trivial context good for evaluations that do not depend on links. */
 function simpleContext(): Context {
-    return new Context(() => Fields.NULL);
+    return new Context(simpleLinkHandler());
 }

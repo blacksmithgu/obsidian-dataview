@@ -1,6 +1,6 @@
 {
   "name": "obsidian-dataview",
-  "version": "0.2.8",
+  "version": "0.2.9",
   "description": "Advanced data views for Obsidian.md.",
   "main": "main.js",
   "scripts": {
