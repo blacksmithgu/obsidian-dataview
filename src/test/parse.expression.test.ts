@@ -19,8 +19,17 @@ test("Parse Float Literal", () => {
 // <-- String Literals -->
 
 test("Parse String Literal", () => {
-    expect(EXPRESSION.string.parse("this won't work, no quotes").status).toBe(false);
-    expect(EXPRESSION.string.tryParse("\"hello\"")).toBe("hello");
+    expect(EXPRESSION.string.parse(`this won't work, no quotes`).status).toBe(false);
+    expect(EXPRESSION.string.tryParse(`"hello"`)).toBe("hello");
+
+    expect(EXPRESSION.string.tryParse(`"\\""`)).toBe('"');
+    expect(EXPRESSION.string.parse(`"\\\\""`).status).toBe(false);
+
+    // Test case which failed on old regex
+    expect(EXPRESSION.string.tryParse(`"\\\\\\""`)).toBe(`\\"`);
+
+    // Testcase for escape in regex strings.
+    expect(EXPRESSION.string.tryParse('"\\w+"')).toBe('\\w+');
 });
 
 test("Parse Empty String Literal", () => {

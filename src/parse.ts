@@ -83,6 +83,7 @@ type PostfixFragment =
 interface ExpressionLanguage {
     number: number;
     string: string;
+    escapeCharacter: string;
     bool: boolean;
     tag: string;
     identifier: string;
@@ -143,10 +144,21 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
     number: q => P.regexp(/[0-9]+(.[0-9]+)?/).map(str => Number.parseFloat(str)).desc("number"),
 
     // A quote-surrounded string which supports escape characters ('\').
-    string: q => P.regexp(/"(.*?)(?<!(?<!\\)\\)"/, 1)
-        .map(str => str.replace(/(?<!\\)\\"/, "\""))
-        .map(str => str.replace(/\\\\/, "\\"))
+    string: q => P.string('"')
+        .then(
+            P.alt(
+                q.escapeCharacter,
+                P.noneOf('"\\'),
+            ).atLeast(0).map(chars => chars.join(''))
+        ).skip(P.string('"'))
         .desc("string"),
+
+    escapeCharacter: q => P.string('\\').then(P.any).map(escaped => {
+        // If we are escaping a backslash or a quote, pass in on in escaped form
+        if (escaped === '"') return '\"';
+        if (escaped === '\\') return '\\';
+        else return '\\' + escaped;
+    }),
 
     // A boolean true/false value.
     bool: q => P.regexp(/true|false|True|False/).map(str => str.toLowerCase() == "true")
