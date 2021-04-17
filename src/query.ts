@@ -165,7 +165,7 @@ export namespace Fields {
     export function string(value: string): LiteralFieldRepr<'string'> {
         return Fields.literal('string', value);
     }
-    
+
     export function number(value: number): LiteralFieldRepr<'number'> {
         return Fields.literal('number', value);
     }
@@ -209,7 +209,7 @@ export namespace Fields {
         for (let index = 1; index < parts.length; index++) {
             result = Fields.index(result, Fields.string(parts[index]));
         }
-        
+
         return result;
     }
 
@@ -377,7 +377,12 @@ export interface GroupStep {
     field: NamedField;
 }
 
-export type QueryOperation = WhereStep | SortByStep | LimitStep | FlattenStep | GroupStep;
+export interface HavingStep {
+    type: 'having';
+    clause: Field;
+}
+
+export type QueryOperation = WhereStep | SortByStep | LimitStep | FlattenStep | GroupStep | HavingStep;
 
 /**
  * A query over the Obsidian database. Queries have a specific and deterministic execution order:

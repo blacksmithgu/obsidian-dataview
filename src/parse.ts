@@ -1,5 +1,5 @@
 import { DateTime, Duration } from 'luxon';
-import { BinaryOp, TagSource, FolderSource, Source, VariableField, Field, Fields, Sources, NegatedSource, WhereStep, SortByStep, LimitStep, QueryHeader, QueryOperation, FlattenStep, GroupStep } from 'src/query';
+import { BinaryOp, TagSource, FolderSource, Source, VariableField, Field, Fields, Sources, NegatedSource, WhereStep, SortByStep, LimitStep, QueryHeader, QueryOperation, FlattenStep, GroupStep, HavingStep } from 'src/query';
 import { QueryType, NamedField, QuerySortBy, Query } from "src/query";
 import * as P from 'parsimmon';
 
@@ -62,7 +62,7 @@ export function chainOpt<T>(base: P.Parser<T>, ...funcs: ((r: T) => P.Parser<T>)
             for (let func of funcs) {
                 let next = (func(result.value as T) as any)._(input, result.index);
                 if (!next.status) return result;
-                
+
                 result = next;
             }
 
@@ -184,7 +184,7 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
 
     // Binary comparison operator.
     binaryCompareOp: q => P.regexp(/>=|<=|!=|>|<|=/).map(str => str as BinaryOp).desc("'>=' or '<=' or '!=' or '=' or '>' or '<'"),
-    
+
     // Binary boolean combination operator.
     binaryBooleanOp: q => P.regexp(/and|or|&|\|/i).map(str => {
         if (str.toLowerCase() == 'and') return '&';
@@ -222,7 +222,7 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
     durationType: q => P.alt(... Object.keys(DURATION_TYPES).map(P.string)) as P.Parser<keyof typeof DURATION_TYPES>,
     duration: q => P.seqMap(q.number, P.optWhitespace, q.durationType, P.string("s").atMost(1), (count, _, t, _2) =>
         DURATION_TYPES[t].mapUnits(x => x * count)),
-    
+
     // Source parsing.
     tagSource: q => q.tag.map(tag => Sources.tag(tag)),
     linkIncomingSource: q => q.link.map(link => Sources.link(link, true)),
@@ -273,7 +273,7 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
     }),
     negatedField: q => P.seqMap(P.string("!"), q.indexField, (_, field) => Fields.negate(field)).desc("negated field"),
     parensField: q => P.seqMap(P.string("("), P.optWhitespace, q.field, P.optWhitespace, P.string(")"), (_1, _2, field, _3, _4) => field),
-    
+
     dotPostfix: q => P.seqMap(P.string("."), q.identifier, (_, field) => { return { type: 'dot', field: Fields.string(field) } }),
     indexPostfix: q => P.seqMap(P.string("["), P.optWhitespace, q.field, P.optWhitespace, P.string("]"),
         (_, _2, field, _3, _4) => { return { type: 'index', field }}),
@@ -311,6 +311,7 @@ interface QueryLanguageTypes {
     limitClause: LimitStep;
     flattenClause: FlattenStep;
     groupByClause: GroupStep;
+    havingClause: HavingStep;
     clause: QueryOperation;
     query: Query;
 }
@@ -362,8 +363,10 @@ export const QUERY_LANGUAGE = P.createLanguage<QueryLanguageTypes>({
         (_, field) => { return { type: 'flatten', field }}),
     groupByClause: q => P.seqMap(P.regexp(/GROUP BY/i).skip(P.whitespace), q.namedField,
         (_, field) => { return { type: 'group', field }}),
+    havingClause: q => P.seqMap(P.regexp(/HAVING/i), P.whitespace, EXPRESSION.field,
+      (having, _, field) => { return { type: 'having', clause: field }}),
     // Full query parsing.
-    clause: q => P.alt(q.fromClause, q.whereClause, q.sortByClause, q.limitClause, q.groupByClause, q.flattenClause),
+    clause: q => P.alt(q.fromClause, q.whereClause, q.sortByClause, q.limitClause, q.groupByClause, q.havingClause, q.flattenClause),
     query: q => P.seqMap(q.headerClause.trim(P.optWhitespace), q.fromClause.trim(P.optWhitespace).atMost(1), q.clause.trim(P.optWhitespace).many(), (header, from, clauses) => {
         return {
             header,

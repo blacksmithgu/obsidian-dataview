@@ -221,9 +221,10 @@ export function execute(query: Query, index: FullIndex, origin: string): QueryRe
                 let amount = rootContext.evaluate(operation.amount);
                 if (typeof amount == 'string') return amount;
                 if (amount.valueType != 'number') return `LIMIT clauses requires a number - got ${amount.valueType} (value ${amount.value})`;
-                
+
                 if (rows.length > amount.value) rows = rows.slice(0, amount.value);
                 break;
+            case "having":
             case "where":
                 let predicate = operation.clause;
                 rows = rows.filter(row => {
