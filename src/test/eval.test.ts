@@ -2,7 +2,7 @@
 
 import { EXPRESSION } from "src/parse";
 import { Context, LinkHandler } from "src/eval";
-import { LiteralField, Fields } from "src/query";
+import { LiteralField, Fields, LiteralFieldRepr } from "src/query";
 
 // <-- Simple Operations -->
 
@@ -232,6 +232,25 @@ test("Evaluate vectorized all()", () => {
     expect(parseEval("all(regexmatch(\"a+\", list(\"a\", \"aaaa\")))")).toEqual(Fields.bool(true));
     expect(parseEval("all(regexmatch(\"a+\", list(\"a\", \"aaab\")))")).toEqual(Fields.bool(false));
     expect(parseEval("any(regexmatch(\"a+\", list(\"a\", \"aaab\")))")).toEqual(Fields.bool(true));
+});
+
+// <-- extract() -->
+
+test("Evaluate 1 field extract()", () => {
+    let res = parseEval("extract(object(\"mtime\", 1), \"mtime\")");
+    expect(res.valueType == "object");
+    let map = (res as LiteralFieldRepr<'object'>).value;
+    expect(map.size).toEqual(1);
+    expect(map.get("mtime")).toEqual(Fields.number(1));
+});
+
+test("Evaluate 2 field extract()", () => {
+    let res = parseEval("extract(object(\"mtime\", 1, \"yes\", \"hello\"), \"yes\", \"mtime\")");
+    expect(res.valueType == "object");
+    let map = (res as LiteralFieldRepr<'object'>).value;
+    expect(map.size).toEqual(2);
+    expect(map.get("mtime")).toEqual(Fields.number(1));
+    expect(map.get("yes")).toEqual(Fields.string("hello"));
 });
 
 /** Parse a field expression and evaluate it in the simple context. */
