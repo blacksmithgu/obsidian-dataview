@@ -1,22 +1,6 @@
-import { Vault, TFile, MarkdownRenderChild, MarkdownRenderer, Component } from 'obsidian';
+import { Vault, MarkdownRenderChild, MarkdownRenderer, Component } from 'obsidian';
+import { Task, TASK_REGEX } from './file';
 import { createAnchor } from 'src/render';
-
-/**
- * This is work-in-progress, and not currently used anywhere. Enables a special task view
- * and querying on tasks.
- */
-
-/** A specific task. */
-export interface Task {
-	/** The text of this task. */
-	text: string;
-	/** The line this task shows up on. */
-	line: number;
-	/** Whether or not this task was completed. */
-	completed: boolean;
-	/** Any subtasks of this task. */
-	subtasks: Task[];
-}
 
 /** Holds DOM events for a rendered task view, including check functionality. */
 export class TaskViewLifecycle extends MarkdownRenderChild {
@@ -64,43 +48,6 @@ export class TaskViewLifecycle extends MarkdownRenderChild {
 	}
 }
 
-/** Matches lines of the form "- [ ] <task thing>". */
-const TASK_REGEX = /(\s*)-\s*\[([ Xx\.]?)\]\s*(.+)/i;
-
-/**
- * A hacky approach to scanning for all tasks using regex. Does not support multiline 
- * tasks yet (though can probably be retro-fitted to do so).
-*/
-export async function findTasksInFile(vault: Vault, file: TFile): Promise<Task[]> {
-	let text = await vault.cachedRead(file);
-
-	// Dummy top of the stack that we'll just never get rid of.
-	let stack: [Task, number][] = [];
-	stack.push([{ text: "Root", line: -1, completed: false, subtasks: [] }, -4]);
-
-	let lineno = 0;
-	for (let line of text.replace("\r", "").split("\n")) {
-		lineno += 1;
-
-		let match = TASK_REGEX.exec(line);
-		if (!match) continue;
-
-		let indent = match[1].replace("\t" , "    ").length;
-		let task: Task = {
-			text: match[3],
-			completed: match[2] == 'X' || match[2] == 'x',
-			line: lineno,
-			subtasks: []
-		};
-
-		while (indent <= (stack.last()?.[1] ?? -4)) stack.pop();
-		stack.last()?.[0].subtasks.push(task);
-		stack.push([task, indent]);
-	}
-
-	// Return everything under the root, which should be all tasks.
-	return stack[0][0].subtasks;
-}
 
 /** Render tasks from multiple files. */
 export async function renderFileTasks(container: HTMLElement, tasks: Map<string, Task[]>) {

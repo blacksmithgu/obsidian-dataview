@@ -1,6 +1,6 @@
 import { MarkdownRenderChild, Plugin, Workspace, Vault, MarkdownPostProcessorContext, PluginSettingTab, App, Setting } from 'obsidian';
 import { renderErrorPre, renderField, renderList, renderTable } from 'src/render';
-import { FullIndex, TaskCache } from 'src/index';
+import { FullIndex } from 'src/index';
 import * as Tasks from 'src/tasks';
 import { Query } from 'src/query';
 import { parseQuery } from "src/parse";
@@ -24,7 +24,6 @@ export default class DataviewPlugin extends Plugin {
 	workspace: Workspace;
 
 	index: FullIndex;
-	tasks: TaskCache;
 
 	async onload() {
 		this.settings = Object.assign(DEFAULT_SETTINGS, await this.loadData());
@@ -53,8 +52,8 @@ export default class DataviewPlugin extends Plugin {
 
 			switch (query.header.type) {
 				case 'task':
-					ctx.addChild(this.wrapWithEnsureTaskIndex(ctx, el,
-						() => new DataviewTaskRenderer(query as Query, el, this.index, this.tasks, ctx.sourcePath, this.app.vault, this.settings)));
+					ctx.addChild(this.wrapWithEnsureIndex(ctx, el,
+						() => new DataviewTaskRenderer(query as Query, el, this.index, ctx.sourcePath, this.app.vault, this.settings)));
 					break;
 				case 'list':
 					ctx.addChild(this.wrapWithEnsureIndex(ctx, el,
@@ -73,10 +72,6 @@ export default class DataviewPlugin extends Plugin {
 	/** Prepare all dataview indices. */
 	async prepareIndexes() {
 		this.index = await FullIndex.generate(this.app.vault, this.app.metadataCache);
-		this.tasks = await TaskCache.generate(this.app.vault);
-
-		// TODO: A little hacky; improve the index to include the task cache in the future.
-		this.index.on("reload", file => this.tasks.reloadFile(file));
 	}
 
 	/** Update plugin settings. */
@@ -87,12 +82,6 @@ export default class DataviewPlugin extends Plugin {
 
 	private wrapWithEnsureIndex(ctx: MarkdownPostProcessorContext, container: HTMLElement, success: () => MarkdownRenderChild): EnsurePredicateRenderer {
 		return new EnsurePredicateRenderer(ctx, container, () => this.index != undefined, success);
-	}
-
-	private wrapWithEnsureTaskIndex(ctx: MarkdownPostProcessorContext, container: HTMLElement, success: () => MarkdownRenderChild): EnsurePredicateRenderer {
-		return new EnsurePredicateRenderer(ctx, container,
-			() => (this.index != undefined) && (this.tasks != undefined),
-			success);
 	}
 }
 
@@ -264,26 +253,24 @@ class DataviewTaskRenderer extends MarkdownRenderChild {
 	query: Query;
 	container: HTMLElement;
 	index: FullIndex;
-	tasks: TaskCache;
 	vault: Vault;
 	origin: string;
 	settings: DataviewSettings;
 
-	constructor(query: Query, container: HTMLElement, index: FullIndex, tasks: TaskCache, origin: string, vault: Vault, settings: DataviewSettings) {
+	constructor(query: Query, container: HTMLElement, index: FullIndex, origin: string, vault: Vault, settings: DataviewSettings) {
 		super();
 
 		this.query = query;
 		this.container = container;
 
 		this.index = index;
-		this.tasks = tasks;
 		this.origin = origin;
 		this.vault = vault;
 		this.settings = settings;
 	}
 
 	async onload() {
-		let result = tryOrPropogate(() => executeTask(this.query, this.origin, this.index, this.tasks));
+		let result = tryOrPropogate(() => executeTask(this.query, this.origin, this.index));
 		if (typeof result === 'string') {
 			renderErrorPre(this.container, "Dataview: " + result);
 		} else if (result.size == 0 && this.settings.warnOnEmptyResult) {
