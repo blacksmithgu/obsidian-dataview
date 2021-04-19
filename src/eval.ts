@@ -1,6 +1,8 @@
 /** Evaluates fields in the expression language. */
-import { BinaryOp, LiteralType, LiteralField, LiteralFieldRepr, Field, Fields } from 'src/query';
+import { DateTime } from 'luxon';
+import { BinaryOp, LiteralType, LiteralField, LiteralFieldRepr, Field, Fields, StringField, DateField } from 'src/query';
 import { normalizeDuration } from "src/util/normalize";
+import { EXPRESSION } from './parse';
 
 /////////////////////////////////
 // Core Context Implementation //
@@ -447,7 +449,7 @@ export class FunctionHandler {
 
         // Check for lists in vectorize positions.
         for (let pos of vectorize) {
-            if (pos > args.length) continue;
+            if (pos >= args.length) continue;
             let value = args[pos];
             if (value.valueType != "array") continue;
 
@@ -484,13 +486,13 @@ export class FunctionHandler {
 export type LFR<T extends LiteralTypeOrAll> = LiteralFieldReprAll<T>;
 
 export const FUNCTIONS = new FunctionHandler()
-    .add1("length", "array", (field: LFR<'array'>, context) => Fields.number(field.value.length))
-    .add1("length", "object", (field: LFR<'object'>, context) => Fields.number(field.value.size))
-    .add1("length", "string", (field: LFR<'string'>, context) => Fields.number(field.value.length))
-    .add1("length", "*", (field: LFR<'*'>, context) => Fields.number(0))
-    .addVararg("list", (args, context) => Fields.array(args))
-    .addVararg("array", (args, context) => Fields.array(args))
-    .addVararg("object", (args, context) => {
+    .add1("length", "array", (field: LFR<'array'>, _context) => Fields.number(field.value.length))
+    .add1("length", "object", (field: LFR<'object'>, _context) => Fields.number(field.value.size))
+    .add1("length", "string", (field: LFR<'string'>, _context) => Fields.number(field.value.length))
+    .add1("length", "*", (field: LFR<'*'>, _context) => Fields.number(0))
+    .addVararg("list", (args, _context) => Fields.array(args))
+    .addVararg("array", (args, _context) => Fields.array(args))
+    .addVararg("object", (args, _context) => {
         if (args.length % 2 != 0) return "object(key1, value1, ...) requires an even number of arguments";
         let result = new Map<string, LiteralField>();
         for (let index = 0; index < args.length; index += 2) {
@@ -501,8 +503,49 @@ export const FUNCTIONS = new FunctionHandler()
 
         return Fields.object(result);
     })
-    .add1("link", "string", (field: LFR<'string'>, context) => Fields.link(field.value)) // TODO: Normalize link here.
-    .add1("link", "null", (field, context) => Fields.NULL)
+    .add1("link", "string", (field: LFR<'string'>, context) => Fields.link(context.linkHandler.normalize(field.value)))
+    .add1("link", "link", (field: LFR<'link'>, _context) => field)
+    .add1("link", "null", (_field, _context) => Fields.NULL)
+    .vectorize("link", [0])
+    .add1("elink", "string", (field: LFR<'string'>, context) => {
+        let elem = document.createElement('a');
+        elem.textContent = field.value;
+        elem.rel = "noopener";
+        elem.target = "_blank";
+        elem.classList.add("external-link");
+        elem.href = field.value;
+        return Fields.html(elem);
+    })
+    .add2("elink", "string", "string", (url: LFR<'string'>, name: LFR<'string'>, context) => {
+        let elem = document.createElement('a');
+        elem.textContent = name.value;
+        elem.rel = "noopener";
+        elem.target = "_blank";
+        elem.classList.add("external-link");
+        elem.href = url.value;
+        return Fields.html(elem);
+    })
+    .vectorize("elink", [0])
+    .add1("date", "string", (obj: StringField, context) => {
+        let parsedDate = EXPRESSION.date.parse(obj.value);
+        if (parsedDate.status) return Fields.literal('date', parsedDate.value);
+        else return Fields.NULL;
+    })
+    .add1("date", "date", (obj: DateField, context) => obj)
+    .vectorize("date", [0])
+    .add1("number", "string", (obj: StringField, context) => {
+        let numMatch = /(-?[0-9]+(\.[0-9]+)?)/.exec(obj.value.trim());
+        if (numMatch) {
+            let parsed = parseFloat(numMatch[1]);
+            if (!isNaN(parsed)) return Fields.number(parsed);
+        }
+
+        return Fields.NULL;
+    })
+    .add1("number", "number", (obj: LFR<"number">, context) => obj)
+    .vectorize("number", [0])
+    .add1("striptime", "date", (obj: DateField, context) => Fields.literal('date', DateTime.fromObject({ year: obj.value.year, month: obj.value.month, day: obj.value.day })))
+    .vectorize("striptime", [0])
     .add2("contains", "object", "string", (obj: LFR<"object">, key: LFR<"string">, context) => Fields.bool(obj.value.has(key.value)))
     .add2("contains", "link", "string", (link: LFR<"link">, key: LFR<'string'>, context) => {
         let linkValue = context.linkHandler.resolve(link.value);
@@ -541,7 +584,7 @@ export const FUNCTIONS = new FunctionHandler()
                 return "extract(object, key1, ...) must be called on an object";
         }
     })
-    .vectorize("extract", [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]) // lol
+    .vectorize("extract", [0])
     .add1("reverse", "array", (list: LFR<"array">, context) => {
         let array = list.value;
         let result = [];
@@ -577,6 +620,15 @@ export const FUNCTIONS = new FunctionHandler()
     .add2("regexmatch", "null", "*", (a: LFR<"null">, b: LFR<"*">, context) => Fields.bool(false))
     .add2("regexmatch", "*", "null", (a: LFR<"*">, b: LFR<"null">, context) => Fields.bool(false))
     .vectorize("regexmatch", [0, 1])
+    .add3("regexreplace", "string", "string", "string", (field: LFR<"string">, pat: LFR<"string">, rep: LFR<"string">, context) => {
+        try {
+            let reg = new RegExp(pat.value, "g");
+            return Fields.string(field.value.replace(reg, rep.value));
+        } catch (ex) {
+            return `Invalid regexp '${pat}' in regexreplace`;
+        }
+    })
+    .vectorize("regexreplace", [1, 2])
     .add1("lower", "string", (str: LFR<"string">, context) => Fields.string(str.value.toLocaleLowerCase())).vectorize("lower", [0])
     .add1("lower", "null", (str: LFR<"null">, context) => Fields.NULL)
     .add1("upper", "string", (str: LFR<"string">, context) => Fields.string(str.value.toLocaleUpperCase())).vectorize("upper", [0])

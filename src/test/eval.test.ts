@@ -2,7 +2,7 @@
 
 import { EXPRESSION } from "src/parse";
 import { Context, LinkHandler } from "src/eval";
-import { LiteralField, Fields } from "src/query";
+import { LiteralField, Fields, LiteralFieldRepr } from "src/query";
 
 // <-- Simple Operations -->
 
@@ -47,6 +47,11 @@ test("Evaluate string comparisons", () => {
     expect(simpleContext().evaluate(Fields.binaryOp(Fields.string("xyz"), '=', Fields.string("xyz"))))
         .toEqual(Fields.bool(true));
 });
+
+test("Evaluate date comparisons", () => {
+    expect(parseEval("date(2021-01-14) = date(2021-01-14)")).toEqual(Fields.bool(true));
+    expect(parseEval("contains(list(date(2020-01-01)), date(2020-01-01))")).toEqual(Fields.bool(true));
+})
 
 // <-- Field resolution -->
 
@@ -232,6 +237,43 @@ test("Evaluate vectorized all()", () => {
     expect(parseEval("all(regexmatch(\"a+\", list(\"a\", \"aaaa\")))")).toEqual(Fields.bool(true));
     expect(parseEval("all(regexmatch(\"a+\", list(\"a\", \"aaab\")))")).toEqual(Fields.bool(false));
     expect(parseEval("any(regexmatch(\"a+\", list(\"a\", \"aaab\")))")).toEqual(Fields.bool(true));
+});
+
+// <-- extract() -->
+
+test("Evaluate 1 field extract()", () => {
+    let res = parseEval("extract(object(\"mtime\", 1), \"mtime\")");
+    expect(res.valueType == "object");
+    let map = (res as LiteralFieldRepr<'object'>).value;
+    expect(map.size).toEqual(1);
+    expect(map.get("mtime")).toEqual(Fields.number(1));
+});
+
+test("Evaluate 2 field extract()", () => {
+    let res = parseEval("extract(object(\"mtime\", 1, \"yes\", \"hello\"), \"yes\", \"mtime\")");
+    expect(res.valueType == "object");
+    let map = (res as LiteralFieldRepr<'object'>).value;
+    expect(map.size).toEqual(2);
+    expect(map.get("mtime")).toEqual(Fields.number(1));
+    expect(map.get("yes")).toEqual(Fields.string("hello"));
+});
+
+// <-- number() -->
+
+test("Evaluate number()", () => {
+    expect(parseEval("number(\"hmm\")")).toEqual(Fields.NULL);
+    expect(parseEval("number(34)")).toEqual(Fields.number(34));
+    expect(parseEval("number(\"34\")")).toEqual(Fields.number(34));
+    expect(parseEval("number(\"17 years\")")).toEqual(Fields.number(17));
+    expect(parseEval("number(\"-19\")")).toEqual(Fields.number(-19));
+});
+
+// <-- regexreplace() -->
+
+test("Evaluate regexreplace", () => {
+    expect(parseEval('regexreplace("yes", ".+", "no")')).toEqual(Fields.string("no"));
+    expect(parseEval('regexreplace("yes", "y", "no")')).toEqual(Fields.string("noes"));
+    expect(parseEval('regexreplace("yes", "yes", "no")')).toEqual(Fields.string("no"));
 });
 
 /** Parse a field expression and evaluate it in the simple context. */

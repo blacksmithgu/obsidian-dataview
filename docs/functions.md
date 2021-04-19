@@ -42,6 +42,25 @@ list(1, 2, 3) => list with 1, 2, and 3
 list("a", "b", "c") => list with "a", "b", and "c"
 ```
 
+##### `date(string)`
+
+Parses a date from the provided string argument, if possible, returning null otherwise.
+
+```
+date("2020-04-18") = <date object representing April 18th, 2020>
+```
+
+##### `number(string)`
+
+Pulls the first number out of the given string, returning it if possible. Returns null if there are no numbers in the
+string.
+
+```
+number("18 years") = 18
+number(34) = 34
+number("hmm") = null
+```
+
 ---
 
 ## Objects, Arrays, and String Operations
@@ -158,6 +177,16 @@ regexmatch(".", "a") = true
 regexmatch("yes|no", "maybe") = false
 ```
 
+##### `regexreplace(string, pattern, replacement)`
+
+Replaces all instances where the *regex* `pattern` matches in `string`, with `replacement`. This uses the JavaScript
+replace method under the hood, so you can use special characters like `$1` to refer to the first capture group, and so on.
+
+```
+regexreplace("yes", "[ys]", "a") = "aea"
+regexreplace("Suite 1000", "\d+", "-") = "Suite -"
+```
+
 ##### `replace(string, pattern, replacement)`
 
 Replace all instances of `pattern` in `string` with `replacement`.
@@ -212,4 +241,14 @@ A primitive if statement - if the first argument is truthy, returns left; otherw
 choice(true, "yes", "no") = "yes"
 choice(false, "yes", "no") = "no"
 choice(x > 4, y, z) = y if x > 4, else z
+```
+
+##### `striptime(date)`
+
+Strip the time component of a date, leaving only the year, month, and day. Good for date comparisons if you don't care
+about the time.
+
+```
+striptime(file.ctime) = file.cday
+striptime(file.mtime) = file.mday
 ```

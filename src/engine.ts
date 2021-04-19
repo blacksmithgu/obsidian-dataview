@@ -2,13 +2,11 @@
  * Takes a full query and a set of indices, and (hopefully quickly) returns all relevant files.
  */
 import { LiteralField, LiteralFieldRepr, Query, Fields, Source, NamedField } from 'src/query';
-import { FullIndex, TaskCache } from 'src/index';
-import { Task } from 'src/tasks';
+import { FullIndex } from 'src/index';
+import { Task } from 'src/file';
 import { DateTime } from 'luxon';
 import { TFile } from 'obsidian';
-import { EXPRESSION } from 'src/parse';
 import { Context, BINARY_OPS, LinkHandler } from 'src/eval';
-import { getFileName } from "./util/normalize";
 
 /** The result of executing a query over an index. */
 export interface QueryResult {
@@ -22,7 +20,7 @@ export interface QueryResult {
 export function collectFromSource(source: Source, index: FullIndex, origin: string): Set<string> | string {
     switch (source.type) {
         case "empty": return new Set<string>();
-        case "tag": return index.tag.get(source.tag);
+        case "tag": return index.tags.getInverse(source.tag);
         case "folder": return index.prefix.get(source.folder);
         case "link":
             let fullPath = index.metadataCache.getFirstLinkpathDest(source.file, origin)?.path;
@@ -80,58 +78,6 @@ export function collectFromSource(source: Source, index: FullIndex, origin: stri
     }
 }
 
-/** Recursively convert frontmatter into fields. */
-export function parseFrontmatter(value: any): LiteralField {
-    if (value == null) {
-        return Fields.NULL;
-    } else if (typeof value === 'object') {
-        if (Array.isArray(value)) {
-            let object = (value as Array<any>);
-            // Special case for link syntax, which shows up as double-nested arrays.
-            if (object.length == 1 && Array.isArray(object[0]) && (object[0].length == 1) && typeof object[0][0] === 'string') {
-                return Fields.link(object[0][0]);
-            }
-
-            let result = [];
-            for (let child of object) {
-                result.push(parseFrontmatter(child));
-            }
-
-            return Fields.array(result);
-        } else {
-            let object = (value as Record<string, any>);
-            let result = new Map<string, LiteralField>();
-            for (let key in object) {
-                result.set(key, parseFrontmatter(object[key]));
-            }
-
-            return Fields.object(result);
-        }
-    } else if (typeof value === 'number') {
-        return Fields.number(value);
-    } else if (typeof value === 'string') {
-        let dateParse = EXPRESSION.date.parse(value);
-        if (dateParse.status) {
-            return Fields.literal('date', dateParse.value);
-        }
-
-        let durationParse = EXPRESSION.duration.parse(value);
-        if (durationParse.status) {
-            return Fields.literal('duration', durationParse.value);
-        }
-
-        let linkParse = EXPRESSION.link.parse(value);
-        if (linkParse.status) {
-            return Fields.literal('link', linkParse.value);
-        }
-
-        return Fields.literal('string', value);
-    }
-
-    // Backup if we don't understand the type.
-    return Fields.NULL;
-}
-
 /** The default link resolver used when creating contexts. */
 export function defaultLinkHandler(index: FullIndex, origin: string): LinkHandler {
     return {
@@ -139,7 +85,9 @@ export function defaultLinkHandler(index: FullIndex, origin: string): LinkHandle
             let realFile = index.metadataCache.getFirstLinkpathDest(link, origin);
             if (!realFile) return Fields.NULL;
 
-            return createContext(realFile.path, index).namespace;
+            let context = createContext(realFile.path, index);
+            if (context) return context.namespace;
+            else return Fields.NULL;
         },
         normalize: (link) => {
             let realFile = index.metadataCache.getFirstLinkpathDest(link, origin);
@@ -153,39 +101,35 @@ export function defaultLinkHandler(index: FullIndex, origin: string): LinkHandle
 }
 
 /** Create a fully-filled context representing the given file. */
-export function createContext(file: string, index: FullIndex, rootContext: Context | undefined = undefined): Context {
-    // Parse the frontmatter if present.
-    let frontmatterData = Fields.emptyObject();
-    let fileData = index.metadataCache.getCache(file);
-    if (fileData && fileData.frontmatter) {
-        frontmatterData = parseFrontmatter(fileData.frontmatter) as LiteralFieldRepr<'object'>;
-    }
+export function createContext(file: string, index: FullIndex, rootContext: Context | undefined = undefined): Context | undefined {
+    let page = index.pages.get(file);
+    if (!page) return undefined;
 
     // Create a context which uses the cache to look up link info.
-    let context = new Context(defaultLinkHandler(index, file), rootContext, frontmatterData);
+    let context = new Context(defaultLinkHandler(index, file), rootContext, Fields.object(page.fields));
 
     // Fill out per-file metadata.
     let fileMeta = new Map<string, LiteralField>();
-    fileMeta.set("path", Fields.literal('string', file));
-    fileMeta.set("name", Fields.literal('string', getFileName(file)));
+    fileMeta.set("path", Fields.string(file));
+    fileMeta.set("folder", Fields.string(page.folder()));
+    fileMeta.set("name", Fields.string(page.name()));
     fileMeta.set("link", Fields.link(file));
-    fileMeta.set("tags", Fields.array(Array.from(index.tag.getInverse(file)).map(val => Fields.string(val))));
+    fileMeta.set("tags", Fields.array(Array.from(page.fullTags()).map(l => Fields.string(l))));
+    fileMeta.set("etags", Fields.array(Array.from(page.tags).map(l => Fields.string(l))));
+    fileMeta.set("aliases", Fields.array(Array.from(page.aliases).map(l => Fields.string(l))));
 
-    // If the file has a date name, add it as the 'day' field.
-    let dateMatch = /(\d{4})-(\d{2})-(\d{2})/.exec(getFileName(file));
-    if (!dateMatch) dateMatch = /(\d{4})(\d{2})(\d{2})/.exec(getFileName(file));
-    if (dateMatch) {
-        let year = Number.parseInt(dateMatch[1]);
-        let month = Number.parseInt(dateMatch[2]);
-        let day = Number.parseInt(dateMatch[3]);
-        fileMeta.set("day", Fields.literal('date', DateTime.fromObject({ year, month, day })))
-    }
+    if (page.day) fileMeta.set("day", Fields.date(page.day));
 
     // Populate file metadata.
     let afile = index.vault.getAbstractFileByPath(file);
     if (afile && afile instanceof TFile) {
-        fileMeta.set('ctime', Fields.literal('date', DateTime.fromMillis(afile.stat.ctime)));
-        fileMeta.set('mtime', Fields.literal('date', DateTime.fromMillis(afile.stat.mtime)));
+        let ctime = DateTime.fromMillis(afile.stat.ctime);
+        let mtime = DateTime.fromMillis(afile.stat.mtime);
+
+        fileMeta.set('ctime', Fields.date(ctime));
+        fileMeta.set('cday', Fields.date(DateTime.fromObject({ year: ctime.year, month: ctime.month, day: ctime.day })));
+        fileMeta.set('mtime', Fields.date(mtime));
+        fileMeta.set('mday', Fields.date(DateTime.fromObject({ year: mtime.year, month: mtime.month, day: mtime.day })));
         fileMeta.set('size', Fields.number(afile.stat.size));
         fileMeta.set('ext', Fields.string(afile.extension));
     }
@@ -205,7 +149,8 @@ export function execute(query: Query, index: FullIndex, origin: string): QueryRe
 
     // Collect file metadata about the file this query is running in.
     if (origin) {
-        rootContext.set("this", createContext(origin, index).namespace);
+        let context = createContext(origin, index);
+        if (context) rootContext.set("this", context.namespace);
     }
 
     // Then, map all of the files to their corresponding contexts.
@@ -359,7 +304,7 @@ export function execute(query: Query, index: FullIndex, origin: string): QueryRe
     }
 }
 
-export function executeTask(query: Query, origin: string, index: FullIndex, cache: TaskCache): Map<string, Task[]> | string {
+export function executeTask(query: Query, origin: string, index: FullIndex): Map<string, Task[]> | string {
     // This is a somewhat silly way to do this for now; call into regular execute on the full query,
     // yielding a list of files. Then map the files to their tasks.
     // TODO: Consider per-task or per-task-block filtering via a more nuanced algorithm.
@@ -370,7 +315,7 @@ export function executeTask(query: Query, origin: string, index: FullIndex, cach
     for (let row of result.data) {
         let file = (row[0] as LiteralFieldRepr<'string'>).value;
 
-        let tasks = cache.get(file);
+        let tasks = index.pages.get(file)?.tasks;
         if (tasks == undefined || tasks.length == 0) continue;
 
         realResult.set(file, tasks);

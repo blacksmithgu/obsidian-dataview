@@ -1,7 +1,8 @@
 import { DateTime, Duration } from 'luxon';
-import { BinaryOp, TagSource, FolderSource, Source, VariableField, Field, Fields, Sources, NegatedSource, WhereStep, SortByStep, LimitStep, QueryHeader, QueryOperation, FlattenStep, GroupStep } from 'src/query';
+import { BinaryOp, TagSource, FolderSource, Source, VariableField, Field, Fields, Sources, NegatedSource, WhereStep, SortByStep, LimitStep, QueryHeader, QueryOperation, FlattenStep, GroupStep, LiteralField } from 'src/query';
 import { QueryType, NamedField, QuerySortBy, Query } from "src/query";
 import * as P from 'parsimmon';
+import { normalizeDuration } from './util/normalize';
 
 ///////////
 // TYPES //
@@ -113,13 +114,16 @@ interface ExpressionLanguage {
 
     // Field-related parsers.
     variableField: VariableField;
-    numberField: Field;
-    boolField: Field;
-    stringField: Field;
-    dateField: Field;
-    durationField: Field;
-    linkField: Field;
-    nullField: Field;
+    numberField: LiteralField;
+    boolField: LiteralField;
+    stringField: LiteralField;
+    dateField: LiteralField;
+    durationField: LiteralField;
+    linkField: LiteralField;
+    nullField: LiteralField;
+    literalField: LiteralField;
+    strippedLiteralField: LiteralField;
+
     negatedField: Field;
     atomField: Field;
     indexField: Field;
@@ -145,12 +149,8 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
 
     // A quote-surrounded string which supports escape characters ('\').
     string: q => P.string('"')
-        .then(
-            P.alt(
-                q.escapeCharacter,
-                P.noneOf('"\\'),
-            ).atLeast(0).map(chars => chars.join(''))
-        ).skip(P.string('"'))
+        .then(P.alt(q.escapeCharacter, P.noneOf('"\\')).atLeast(0).map(chars => chars.join('')))
+        .skip(P.string('"'))
         .desc("string"),
 
     escapeCharacter: q => P.string('\\').then(P.any).map(escaped => {
@@ -174,7 +174,7 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
     identifierDot: q => P.regexp(/[\p{Letter}\p{Emoji_Presentation}][\p{Letter}\p{Emoji_Presentation}\.\w_-]*/u).desc("variable identifier"),
 
     // An Obsidian link of the form [[<link>]].
-    link: q => P.regexp(/\[\[(.*?)\]\]/u, 1).desc("file link"),
+    link: q => P.regexp(/\[\[([^\[\]]*?)\]\]/u, 1).desc("file link"),
 
     // Binary plus or minus operator.
     binaryPlusMinus: q => P.regexp(/\+|-/).map(str => str as BinaryOp).desc("'+' or '-'"),
@@ -210,7 +210,7 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
     datePlus: q => P.alt<DateTime>(
         P.string("now").map(_ => DateTime.local()),
         P.string("today").map(_ => DateTime.local().startOf("day")),
-        P.string("tommorow").map(_ => DateTime.local().startOf("day").plus(Duration.fromObject({ day: 1 }))),
+        P.string("tomorrow").map(_ => DateTime.local().startOf("day").plus(Duration.fromObject({ day: 1 }))),
         P.string("som").map(_ => DateTime.local().startOf("month")),
         P.string("soy").map(_ => DateTime.local().startOf("year")),
         P.string("eom").map(_ => DateTime.local().endOf("month")),
@@ -254,6 +254,17 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
         .desc("duration"),
     nullField: q => P.string("null").map(_ => Fields.NULL),
     linkField: q => q.link.map(f => Fields.link(f)),
+
+    literalField: q => P.alt(q.nullField, q.numberField, q.stringField, q.boolField, q.dateField, q.durationField),
+    strippedLiteralField: q => P.alt(
+        q.date.map(d => Fields.literal('date', d)),
+        q.duration.map(d => Fields.literal('duration', normalizeDuration(d))),
+        q.stringField,
+        q.linkField,
+        q.boolField,
+        q.numberField,
+        q.nullField),
+
     atomField: q => P.alt(q.negatedField, q.parensField, q.boolField, q.numberField, q.stringField, q.linkField, q.dateField, q.durationField, q.nullField, q.variableField),
     indexField: q => P.seqMap(q.atomField, P.alt(q.dotPostfix, q.indexPostfix, q.functionPostfix).many(), (obj, postfixes) => {
         let result = obj;
