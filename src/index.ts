@@ -151,7 +151,8 @@ export class FullIndex {
     }
 
     private async reloadInternalFile(file: TFile) {
-        let newPageMeta = await extractMarkdownMetadata(file, this.vault, this.metadataCache, /^\s*\*\*(.+)\*\*:\s*(.+)\s*$/);
+        let newPageMeta = await extractMarkdownMetadata(file, this.vault, this.metadataCache,
+            /[_\*~]*([0-9\w\p{Letter}\p{Emoji_Presentation}\s]+)[_\*~]*\s*::\s*(.+)/);
 
         this.pages.set(file.path, newPageMeta);
         this.tags.set(file.path, newPageMeta.fullTags());

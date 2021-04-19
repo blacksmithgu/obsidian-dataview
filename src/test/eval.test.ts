@@ -48,6 +48,11 @@ test("Evaluate string comparisons", () => {
         .toEqual(Fields.bool(true));
 });
 
+test("Evaluate date comparisons", () => {
+    expect(parseEval("date(2021-01-14) = date(2021-01-14)")).toEqual(Fields.bool(true));
+    expect(parseEval("contains(list(date(2020-01-01)), date(2020-01-01))")).toEqual(Fields.bool(true));
+})
+
 // <-- Field resolution -->
 
 test("Evaluate simple field resolution", () => {
@@ -251,6 +256,23 @@ test("Evaluate 2 field extract()", () => {
     expect(map.size).toEqual(2);
     expect(map.get("mtime")).toEqual(Fields.number(1));
     expect(map.get("yes")).toEqual(Fields.string("hello"));
+});
+
+// <-- number() -->
+
+test("Evaluate number", () => {
+    expect(parseEval("number(34)")).toEqual(Fields.number(34));
+    expect(parseEval("number(\"34\")")).toEqual(Fields.number(34));
+    expect(parseEval("number(\"17 years\")")).toEqual(Fields.number(17));
+    expect(parseEval("number(\"-19\")")).toEqual(Fields.number(-19));
+});
+
+// <-- regexreplace() -->
+
+test("Evaluate regexreplace", () => {
+    expect(parseEval('regexreplace(".+", "yes", "no")')).toEqual(Fields.string("no"));
+    expect(parseEval('regexreplace("y?", "yes", "no")')).toEqual(Fields.string("noes"));
+    expect(parseEval('regexreplace("yes", "yes", "no")')).toEqual(Fields.string("no"));
 });
 
 /** Parse a field expression and evaluate it in the simple context. */

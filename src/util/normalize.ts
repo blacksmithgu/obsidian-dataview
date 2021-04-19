@@ -19,3 +19,24 @@ export function getFileName(path: string): string {
 	if (path.endsWith(".md")) path = path.substring(0, path.length - 3);
 	return path;
 }
+
+const ALLOWABLE_VAR_CHARACTERS = /[0-9\w\p{Letter}\p{Emoji_Presentation}]/;
+const WHITESPACE = /\s/;
+
+/** Convert an arbitrary variable name into something JS/query friendly. */
+export function canonicalizeVarName(name: string): string {
+	// Strip down to purely alphanumeric + spaces.
+	let result = "";
+	for (let index = 0; index < name.length; index++) {
+		let ch = name[index];
+		if (ch.match(WHITESPACE)) {
+			result += "-";
+			continue;
+		}
+
+		if (!ch.match(ALLOWABLE_VAR_CHARACTERS)) continue;
+		result += ch.toLocaleLowerCase();
+	}
+
+	return result;
+}

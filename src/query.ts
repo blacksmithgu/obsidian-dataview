@@ -23,19 +23,30 @@ export type LiteralTypeRepr<T extends LiteralType> =
 /** Valid binary operators. */
 export type BinaryOp = '+' | '-' | '*' | '/' | '>' | '>=' | '<=' | '<' | '=' | '!=' | '&' | '|';
 
+export type StringField = LiteralFieldRepr<'string'>;
+export type NumberField = LiteralFieldRepr<'number'>;
+export type BooleanField = LiteralFieldRepr<'boolean'>;
+export type DateField = LiteralFieldRepr<'date'>;
+export type DurationField = LiteralFieldRepr<'duration'>;
+export type LinkField = LiteralFieldRepr<'link'>;
+export type ArrayField = LiteralFieldRepr<'array'>;
+export type ObjectField = LiteralFieldRepr<'object'>;
+export type HtmlField = LiteralFieldRepr<'html'>;
+export type NullField = LiteralFieldRepr<'null'>;
+
 /** A (potentially computed) field to select or compare against. */
 export type Field = BinaryOpField | VariableField | LiteralField | FunctionField | IndexField | NegatedField;
 export type LiteralField =
-    LiteralFieldRepr<'string'>
-    | LiteralFieldRepr<'number'>
-    | LiteralFieldRepr<'boolean'>
-    | LiteralFieldRepr<'date'>
-    | LiteralFieldRepr<'duration'>
-    | LiteralFieldRepr<'link'>
-    | LiteralFieldRepr<'array'>
-    | LiteralFieldRepr<'object'>
-    | LiteralFieldRepr<'html'>
-    | LiteralFieldRepr<'null'>;
+    StringField
+    | NumberField
+    | BooleanField
+    | DateField
+    | DurationField
+    | LinkField
+    | ArrayField
+    | ObjectField
+    | HtmlField
+    | NullField;
 
 /** Literal representation of some field type. */
 export interface LiteralFieldRepr<T extends LiteralType> {
@@ -168,6 +179,10 @@ export namespace Fields {
     
     export function number(value: number): LiteralFieldRepr<'number'> {
         return Fields.literal('number', value);
+    }
+
+    export function date(value: DateTime): LiteralFieldRepr<'date'> {
+        return Fields.literal('date', value);
     }
 
     export function duration(value: Duration): LiteralFieldRepr<'duration'> {

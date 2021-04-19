@@ -7,7 +7,6 @@ import { Task } from 'src/file';
 import { DateTime } from 'luxon';
 import { TFile } from 'obsidian';
 import { Context, BINARY_OPS, LinkHandler } from 'src/eval';
-import { getFileName } from "./util/normalize";
 
 /** The result of executing a query over an index. */
 export interface QueryResult {
@@ -112,26 +111,25 @@ export function createContext(file: string, index: FullIndex, rootContext: Conte
     // Fill out per-file metadata.
     let fileMeta = new Map<string, LiteralField>();
     fileMeta.set("path", Fields.string(file));
+    fileMeta.set("folder", Fields.string(page.folder()));
     fileMeta.set("name", Fields.string(page.name()));
     fileMeta.set("link", Fields.link(file));
     fileMeta.set("tags", Fields.array(Array.from(page.fullTags()).map(l => Fields.string(l))));
     fileMeta.set("etags", Fields.array(Array.from(page.tags).map(l => Fields.string(l))));
+    fileMeta.set("aliases", Fields.array(Array.from(page.aliases).map(l => Fields.string(l))));
 
-    // If the file has a date name, add it as the 'day' field.
-    let dateMatch = /(\d{4})-(\d{2})-(\d{2})/.exec(getFileName(file));
-    if (!dateMatch) dateMatch = /(\d{4})(\d{2})(\d{2})/.exec(getFileName(file));
-    if (dateMatch) {
-        let year = Number.parseInt(dateMatch[1]);
-        let month = Number.parseInt(dateMatch[2]);
-        let day = Number.parseInt(dateMatch[3]);
-        fileMeta.set("day", Fields.literal('date', DateTime.fromObject({ year, month, day })))
-    }
+    if (page.day) fileMeta.set("day", Fields.date(page.day));
 
     // Populate file metadata.
     let afile = index.vault.getAbstractFileByPath(file);
     if (afile && afile instanceof TFile) {
-        fileMeta.set('ctime', Fields.literal('date', DateTime.fromMillis(afile.stat.ctime)));
-        fileMeta.set('mtime', Fields.literal('date', DateTime.fromMillis(afile.stat.mtime)));
+        let ctime = DateTime.fromMillis(afile.stat.ctime);
+        let mtime = DateTime.fromMillis(afile.stat.mtime);
+
+        fileMeta.set('ctime', Fields.date(ctime));
+        fileMeta.set('cday', Fields.date(DateTime.fromObject({ year: ctime.year, month: ctime.month, day: ctime.day })));
+        fileMeta.set('mtime', Fields.date(mtime));
+        fileMeta.set('mday', Fields.date(DateTime.fromObject({ year: mtime.year, month: mtime.month, day: mtime.day })));
         fileMeta.set('size', Fields.number(afile.stat.size));
         fileMeta.set('ext', Fields.string(afile.extension));
     }

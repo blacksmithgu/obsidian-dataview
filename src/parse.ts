@@ -149,12 +149,8 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
 
     // A quote-surrounded string which supports escape characters ('\').
     string: q => P.string('"')
-        .then(
-            P.alt(
-                q.escapeCharacter,
-                P.noneOf('"\\'),
-            ).atLeast(0).map(chars => chars.join(''))
-        ).skip(P.string('"'))
+        .then(P.alt(q.escapeCharacter, P.noneOf('"\\')).atLeast(0).map(chars => chars.join('')))
+        .skip(P.string('"'))
         .desc("string"),
 
     escapeCharacter: q => P.string('\\').then(P.any).map(escaped => {

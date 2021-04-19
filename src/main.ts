@@ -126,7 +126,7 @@ class EnsurePredicateRenderer extends MarkdownRenderChild {
 		container: HTMLElement,
 		update: () => boolean,
 		success: () => MarkdownRenderChild) {
-		super();
+		super(container);
 
 		this.ctx = ctx;
 		this.container = container;
@@ -165,7 +165,7 @@ class DataviewListRenderer extends MarkdownRenderChild {
 	origin: string;
 
 	constructor(query: Query, container: HTMLElement, index: FullIndex, origin: string, settings: DataviewSettings) {
-		super();
+		super(container);
 
 		this.query = query;
 		this.container = container;
@@ -216,7 +216,7 @@ class DataviewTableRenderer extends MarkdownRenderChild {
 	settings: DataviewSettings;
 
 	constructor(query: Query, container: HTMLElement, index: FullIndex, origin: string, settings: DataviewSettings) {
-		super();
+		super(container);
 
 		this.query = query;
 		this.container = container;
@@ -258,7 +258,7 @@ class DataviewTaskRenderer extends MarkdownRenderChild {
 	settings: DataviewSettings;
 
 	constructor(query: Query, container: HTMLElement, index: FullIndex, origin: string, vault: Vault, settings: DataviewSettings) {
-		super();
+		super(container);
 
 		this.query = query;
 		this.container = container;

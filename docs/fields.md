@@ -1,7 +1,12 @@
 # Fields
 
-Fields are the general term for data associated with a markdown page - every YAML frontmatter entry is a field. Fields
-have a value as well as a type, and can be combined into more complex fields via operators.
+Fields are the general term for data associated with a markdown page.
+
+1. Every front-matter entry is a field.
+2. Inline fields using the syntax `Key:: Value`; inline fields follow the same parsing rules as front-matter fields.
+3. Dataview provides several special fields ("implicit fields").
+
+Fields have a value as well as a type, and can be combined into more complex fields via operators.
 
 ## Basic Fields
 
@@ -36,16 +41,37 @@ the `row` virtual object - i.e., `row.limit` will obtain the `limit` variable fr
 All files have the following implicit attributes:
 
 - `file.name`: The file title (a string).
+- `file.folder`: The path of the folder this file belongs to.
 - `file.path`: The full file path (a string).
 - `file.link`: A link to the file (a link).
 - `file.size`: The size (in bytes) of the file (a number).
-- `file.ctime`: The date that the file was created (a date).
-- `file.mtime`: The date that the file was last modified (a date).
-- `file.tags`: An array of all tags in the note. Subtags are broken down by each level, so `#Tag/1/A` will be stored in the array as `[#Tag, #Tag/1, #Tag/1/A]`.
+- `file.ctime`: The date that the file was created (a date + time).
+- `file.cday`: The date that the file was created (just a date).
+- `file.mtime`: The date that the file was last modified (a date + time).
+- `file.mday`: The date that the file was last modified (just a date).
+- `file.tags`: An array of all tags in the note. Subtags are broken down by each level, so `#Tag/1/A` will be stored in
+  the array as `[#Tag, #Tag/1, #Tag/1/A]`.
+- `file.etags`: An array of all explicit tags in the note; unlike `file.tags`, does not include subtags.
+- `file.aliases`: An array of all aliases for the note.
 
-If the file has a date inside it's title (of form `yyyy-mm-dd` or `yyyymmdd`), it also obtains the following attributes:
+If the file has a date inside it's title (of form `yyyy-mm-dd` or `yyyymmdd`), or has a `Date` field/inline field, it also obtains the following attributes:
 
 - `file.day`: The date contained in the file title (a date).
+
+## Inline Fields
+
+If you prefer writing your data inline instead of in the YAML front-matter, you can do so via the syntax
+
+```
+Key:: Value
+```
+
+Dataview will automatically parse these fields and make them visible. The 'Key' can have typical markdown formatting (like bold, italics, and so on), as well as spaces and emoji. Such fields may be difficult to query; dataview also allows you to query such fields using an alternative, all-lowercase name where spaces are replaced with dashes ('-'). I.e., "This is a Field" would also be queryable as "this-is-a-field".
+
+Values have the same format as values in YAML frontmatter; you can specify numbers, text, links, dates (YYYY-MM-DD),
+datetimes (YYYY-MM-DDTHH:mm:ss), and durations (4 years, 3 months, 1 hour, etc). Lists/objects are not yet supported,
+but will be in a future release. Values do not allow for computations (i.e., `3 + 1` is not a valid field); this will
+likely also be added in a future release.
 
 ## Calculated Fields
 

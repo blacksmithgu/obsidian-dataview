@@ -7,7 +7,7 @@ export class TaskViewLifecycle extends MarkdownRenderChild {
 	vault: Vault;
 
 	constructor(vault: Vault, container: HTMLElement) {
-		super();
+		super(container);
 		this.vault = vault;
 		this.containerEl = container;
 	}

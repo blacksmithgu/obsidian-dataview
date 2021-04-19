@@ -1,4 +1,4 @@
-import { getFileName, getParentFolder } from './util/normalize';
+import { canonicalizeVarName, getFileName, getParentFolder } from './util/normalize';
 import { Fields, LiteralField, LiteralFieldRepr } from './query';
 import { MetadataCache, parseFrontMatterAliases, parseFrontMatterTags, TFile, Vault } from 'obsidian';
 import { EXPRESSION } from './parse';
@@ -51,6 +51,8 @@ export class PageMetadata {
     mtime: DateTime;
     /** Obsidian-provided size of this page in bytes. */
     size: number;
+    /** The day associated with this page, if relevant. */
+    day?: DateTime;
     /** The first H1/H2 header in the file. May not exist. */
     title?: string;
     /** All of the fields contained in this markdown file - both frontmatter AND in-file links. */
@@ -123,6 +125,36 @@ export class PageMetadata {
             }
         })
     }
+}
+
+/** Try to extract a YYYYMMDD date from a string. */
+function extractDate(str: string): DateTime | undefined {
+    let dateMatch = /(\d{4})-(\d{2})-(\d{2})/.exec(str);
+    if (!dateMatch) dateMatch = /(\d{4})(\d{2})(\d{2})/.exec(str);
+    if (dateMatch) {
+        let year = Number.parseInt(dateMatch[1]);
+        let month = Number.parseInt(dateMatch[2]);
+        let day = Number.parseInt(dateMatch[3]);
+        return DateTime.fromObject({ year, month, day });
+    }
+
+    return undefined;
+}
+
+/** Attempt to find a date associated with the given page from metadata or filenames. */
+function findDate(file: string, fields: Map<string, LiteralField>): DateTime | undefined {
+    for (let key of fields.keys()) {
+        if (!(key.toLocaleLowerCase() == "date")) continue;
+
+        let value = fields.get(key) as LiteralField;
+        if (value.valueType == "date") return value.value;
+        else if (value.valueType == "link") {
+            let date = extractDate(value.value);
+            if (date) return date;
+        }
+    }
+
+    return extractDate(getFileName(file));
 }
 
 /** Recursively convert frontmatter into fields. We have to dance around YAML structure. */
@@ -282,7 +314,9 @@ export async function extractMarkdownMetadata(file: TFile, vault: Vault, cache: 
         let match = inlineRegex.exec(line);
         if (!match) continue;
 
-        fields.set(match[1].trim(), parseInlineField(match[2]));
+        let inlineField = parseInlineField(match[2]);
+        fields.set(match[1].trim(), inlineField);
+        fields.set(canonicalizeVarName(match[1].trim()), inlineField);
     }
 
     // And extract tasks...
@@ -292,6 +326,7 @@ export async function extractMarkdownMetadata(file: TFile, vault: Vault, cache: 
         fields, tags, aliases, links, tasks,
         ctime: DateTime.fromMillis(file.stat.ctime),
         mtime: DateTime.fromMillis(file.stat.mtime),
-        size: file.stat.size
+        size: file.stat.size,
+        day: findDate(file.path, fields)
     });
 }
