@@ -114,6 +114,8 @@ export function createContext(file: string, index: FullIndex, rootContext: Conte
     fileMeta.set("folder", Fields.string(page.folder()));
     fileMeta.set("name", Fields.string(page.name()));
     fileMeta.set("link", Fields.link(file));
+    fileMeta.set("outlinks", Fields.array(page.fileLinks().map(l => Fields.link(l.path))));
+    fileMeta.set("inlinks", Fields.array(Array.from(index.links.getInverse(page.path)).map(l => Fields.link(l))));
     fileMeta.set("tags", Fields.array(Array.from(page.fullTags()).map(l => Fields.string(l))));
     fileMeta.set("etags", Fields.array(Array.from(page.tags).map(l => Fields.string(l))));
     fileMeta.set("aliases", Fields.array(Array.from(page.aliases).map(l => Fields.string(l))));

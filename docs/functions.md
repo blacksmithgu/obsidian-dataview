@@ -61,6 +61,24 @@ number(34) = 34
 number("hmm") = null
 ```
 
+##### `link(path)`
+
+Construct a link object from the given file path or name.
+
+```
+link()
+```
+
+##### `elink(url)`
+
+Construct a link to an external url (like `www.google.com`). If provided with two arguments, the second
+argument is the display name for the link.
+
+```
+elink("www.google.com") => link element to google.com
+elink("www.google.com", "Google") => link element to google.com, displays as "Google"
+```
+
 ---
 
 ## Objects, Arrays, and String Operations
