@@ -620,9 +620,9 @@ export const FUNCTIONS = new FunctionHandler()
     .add2("regexmatch", "null", "*", (a: LFR<"null">, b: LFR<"*">, context) => Fields.bool(false))
     .add2("regexmatch", "*", "null", (a: LFR<"*">, b: LFR<"null">, context) => Fields.bool(false))
     .vectorize("regexmatch", [0, 1])
-    .add3("regexreplace", "string", "string", "string", (pat: LFR<"string">, field: LFR<"string">, rep: LFR<"string">, context) => {
+    .add3("regexreplace", "string", "string", "string", (field: LFR<"string">, pat: LFR<"string">, rep: LFR<"string">, context) => {
         try {
-            let reg = new RegExp(pat.value);
+            let reg = new RegExp(pat.value, "g");
             return Fields.string(field.value.replace(reg, rep.value));
         } catch (ex) {
             return `Invalid regexp '${pat}' in regexreplace`;

@@ -260,7 +260,8 @@ test("Evaluate 2 field extract()", () => {
 
 // <-- number() -->
 
-test("Evaluate number", () => {
+test("Evaluate number()", () => {
+    expect(parseEval("number(\"hmm\")")).toEqual(Fields.NULL);
     expect(parseEval("number(34)")).toEqual(Fields.number(34));
     expect(parseEval("number(\"34\")")).toEqual(Fields.number(34));
     expect(parseEval("number(\"17 years\")")).toEqual(Fields.number(17));
@@ -270,8 +271,8 @@ test("Evaluate number", () => {
 // <-- regexreplace() -->
 
 test("Evaluate regexreplace", () => {
-    expect(parseEval('regexreplace(".+", "yes", "no")')).toEqual(Fields.string("no"));
-    expect(parseEval('regexreplace("y?", "yes", "no")')).toEqual(Fields.string("noes"));
+    expect(parseEval('regexreplace("yes", ".+", "no")')).toEqual(Fields.string("no"));
+    expect(parseEval('regexreplace("yes", "y", "no")')).toEqual(Fields.string("noes"));
     expect(parseEval('regexreplace("yes", "yes", "no")')).toEqual(Fields.string("no"));
 });
 
