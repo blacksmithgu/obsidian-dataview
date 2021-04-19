@@ -6,12 +6,12 @@ references, sorted by general purpose, is shown below.
 ## Function Vectorization
 
 Most functions can be applied either to single values (like `number`, `string`, `date`, etc.) OR to lists of those
-values. If a function is applied to a list, it also returns a list, where the the function is applied to each element
-in the list. I.e.,
+values. If a function is applied to a list, it also returns a list after the function is applied to each element
+in the list. For example:
 
 ```
 lower("YES") = "yes"
-lower(list("YES", "NO")) = list("yes", "yes")
+lower(list("YES", "NO")) = list("yes", "no")
 
 replace("yes", "e", "a") = "yas"
 replace(list("yes", "ree"), "e", "a") = list("yas", "raa")
@@ -56,7 +56,7 @@ the first argument is an object, a list, or a string.
 - For objects, checks if the object has a key with the given name. For example,
     ```
     contains(file, "ctime") = true
-    contains(file, "day") = true (if file has a date in it's title, false otherwise)
+    contains(file, "day") = true (if file has a date in its title, false otherwise)
     ```
 - For lists, checks if any of the array elements equals the given value. For example,
     ```
@@ -116,7 +116,7 @@ sum(list(1, 2, 3)) = 6
 
 ##### `all(array)`
 
-Returns `true` only if all values in the array are truthy. You can also pass multiple arguments to this function, in
+Returns `true` only if ALL values in the array are truthy. You can also pass multiple arguments to this function, in
 which case it returns `true` only if all arguments are truthy.
 
 ```
