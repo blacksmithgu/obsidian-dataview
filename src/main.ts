@@ -1,4 +1,4 @@
-import { MarkdownRenderChild, Plugin, Workspace, Vault, MarkdownPostProcessorContext, PluginSettingTab, App, Setting } from 'obsidian';
+import { MarkdownRenderChild, Plugin, Workspace, Vault, MarkdownPostProcessorContext, PluginSettingTab, App, Setting, MarkdownRenderer } from 'obsidian';
 import { renderErrorPre, renderField, renderList, renderTable } from 'src/render';
 import { FullIndex } from 'src/index';
 import * as Tasks from 'src/tasks';
@@ -40,7 +40,6 @@ export default class DataviewPlugin extends Plugin {
 		}
 
 		// Main entry point for dataview.
-		// TODO: Replace w/ code post processor & raise minimum version.
 		this.registerMarkdownCodeBlockProcessor("dataview", async (source: string, el, ctx) => {
 			let query = tryOrPropogate(() => parseQuery(source));
 
@@ -71,7 +70,8 @@ export default class DataviewPlugin extends Plugin {
 
 	/** Prepare all dataview indices. */
 	async prepareIndexes() {
-		this.index = await FullIndex.generate(this.app.vault, this.app.metadataCache);
+		let index = await FullIndex.generate(this.app.vault, this.app.metadataCache);
+		this.index = index;
 	}
 
 	/** Update plugin settings. */
@@ -81,7 +81,7 @@ export default class DataviewPlugin extends Plugin {
 	}
 
 	private wrapWithEnsureIndex(ctx: MarkdownPostProcessorContext, container: HTMLElement, success: () => MarkdownRenderChild): EnsurePredicateRenderer {
-		return new EnsurePredicateRenderer(ctx, container, () => this.index != undefined, success);
+		return new EnsurePredicateRenderer(ctx, container, () => this.index != undefined && this.index.pages && this.index.pages.size > 0, success);
 	}
 }
 
@@ -174,7 +174,7 @@ class DataviewListRenderer extends MarkdownRenderChild {
 		this.origin = origin;
 	}
 
-	onload() {
+	async onload() {
 		let result = tryOrPropogate(() => execute(this.query, this.index, this.origin));
 		if (typeof result === 'string') {
 			renderErrorPre(this.container, "Dataview: " + result);
@@ -182,9 +182,10 @@ class DataviewListRenderer extends MarkdownRenderChild {
 			renderErrorPre(this.container, "Dataview: Query returned 0 results.");
 		} else {
 			if (result.names.length == 2) {
-				renderList(this.container, result.data.map(e => {
+				let rendered: HTMLElement[] = [];
+				for (let [file, value] of result.data) {
 					let span = document.createElement('span');
-					let renderedFile = renderField(e[0], this.settings.renderNullAs, true);
+					let renderedFile = renderField(file, this.settings.renderNullAs, true);
 					if (typeof renderedFile == "string") {
 						span.appendText(renderedFile + ": ");
 					} else {
@@ -192,17 +193,18 @@ class DataviewListRenderer extends MarkdownRenderChild {
 						span.appendText(": ");
 					}
 
-					let renderedValue = renderField(e[1], this.settings.renderNullAs, true);
+					let renderedValue = renderField(value, this.settings.renderNullAs, true);
 					if (typeof renderedValue == "string") {
-						span.appendText(renderedValue);
+						await MarkdownRenderer.renderMarkdown(renderedValue, span, this.origin, this);
 					} else {
 						span.appendChild(renderedValue);
 					}
+				}
 
-					return span;
-				}))
+				await renderList(this.container, rendered, this, this.origin);
 			} else {
-				renderList(this.container, result.data.map(e => renderField(e[0], this.settings.renderNullAs, true)));
+				await renderList(this.container, result.data.map(e => renderField(e[0], this.settings.renderNullAs, true)),
+					this, this.origin);
 			}
 		}
 	}
@@ -225,14 +227,14 @@ class DataviewTableRenderer extends MarkdownRenderChild {
 		this.origin = origin;
 	}
 
-	onload() {
+	async onload() {
 		let result = tryOrPropogate(() => execute(this.query, this.index, this.origin));
 		if (typeof result === 'string') {
 			renderErrorPre(this.container, "Dataview: " + result);
 			return;
 		}
 
-		renderTable(this.container, result.names, result.data.map(row => {
+		await renderTable(this.container, result.names, result.data.map(row => {
 			let result: (string | HTMLElement)[] = [];
 
 			for (let elem of row) {
@@ -240,7 +242,7 @@ class DataviewTableRenderer extends MarkdownRenderChild {
 			}
 
 			return result;
-		}));
+		}), this, this.origin);
 
 		// Render after the empty table, so the table header still renders.
 		if (result.data.length == 0 && this.settings.warnOnEmptyResult) {

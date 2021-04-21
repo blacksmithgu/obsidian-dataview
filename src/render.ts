@@ -1,4 +1,5 @@
 import { DateTime, Duration } from 'luxon';
+import { Component, MarkdownRenderer } from 'obsidian';
 import { LiteralField } from 'src/query';
 import { getFileName, normalizeDuration } from './util/normalize';
 
@@ -16,12 +17,14 @@ export function createAnchor(text: string, target: string, internal: boolean): H
 }
 
 /** Create a list inside the given container, with the given data. */
-export function renderList(container: HTMLElement, elements: (string | HTMLElement)[]) {
-	let listEl = container.createEl('ul', { cls: 'list-view-ul' });
+export async function renderList(container: HTMLElement, elements: (string | HTMLElement)[], component: Component, originFile: string) {
+	let listEl = container.createEl('ul', { cls: ['dataview', 'list-view-ul'] });
 	for (let elem of elements) {
 		let li = listEl.createEl('li');
 		if (typeof elem == "string") {
-			li.appendText(elem);
+			// TODO: There may be links in text which are file-location-dependent; when I eventually get a bug for this, 
+			// I'll need to change render list to be file-aware.
+			await MarkdownRenderer.renderMarkdown(elem, li, originFile, component);
 		} else {
 			li.appendChild(elem);
 		}
@@ -29,8 +32,9 @@ export function renderList(container: HTMLElement, elements: (string | HTMLEleme
 }
 
 /** Create a table inside the given container, with the given data. */
-export function renderTable(container: HTMLElement, headers: string[], values: (string | HTMLElement)[][]) {
-	let tableEl = container.createEl('table', { cls: 'table-view-table' });
+export async function renderTable(container: HTMLElement, headers: string[], values: (string | HTMLElement)[][],
+	component: Component, originFile: string) {
+	let tableEl = container.createEl('table', { cls: ['dataview', 'table-view-table'] });
 
 	let theadEl = tableEl.createEl('thead');
 	let headerEl = theadEl.createEl('tr');
@@ -43,7 +47,11 @@ export function renderTable(container: HTMLElement, headers: string[], values: (
 		let rowEl = tbodyEl.createEl('tr');
 		for (let value of row) {
 			if (typeof value == "string") {
-				rowEl.createEl('td', { text: value });
+				let td = rowEl.createEl('td');
+
+				// TODO: There may be links in text which are file-location-dependent; when I eventually get a bug for this, 
+				// I'll need to change render list to be file-aware.
+				await MarkdownRenderer.renderMarkdown(value, td, originFile, component);
 			} else {
 				let wrapper = rowEl.createEl('td');
 				wrapper.appendChild(value);

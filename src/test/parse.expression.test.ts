@@ -295,6 +295,22 @@ test("Parse negated parens source", () => {
         Sources.binaryOp(Sources.negate(Sources.folder("meme")), '&', Sources.tag("#dirty")));
 });
 
+// <-- Inline Field Lists -->
+
+test("Parse basic inline fields", () => {
+    expect(EXPRESSION.inlineField.tryParse("14")).toEqual(Fields.number(14));
+    expect(EXPRESSION.inlineField.tryParse("\"yes,\"")).toEqual(Fields.string("yes,"));
+    expect(EXPRESSION.inlineField.tryParse("[[test]]")).toEqual(Fields.link("test"));
+});
+
+test("Parse inline field lists", () => {
+    expect(EXPRESSION.inlineField.tryParse("[[test]],")).toEqual(Fields.array([Fields.link("test")]));
+    expect(EXPRESSION.inlineField.tryParse("[[test]], [[test2]]")).toEqual(Fields.array([Fields.link("test"), Fields.link("test2")]));
+    expect(EXPRESSION.inlineField.tryParse("1, 2, 3, \"hello\"")).toEqual(Fields.array([
+        Fields.number(1), Fields.number(2), Fields.number(3), Fields.string("hello")
+    ]));
+});
+
 // <-- Stress Tests -->
 
 test("Parse Various Fields", () => {

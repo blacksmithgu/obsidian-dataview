@@ -122,7 +122,10 @@ interface ExpressionLanguage {
     linkField: LiteralField;
     nullField: LiteralField;
     literalField: LiteralField;
-    strippedLiteralField: LiteralField;
+
+    atomInlineField: LiteralField;
+    inlineFieldList: LiteralField[];
+    inlineField: LiteralField;
 
     negatedField: Field;
     atomField: Field;
@@ -256,7 +259,7 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
     linkField: q => q.link.map(f => Fields.link(f)),
 
     literalField: q => P.alt(q.nullField, q.numberField, q.stringField, q.boolField, q.dateField, q.durationField),
-    strippedLiteralField: q => P.alt(
+    atomInlineField: q => P.alt(
         q.date.map(d => Fields.literal('date', d)),
         q.duration.map(d => Fields.literal('duration', normalizeDuration(d))),
         q.stringField,
@@ -264,6 +267,11 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
         q.boolField,
         q.numberField,
         q.nullField),
+    inlineFieldList: q => q.atomInlineField.sepBy(P.string(",").trim(P.optWhitespace).lookahead(q.atomInlineField)),
+    inlineField: q => P.alt(
+        P.seqMap(q.atomInlineField, P.string(",").trim(P.optWhitespace), q.inlineFieldList, (f, s, l) => Fields.array([f].concat(l))),
+        q.atomInlineField
+    ),
 
     atomField: q => P.alt(q.negatedField, q.parensField, q.boolField, q.numberField, q.stringField, q.linkField, q.dateField, q.durationField, q.nullField, q.variableField),
     indexField: q => P.seqMap(q.atomField, P.alt(q.dotPostfix, q.indexPostfix, q.functionPostfix).many(), (obj, postfixes) => {

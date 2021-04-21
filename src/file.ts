@@ -1,6 +1,6 @@
 import { canonicalizeVarName, getFileName, getParentFolder } from './util/normalize';
 import { Fields, LiteralField, LiteralFieldRepr } from './query';
-import { MetadataCache, parseFrontMatterAliases, parseFrontMatterTags, TFile, Vault } from 'obsidian';
+import { getAllTags, MetadataCache, parseFrontMatterAliases, parseFrontMatterTags, TFile, Vault } from 'obsidian';
 import { EXPRESSION } from './parse';
 import { DateTime } from 'luxon';
 
@@ -214,7 +214,7 @@ export function parseInlineField(value: string): LiteralField {
     // The stripped literal field parser understands all of the non-array/non-object fields and can parse them for us.
     // Inline field objects are not currently supported; inline array objects have to be handled by the parser
     // separately.
-    let inline = EXPRESSION.strippedLiteralField.parse(value);
+    let inline = EXPRESSION.inlineField.parse(value);
     if (inline.status) return inline.value;
     else return Fields.string(value);
 }
@@ -264,15 +264,8 @@ export async function extractMarkdownMetadata(file: TFile, vault: Vault, cache: 
     // Pull out the easy-to-extract information from the cache first...
     let fileCache = cache.getFileCache(file);
     if (fileCache) {
-        // File tags (outside of the front-matter, I believe?).
-        if (fileCache.tags) {
-            for (let tag of fileCache.tags) {
-                if (!tag.tag || !(typeof tag.tag == 'string')) continue;
-                let rtag = tag.tag;
-                if (!rtag.startsWith("#")) rtag = "#" + rtag;
-                tags.add(rtag);
-            }
-        }
+        // File tags, including front-matter and in-file tags.
+        getAllTags(fileCache)?.forEach(t => tags.add(t));
 
         // Front-matter file tags, aliases, AND frontmatter properties.
         if (fileCache.frontmatter) {
