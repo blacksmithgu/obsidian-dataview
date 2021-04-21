@@ -15,7 +15,7 @@ There are 7 basic field types, corresponding to different types of values:
 - `number`: A number like `0` or `18` or `19.37`.
 - `date`: A date and time in ISO8601 format - `yyyy-mm-ddThh:mm:ss`. Everything after the year and month is optional, so
   you can just write `yyyy-mm` or `yyyy-mm-dd` or `yyyy-mm-ddThh`. If you want to use a date in a query, use
-  `date(<date>)` where `<date>` is either a date, `today`, `tommorow`, `eom` (end of month), or `eoy` (end of year).
+  `date(<date>)` where `<date>` is either a date, `today`, `tomorrow`, `eom` (end of month), or `eoy` (end of year).
     - You can access date fields like 'years' and so on via dot-notation (i.e., `date(today).year`).
 - `duration`: A length of time - can be added/subtracted from dates. Has the format `<number> years/months/.../seconds`,
   where the unit can be years, months, weeks, days, hours, minutes, or seconds. If you want to use a duration in a
@@ -54,7 +54,7 @@ All files have the following implicit attributes:
 - `file.etags`: An array of all explicit tags in the note; unlike `file.tags`, does not include subtags.
 - `file.aliases`: An array of all aliases for the note.
 
-If the file has a date inside it's title (of form `yyyy-mm-dd` or `yyyymmdd`), or has a `Date` field/inline field, it also obtains the following attributes:
+If the file has a date inside its title (of form `yyyy-mm-dd` or `yyyymmdd`), or has a `Date` field/inline field, it also has the following attributes:
 
 - `file.day`: The date contained in the file title (a date).
 
