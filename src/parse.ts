@@ -403,3 +403,15 @@ export function parseQuery(text: string): Query | string {
         return "" + error;
     }
 }
+
+/**
+ * Attempt to parse a field from the given text, returning a string error if the 
+ * parse failed.
+ */
+export function parseField(text: string): Field | string {
+    try {
+        return EXPRESSION.field.tryParse(text);
+    } catch (error) {
+        return "" + error;
+    }
+}

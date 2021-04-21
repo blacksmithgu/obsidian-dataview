@@ -2,21 +2,24 @@ import { MarkdownRenderChild, Plugin, Workspace, Vault, MarkdownPostProcessorCon
 import { renderErrorPre, renderField, renderList, renderTable } from 'src/render';
 import { FullIndex } from 'src/index';
 import * as Tasks from 'src/tasks';
-import { Query } from 'src/query';
-import { parseQuery } from "src/parse";
-import { execute, executeTask } from 'src/engine';
+import { Field, Query } from 'src/query';
+import { parseField, parseQuery } from "src/parse";
+import { execute, executeInline, executeTask } from 'src/engine';
 
 interface DataviewSettings {
 	/** What to render 'null' as in tables. Defaults to '-'. */
 	renderNullAs: string;
 	/** If true, render a modal which shows no results were returned. */
 	warnOnEmptyResult: boolean;
+	/** The prefix for inline queries by default. */
+	inlineQueryPrefix: string;
 }
 
 /** Default settings for dataview on install. */
 const DEFAULT_SETTINGS: DataviewSettings = {
 	renderNullAs: "-",
-	warnOnEmptyResult: true
+	warnOnEmptyResult: true,
+	inlineQueryPrefix: "="
 }
 
 export default class DataviewPlugin extends Plugin {
@@ -64,6 +67,29 @@ export default class DataviewPlugin extends Plugin {
 					break;
 			}
 		});
+
+		// Dataview inline queries.
+		this.registerMarkdownPostProcessor(async (el, ctx) => {
+			// Search for <code> blocks inside this element; for each one, look for things of the form `
+			let codeblocks = el.querySelectorAll("code");
+			for (let index = 0; index < codeblocks.length; index++) {
+				let codeblock = codeblocks.item(index);
+
+				let text = codeblock.innerText.trim();
+				if (!text.startsWith(this.settings.inlineQueryPrefix)) continue;
+
+				let potentialField = text.substring(this.settings.inlineQueryPrefix.length).trim();
+
+				let field = tryOrPropogate(() => parseField(potentialField));
+				if (typeof field === "string") {
+					let errorBlock = el.createEl('div');
+					renderErrorPre(errorBlock, `Dataview (inline field '${potentialField}'): ${field}`);
+				} else {
+					ctx.addChild(this.wrapInlineWithEnsureIndex(ctx, codeblock,
+						() => new DataviewInlineRenderer(field as Field, el, codeblock, this.index, ctx.sourcePath, this.settings)));
+				}
+			}
+		});
 	}
 
 	onunload() { }
@@ -83,8 +109,13 @@ export default class DataviewPlugin extends Plugin {
 	private wrapWithEnsureIndex(ctx: MarkdownPostProcessorContext, container: HTMLElement, success: () => MarkdownRenderChild): EnsurePredicateRenderer {
 		return new EnsurePredicateRenderer(ctx, container, () => this.index != undefined && this.index.pages && this.index.pages.size > 0, success);
 	}
+
+	private wrapInlineWithEnsureIndex(ctx: MarkdownPostProcessorContext, container: HTMLElement, success: () => MarkdownRenderChild): EnsurePredicateRenderer {
+		return new EnsureInlinePredicateRenderer(ctx, container, () => this.index != undefined && this.index.pages && this.index.pages.size > 0, success);
+	}
 }
 
+/** All of the dataview settings in a single, nice tab. */
 class DataviewSettingsTab extends PluginSettingTab {
 	constructor(app: App, private plugin: DataviewPlugin) {
 		super(app, plugin);
@@ -108,6 +139,14 @@ class DataviewSettingsTab extends PluginSettingTab {
 			.addToggle(toggle =>
 				toggle.setValue(this.plugin.settings.warnOnEmptyResult)
 					.onChange(async (value) => await this.plugin.updateSettings({ warnOnEmptyResult: value })));
+
+		new Setting(this.containerEl)
+			.setName("Inline Query Prefix")
+			.setDesc("The prefix to inline queries (to mark them as Dataview queries). Defaults to '='.")
+			.addText(text =>
+				text.setPlaceholder("=")
+				.setValue(this.plugin.settings.inlineQueryPrefix)
+				.onChange(async (value) => await this.plugin.updateSettings({ inlineQueryPrefix: value })))
 	}
 }
 
@@ -115,17 +154,12 @@ class DataviewSettingsTab extends PluginSettingTab {
 class EnsurePredicateRenderer extends MarkdownRenderChild {
 	static CHECK_INTERVAL_MS = 1_000;
 
-	update: () => boolean;
-	success: () => MarkdownRenderChild;
-
-	ctx: MarkdownPostProcessorContext;
 	dead: boolean;
-	container: HTMLElement;
 
-	constructor(ctx: MarkdownPostProcessorContext,
-		container: HTMLElement,
-		update: () => boolean,
-		success: () => MarkdownRenderChild) {
+	constructor(public ctx: MarkdownPostProcessorContext,
+		public container: HTMLElement,
+		public update: () => boolean,
+		public success: () => MarkdownRenderChild) {
 		super(container);
 
 		this.ctx = ctx;
@@ -155,23 +189,53 @@ class EnsurePredicateRenderer extends MarkdownRenderChild {
 	}
 }
 
-/** Renders a list dataview for the given query. */
-class DataviewListRenderer extends MarkdownRenderChild {
-	// If true, kill any waiting / pending operations since this view was killed.
-	query: Query;
-	container: HTMLElement;
-	index: FullIndex;
-	settings: DataviewSettings;
-	origin: string;
+/** Inline version of EnsurePredicateRenderer; renders it's loading message differently. */
+class EnsureInlinePredicateRenderer extends MarkdownRenderChild {
+	static CHECK_INTERVAL_MS = 1_000;
 
-	constructor(query: Query, container: HTMLElement, index: FullIndex, origin: string, settings: DataviewSettings) {
+	dead: boolean;
+
+	constructor(public ctx: MarkdownPostProcessorContext,
+		public container: HTMLElement,
+		public update: () => boolean,
+		public success: () => MarkdownRenderChild) {
 		super(container);
 
-		this.query = query;
+		this.ctx = ctx;
 		this.container = container;
-		this.index = index;
-		this.settings = settings;
-		this.origin = origin;
+		this.update = update;
+		this.success = success;
+		this.dead = false;
+	}
+
+	async onload() {
+		this.container.innerHTML = "<Indices loading>";
+
+		// Wait for the given predicate to finally pass...
+		await waitFor(EnsurePredicateRenderer.CHECK_INTERVAL_MS,
+			() => { return this.update(); },
+			() => this.dead);
+
+		// Clear the container before passing it off to the child.
+		this.container.innerHTML = "";
+
+		// And then pass off rendering to a child context.
+		this.ctx.addChild(this.success());
+	}
+
+	onunload() {
+		this.dead = true;
+	}
+}
+
+/** Renders a list dataview for the given query. */
+class DataviewListRenderer extends MarkdownRenderChild {
+	constructor(public query: Query,
+		public container: HTMLElement,
+		public index: FullIndex,
+		public origin: string,
+		public settings: DataviewSettings) {
+		super(container);
 	}
 
 	async onload() {
@@ -211,20 +275,13 @@ class DataviewListRenderer extends MarkdownRenderChild {
 }
 
 class DataviewTableRenderer extends MarkdownRenderChild {
-	query: Query;
-	container: HTMLElement;
-	index: FullIndex;
-	origin: string;
-	settings: DataviewSettings;
-
-	constructor(query: Query, container: HTMLElement, index: FullIndex, origin: string, settings: DataviewSettings) {
+	constructor(
+		public query: Query,
+		public container: HTMLElement,
+		public index: FullIndex,
+		public origin: string,
+		public settings: DataviewSettings) {
 		super(container);
-
-		this.query = query;
-		this.container = container;
-		this.index = index;
-		this.settings = settings;
-		this.origin = origin;
 	}
 
 	async onload() {
@@ -281,6 +338,36 @@ class DataviewTaskRenderer extends MarkdownRenderChild {
 			await Tasks.renderFileTasks(this.container, result);
 			// TODO: Merge this into this renderer.
 			this.addChild(new Tasks.TaskViewLifecycle(this.vault, this.container));
+		}
+	}
+}
+
+/** Renders inline query results. */
+class DataviewInlineRenderer extends MarkdownRenderChild {
+	constructor(
+		public field: Field,
+		public container: HTMLElement,
+		public target: HTMLElement,
+		public index: FullIndex,
+		public origin: string,
+		public settings: DataviewSettings) {
+		super(container);
+	}
+
+	async onload() {
+		let result = tryOrPropogate(() => executeInline(this.field, this.origin, this.index));
+		if (typeof result === 'string') {
+			let errorBox = this.container.createEl('div');
+			renderErrorPre(errorBox, "Dataview (for inline query '" + this.target.innerText + "'): " + result);
+		} else {
+			let realResult = renderField(result, this.settings.renderNullAs, false);
+			let wrapped: HTMLElement;
+			if (typeof realResult === "string") {
+				wrapped = document.createElement("span");
+ 				wrapped.appendText(realResult);
+			}
+			else wrapped = realResult;
+			this.target.replaceWith(wrapped);
 		}
 	}
 }

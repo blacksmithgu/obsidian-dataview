@@ -67,6 +67,13 @@ export function renderErrorPre(container: HTMLElement, error: string): HTMLEleme
 	return pre;
 }
 
+/** Render a span block with an error in it; returns the element to allow for dynamic updating. */
+export function renderErrorSpan(container: HTMLElement, error: string): HTMLElement {
+	let pre = container.createEl('span', { cls: ["dataview", "dataview-error"] });
+	pre.appendText(error);
+	return pre;
+}
+
 /** Render a DateTime in a minimal format to save space. */
 export function renderMinimalDate(time: DateTime): string {
 	// If there is no relevant time specified, fall back to just rendering the date.

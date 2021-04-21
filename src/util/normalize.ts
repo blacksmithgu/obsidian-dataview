@@ -40,3 +40,22 @@ export function canonicalizeVarName(name: string): string {
 
 	return result;
 }
+
+/** Busily wait for a async function to return with a maximum timeout. */
+export function busyAwait<T>(func: (() => Promise<T>), timeoutMs: number): T | undefined {
+	let finished = false;
+	let result: T | undefined = undefined;
+	func().then(
+		val => {
+			result = val;
+			finished = true;
+		},
+		reason => {
+			finished = true;
+		});
+
+	let startTime = new Date().getTime();
+	while (!finished && (new Date().getTime() - startTime) < timeoutMs);
+
+	return result;
+}

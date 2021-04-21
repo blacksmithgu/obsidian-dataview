@@ -1,7 +1,7 @@
 /**
  * Takes a full query and a set of indices, and (hopefully quickly) returns all relevant files.
  */
-import { LiteralField, LiteralFieldRepr, Query, Fields, Source, NamedField } from 'src/query';
+import { LiteralField, LiteralFieldRepr, Query, Fields, Source, NamedField, Field } from 'src/query';
 import { FullIndex } from 'src/index';
 import { Task } from 'src/file';
 import { DateTime } from 'luxon';
@@ -304,6 +304,19 @@ export function execute(query: Query, index: FullIndex, origin: string): QueryRe
                 data: filtered
             }
     }
+}
+
+/** Execute a single field inline a file, returning the evaluated result. */
+export function executeInline(field: Field, origin: string, index: FullIndex): LiteralField | string {
+    let rootContext = new Context(defaultLinkHandler(index, origin));
+
+    // Collect file metadata about the file this query is running in.
+    if (origin) {
+        let context = createContext(origin, index);
+        if (context) rootContext.set("this", context.namespace);
+    }
+
+    return rootContext.evaluate(field);
 }
 
 export function executeTask(query: Query, origin: string, index: FullIndex): Map<string, Task[]> | string {
