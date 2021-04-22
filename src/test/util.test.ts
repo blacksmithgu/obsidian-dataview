@@ -14,11 +14,11 @@ test("folder getFileName()", () => {
     expect(getFileName("/yes")).toEqual("yes");
 });
 
-test("empty getParentFolder", () => {
+test("empty getParentFolder()", () => {
     expect(getParentFolder("")).toEqual("");
 });
 
-test("root getParentFolder", () => {
+test("root getParentFolder()", () => {
     expect(getParentFolder("yes")).toEqual("");
     expect(getParentFolder("maybe")).toEqual("");
 });
@@ -28,6 +28,12 @@ test("folder getParentFolder()", () => {
     expect(getParentFolder("no/maybe")).toEqual("no");
     expect(getParentFolder("/maybe")).toEqual("");
 })
+
+test("nested folder getParentFolder()", () => {
+    expect(getParentFolder("a/b/c.md")).toEqual("a/b");
+    expect(getParentFolder("hello/yes/no/maybe.md")).toEqual("hello/yes/no");
+    expect(getParentFolder("hello/yes/no/")).toEqual("hello/yes/no");
+});
 
 test("simple canonicalizeVarName()", () => {
     expect(canonicalizeVarName("test")).toEqual("test");

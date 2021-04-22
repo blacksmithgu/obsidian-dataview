@@ -2,24 +2,29 @@ import { MarkdownRenderChild, Plugin, Workspace, Vault, MarkdownPostProcessorCon
 import { renderErrorPre, renderField, renderList, renderTable } from 'src/render';
 import { FullIndex } from 'src/index';
 import * as Tasks from 'src/tasks';
-import { Field, Query } from 'src/query';
+import { Field, Query, QuerySettings } from 'src/query';
 import { parseField, parseQuery } from "src/parse";
 import { execute, executeInline, executeTask } from 'src/engine';
+import { tryOrPropogate } from './util/normalize';
+import { waitFor } from './util/concurrency';
 
-interface DataviewSettings {
+interface DataviewSettings extends QuerySettings {
 	/** What to render 'null' as in tables. Defaults to '-'. */
 	renderNullAs: string;
 	/** If true, render a modal which shows no results were returned. */
 	warnOnEmptyResult: boolean;
 	/** The prefix for inline queries by default. */
 	inlineQueryPrefix: string;
+	/** The interval that views are refreshed, by default. */
+	refreshInterval: number;
 }
 
 /** Default settings for dataview on install. */
 const DEFAULT_SETTINGS: DataviewSettings = {
 	renderNullAs: "-",
 	warnOnEmptyResult: true,
-	inlineQueryPrefix: "="
+	inlineQueryPrefix: "=",
+	refreshInterval: 5000
 }
 
 export default class DataviewPlugin extends Plugin {
@@ -44,7 +49,7 @@ export default class DataviewPlugin extends Plugin {
 
 		// Main entry point for dataview.
 		this.registerMarkdownCodeBlockProcessor("dataview", async (source: string, el, ctx) => {
-			let query = tryOrPropogate(() => parseQuery(source));
+			let query = tryOrPropogate(() => parseQuery(source, this.settings));
 
 			// In case of parse error, just render the error.
 			if (typeof query === 'string') {
@@ -239,6 +244,15 @@ class DataviewListRenderer extends MarkdownRenderChild {
 	}
 
 	async onload() {
+		await this.render();
+
+		this.registerInterval(window.setInterval(async () => {
+			this.container.innerHTML = "";
+			await this.render();
+		}, this.query.settings.refreshInterval));
+	}
+
+	async render() {
 		let result = tryOrPropogate(() => execute(this.query, this.index, this.origin));
 		if (typeof result === 'string') {
 			renderErrorPre(this.container, "Dataview: " + result);
@@ -285,6 +299,15 @@ class DataviewTableRenderer extends MarkdownRenderChild {
 	}
 
 	async onload() {
+		await this.render();
+
+		this.registerInterval(window.setInterval(async () => {
+			this.container.innerHTML = "";
+			await this.render();
+		}, this.query.settings.refreshInterval));
+	}
+
+	async render() {
 		let result = tryOrPropogate(() => execute(this.query, this.index, this.origin));
 		if (typeof result === 'string') {
 			renderErrorPre(this.container, "Dataview: " + result);
@@ -309,26 +332,30 @@ class DataviewTableRenderer extends MarkdownRenderChild {
 }
 
 class DataviewTaskRenderer extends MarkdownRenderChild {
-	query: Query;
-	container: HTMLElement;
-	index: FullIndex;
-	vault: Vault;
-	origin: string;
-	settings: DataviewSettings;
 
-	constructor(query: Query, container: HTMLElement, index: FullIndex, origin: string, vault: Vault, settings: DataviewSettings) {
+	taskView?: MarkdownRenderChild;
+
+	constructor(public query: Query,
+		public container: HTMLElement,
+		public index: FullIndex,
+		public origin: string,
+		public vault: Vault,
+		public settings: DataviewSettings) {
 		super(container);
-
-		this.query = query;
-		this.container = container;
-
-		this.index = index;
-		this.origin = origin;
-		this.vault = vault;
-		this.settings = settings;
 	}
 
 	async onload() {
+		await this.render();
+
+		this.registerInterval(window.setInterval(async () => {
+			if (this.taskView) this.removeChild(this.taskView);
+
+			this.container.innerHTML = "";
+			await this.render();
+		}, this.query.settings.refreshInterval));
+	}
+
+	async render() {
 		let result = tryOrPropogate(() => executeTask(this.query, this.origin, this.index));
 		if (typeof result === 'string') {
 			renderErrorPre(this.container, "Dataview: " + result);
@@ -337,13 +364,17 @@ class DataviewTaskRenderer extends MarkdownRenderChild {
 		} else {
 			await Tasks.renderFileTasks(this.container, result);
 			// TODO: Merge this into this renderer.
-			this.addChild(new Tasks.TaskViewLifecycle(this.vault, this.container));
+			this.addChild(this.taskView = new Tasks.TaskViewLifecycle(this.vault, this.container));
 		}
 	}
 }
 
 /** Renders inline query results. */
 class DataviewInlineRenderer extends MarkdownRenderChild {
+	
+	// The box that the error is rendered in, if relevant.
+	errorbox?: HTMLElement;
+
 	constructor(
 		public field: Field,
 		public container: HTMLElement,
@@ -355,10 +386,19 @@ class DataviewInlineRenderer extends MarkdownRenderChild {
 	}
 
 	async onload() {
+		await this.render();
+
+		this.registerInterval(window.setInterval(async () => {
+			this.errorbox?.remove();
+			await this.render();
+		}, this.settings.refreshInterval));
+	}
+
+	async render() {
 		let result = tryOrPropogate(() => executeInline(this.field, this.origin, this.index));
 		if (typeof result === 'string') {
-			let errorBox = this.container.createEl('div');
-			renderErrorPre(errorBox, "Dataview (for inline query '" + this.target.innerText + "'): " + result);
+			this.errorbox = this.container.createEl('div');
+			renderErrorPre(this.errorbox, "Dataview (for inline query '" + this.target.innerText + "'): " + result);
 		} else {
 			let realResult = renderField(result, this.settings.renderNullAs, false);
 			let wrapped: HTMLElement;
@@ -369,27 +409,5 @@ class DataviewInlineRenderer extends MarkdownRenderChild {
 			else wrapped = realResult;
 			this.target.replaceWith(wrapped);
 		}
-	}
-}
-
-/** Wait for a given predicate (querying at the given interval). */
-async function waitFor(interval: number, predicate: () => boolean, cancel: () => boolean): Promise<boolean> {
-	if (cancel()) return false;
-
-	const wait = (ms: number) => new Promise((re, rj) => setTimeout(re, ms));
-	while (!predicate()) {
-		if (cancel()) return false;
-		await wait(interval);
-	}
-	
-	return true;
-}
-
-/** Try calling the given function; on failure, return the error message.  */
-function tryOrPropogate<T>(func: () => T): T | string {
-	try {
-		return func();
-	} catch (error) {
-		return "" + error + "\n\n" + error.stack;
 	}
 }

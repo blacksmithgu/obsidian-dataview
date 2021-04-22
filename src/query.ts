@@ -342,6 +342,22 @@ export namespace Sources {
     }
 }
 
+////////////////////
+// Query Settings //
+////////////////////
+
+export interface QuerySettings {
+    renderNullAs: string;
+    warnOnEmptyResult: boolean;
+    refreshInterval: number;
+}
+
+export const DEFAULT_QUERY_SETTINGS: QuerySettings = {
+    renderNullAs: "-",
+    warnOnEmptyResult: true,
+    refreshInterval: 5000
+};
+
 //////////////////////
 // Query Definition //
 //////////////////////
@@ -404,8 +420,6 @@ export interface Query {
     source: Source;
     /** The operations to apply to the data to produce the final result that will be rendered. */
     operations: QueryOperation[];
-}
-
-export namespace Queries {
-
+    /** Rendering and execution settings for this query. */
+    settings: QuerySettings;
 }

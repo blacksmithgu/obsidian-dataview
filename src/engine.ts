@@ -261,7 +261,7 @@ export function execute(query: Query, index: FullIndex, origin: string): QueryRe
 
     switch (query.header.type) {
         case "table":
-            let tableFields = query.header.fields;
+            let tableFields = ([] as NamedField[]).concat(query.header.fields);
             if (hasFileLinks) tableFields.unshift(Fields.named("File", Fields.indexVariable("file.link")));
 
             return {

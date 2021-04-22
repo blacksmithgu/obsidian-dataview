@@ -7,10 +7,7 @@ export function normalizeDuration(dur: Duration) {
 
 /** Get the folder containing the given path (i.e., like computing 'path/..') */
 export function getParentFolder(path: string): string {
-	if (path.endsWith("/")) path = path.substring(0, path.length - 1);
-
-	if (path.includes("/")) return path.substring(0, path.indexOf("/"));
-	else return "";
+	return path.split("/").slice(0, -1).join("/");
 }
 
 /** Get the file name for the file, without any parent directories. */
@@ -41,21 +38,11 @@ export function canonicalizeVarName(name: string): string {
 	return result;
 }
 
-/** Busily wait for a async function to return with a maximum timeout. */
-export function busyAwait<T>(func: (() => Promise<T>), timeoutMs: number): T | undefined {
-	let finished = false;
-	let result: T | undefined = undefined;
-	func().then(
-		val => {
-			result = val;
-			finished = true;
-		},
-		reason => {
-			finished = true;
-		});
-
-	let startTime = new Date().getTime();
-	while (!finished && (new Date().getTime() - startTime) < timeoutMs);
-
-	return result;
+/** Try calling the given function; on failure, return the error message.  */
+export function tryOrPropogate<T>(func: () => T): T | string {
+	try {
+		return func();
+	} catch (error) {
+		return "" + error + "\n\n" + error.stack;
+	}
 }

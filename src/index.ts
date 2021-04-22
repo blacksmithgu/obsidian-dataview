@@ -60,6 +60,16 @@ export class IndexMap {
         return true;
     }
 
+    /** Rename all references to the given key to a new value. */
+    public rename(oldKey: string, newKey: string): boolean {
+        let oldValues = this.map.get(oldKey);
+        if (!oldValues) return false;
+
+        this.delete(oldKey);
+        this.set(newKey, oldValues);
+        return true;
+    }
+
     /** Clear the entire index. */
     public clear() {
         this.map.clear();
@@ -89,8 +99,10 @@ export class FullIndex {
     /* Maps path -> markdown metadata for all markdown pages. */
     public pages: Map<string, PageMetadata>;
 
-    /** Map files -> tags in that file, and tags -> files. */
+    /** Map files -> tags in that file, and tags -> files. This version includes subtags. */
     public tags: IndexMap;
+    /** Map files -> exact tags in that file, and tags -> files. This version does not automatically add subtags. */
+    public etags: IndexMap;
     /** Map files -> linked files in that file, and linked file -> files that link to it. */
     public links: IndexMap;
     /** Search files by path prefix. */
@@ -107,20 +119,41 @@ export class FullIndex {
 
         this.pages = new Map();
         this.tags = new IndexMap();
+        this.etags = new IndexMap();
         this.links = new IndexMap();
 
         this.reloadQueue = [];
         this.reloadSet = new Set();
 
-        // Background task which regularly checks for reloads.
+        // Background task which regularly checks for reloads (with debouncing).
         this.reloadHandle = window.setInterval(() => this.reloadInternal(), FullIndex.RELOAD_INTERVAL);
 
-        // TODO: Metadata cache is not updated on modify, but on metadatacache resolve.
-        vault.on("modify", file => {
-            if (file instanceof TFile) {
-                this.queueReload(file);
+        // The metadatda cache is updated on file changes.
+        metadataCache.on("changed", file => this.queueReload(file));
+
+        // Renames do not set off the metadata cache; catch these explicitly.
+        vault.on("rename", (file, oldPath) => {
+            let oldPage = this.pages.get(oldPath);
+            if (oldPage) {
+                this.pages.delete(oldPath);
+                this.pages.set(file.path, oldPage);
             }
+
+            this.tags.rename(oldPath, file.path);
+            this.etags.rename(oldPath, file.path);
+            this.links.rename(oldPath, file.path);
         });
+
+        // File creation does cause a metadata change, but deletes do not. Clear the caches for this.
+        vault.on("delete", file => {
+            if (!(file instanceof TFile)) return;
+            file = file as TFile;
+
+            this.pages.delete(file.path);
+            this.tags.delete(file.path);
+            this.etags.delete(file.path);
+            this.links.delete(file.path);
+        })
     }
 
     /** I am not a fan of a separate "construct/initialize" step, but constructors cannot be async. */
@@ -151,11 +184,13 @@ export class FullIndex {
     }
 
     private async reloadInternalFile(file: TFile) {
+        // TODO: Hard-coding the inline field syntax here LMAO >.>
         let newPageMeta = await extractMarkdownMetadata(file, this.vault, this.metadataCache,
             /[_\*~]*([0-9\w\p{Letter}\p{Emoji_Presentation}\s]+)[_\*~]*\s*::\s*(.+)/);
 
         this.pages.set(file.path, newPageMeta);
         this.tags.set(file.path, newPageMeta.fullTags());
+        this.etags.set(file.path, newPageMeta.tags);
         this.links.set(file.path, new Set<string>(newPageMeta.links.map(l => l.path)));
     }
 }

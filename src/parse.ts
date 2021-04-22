@@ -1,5 +1,5 @@
 import { DateTime, Duration } from 'luxon';
-import { BinaryOp, TagSource, FolderSource, Source, VariableField, Field, Fields, Sources, NegatedSource, WhereStep, SortByStep, LimitStep, QueryHeader, QueryOperation, FlattenStep, GroupStep, LiteralField } from 'src/query';
+import { BinaryOp, TagSource, FolderSource, Source, VariableField, Field, Fields, Sources, NegatedSource, WhereStep, SortByStep, LimitStep, QueryHeader, QueryOperation, FlattenStep, GroupStep, LiteralField, DEFAULT_QUERY_SETTINGS, QuerySettings } from 'src/query';
 import { QueryType, NamedField, QuerySortBy, Query } from "src/query";
 import * as P from 'parsimmon';
 import { normalizeDuration } from './util/normalize';
@@ -387,7 +387,8 @@ export const QUERY_LANGUAGE = P.createLanguage<QueryLanguageTypes>({
         return {
             header,
             source: from.length == 0 ? Sources.folder("") : from[0],
-            operations: clauses
+            operations: clauses,
+            settings: DEFAULT_QUERY_SETTINGS
         } as Query;
     })
 });
@@ -396,9 +397,12 @@ export const QUERY_LANGUAGE = P.createLanguage<QueryLanguageTypes>({
  * Attempt to parse a query from the given query text, returning a string error
  * if the parse failed.
  */
-export function parseQuery(text: string): Query | string {
+export function parseQuery(text: string, settings?: QuerySettings): Query | string {
     try {
-        return QUERY_LANGUAGE.query.tryParse(text);
+        let query = QUERY_LANGUAGE.query.tryParse(text);
+        if (settings) query.settings = Object.assign(query.settings, settings);
+
+        return query;
     } catch (error) {
         return "" + error;
     }
