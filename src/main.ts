@@ -161,10 +161,10 @@ class DataviewSettingsTab extends PluginSettingTab {
 				.setValue("" + this.plugin.settings.refreshInterval)
 				.onChange(async (value) => {
 					let parsed = parseInt(value);
-					if (isNaN(parsed)) continue;
+					if (isNaN(parsed)) return;
 					parsed = (parsed < 100) ? 100 : parsed;
 					await this.plugin.updateSettings({ refreshInterval: parsed });
-				}
+				}));
 	}
 }
 
