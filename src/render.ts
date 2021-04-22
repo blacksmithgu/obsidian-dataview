@@ -128,7 +128,24 @@ export function renderField(field: LiteralField, nullField: string, expandList: 
 
 				return list;
 			} else {
-				return "[" + field.value.map(f => renderField(f, nullField, expandList)).join(", ") + "]";
+				if (field.value.length == 0) return "<empty list>";
+
+				let span = document.createElement('span');
+				let first = true;
+				for (let val of field.value) {
+					if (first) first = false;
+					else span.appendText(", ");
+
+					if (val.valueType == "array" || val.valueType == "object") span.appendText("[");
+
+					let rendered = renderField(val, nullField, expandList);
+					if (typeof rendered === "string") span.appendText(rendered);
+					else span.appendChild(rendered);
+
+					if (val.valueType == "array" || val.valueType == "object") span.appendText("]");
+				}
+
+				return span;
 			}
 		case "object":
 			if (expandList) {
@@ -150,11 +167,19 @@ export function renderField(field: LiteralField, nullField: string, expandList: 
 
 				return list;
 			} else {
-				let entries: string[] = [];
+				let span = document.createElement("span");
+				let first = true;
 				for (let entry of field.value) {
-					entries.push(entry[0] + ": " + renderField(entry[1], nullField, expandList));
+					if (first) first = false;
+					else span.appendText(", ");
+
+					span.appendText(entry[0] + ": ");
+					let rendered = renderField(entry[1], nullField, expandList);
+					if (typeof rendered == "string") span.appendText(rendered);
+					else span.appendChild(rendered);
 				}
-				return "{ " + entries.join(", ") + " }";
+
+				return span;
 			}
 		case "link":
 			return createAnchor(getFileName(field.value), field.value.replace(".md", ""), true);

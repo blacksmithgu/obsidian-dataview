@@ -152,6 +152,19 @@ class DataviewSettingsTab extends PluginSettingTab {
 				text.setPlaceholder("=")
 				.setValue(this.plugin.settings.inlineQueryPrefix)
 				.onChange(async (value) => await this.plugin.updateSettings({ inlineQueryPrefix: value })))
+
+		new Setting(this.containerEl)
+			.setName("Dataview Refresh Interval (milliseconds)")
+			.setDesc("How frequently dataviews are updated in preview mode when files are changing.")
+			.addText(text => 
+				text.setPlaceholder("5000")
+				.setValue("" + this.plugin.settings.refreshInterval)
+				.onChange(async (value) => {
+					let parsed = parseInt(value);
+					if (isNaN(parsed)) continue;
+					parsed = (parsed < 100) ? 100 : parsed;
+					await this.plugin.updateSettings({ refreshInterval: parsed });
+				}
 	}
 }
 

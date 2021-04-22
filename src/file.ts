@@ -290,7 +290,7 @@ export async function extractMarkdownMetadata(file: TFile, vault: Vault, cache: 
     // Grab links from the frontmatter cache.
     let links: LinkMetadata[] = [];
     if (file.path in cache.resolvedLinks) {
-        for (let resolved in Object.keys(cache.resolvedLinks[file.path])) {
+        for (let resolved in cache.resolvedLinks[file.path]) {
             links.push({
                 type: 'file',
                 path: resolved,
