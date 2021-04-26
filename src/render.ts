@@ -17,10 +17,11 @@ export function createAnchor(text: string, target: string, internal: boolean): H
 }
 
 export async function renderCompactMarkdown(markdown: string, container: HTMLElement, sourcePath: string, component: Component) {
-	await MarkdownRenderer.renderMarkdown(markdown, container, sourcePath, component);
+	let subcontainer = container.createSpan();
+	await MarkdownRenderer.renderMarkdown(markdown, subcontainer, sourcePath, component);
 
-	if (container.children.length == 1 && container.querySelector("p")) {
-		container.innerHTML = container.querySelector("p")?.innerHTML ?? "";
+	if (subcontainer.children.length == 1 && subcontainer.querySelector("p")) {
+		subcontainer.innerHTML = subcontainer.querySelector("p")?.innerHTML ?? "";
 	}
 }
 

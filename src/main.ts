@@ -1,4 +1,4 @@
-import { MarkdownRenderChild, Plugin, Workspace, Vault, MarkdownPostProcessorContext, PluginSettingTab, App, Setting, MarkdownRenderer } from 'obsidian';
+import { MarkdownRenderChild, Plugin, Workspace, Vault, MarkdownPostProcessorContext, PluginSettingTab, App, Setting } from 'obsidian';
 import { renderCompactMarkdown, renderErrorPre, renderField, renderList, renderTable } from 'src/render';
 import { FullIndex } from 'src/index';
 import * as Tasks from 'src/tasks';
@@ -300,10 +300,12 @@ class DataviewListRenderer extends MarkdownRenderChild {
 
 					let renderedValue = renderField(value, this.settings.renderNullAs, true);
 					if (typeof renderedValue == "string") {
-						await MarkdownRenderer.renderMarkdown(renderedValue, span, this.origin, this);
+						await renderCompactMarkdown(renderedValue, span, this.origin, this);
 					} else {
 						span.appendChild(renderedValue);
 					}
+
+					rendered.push(span);
 				}
 
 				await renderList(this.container, rendered, this, this.origin);
