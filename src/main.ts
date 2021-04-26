@@ -7,6 +7,7 @@ import { parseField, parseQuery } from "src/parse";
 import { execute, executeInline, executeTask } from 'src/engine';
 import { tryOrPropogate } from './util/normalize';
 import { waitFor } from './util/concurrency';
+import { evalInContext, makeApiContext } from './api';
 
 interface DataviewSettings extends QuerySettings {
 	/** What to render 'null' as in tables. Defaults to '-'. */
@@ -71,6 +72,12 @@ export default class DataviewPlugin extends Plugin {
 						() => new DataviewTableRenderer(query as Query, el, this.index, ctx.sourcePath, this.settings)));
 					break;
 			}
+		});
+
+		// Main entry point for Dataview.
+		this.registerMarkdownCodeBlockProcessor("dataviewjs", async (source: string, el, ctx) => {
+			ctx.addChild(this.wrapWithEnsureIndex(ctx, el,
+				() => new DataviewJSRenderer(source, el, this.app, this.index, ctx.sourcePath, this.settings)));
 		});
 
 		// Dataview inline queries.
@@ -421,6 +428,30 @@ class DataviewInlineRenderer extends MarkdownRenderChild {
 			}
 			else wrapped = realResult;
 			this.target.replaceWith(wrapped);
+		}
+	}
+}
+
+class DataviewJSRenderer extends MarkdownRenderChild {
+	static PREAMBLE: string = "const dataview = this;\nconst dv = this;\n\n";
+
+	constructor(
+		public script: string,
+		public container: HTMLElement,
+		public app: App,
+		public index: FullIndex,
+		public origin: string,
+		public settings: DataviewSettings) {
+		super(container);
+	}
+
+	async onload() {
+		// Assume that the code is javascript, and try to eval it.
+		try {
+			evalInContext(DataviewJSRenderer.PREAMBLE + this.script, makeApiContext(this.index, this, this.app, this.container, this.origin));
+		} catch (e) {
+			this.containerEl.innerHTML = "";
+			renderErrorPre(this.container, "Evaluation Error: " + e);
 		}
 	}
 }

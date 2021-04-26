@@ -1,4 +1,4 @@
-import { Query, Fields, Sources, TableQuery, ListQuery, SortByStep } from "src/query";
+import { Query, Fields, Sources, TableQuery, ListQuery, SortByStep, DEFAULT_QUERY_SETTINGS } from "src/query";
 import { QUERY_LANGUAGE, parseQuery } from "src/parse";
 
 test("Parse Query Type", () => {
@@ -17,6 +17,7 @@ test("Link Source", () => {
     expect(QUERY_LANGUAGE.query.tryParse("list from [[Stuff]]")).toEqual({
         header: { type: 'list' },
         source: Sources.link('Stuff', true),
+        settings: DEFAULT_QUERY_SETTINGS,
         operations: []
     })
 });

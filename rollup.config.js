@@ -15,5 +15,10 @@ export default {
     typescript(),
     nodeResolve({browser: true}),
     commonjs(),
-  ]
+  ],
+  onwarn: (warning, warn) => {
+    // Sorry rollup, but we're using eval...
+    if (/Use of eval is strongly discouraged/.test(warning.message)) return;
+    warn(warning);
+  }
 };
