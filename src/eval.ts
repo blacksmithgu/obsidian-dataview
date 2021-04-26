@@ -595,6 +595,21 @@ export const FUNCTIONS = new FunctionHandler()
         return Fields.array(result);
     })
     .add1("reverse", "null", (a: LFR<"null">, context) => Fields.NULL)
+    .add2("lextract", "null", "*", (a: LFR<"null">, b: LFR<"*">, context) => Fields.NULL)
+    .add2("lextract", "array", "string", (haystack: LFR<"array">, needlepat: LFR<"string">, context) => {
+        let array = haystack.value;
+        let pattern = needlepat.value;
+        if( typeof pattern != "string" ) return Fields.NULL;
+        let result = [];
+        for (let entry of array) {
+            if( typeof entry.value != "string" ) continue;
+            let matches = !!entry.value.match( pattern );
+            if( matches ){
+                result.push(entry);
+            }
+        }
+        return Fields.array(result);
+    })
     .add1("sort", "array", (list: LFR<"array">, context) => {
         let result = ([] as LiteralField[]).concat(list.value);
         result.sort((a, b) => {

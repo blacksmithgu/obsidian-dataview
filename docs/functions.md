@@ -181,6 +181,15 @@ all(false, false) = false
 
 Returns `true` if NONE of the values in the array are truthy.
 
+
+##### `lextract(array, pattern`
+
+Takes a list and returns a new list containing only the elements which match the *regex* `pattern`.
+
+```
+lextract(list("a/b","a/c","x/y","x/z"), "a/") = list("a/b","a/c")
+```
+
 ---
 
 ## String Operations
