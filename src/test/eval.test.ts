@@ -158,6 +158,12 @@ test("Evaluate reverse(list)", () => {
     expect(parseEval('reverse(list("a", "b", "c"))')).toEqual(parseEval('list("c", "b", "a")'));
 });
 
+// <-- lextract() -->
+
+test("Evaluate lextract(list,pattern)", () => {
+    expect(parseEval('lextract(list("a/b","a/c","x/y","x/z"), "a/")')).toEqual(parseEval('list("a/b","a/c")'));
+});
+
 // <-- sort() -->
 
 test("Evaluate sort(list)", () => {
