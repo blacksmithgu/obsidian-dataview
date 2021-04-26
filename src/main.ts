@@ -41,16 +41,8 @@ export default class DataviewPlugin extends Plugin {
 	index: FullIndex;
 
 	async onload() {
-		let rawSettings = await this.loadData() as Partial<DataviewSettings>;
-		let schemaVersion = rawSettings.schemaVersion as number ?? 0;
-		if (schemaVersion != DEFAULT_SETTINGS.schemaVersion) {
-			console.log(`Dataview: Found schema version mismatch, migrating from ${schemaVersion} to ${DEFAULT_SETTINGS.schemaVersion}...`);
-			rawSettings = this.migrateSettings(rawSettings);
-			this.saveData(rawSettings);
-		}
-
 		// Settings initialization; write defaults first time around.
-		this.settings = Object.assign(DEFAULT_SETTINGS, rawSettings);
+		this.settings = Object.assign(DEFAULT_SETTINGS, await this.loadData() ?? {});
 		this.workspace = this.app.workspace;
 
 		this.addSettingTab(new DataviewSettingsTab(this.app, this));
@@ -131,20 +123,6 @@ export default class DataviewPlugin extends Plugin {
 	async updateSettings(settings: Partial<DataviewSettings>) {
 		this.settings = Object.assign(this.settings, settings);
 		await this.saveData(this.settings);
-	}
-
-	/** Migrate settings by checking the raw 'schemaVersion' property. */
-	migrateSettings(raw: Partial<DataviewSettings>): Partial<DataviewSettings> {
-		let schema = raw.schemaVersion ?? 0;
-
-		// Migrations are executed in order that they appear.
-		if (schema < 1 && raw.renderNullAs === "-") {
-			console.log("Dataview: Migrated renderNullAs from '-' to '\\-' (0 -> 1)");
-			raw.renderNullAs = "\\-";
-			raw.schemaVersion = 1;
-		}
-
-		return raw;
 	}
 
 	private wrapWithEnsureIndex(ctx: MarkdownPostProcessorContext, container: HTMLElement, success: () => MarkdownRenderChild): EnsurePredicateRenderer {
