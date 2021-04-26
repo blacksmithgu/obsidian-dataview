@@ -1,5 +1,5 @@
 import { MarkdownRenderChild, Plugin, Workspace, Vault, MarkdownPostProcessorContext, PluginSettingTab, App, Setting, MarkdownRenderer } from 'obsidian';
-import { renderErrorPre, renderField, renderList, renderTable } from 'src/render';
+import { renderCompactMarkdown, renderErrorPre, renderField, renderList, renderTable } from 'src/render';
 import { FullIndex } from 'src/index';
 import * as Tasks from 'src/tasks';
 import { Field, Query, QuerySettings } from 'src/query';
@@ -18,14 +18,20 @@ interface DataviewSettings extends QuerySettings {
 	inlineQueryPrefix: string;
 	/** The interval that views are refreshed, by default. */
 	refreshInterval: number;
+
+	// Internal properties //
+
+	/** A monotonically increasing version which tracks what schema we are on, used for migrations. */
+	schemaVersion: number;
 }
 
 /** Default settings for dataview on install. */
 const DEFAULT_SETTINGS: DataviewSettings = {
-	renderNullAs: "-",
+	renderNullAs: "\\-",
 	warnOnEmptyResult: true,
 	inlineQueryPrefix: "=",
-	refreshInterval: 5000
+	refreshInterval: 5000,
+	schemaVersion: 1
 }
 
 export default class DataviewPlugin extends Plugin {
@@ -35,7 +41,16 @@ export default class DataviewPlugin extends Plugin {
 	index: FullIndex;
 
 	async onload() {
-		this.settings = Object.assign(DEFAULT_SETTINGS, await this.loadData());
+		let rawSettings = await this.loadData() as Partial<DataviewSettings>;
+		let schemaVersion = rawSettings.schemaVersion as number ?? 0;
+		if (schemaVersion != DEFAULT_SETTINGS.schemaVersion) {
+			console.log(`Dataview: Found schema version mismatch, migrating from ${schemaVersion} to ${DEFAULT_SETTINGS.schemaVersion}...`);
+			rawSettings = this.migrateSettings(rawSettings);
+			this.saveData(rawSettings);
+		}
+
+		// Settings initialization; write defaults first time around.
+		this.settings = Object.assign(DEFAULT_SETTINGS, rawSettings);
 		this.workspace = this.app.workspace;
 
 		this.addSettingTab(new DataviewSettingsTab(this.app, this));
@@ -116,6 +131,20 @@ export default class DataviewPlugin extends Plugin {
 	async updateSettings(settings: Partial<DataviewSettings>) {
 		this.settings = Object.assign(this.settings, settings);
 		await this.saveData(this.settings);
+	}
+
+	/** Migrate settings by checking the raw 'schemaVersion' property. */
+	migrateSettings(raw: Partial<DataviewSettings>): Partial<DataviewSettings> {
+		let schema = raw.schemaVersion ?? 0;
+
+		// Migrations are executed in order that they appear.
+		if (schema < 1 && raw.renderNullAs === "-") {
+			console.log("Dataview: Migrated renderNullAs from '-' to '\\-' (0 -> 1)");
+			raw.renderNullAs = "\\-";
+			raw.schemaVersion = 1;
+		}
+
+		return raw;
 	}
 
 	private wrapWithEnsureIndex(ctx: MarkdownPostProcessorContext, container: HTMLElement, success: () => MarkdownRenderChild): EnsurePredicateRenderer {
@@ -424,7 +453,7 @@ class DataviewInlineRenderer extends MarkdownRenderChild {
 			let wrapped: HTMLElement;
 			if (typeof realResult === "string") {
 				wrapped = document.createElement("span");
- 				wrapped.appendText(realResult);
+				await renderCompactMarkdown(realResult, wrapped, this.origin, this);
 			}
 			else wrapped = realResult;
 			this.target.replaceWith(wrapped);
@@ -433,7 +462,7 @@ class DataviewInlineRenderer extends MarkdownRenderChild {
 }
 
 class DataviewJSRenderer extends MarkdownRenderChild {
-	static PREAMBLE: string = "const dataview = this;\nconst dv = this;\n\n";
+	static PREAMBLE: string = "const dataview = this;const dv = this;";
 
 	constructor(
 		public script: string,
@@ -448,7 +477,8 @@ class DataviewJSRenderer extends MarkdownRenderChild {
 	async onload() {
 		// Assume that the code is javascript, and try to eval it.
 		try {
-			evalInContext(DataviewJSRenderer.PREAMBLE + this.script, makeApiContext(this.index, this, this.app, this.container, this.origin));
+			evalInContext(DataviewJSRenderer.PREAMBLE + this.script,
+				makeApiContext(this.index, this, this.app, this.container, this.origin));
 		} catch (e) {
 			this.containerEl.innerHTML = "";
 			renderErrorPre(this.container, "Evaluation Error: " + e);

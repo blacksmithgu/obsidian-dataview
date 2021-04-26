@@ -32,6 +32,27 @@ export class DataviewApi {
         this.app = app;
         this.currentFilePath = currentFilePath;
     }
+
+    /////////////////////////
+    // Rendering Functions //
+    /////////////////////////
+
+    public header(level: number, text: string) {
+        console.log(this.container);
+        switch (level) {
+            case 1: this.container.createEl('h1', { text }); break;
+            case 2: this.container.createEl('h2', { text }); break;
+            case 3: this.container.createEl('h3', { text }); break;
+            case 4: this.container.createEl('h4', { text }); break;
+            case 5: this.container.createEl('h5', { text }); break;
+            case 6: this.container.createEl('h6', { text }); break;
+            default: throw new Error(`Invalid header level ${level}`);
+        }
+    }
+
+    public list(values: any[]) {
+
+    }
 }
 
 /** Evaluate a script where 'this' for the script is set to the given context. Allows you to define global variables. */

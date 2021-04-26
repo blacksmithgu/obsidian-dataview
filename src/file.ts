@@ -1,7 +1,7 @@
 import { canonicalizeVarName, getFileName, getParentFolder } from './util/normalize';
 import { Fields, LiteralField, LiteralFieldRepr } from './query';
 import { getAllTags, MetadataCache, parseFrontMatterAliases, parseFrontMatterTags, TFile, Vault } from 'obsidian';
-import { EXPRESSION } from './parse';
+import { EXPRESSION, parseInnerLink } from './parse';
 import { DateTime } from 'luxon';
 
 interface BaseLinkMetadata {
@@ -149,7 +149,13 @@ function findDate(file: string, fields: Map<string, LiteralField>): DateTime | u
         let value = fields.get(key) as LiteralField;
         if (value.valueType == "date") return value.value;
         else if (value.valueType == "link") {
-            let date = extractDate(value.value);
+            let date = extractDate(value.value.path);
+            if (date) return date;
+
+            date = extractDate(value.value.subpath ?? "");
+            if (date) return date;
+
+            date = extractDate(value.value.display ?? "");
             if (date) return date;
         }
     }
@@ -165,8 +171,8 @@ export function parseFrontmatter(value: any): LiteralField {
         if (Array.isArray(value)) {
             let object = (value as Array<any>);
             // Special case for link syntax, which shows up as double-nested arrays.
-            if (object.length == 1 && Array.isArray(object[0]) && (object[0].length == 1) && typeof object[0][0] === 'string') {
-                return Fields.link(object[0][0]);
+            if (object.length == 1 && Array.isArray(object[0]) && object[0].every(v => typeof v === 'string')) {
+                return Fields.link(parseInnerLink(object[0].join(", ")));
             }
 
             let result = [];
@@ -197,7 +203,7 @@ export function parseFrontmatter(value: any): LiteralField {
             return Fields.literal('duration', durationParse.value);
         }
 
-        let linkParse = EXPRESSION.link.parse(value);
+        let linkParse = EXPRESSION.embedLink.parse(value);
         if (linkParse.status) {
             return Fields.literal('link', linkParse.value);
         }

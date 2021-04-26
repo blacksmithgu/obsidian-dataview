@@ -1,7 +1,7 @@
 /**
  * Takes a full query and a set of indices, and (hopefully quickly) returns all relevant files.
  */
-import { LiteralField, LiteralFieldRepr, Query, Fields, Source, NamedField, Field } from 'src/query';
+import { LiteralField, LiteralFieldRepr, Query, Fields, Source, NamedField, Field, Link } from 'src/query';
 import { FullIndex } from 'src/index';
 import { Task } from 'src/file';
 import { DateTime } from 'luxon';
@@ -113,9 +113,9 @@ export function createContext(file: string, index: FullIndex, rootContext: Conte
     fileMeta.set("path", Fields.string(file));
     fileMeta.set("folder", Fields.string(page.folder()));
     fileMeta.set("name", Fields.string(page.name()));
-    fileMeta.set("link", Fields.link(file));
-    fileMeta.set("outlinks", Fields.array(page.fileLinks().map(l => Fields.link(l.path))));
-    fileMeta.set("inlinks", Fields.array(Array.from(index.links.getInverse(page.path)).map(l => Fields.link(l))));
+    fileMeta.set("link", Fields.link(Link.file(file, false)));
+    fileMeta.set("outlinks", Fields.array(page.fileLinks().map(l => Fields.link(Link.file(l.path, false)))));
+    fileMeta.set("inlinks", Fields.array(Array.from(index.links.getInverse(page.path)).map(l => Fields.link(Link.file(l, false)))));
     fileMeta.set("tags", Fields.array(Array.from(page.fullTags()).map(l => Fields.string(l))));
     fileMeta.set("etags", Fields.array(Array.from(page.tags).map(l => Fields.string(l))));
     fileMeta.set("aliases", Fields.array(Array.from(page.aliases).map(l => Fields.string(l))));

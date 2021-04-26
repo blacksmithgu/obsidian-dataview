@@ -1,4 +1,4 @@
-import { BinaryOpField, Fields, LiteralFieldRepr, Sources } from "src/query";
+import { BinaryOpField, Fields, Link, LiteralFieldRepr, Sources } from "src/query";
 import { EXPRESSION } from "src/parse";
 import { DateTime, Duration } from 'luxon';
 import { Success } from "parsimmon";
@@ -147,11 +147,26 @@ test("Parse minute duration", () => {
 // <-- Links -->
 
 test("Parse Link", () => {
-    expect(EXPRESSION.field.tryParse("[[test/Main]]")).toEqual(Fields.link("test/Main"));
-    expect(EXPRESSION.field.tryParse("[[test/Main.md]]")).toEqual(Fields.link("test/Main.md"));
-    expect(EXPRESSION.field.tryParse("[[simple0]]")).toEqual(Fields.link("simple0"));
-    expect(EXPRESSION.field.tryParse("[[2020-08-15]]")).toEqual(Fields.link("2020-08-15"));
-    expect(EXPRESSION.field.tryParse("[[%Man & Machine + Mind%]]")).toEqual(Fields.link("%Man & Machine + Mind%"));
+    expect(EXPRESSION.field.tryParse("[[test/Main]]")).toEqual(Fields.fileLink("test/Main"));
+    expect(EXPRESSION.field.tryParse("[[test/Main.md]]")).toEqual(Fields.fileLink("test/Main.md"));
+    expect(EXPRESSION.field.tryParse("[[simple0]]")).toEqual(Fields.fileLink("simple0"));
+    expect(EXPRESSION.field.tryParse("[[2020-08-15]]")).toEqual(Fields.fileLink("2020-08-15"));
+    expect(EXPRESSION.field.tryParse("[[%Man & Machine + Mind%]]")).toEqual(Fields.fileLink("%Man & Machine + Mind%"));
+});
+
+test("Parse link with display", () => {
+    expect(EXPRESSION.field.tryParse("[[test/Main|Yes]]")).toEqual(Fields.link(Link.file("test/Main", false, "Yes")));
+    expect(EXPRESSION.field.tryParse("[[%Man + Machine%|0h no]]")).toEqual(Fields.link(Link.file("%Man + Machine%", false, "0h no")));
+});
+
+test("Parse link with header/block", () => {
+    expect(EXPRESSION.field.tryParse("[[test/Main#Yes]]")).toEqual(Fields.link(Link.header("test/Main", "Yes", false)));
+    expect(EXPRESSION.field.tryParse("[[2020^14df]]")).toEqual(Fields.link(Link.block("2020", "14df", false)));
+});
+
+test("Parse link with header and display", () => {
+    expect(EXPRESSION.field.tryParse("[[test/Main#what|Yes]]")).toEqual(Fields.link(Link.header("test/Main", "what", false, "Yes")));
+    expect(EXPRESSION.field.tryParse("[[%Man + Machine%^no|0h no]]")).toEqual(Fields.link(Link.block("%Man + Machine%", "no", false, "0h no")));
 });
 
 // <-- Null ->
@@ -295,25 +310,10 @@ test("Parse negated parens source", () => {
         Sources.binaryOp(Sources.negate(Sources.folder("meme")), '&', Sources.tag("#dirty")));
 });
 
-// <-- Inline Field Lists -->
-
-test("Parse basic inline fields", () => {
-    expect(EXPRESSION.inlineField.tryParse("14")).toEqual(Fields.number(14));
-    expect(EXPRESSION.inlineField.tryParse("\"yes,\"")).toEqual(Fields.string("yes,"));
-    expect(EXPRESSION.inlineField.tryParse("[[test]]")).toEqual(Fields.link("test"));
-});
-
-test("Parse inline field lists", () => {
-    expect(EXPRESSION.inlineField.tryParse("[[test]],")).toEqual(Fields.array([Fields.link("test")]));
-    expect(EXPRESSION.inlineField.tryParse("[[test]], [[test2]]")).toEqual(Fields.array([Fields.link("test"), Fields.link("test2")]));
-    expect(EXPRESSION.inlineField.tryParse("1, 2, 3, \"hello\"")).toEqual(Fields.array([
-        Fields.number(1), Fields.number(2), Fields.number(3), Fields.string("hello")
-    ]));
-});
 
 // <-- Stress Tests -->
 
 test("Parse Various Fields", () => {
     expect(EXPRESSION.field.tryParse("list(a, \"b\", 3, [[4]])")).toEqual(
-        Fields.func(Fields.variable('list'), [Fields.variable("a"), Fields.string("b"), Fields.number(3), Fields.link("4")]));
+        Fields.func(Fields.variable('list'), [Fields.variable("a"), Fields.string("b"), Fields.number(3), Fields.fileLink("4")]));
 });

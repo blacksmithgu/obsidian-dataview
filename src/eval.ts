@@ -1,6 +1,6 @@
 /** Evaluates fields in the expression language. */
 import { DateTime } from 'luxon';
-import { BinaryOp, LiteralType, LiteralField, LiteralFieldRepr, Field, Fields, StringField, DateField } from 'src/query';
+import { BinaryOp, LiteralType, LiteralField, LiteralFieldRepr, Field, Fields, StringField, DateField, Link } from 'src/query';
 import { normalizeDuration } from "src/util/normalize";
 import { EXPRESSION } from './parse';
 
@@ -98,7 +98,7 @@ export class Context {
                         return obj.value.get(index.value) ?? Fields.NULL;
                     case "link":
                         if (index.valueType != 'string') return "can only index into links with strings (a.b or a[\"b\"])";
-                        let linkValue = this.linkHandler.resolve(obj.value);
+                        let linkValue = this.linkHandler.resolve(obj.value.path);
                         if (linkValue.valueType == 'null') return Fields.NULL;
                         return linkValue.value.get(index.value) ?? Fields.NULL;
                     case "array":
@@ -313,8 +313,8 @@ export const BINARY_OPS = BinaryOpHandler.create()
     .add('+', '*', 'string', (a, b) => Fields.literal('string', a.value + b.value))
     .addComm("*", 'string', 'number', (a, b) => Fields.literal('string', a.value.repeat(Math.abs(b.value))))
     .addComparison('string', {
-        equals: (a, b) => Fields.bool(a.value == b.value),
-        le: (a, b) => Fields.bool(a.value < b.value)
+        equals: (a, b) => Fields.bool(a.value.localeCompare(b.value) == 0),
+        le: (a, b) => Fields.bool(a.value.localeCompare(b.value) < 0)
     })
     // Date Operations.
     .add("-", 'date', 'date', (a, b) => Fields.literal('duration', normalizeDuration(b.value.until(a.value).toDuration("seconds"))))
@@ -347,8 +347,8 @@ export const BINARY_OPS = BinaryOpHandler.create()
     })
     // Link operations.
     .addComparisonContext('link', {
-        equals: (a, b, c) => Fields.bool(c.linkHandler.normalize(a.value) == c.linkHandler.normalize(b.value)),
-        le: (a, b, c) => Fields.bool(c.linkHandler.normalize(a.value) < c.linkHandler.normalize(b.value))
+        equals: (a, b, c) => Fields.bool(c.linkHandler.normalize(a.value.path) == c.linkHandler.normalize(b.value.path)),
+        le: (a, b, c) => Fields.bool(c.linkHandler.normalize(a.value.path) < c.linkHandler.normalize(b.value.path))
     })
     // Boolean operations.
     .add('&', '*', '*', (a, b) => Fields.literal('boolean', Fields.isTruthy(a) && Fields.isTruthy(b)))
@@ -503,7 +503,7 @@ export const FUNCTIONS = new FunctionHandler()
 
         return Fields.object(result);
     })
-    .add1("link", "string", (field: LFR<'string'>, context) => Fields.link(context.linkHandler.normalize(field.value)))
+    .add1("link", "string", (field: LFR<'string'>, context) => Fields.link(Link.file(context.linkHandler.normalize(field.value), false)))
     .add1("link", "link", (field: LFR<'link'>, _context) => field)
     .add1("link", "null", (_field, _context) => Fields.NULL)
     .vectorize("link", [0])
@@ -548,7 +548,7 @@ export const FUNCTIONS = new FunctionHandler()
     .vectorize("striptime", [0])
     .add2("contains", "object", "string", (obj: LFR<"object">, key: LFR<"string">, context) => Fields.bool(obj.value.has(key.value)))
     .add2("contains", "link", "string", (link: LFR<"link">, key: LFR<'string'>, context) => {
-        let linkValue = context.linkHandler.resolve(link.value);
+        let linkValue = context.linkHandler.resolve(link.value.path);
         if (linkValue.valueType == 'null') return Fields.bool(false);
         return Fields.bool(linkValue.value.has(key.value));
     })
@@ -570,7 +570,7 @@ export const FUNCTIONS = new FunctionHandler()
 
         switch (object.valueType) {
             case "link":
-                object = context.linkHandler.resolve(object.value);
+                object = context.linkHandler.resolve(object.value.path);
                 if (object.valueType == 'null') return Fields.NULL;
             case "object":
                 let result = new Map<string, LiteralField>();

@@ -1,6 +1,59 @@
 /** Provides an AST for complex queries. */
 import { DateTime, Duration } from 'luxon';
 
+/** An Obsidian link with all associated metadata. */
+export class Link {
+    /** The file path this link points to. */
+    public path: string;
+    /** The display name associated with the link. */
+    public display?: string;
+    /** The block ID or header this link points to within a file, if relevant. */
+    public subpath?: string;
+    /** Is this link an embedded link (!)? */
+    public embed: boolean;
+    /** The type of this link, which determines what 'subpath' refers to, if anything. */
+    public type: 'file' | 'header' | 'block';
+
+    public static file(path: string, embed: boolean, display?: string) {
+        return new Link({
+            path,
+            embed,
+            display,
+            type: 'file'
+        });
+    }
+
+    public static header(path: string, header: string, embed: boolean, display?: string) {
+        return new Link({
+            path,
+            embed,
+            display,
+            subpath: header,
+            type: 'header'
+        });
+    }
+
+    public static block(path: string, blockId: string, embed: boolean, display?: string) {
+        return new Link({
+            path,
+            embed,
+            display,
+            subpath: blockId,
+            type: 'block'
+        });
+    }
+
+    private constructor(fields: Partial<Link>) {
+        Object.assign(this, fields);
+    }
+
+    public equals(other: Link): boolean {
+        return this.path == other.path
+            && this.type == other.type
+            && this.subpath == other.subpath;
+    }
+}
+
 /** The supported query types (corresponding to view types). */
 export type QueryType = 'list' | 'table' | 'task';
 
@@ -14,7 +67,7 @@ export type LiteralTypeRepr<T extends LiteralType> =
     T extends 'duration' ? Duration :
     T extends 'date' ? DateTime :
     T extends 'null' ? null :
-    T extends 'link'? string :
+    T extends 'link'? Link :
     T extends 'array' ? Array<LiteralField> :
     T extends 'object' ? Map<string, LiteralField> :
     T extends 'html' ? HTMLElement :
@@ -189,8 +242,12 @@ export namespace Fields {
         return Fields.literal('duration', value);
     }
 
-    export function link(target: string): LiteralFieldRepr<'link'> {
+    export function link(target: Link): LiteralFieldRepr<'link'> {
         return Fields.literal('link', target);
+    }
+
+    export function fileLink(target: string): LinkField {
+        return link(Link.file(target, false));
     }
 
     export function array(target: LiteralField[]): LiteralFieldRepr<'array'> {
@@ -207,6 +264,44 @@ export namespace Fields {
 
     export function html(elem: HTMLElement): LiteralFieldRepr<'html'> {
         return Fields.literal('html', elem);
+    }
+
+    /** Convert an arbitrary javascript value into a Dataview field. */
+    export function asField(val: any): LiteralField | undefined {
+        if (val === null || val === undefined) return Fields.NULL;
+        if (val instanceof Duration) return Fields.duration(val);
+        else if (val instanceof DateTime) return Fields.date(val);
+        else if (val instanceof HTMLElement) return Fields.html(val);
+        else if (val instanceof Map) return Fields.object(val);
+        else if (val instanceof Link) return Fields.link(val);
+        else if (Array.isArray(val)) {
+            let result: LiteralField[] = [];
+            for (let v of val) {
+                let converted = asField(v);
+                if (converted) result.push(v);
+            }
+            return Fields.array(result);
+        }
+        else if (typeof val == "number") return Fields.number(val);
+        else if (typeof val == "boolean") return Fields.bool(val);
+        else if (typeof val == "object") {
+            let result = new Map<string, LiteralField>();
+            for (let key of val) {
+                let converted = asField(val[key]);
+                if (converted) result.set(key, converted);
+            }
+            return Fields.object(result);
+        }
+        else if (typeof val == "string") {
+            // TODO: Add parsing functionality here. For now, just return a string.
+            return Fields.string(val);
+        }
+        else return undefined;
+    }
+
+    /** Find the corresponding Dataveiw type for an arbitrary value. */
+    export function typeOf(val: any): LiteralType | undefined {
+        return asField(val)?.valueType;
     }
 
     export function binaryOp(left: Field, op: BinaryOp, right: Field): Field {
@@ -253,7 +348,7 @@ export namespace Fields {
             case "boolean":
                 return field.value;
             case "link":
-                return field.value.length > 0;
+                return !!field.value.path;
             case "date":
                 return field.value.toMillis() != 0;
             case "duration":

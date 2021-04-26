@@ -22,7 +22,8 @@ There are 7 basic field types, corresponding to different types of values:
   query, use `dur(<duration>)`.
     - You can access duration fields like 'years' and so on via dot-notation (i.e., `dur(<duration>).years`).
 - `link`: An obsidian link (in the same format); you can use dot-notation to get fields in the linked file. For example,
-  `[[2020-09-20]].file.ctime` would get the creation time of the `2020-09-20` note.
+  `[[2020-09-20]].file.ctime` would get the creation time of the `2020-09-20` note. Note that Obsidian does wierd things
+  with links in front-matter (and does not update them on file renames); you should use Inline Fields for links where possible.
 - `array`: A list of elements. Automatically created by YAML lists in the frontmatter; can manually be created using
   `list(elem1, elem2, ...)`.
 - `object`: A mapping of name -> value. Automatically created from YAML objects. You can access elements inside an
@@ -52,6 +53,8 @@ All files have the following implicit attributes:
 - `file.tags`: An array of all tags in the note. Subtags are broken down by each level, so `#Tag/1/A` will be stored in
   the array as `[#Tag, #Tag/1, #Tag/1/A]`.
 - `file.etags`: An array of all explicit tags in the note; unlike `file.tags`, does not include subtags.
+- `file.inlinks`: An array of all incoming links to this file.
+- `file.outlinks`: An array of all outgoing links from this file.
 - `file.aliases`: An array of all aliases for the note.
 
 If the file has a date inside its title (of form `yyyy-mm-dd` or `yyyymmdd`), or has a `Date` field/inline field, it also has the following attributes:
@@ -72,6 +75,18 @@ Values have the same format as values in YAML frontmatter; you can specify numbe
 datetimes (YYYY-MM-DDTHH:mm:ss), and durations (4 years, 3 months, 1 hour, etc). Lists/objects are not yet supported,
 but will be in a future release. Values do not allow for computations (i.e., `3 + 1` is not a valid field); this will
 likely also be added in a future release.
+
+## Computed Fields
+
+You can also have Dataview compute fields which are rendered inline in your document using the computed field syntax:
+
+```
+`= <expression>`
+```
+
+Where `expression` is any field or caculated field. You can get the current day as `= this.file.day`, for example; or
+fetch a value from another file with `= [[Other File]].value`. The prefix does not have to be `=` - it can be configured
+in the settings.
 
 ## Calculated Fields
 

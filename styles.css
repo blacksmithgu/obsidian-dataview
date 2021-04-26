@@ -23,8 +23,3 @@
     border: none;
     font-weight: 400;
 }
-
-/* Ensure tables are rendered compactly still - <p> elements have huge margins by default. */
-.table-view-table p {
-    margin: 2px !important;
-}

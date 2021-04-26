@@ -16,6 +16,14 @@ export function createAnchor(text: string, target: string, internal: boolean): H
 	return a;
 }
 
+export async function renderCompactMarkdown(markdown: string, container: HTMLElement, sourcePath: string, component: Component) {
+	await MarkdownRenderer.renderMarkdown(markdown, container, sourcePath, component);
+
+	if (container.children.length == 1 && container.querySelector("p")) {
+		container.innerHTML = container.querySelector("p")?.innerHTML ?? "";
+	}
+}
+
 /** Create a list inside the given container, with the given data. */
 export async function renderList(container: HTMLElement, elements: (string | HTMLElement)[], component: Component, originFile: string) {
 	let listEl = container.createEl('ul', { cls: ['dataview', 'list-view-ul'] });
@@ -24,7 +32,7 @@ export async function renderList(container: HTMLElement, elements: (string | HTM
 		if (typeof elem == "string") {
 			// TODO: There may be links in text which are file-location-dependent; when I eventually get a bug for this, 
 			// I'll need to change render list to be file-aware.
-			await MarkdownRenderer.renderMarkdown(elem, li, originFile, component);
+			await renderCompactMarkdown(elem, li, originFile, component);
 		} else {
 			li.appendChild(elem);
 		}
@@ -51,7 +59,7 @@ export async function renderTable(container: HTMLElement, headers: string[], val
 
 				// TODO: There may be links in text which are file-location-dependent; when I eventually get a bug for this, 
 				// I'll need to change render list to be file-aware.
-				await MarkdownRenderer.renderMarkdown(value, td, originFile, component);
+				await renderCompactMarkdown(value, td, originFile, component);
 			} else {
 				let wrapper = rowEl.createEl('td');
 				wrapper.appendChild(value);
@@ -182,7 +190,7 @@ export function renderField(field: LiteralField, nullField: string, expandList: 
 				return span;
 			}
 		case "link":
-			return createAnchor(getFileName(field.value), field.value.replace(".md", ""), true);
+			return createAnchor(getFileName(field.value.path), field.value.path.replace(".md", ""), true);
 		case "null":
 			return nullField;
 		case "html":

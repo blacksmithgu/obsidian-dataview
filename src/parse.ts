@@ -1,5 +1,5 @@
 import { DateTime, Duration } from 'luxon';
-import { BinaryOp, TagSource, FolderSource, Source, VariableField, Field, Fields, Sources, NegatedSource, WhereStep, SortByStep, LimitStep, QueryHeader, QueryOperation, FlattenStep, GroupStep, LiteralField, DEFAULT_QUERY_SETTINGS, QuerySettings } from 'src/query';
+import { BinaryOp, TagSource, FolderSource, Source, VariableField, Field, Fields, Sources, NegatedSource, WhereStep, SortByStep, LimitStep, QueryHeader, QueryOperation, FlattenStep, GroupStep, LiteralField, DEFAULT_QUERY_SETTINGS, QuerySettings, Link } from 'src/query';
 import { QueryType, NamedField, QuerySortBy, Query } from "src/query";
 import * as P from 'parsimmon';
 import { normalizeDuration } from './util/normalize';
@@ -39,6 +39,26 @@ export const KEYWORDS = ["FROM", "WHERE", "LIMIT", "GROUP", "FLATTEN"];
 ///////////////
 // Utilities //
 ///////////////
+
+/** Attempt to parse the inside of a link to pull out display name, subpath, etc. */
+export function parseInnerLink(link: string): Link {
+    let display: string | undefined = undefined;
+    if (link.includes('|')) {
+        let split = link.split("|");
+        link = split[0];
+        display = split[1];
+    }
+
+    if (link.includes('#')) {
+        let split = link.split('#');
+        return Link.header(split[0], split[1], false, display);
+    } else if (link.includes('^')) {
+        let split = link.split('^');
+        return Link.block(split[0], split[1], false, display);
+    }
+
+    return Link.file(link, false, display);
+}
 
 /** Create a left-associative binary parser which parses the given sub-element and separator. Handles whitespace. */
 export function createBinaryParser<T, U>(child: P.Parser<T>, sep: P.Parser<U>, combine: (a: T, b: U, c: T) => T): P.Parser<T> {
@@ -89,7 +109,8 @@ interface ExpressionLanguage {
     tag: string;
     identifier: string;
     identifierDot: string;
-    link: string;
+    link: Link;
+    embedLink: Link;
     rootDate: DateTime;
     date: DateTime;
     datePlus: DateTime;
@@ -177,7 +198,11 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
     identifierDot: q => P.regexp(/[\p{Letter}\p{Emoji_Presentation}][\p{Letter}\p{Emoji_Presentation}\.\w_-]*/u).desc("variable identifier"),
 
     // An Obsidian link of the form [[<link>]].
-    link: q => P.regexp(/\[\[([^\[\]]*?)\]\]/u, 1).desc("file link"),
+    link: q => P.regexp(/\[\[([^\[\]]*?)\]\]/u, 1).map(linkInner => parseInnerLink(linkInner)).desc("file link"),
+    embedLink: q => P.seqMap(P.string("!").atMost(1), q.link, (p, l) => {
+        if (p.length > 0) l.embed = true;
+        return l;
+    }),
 
     // Binary plus or minus operator.
     binaryPlusMinus: q => P.regexp(/\+|-/).map(str => str as BinaryOp).desc("'+' or '-'"),
@@ -228,9 +253,9 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
     
     // Source parsing.
     tagSource: q => q.tag.map(tag => Sources.tag(tag)),
-    linkIncomingSource: q => q.link.map(link => Sources.link(link, true)),
+    linkIncomingSource: q => q.link.map(link => Sources.link(link.path, true)),
     linkOutgoingSource: q => P.seqMap(P.string("outgoing(").skip(P.optWhitespace), q.link, P.string(")"),
-        (_1, link, _2) => Sources.link(link, false)),
+        (_1, link, _2) => Sources.link(link.path, false)),
     folderSource: q => q.string.map(str => Sources.folder(str)),
     parensSource: q => P.seqMap(P.string("("), P.optWhitespace, q.source, P.optWhitespace, P.string(")"), (_1, _2, field, _3, _4) => field),
     negateSource: q => P.seqMap(P.alt(P.string("-"), P.string("!")), q.atomSource, (_, source) => Sources.negate(source)),

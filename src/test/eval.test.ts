@@ -84,7 +84,7 @@ test("Evaluate simple link resolution", () => {
         .set("inner", Fields.object(rawRawObject));
 
     let context = new Context({ resolve: path => Fields.object(rawObject), normalize: path => path, exists: path => false })
-        .set("link", Fields.link("test"));
+        .set("link", Fields.fileLink("test"));
     expect(context.get("link").valueType).toEqual("link");
     expect(context.evaluate(Fields.indexVariable("link.inner"))).toEqual(Fields.object(rawRawObject));
     expect(context.evaluate(Fields.indexVariable("link.inner.final"))).toEqual(Fields.number(6));
