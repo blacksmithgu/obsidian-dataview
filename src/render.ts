@@ -1,7 +1,7 @@
 import { DateTime, Duration } from 'luxon';
 import { Component, MarkdownRenderer } from 'obsidian';
-import { LiteralField } from 'src/query';
-import { getFileName, normalizeDuration } from './util/normalize';
+import { Fields, LiteralValue } from 'src/query';
+import { normalizeDuration } from './util/normalize';
 
 /** Make an Obsidian-friendly internal link. */
 export function createAnchor(text: string, target: string, internal: boolean): HTMLAnchorElement {
@@ -16,6 +16,7 @@ export function createAnchor(text: string, target: string, internal: boolean): H
 	return a;
 }
 
+/** Render simple fields compactly, removing wrapping content like '<p>'. */
 export async function renderCompactMarkdown(markdown: string, container: HTMLElement, sourcePath: string, component: Component) {
 	let subcontainer = container.createSpan();
 	await MarkdownRenderer.renderMarkdown(markdown, subcontainer, sourcePath, component);
@@ -26,45 +27,32 @@ export async function renderCompactMarkdown(markdown: string, container: HTMLEle
 }
 
 /** Create a list inside the given container, with the given data. */
-export async function renderList(container: HTMLElement, elements: (string | HTMLElement)[], component: Component, originFile: string) {
+export async function renderList(container: HTMLElement, elements: LiteralValue[], component: Component, originFile: string,
+	nullField: string) {
 	let listEl = container.createEl('ul', { cls: ['dataview', 'list-view-ul'] });
 	for (let elem of elements) {
 		let li = listEl.createEl('li');
-		if (typeof elem == "string") {
-			// TODO: There may be links in text which are file-location-dependent; when I eventually get a bug for this, 
-			// I'll need to change render list to be file-aware.
-			await renderCompactMarkdown(elem, li, originFile, component);
-		} else {
-			li.appendChild(elem);
-		}
+		await renderValue(elem, li, originFile, component, nullField, true);
 	}
 }
 
 /** Create a table inside the given container, with the given data. */
-export async function renderTable(container: HTMLElement, headers: string[], values: (string | HTMLElement)[][],
-	component: Component, originFile: string) {
+export async function renderTable(container: HTMLElement, headers: string[], values: LiteralValue[][], component: Component,
+	originFile: string, nullField: string) {
 	let tableEl = container.createEl('table', { cls: ['dataview', 'table-view-table'] });
 
-	let theadEl = tableEl.createEl('thead');
-	let headerEl = theadEl.createEl('tr');
+	let theadEl = tableEl.createEl('thead', { cls: 'table-view-thead' });
+	let headerEl = theadEl.createEl('tr', { cls: 'table-view-tr-header' });
 	for (let header of headers) {
-		headerEl.createEl('th', { text: header });
+		headerEl.createEl('th', { text: header, cls: 'table-view-th' });
 	}
 
-	let tbodyEl = tableEl.createEl('tbody');
+	let tbodyEl = tableEl.createEl('tbody', { cls: 'table-view-tbody' });
 	for (let row of values) {
 		let rowEl = tbodyEl.createEl('tr');
 		for (let value of row) {
-			if (typeof value == "string") {
-				let td = rowEl.createEl('td');
-
-				// TODO: There may be links in text which are file-location-dependent; when I eventually get a bug for this, 
-				// I'll need to change render list to be file-aware.
-				await renderCompactMarkdown(value, td, originFile, component);
-			} else {
-				let wrapper = rowEl.createEl('td');
-				wrapper.appendChild(value);
-			}
+			let td = rowEl.createEl('td');
+			await renderValue(value, td, originFile, component, nullField, true);
 		}
 	}
 }
@@ -111,92 +99,81 @@ export function renderMinimalDuration(dur: Duration): string {
 	return result;
 }
 
-/** Prettily render a field with the given settings. */
-export function renderField(field: LiteralField, nullField: string, expandList: boolean = false): HTMLElement | string {
-	switch (field.valueType) {
-		case "date":
-			return renderMinimalDate(field.value);
-		case "duration":
-			return renderMinimalDuration(field.value);
-		case "array":
-			if (expandList) {
-				if (field.value.length == 0) return "";
-				else if (field.value.length == 1) return renderField(field.value[0], nullField, expandList);
+/** Prettily render a value into a container with the given settings. */
+export async function renderValue(field: LiteralValue, container: HTMLElement, originFile: string, component: Component,
+	nullField: string, expandList: boolean = false) {
 
-				let list = document.createElement('ul');
-				list.classList.add('dataview', 'dataview-ul');
-				for (let child of field.value) {
-					let li = list.createEl('li');
-					let value = renderField(child, nullField, expandList);
-					if (typeof value == 'string') {
-						li.textContent = value;
-					} else {
-						li.appendChild(value);
-					}
-				}
-
-				return list;
-			} else {
-				if (field.value.length == 0) return "<empty list>";
-
-				let span = document.createElement('span');
-				let first = true;
-				for (let val of field.value) {
-					if (first) first = false;
-					else span.appendText(", ");
-
-					if (val.valueType == "array" || val.valueType == "object") span.appendText("[");
-
-					let rendered = renderField(val, nullField, expandList);
-					if (typeof rendered === "string") span.appendText(rendered);
-					else span.appendChild(rendered);
-
-					if (val.valueType == "array" || val.valueType == "object") span.appendText("]");
-				}
-
-				return span;
+	if (Fields.isNull(field)) {
+		await renderCompactMarkdown("" + field, container, originFile, component);
+	} else if (Fields.isDate(field)) {
+		container.appendText(renderMinimalDate(field));
+	} else if (Fields.isDuration(field)) {
+		container.appendText(renderMinimalDuration(field));
+	} else if (Fields.isString(field) || Fields.isBoolean(field) || Fields.isNumber(field)) {
+		await renderCompactMarkdown("" + field, container, originFile, component);
+	} else if (Fields.isArray(field)) {
+		if (expandList) {
+			if (field.length == 0) return;
+			else if (field.length == 1) {
+				await renderValue(field[0], container, originFile, component, nullField, expandList);
+				return;
 			}
-		case "object":
-			if (expandList) {
-				if (field.value.size == 0) return "";
-				else if (field.value.size == 1) return field.value.keys().next().value + ": " + renderField(field.value.values().next().value, nullField, expandList);
 
-				let list = document.createElement('ul');
-				list.classList.add('dataview', 'dataview-ul');
-				for (let entry of field.value) {
-					let li = list.createEl('li');
-					let value = renderField(entry[1], nullField, expandList);
-					if (typeof value == 'string') {
-						li.textContent = `${entry[0]}: ${value}`;
-					} else {
-						li.appendText(entry[0] + ":");
-						li.appendChild(value);
-					}
-				}
-
-				return list;
-			} else {
-				let span = document.createElement("span");
-				let first = true;
-				for (let entry of field.value) {
-					if (first) first = false;
-					else span.appendText(", ");
-
-					span.appendText(entry[0] + ": ");
-					let rendered = renderField(entry[1], nullField, expandList);
-					if (typeof rendered == "string") span.appendText(rendered);
-					else span.appendChild(rendered);
-				}
-
-				return span;
+			let list = container.createEl('ul', { cls: ['dataview', 'dataview-ul', 'dataview-result-list-ul'] });
+			for (let child of field) {
+				let li = list.createEl('li', { cls: 'dataview-result-list-li' });
+				await renderValue(child, li, originFile, component, nullField, expandList);
 			}
-		case "link":
-			return createAnchor(getFileName(field.value.path), field.value.path.replace(".md", ""), true);
-		case "null":
-			return nullField;
-		case "html":
-			return field.value;
-		default:
-			return "" + field.value;
+		} else {
+			if (field.length == 0) {
+				container.appendText("<empty list>");
+				return;
+			}
+
+			let span = container.createEl('span', { cls: ['dataview', 'dataview-result-list-span' ]});
+			let first = true;
+			for (let val of field) {
+				if (first) first = false;
+				else span.appendText(", ");
+
+				if (val.valueType == "array" || val.valueType == "object") span.appendText("[");
+				await renderValue(val, span, originFile, component, nullField, expandList);
+				if (val.valueType == "array" || val.valueType == "object") span.appendText("]");
+			}
+		}
+	} else if (Fields.isObject(field)) {
+		if (expandList) {
+			if (field.size == 0) {
+				container.appendText("<empty object>");
+				return;
+			} else if (field.size == 1) {
+				container.appendText(field.keys().next().value + ": ");
+				await renderValue(field.values().next().value, container, originFile, component, nullField, expandList);
+				return;
+			}
+
+			let list = container.createEl('ul', { cls: ['dataview', 'dataview-ul', 'dataview-result-object-ul' ]});
+			for (let entry of field) {
+				let li = list.createEl('li', { cls: ['dataview', 'dataview-li', 'dataview-result-object-li'] });
+				li.appendText(entry[0] + ": ");
+				await renderValue(entry[1], li, originFile, component, nullField, expandList);
+			}
+		} else {
+			let span = container.createEl("span", { cls: ['dataview', 'dataview-result-object-span'] });
+			let first = true;
+			for (let entry of field) {
+				if (first) first = false;
+				else span.appendText(", ");
+
+				span.appendText(entry[0] + ": ");
+				await renderValue(entry[1], span, originFile, component, nullField, expandList);
+			}
+		}
+	} else if (Fields.isLink(field)) {
+		await renderCompactMarkdown(field.markdown(), container, originFile, component);
+	} else if (Fields.isHtml(field)) {
+		container.appendChild(field);
+	} else {
+		container.appendText("Unrecognized: " + field);
 	}
 }

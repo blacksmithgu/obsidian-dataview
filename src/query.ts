@@ -1,5 +1,6 @@
 /** Provides an AST for complex queries. */
 import { DateTime, Duration } from 'luxon';
+import { getFileName } from './util/normalize';
 
 /** An Obsidian link with all associated metadata. */
 export class Link {
@@ -52,6 +53,19 @@ export class Link {
             && this.type == other.type
             && this.subpath == other.subpath;
     }
+
+    public markdown(): string {
+        let result = (this.embed ? "!" : "") + "[[" + this.path;
+
+        if (this.type == 'header') result += '#' + this.subpath;
+        else if (this.type == 'block') result += '^' + this.subpath;
+
+        if (this.display && !this.embed) result += '|' + this.display;
+        else if (!this.embed) result += '|' + getFileName(this.path).replace(".md", "");
+
+        result += ']]';
+        return result;
+    }
 }
 
 /** The supported query types (corresponding to view types). */
@@ -59,7 +73,8 @@ export type QueryType = 'list' | 'table' | 'task';
 
 /** The literal types supported by the query engine. */
 export type LiteralType = 'boolean' | 'number' | 'string' | 'date' | 'duration' | 'link' | 'array' | 'object' | 'html' | 'null';
-/** Maps the string type to it's actual javascript representation. */
+
+/** Maps the string type to it's internal javascript representation. */
 export type LiteralTypeRepr<T extends LiteralType> =
     T extends 'boolean' ? boolean :
     T extends 'number' ? number :
@@ -72,6 +87,23 @@ export type LiteralTypeRepr<T extends LiteralType> =
     T extends 'object' ? Map<string, LiteralField> :
     T extends 'html' ? HTMLElement :
     any;
+
+/** Maps the string type to it's external, API-facing representation. */
+export type ExternalTypeRepr<T extends LiteralType> = 
+    T extends 'boolean' ? boolean :
+    T extends 'number' ? number :
+    T extends 'string' ? string :
+    T extends 'duration' ? Duration :
+    T extends 'date' ? DateTime :
+    T extends 'null' ? null :
+    T extends 'link'? Link :
+    T extends 'array' ? Array<any> :
+    T extends 'object' ? Map<string, any> :
+    T extends 'html' ? HTMLElement :
+    any;
+
+/** The raw values that a literal can take on. */
+export type LiteralValue = ExternalTypeRepr<LiteralType>;
 
 /** Valid binary operators. */
 export type BinaryOp = '+' | '-' | '*' | '/' | '>' | '>=' | '<=' | '<' | '=' | '!=' | '&' | '|';
@@ -407,6 +439,46 @@ export namespace Fields {
             case "link":
                 return `${field.valueType}:${field.value.path}`;
         }
+    }
+
+    export function isString(val: any): val is string {
+        return typeof val == "string";
+    }
+
+    export function isNumber(val: any): val is number {
+        return typeof val == "number";
+    }
+
+    export function isDate(val: any): val is DateTime {
+        return val instanceof DateTime;
+    }
+
+    export function isDuration(val: any): val is Duration {
+        return val instanceof Duration;
+    }
+
+    export function isNull(val: any): val is null {
+        return val === null || val === undefined;
+    }
+
+    export function isArray(val: any): val is any[] {
+        return Array.isArray(val);
+    }
+
+    export function isBoolean(val: any): val is boolean {
+        return typeof val === "boolean";
+    }
+
+    export function isLink(val: any): val is Link {
+        return val instanceof Link;
+    }
+
+    export function isHtml(val: any): val is HTMLElement {
+        return val instanceof HTMLElement;
+    }
+
+    export function isObject(val: any): val is Map<string, any> {
+        return val instanceof Map;
     }
 
     export const NULL = Fields.literal('null', null);

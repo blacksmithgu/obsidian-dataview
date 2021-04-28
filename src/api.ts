@@ -2,6 +2,7 @@
 
 import { App, Component } from "obsidian";
 import { FullIndex } from "src/index";
+import { renderList, renderTable } from "./render";
 
 export class DataviewApi {
     /**
@@ -51,7 +52,11 @@ export class DataviewApi {
     }
 
     public list(values: any[]) {
+        renderList(this.container, values, this.component, this.currentFilePath, "\-");
+    }
 
+    public rawTable(headers: string[], values: any[][]) {
+        renderTable(this.container, headers, values, this.component, this.currentFilePath, "\-");
     }
 }
 

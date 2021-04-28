@@ -1,5 +1,5 @@
 import { MarkdownRenderChild, Plugin, Workspace, Vault, MarkdownPostProcessorContext, PluginSettingTab, App, Setting } from 'obsidian';
-import { renderCompactMarkdown, renderErrorPre, renderField, renderList, renderTable } from 'src/render';
+import { renderErrorPre, renderList, renderTable, renderValue } from 'src/render';
 import { FullIndex } from 'src/index';
 import * as Tasks from 'src/tasks';
 import { Field, Query, QuerySettings } from 'src/query';
@@ -290,28 +290,17 @@ class DataviewListRenderer extends MarkdownRenderChild {
 				let rendered: HTMLElement[] = [];
 				for (let [file, value] of result.data) {
 					let span = document.createElement('span');
-					let renderedFile = renderField(file, this.settings.renderNullAs, true);
-					if (typeof renderedFile == "string") {
-						span.appendText(renderedFile + ": ");
-					} else {
-						span.appendChild(renderedFile);
-						span.appendText(": ");
-					}
-
-					let renderedValue = renderField(value, this.settings.renderNullAs, true);
-					if (typeof renderedValue == "string") {
-						await renderCompactMarkdown(renderedValue, span, this.origin, this);
-					} else {
-						span.appendChild(renderedValue);
-					}
+					await renderValue(file.value, this.container, this.origin, this, this.settings.renderNullAs, true);
+					span.appendText(": ");
+					await renderValue(value.value, this.container, this.origin, this, this.settings.renderNullAs, true);
 
 					rendered.push(span);
 				}
 
-				await renderList(this.container, rendered, this, this.origin);
+				await renderList(this.container, rendered, this, this.origin, this.settings.renderNullAs);
 			} else {
-				await renderList(this.container, result.data.map(e => renderField(e[0], this.settings.renderNullAs, true)),
-					this, this.origin);
+				await renderList(this.container, result.data.map(v => v.length == 0 ? null : v[0].value),
+					this, this.origin, this.settings.renderNullAs);
 			}
 		}
 	}
@@ -343,15 +332,8 @@ class DataviewTableRenderer extends MarkdownRenderChild {
 			return;
 		}
 
-		await renderTable(this.container, result.names, result.data.map(row => {
-			let result: (string | HTMLElement)[] = [];
-
-			for (let elem of row) {
-				result.push(renderField(elem, this.settings.renderNullAs, true));
-			}
-
-			return result;
-		}), this, this.origin);
+		await renderTable(this.container, result.names, result.data.map(l => l.map(v => v.value)),
+			this, this.origin, this.settings.renderNullAs);
 
 		// Render after the empty table, so the table header still renders.
 		if (result.data.length == 0 && this.settings.warnOnEmptyResult) {
@@ -429,14 +411,7 @@ class DataviewInlineRenderer extends MarkdownRenderChild {
 			this.errorbox = this.container.createEl('div');
 			renderErrorPre(this.errorbox, "Dataview (for inline query '" + this.target.innerText + "'): " + result);
 		} else {
-			let realResult = renderField(result, this.settings.renderNullAs, false);
-			let wrapped: HTMLElement;
-			if (typeof realResult === "string") {
-				wrapped = document.createElement("span");
-				await renderCompactMarkdown(realResult, wrapped, this.origin, this);
-			}
-			else wrapped = realResult;
-			this.target.replaceWith(wrapped);
+			await renderValue(result.value, this.container, this.origin, this, this.settings.renderNullAs, false);
 		}
 	}
 }
