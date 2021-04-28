@@ -389,7 +389,6 @@ export namespace Fields {
 
     /** Renders an object as a string. */
     export function toLiteralKey(field: LiteralField): string {
- debugger;
         switch (field.valueType) {
             case "string":
             case "number":
