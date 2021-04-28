@@ -389,11 +389,11 @@ export namespace Fields {
 
     /** Renders an object as a string. */
     export function toLiteralKey(field: LiteralField): string {
+ debugger;
         switch (field.valueType) {
             case "string":
             case "number":
             case "null":
-            case "link":
             case "date":
             case "boolean":
                 return `${field.valueType}:${field.value}`;
@@ -405,6 +405,8 @@ export namespace Fields {
                 return `object:[${Object.entries(field.value).map(val => `${val[0]}:${toLiteralKey(val[1])}`).join(", ")}]`
             case "html":
                 return "" + field.value;
+            case "link":
+                return `${field.valueType}:${field.value.path}`;
         }
     }
 
