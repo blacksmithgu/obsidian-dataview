@@ -55,7 +55,7 @@ export default class DataviewPlugin extends Plugin {
 			await this.prepareIndexes();
 		}
 
-		// Main entry point for dataview.
+		// Main entry point for dataview. Runs at a very high priority before other tasks.
 		this.registerMarkdownCodeBlockProcessor("dataview", async (source: string, el, ctx) => {
 			let query = tryOrPropogate(() => parseQuery(source, this.settings));
 

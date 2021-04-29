@@ -98,7 +98,7 @@ export type ExternalTypeRepr<T extends LiteralType> =
     T extends 'null' ? null :
     T extends 'link'? Link :
     T extends 'array' ? Array<any> :
-    T extends 'object' ? Map<string, any> :
+    T extends 'object' ? Record<string, any> :
     T extends 'html' ? HTMLElement :
     any;
 
@@ -479,6 +479,19 @@ export namespace Fields {
 
     export function isObject(val: any): val is Map<string, any> {
         return val instanceof Map;
+    }
+
+    export function fieldToValue(val: LiteralField): LiteralValue {
+        switch (val.valueType) {
+            case "array":
+                return val.value.map(f => fieldToValue(f));
+            case "object":
+                let result: Record<string, any> = {};
+                for (let [key, value] of val.value.entries()) result[key] = fieldToValue(value);
+                return result;
+            default:
+                return val.value;
+        }
     }
 
     export const NULL = Fields.literal('null', null);
