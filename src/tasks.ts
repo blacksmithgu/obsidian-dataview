@@ -1,6 +1,7 @@
 import { Vault, MarkdownRenderChild, MarkdownRenderer, Component } from 'obsidian';
 import { Task, TASK_REGEX } from './file';
 import { createAnchor } from 'src/render';
+import { getFileName } from './util/normalize';
 
 /** Holds DOM events for a rendered task view, including check functionality. */
 export class TaskViewLifecycle extends MarkdownRenderChild {
@@ -48,22 +49,21 @@ export class TaskViewLifecycle extends MarkdownRenderChild {
 	}
 }
 
-
 /** Render tasks from multiple files. */
 export async function renderFileTasks(container: HTMLElement, tasks: Map<string, Task[]>) {
 	for (let [path, list] of tasks.entries()) {
 		let basepath = path.replace(".md", "");
 
 		let header = container.createEl('h4');
-		header.appendChild(createAnchor(basepath, basepath, true));
+		header.appendChild(createAnchor(getFileName(basepath), basepath, true));
 		let div = container.createDiv();
 
-		await renderTasks(div, path, list);
+		await renderTasks(div, list);
 	}
 }
 
 /** Render a list of tasks as a single list. */
-export async function renderTasks(container: HTMLElement, path: string, tasks: Task[]) {
+export async function renderTasks(container: HTMLElement, tasks: Task[]) {
 	let ul = container.createEl('ul', { cls: 'contains-task-list' });
 	for (let task of tasks) {
 		let li = ul.createEl('li', { cls: 'task-list-item' });
@@ -73,7 +73,7 @@ export async function renderTasks(container: HTMLElement, path: string, tasks: T
 		}
 
 		// Render the text as markdown so that bolds, links, and other things work properly.
-		await MarkdownRenderer.renderMarkdown(task.text, li, path, new Component());
+		await MarkdownRenderer.renderMarkdown(task.text, li, task.path, new Component());
 
 		// Unwrap the paragraph element that is created.
 		let paragraph = li.querySelector("p");
@@ -82,11 +82,11 @@ export async function renderTasks(container: HTMLElement, path: string, tasks: T
 			paragraph.remove();
 		}
 
-		let check = createCheckbox(path, task.line, task.text, task.completed);
+		let check = createCheckbox(task.path, task.line, task.text, task.completed);
 		li.prepend(check);
 
 		if (task.subtasks.length > 0) {
-			renderTasks(li, path, task.subtasks);
+			renderTasks(li, task.subtasks);
 		}
 	}
 }

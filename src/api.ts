@@ -3,9 +3,11 @@
 import { App, Component } from "obsidian";
 import { FullIndex } from "src/index";
 import { collectFromSource, createContext } from "./engine";
+import { Task } from "./file";
 import { EXPRESSION } from "./parse";
-import { Fields, Link } from "./query";
+import { Fields, Link, Sources } from "./query";
 import { renderList, renderTable } from "./render";
+import { renderFileTasks, renderTasks, TaskViewLifecycle } from "./tasks";
 
 type ArrayFunc<O> = (elem: any, index: number, arr: any[]) => O;
 
@@ -26,6 +28,8 @@ export interface DataArray {
     map(f: ArrayFunc<any>): DataArray;
     /** Map elements in the data array by applying a function to each, then flatten the results to produce a new array. */
     flatMap(f: ArrayFunc<any[]>): DataArray;
+    /** Mutably change each value in the array, returning the same array which you can further chain off of. */
+    mutate(f: ArrayFunc<any>): DataArray;
 
     /** Limit the total number of entries in the array to the given value. */
     limit(count: number): DataArray;
@@ -40,6 +44,18 @@ export interface DataArray {
      * be used to compare the keys in leiu of the default dataview comparator.
      */
     sort(key: ArrayFunc<any>, direction?: 'asc' | 'desc', comparator?: (a: any, b: any) => number): DataArray;
+
+    /**
+     * Return an array where elements are grouped by the given key; the resulting array will have objects of the form
+     * { key: <key value>, rows: DataArray }.
+     */
+    groupBy(key: ArrayFunc<any>): DataArray;
+
+    /**
+     * Return distinct entries. If a key is provided, then rows with distinct keys are returned. By default,
+     * the first row is taken for each key. You can provide a tiebreaker to choose which entry if you want.
+     */
+    distinct(key?: ArrayFunc<any>, tiebreaker?: (a: any, b: any, ai: number, bi: number) => boolean): DataArray;
 
     /** Return true if the predicate is true for all values. */
     every(f: ArrayFunc<boolean>): boolean;
@@ -64,6 +80,9 @@ export interface DataArray {
     /** Run a lambda on each element in the array. */
     forEach(f: ArrayFunc<void>): void;
 
+    /** Convert this to a plain javascript array. */
+    array(): any[];
+
     /** Allow iterating directly over the array. */
     [Symbol.iterator](): Iterator<any>;
 
@@ -77,15 +96,16 @@ export interface DataArray {
 class DataArrayImpl implements DataArray {
     private static ARRAY_FUNCTIONS: Set<string> = new Set([
         "where", "filter", "map", "flatMap", "slice", "sort", "every", "some", "none", "first", "last", "to",
-        "expand", "forEach"
+        "expand", "forEach", "length", "values", "array"
     ]);
 
     private static ARRAY_PROXY: ProxyHandler<DataArrayImpl> = {
         get: function(target, prop, reciever) {
-            if (typeof prop === "number") return target[prop];
+            if (typeof prop === "symbol") return (target as any)[prop];
+            else if (typeof prop === "number") return target.values[prop];
             else if (DataArrayImpl.ARRAY_FUNCTIONS.has(prop.toString())) return target[prop.toString()];
 
-            return target.to(prop.toString());
+            return target.to(prop);
         }
     };
 
@@ -115,10 +135,18 @@ class DataArrayImpl implements DataArray {
     public flatMap(f: ArrayFunc<any[]>): DataArray {
         let result = [];
         for (let index = 0; index < this.length; index++) {
-            for (let r of f(this.values[index], index, this.values)) result.push(r);
+            let value = f(this.values[index], index, this.values);
+            if (!value || value.length == 0) continue;
+
+            for (let r of value) result.push(r);
         }
 
         return DataArrayImpl.wrap(result);
+    }
+
+    public mutate(f: ArrayFunc<any>): DataArray {
+        this.values.forEach(f);
+        return this;
     }
 
     public limit(count: number): DataArray {
@@ -130,6 +158,16 @@ class DataArrayImpl implements DataArray {
     }
 
     public sort(key: ArrayFunc<any>, direction?: 'asc' | 'desc', comparator?: (a: any, b: any) => number): DataArray {
+        // todo: implement.
+        return this;
+    }
+
+    public groupBy(key: ArrayFunc<any>): DataArray {
+        // todo: implement.
+        return this;
+    }
+
+    public distinct(key?: ArrayFunc<any>, tiebreaker?: (a: any, b: any, ai: number, bi: number) => boolean): DataArray {
         // todo: implement.
         return this;
     }
@@ -181,66 +219,10 @@ class DataArrayImpl implements DataArray {
         }
     }
 
+    public array(): any[] { return ([] as any[]).concat(this.values); }
+
     public [Symbol.iterator](): Iterator<any> {
         return this.values[Symbol.iterator]();
-    }
-}
-
-/** Proxied interface which stores field-based data. */
-export interface DataObject {
-    size: number;
-    
-    /** Index into the object to obtain values for this row. */
-    [key: string]: any;
-
-    /**
-     * Recursively expand the given key, producing a flattened list. Useful for heirarchical data structures, like
-     * tasks with 'subtasks'.
-     */
-    expand(key: string): DataArray;
-}
-
-class DataObjectImpl implements DataObject {
-    private static OBJECT_FUNCTIONS: Set<string> = new Set([
-        "size", "expand"
-    ]);
-
-    private static OBJECT_PROXY: ProxyHandler<DataObjectImpl> = {
-        get: function(target, prop, reciever) {
-            if (DataObjectImpl.OBJECT_FUNCTIONS.has(prop.toString())) return target[prop.toString()];
-            
-            return target.object[prop.toString()];
-        }
-    };
-
-    public static wrap(raw: Record<string, any>): DataObject {
-        return new Proxy(new DataObjectImpl(raw), this.OBJECT_PROXY);
-    }
-
-    public size: number;
-    [key: string]: any;
-
-    public constructor(public object: Record<string, any>) {
-        this.size = Object.keys(object).length;
-    }
-
-    public expand(key: string): DataArray {
-        let result = [];
-        let queue: any[] = [this];
-
-        while (queue.length > 0) {
-            let next = queue.pop();
-            let value = next[key];
-
-            if (value === undefined || value === null) continue;
-            if (Array.isArray(value)) value.forEach(v => queue.push(v));
-            else if (value instanceof DataArrayImpl) value.forEach(v => queue.push(v));
-            else queue.push(value);
-
-            result.push(next);
-        }
-
-        return Data.array(result);
     }
 }
 
@@ -249,11 +231,6 @@ export namespace Data {
     /** Create a new Dataview data array. */
     export function array(raw: any[]): DataArray {
         return DataArrayImpl.wrap(raw);
-    }
-
-    /** Create a new dataview data object. */
-    export function object(raw: Record<string, any>): DataObject {
-        return DataObjectImpl.wrap(raw);
     }
 }
 
@@ -269,7 +246,7 @@ export class DataviewInlineApi {
 
     /** The path to the current file this script is running in. */
     public currentFilePath: string;
-    
+
     /**
      * The container which holds the output of this view. You can directly append fields to this, if you wish, though 
      * the rendering API is likely to be easier for straight-forward purposes.
@@ -291,7 +268,8 @@ export class DataviewInlineApi {
     // Rendering Functions //
     /////////////////////////
 
-    public header(level: number, text: string) {
+    /** Render an HTML header; the level can be anything from 1 - 6. */
+    public header(level: number, text: any) {
         switch (level) {
             case 1: this.container.createEl('h1', { text }); break;
             case 2: this.container.createEl('h2', { text }); break;
@@ -303,14 +281,18 @@ export class DataviewInlineApi {
         }
     }
 
-    public paragraph(text: string) {
+    /** Render an HTML paragraph, containing arbitrary text. */
+    public paragraph(text: any) {
         this.container.createEl('p', { text });
     }
 
     /** Return an array of paths (as strings) corresponding to pages which match the query. */
-    public pagePaths(query: string): DataArray {
+    public pagePaths(query?: string): DataArray {
         try {
-            let source = EXPRESSION.source.tryParse(query);
+            let source;
+            if (!query || query.trim() === "") source = Sources.folder("");
+            else source = EXPRESSION.source.tryParse(query);
+
             return Data.array(Array.from(collectFromSource(source, this.index, this.currentFilePath)));
         } catch (ex) {
             throw new Error(`Failed to parse query in 'pagePaths': ${ex}`);
@@ -318,29 +300,60 @@ export class DataviewInlineApi {
     }
 
     /** Map a page path to the actual data contained within that page. */
-    public page(path: string | Link): DataObject | undefined {
+    public page(path: string | Link): Record<string, any> | undefined {
         let rawPath = (path instanceof Link) ? path.path : path;
         let rawData = createContext(rawPath, this.index, undefined)?.namespace;
         if (rawData === undefined) return undefined;
 
-        return Data.object(Fields.fieldToValue(rawData) as Record<string, any>);
+        return Fields.fieldToValue(rawData) as Record<string, any>;
     }
 
     /** Return an array of page objects corresponding to pages which match the query. */
     public pages(query: string): DataArray {
         return this.pagePaths(query).flatMap(p => {
-            console.log("inside?");
             let res = this.page(p);
             return res ? [res] : [];
         });
     }
 
-    public list(values: any[]) {
-        renderList(this.container, values, this.component, this.currentFilePath, "\-");
+    /** Render a dataview list of the given values. */
+    public list(values?: any[] | DataArray) {
+        if (!values) return;
+        if (values instanceof DataArrayImpl) values = values.array();
+
+        renderList(this.container, values as any[], this.component, this.currentFilePath, "\-");
     }
 
-    public rawTable(headers: string[], values: any[][]) {
-        renderTable(this.container, headers, values, this.component, this.currentFilePath, "\-");
+    /** Render a dataview table with the given headers, and the 2D array of values. */
+    public rawTable(headers: string[], values?: any[][] | DataArray) {
+        if (!values) values = [];
+        if (values instanceof DataArrayImpl) values = values.array();
+        renderTable(this.container, headers, values as any[][], this.component, this.currentFilePath, "\-");
+    }
+
+    /** Render a dataview task view with the given tasks. */
+    public tasks(tasks: Task[] | DataArray, groupByFile: boolean = false) {
+        if (tasks instanceof DataArrayImpl) tasks = tasks.array();
+
+        if (groupByFile) {
+            let byFile = new Map<string, Task[]>();
+            for (let task of (tasks as Task[])) {
+                if (!byFile.has(task.path)) byFile.set(task.path, []);
+                byFile.get(task.path)?.push(task);
+            }
+
+            let subcontainer = this.container.createDiv();
+            (async () => {
+                await renderFileTasks(subcontainer, byFile);
+                this.component.addChild(new TaskViewLifecycle(this.app.vault, subcontainer));
+            })();
+        } else {
+            let subcontainer = this.container.createDiv();
+            (async () => {
+                await renderTasks(subcontainer, tasks as Task[]);
+                this.component.addChild(new TaskViewLifecycle(this.app.vault, subcontainer));
+            })();
+        }
     }
 }
 

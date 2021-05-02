@@ -119,6 +119,7 @@ export function createContext(file: string, index: FullIndex, rootContext: Conte
     fileMeta.set("tags", Fields.array(Array.from(page.fullTags()).map(l => Fields.string(l))));
     fileMeta.set("etags", Fields.array(Array.from(page.tags).map(l => Fields.string(l))));
     fileMeta.set("aliases", Fields.array(Array.from(page.aliases).map(l => Fields.string(l))));
+    fileMeta.set("tasks", Fields.asField(page.tasks) ?? Fields.array([]));
 
     if (page.day) fileMeta.set("day", Fields.date(page.day));
 

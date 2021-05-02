@@ -35,8 +35,12 @@ export interface Task {
 	text: string;
 	/** The line this task shows up on. */
 	line: number;
+    /** The full path of the file. */
+    path: string;
 	/** Whether or not this task was completed. */
 	completed: boolean;
+    /** The tags inside of this task description. */
+    tags?: Set<string>;
 	/** Any subtasks of this task. */
 	subtasks: Task[];
 }
@@ -232,10 +236,10 @@ export const TASK_REGEX = /(\s*)[-*]\s*\[([ Xx\.]?)\]\s*(.+)/i;
  * A hacky approach to scanning for all tasks using regex. Does not support multiline 
  * tasks yet (though can probably be retro-fitted to do so).
 */
-export function findTasksInFile(file: string): Task[] {
+export function findTasksInFile(path: string, file: string): Task[] {
 	// Dummy top of the stack that we'll just never get rid of.
 	let stack: [Task, number][] = [];
-	stack.push([{ text: "Root", line: -1, completed: false, subtasks: [] }, -4]);
+	stack.push([{ text: "Root", line: -1, path, completed: false, subtasks: [] }, -4]);
 
 	let lineno = 0;
 	for (let line of file.replace("\r", "").split("\n")) {
@@ -248,6 +252,7 @@ export function findTasksInFile(file: string): Task[] {
 		let task: Task = {
 			text: match[3],
 			completed: match[2] == 'X' || match[2] == 'x',
+            path,
 			line: lineno,
 			subtasks: []
 		};
@@ -319,7 +324,7 @@ export async function extractMarkdownMetadata(file: TFile, vault: Vault, cache: 
     }
 
     // And extract tasks...
-    let tasks = findTasksInFile(fileContents);
+    let tasks = findTasksInFile(file.path, fileContents);
 
     return new PageMetadata(file.path, {
         fields, tags, aliases, links, tasks,

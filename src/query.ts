@@ -298,8 +298,22 @@ export namespace Fields {
         return Fields.literal('html', elem);
     }
 
+    /** Convert a field to a raw JavaScript-friendly value. */
+    export function fieldToValue(val: LiteralField): LiteralValue {
+        switch (val.valueType) {
+            case "array":
+                return val.value.map(f => fieldToValue(f));
+            case "object":
+                let result: Record<string, any> = {};
+                for (let [key, value] of val.value.entries()) result[key] = fieldToValue(value);
+                return result;
+            default:
+                return val.value;
+        }
+    }
+
     /** Convert an arbitrary javascript value into a Dataview field. */
-    export function asField(val: any): LiteralField | undefined {
+    export function asField(val: LiteralValue): LiteralField | undefined {
         if (val === null || val === undefined) return Fields.NULL;
         if (val instanceof Duration) return Fields.duration(val);
         else if (val instanceof DateTime) return Fields.date(val);
@@ -310,7 +324,7 @@ export namespace Fields {
             let result: LiteralField[] = [];
             for (let v of val) {
                 let converted = asField(v);
-                if (converted) result.push(v);
+                if (converted) result.push(converted);
             }
             return Fields.array(result);
         }
@@ -318,7 +332,7 @@ export namespace Fields {
         else if (typeof val == "boolean") return Fields.bool(val);
         else if (typeof val == "object") {
             let result = new Map<string, LiteralField>();
-            for (let key of val) {
+            for (let key of Object.keys(val)) {
                 let converted = asField(val[key]);
                 if (converted) result.set(key, converted);
             }
@@ -479,19 +493,6 @@ export namespace Fields {
 
     export function isObject(val: any): val is Map<string, any> {
         return val instanceof Map;
-    }
-
-    export function fieldToValue(val: LiteralField): LiteralValue {
-        switch (val.valueType) {
-            case "array":
-                return val.value.map(f => fieldToValue(f));
-            case "object":
-                let result: Record<string, any> = {};
-                for (let [key, value] of val.value.entries()) result[key] = fieldToValue(value);
-                return result;
-            default:
-                return val.value;
-        }
     }
 
     export const NULL = Fields.literal('null', null);

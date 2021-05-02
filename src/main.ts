@@ -436,7 +436,7 @@ class DataviewJSRenderer extends MarkdownRenderChild {
 				makeApiContext(this.index, this, this.app, this.container, this.origin));
 		} catch (e) {
 			this.containerEl.innerHTML = "";
-			renderErrorPre(this.container, "Evaluation Error: " + e);
+			renderErrorPre(this.container, "Evaluation Error: " + e.stack);
 		}
 	}
 }
