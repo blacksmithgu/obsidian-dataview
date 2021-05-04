@@ -96,7 +96,7 @@ export type ExternalTypeRepr<T extends LiteralType> =
     T extends 'duration' ? Duration :
     T extends 'date' ? DateTime :
     T extends 'null' ? null :
-    T extends 'link'? Link :
+    T extends 'link' ? Link :
     T extends 'array' ? Array<any> :
     T extends 'object' ? Record<string, any> :
     T extends 'html' ? HTMLElement :
@@ -104,6 +104,23 @@ export type ExternalTypeRepr<T extends LiteralType> =
 
 /** The raw values that a literal can take on. */
 export type LiteralValue = ExternalTypeRepr<LiteralType>;
+/** A wrapped literal value which can be switched on. */
+export type WrappedLiteralValue =
+    LiteralValueWrapper<'string'>
+    | LiteralValueWrapper<'number'>
+    | LiteralValueWrapper<'boolean'>
+    | LiteralValueWrapper<'date'>
+    | LiteralValueWrapper<'duration'>
+    | LiteralValueWrapper<'link'>
+    | LiteralValueWrapper<'array'>
+    | LiteralValueWrapper<'object'>
+    | LiteralValueWrapper<'html'>
+    | LiteralValueWrapper<'null'>;
+
+export interface LiteralValueWrapper<T extends LiteralType> {
+    type: T;
+    value: ExternalTypeRepr<T>;
+}
 
 /** Valid binary operators. */
 export type BinaryOp = '+' | '-' | '*' | '/' | '>' | '>=' | '<=' | '<' | '=' | '!=' | '&' | '|';
@@ -312,6 +329,21 @@ export namespace Fields {
         }
     }
 
+    /** Wrap a literal value so you can switch on it easily. */
+    export function wrapValue(val: LiteralValue): WrappedLiteralValue | undefined {
+        if (Fields.isNull(val)) return { type: 'null', value: val };
+        else if (isNumber(val)) return { type: 'number', value: val };
+        else if (isString(val)) return { type: 'string', value: val };
+        else if (isBoolean(val)) return { type: 'boolean', value: val };
+        else if (isDuration(val)) return { type: 'duration', value: val };
+        else if (isDate(val)) return { type: 'date', value: val };
+        else if (isHtml(val)) return { type: 'html', value: val };
+        else if (isArray(val)) return { type: 'array', value: val };
+        else if (isLink(val)) return { type: 'link', value: val };
+        else if (typeof val === "object") return { type: 'object', value: val };
+        else return undefined;
+    }
+
     /** Convert an arbitrary javascript value into a Dataview field. */
     export function asField(val: LiteralValue): LiteralField | undefined {
         if (val === null || val === undefined) return Fields.NULL;
@@ -345,9 +377,74 @@ export namespace Fields {
         else return undefined;
     }
 
+    /** Compare two arbitrary JavaScript values. Produces a total ordering over ANY possible dataview value. */
+    export function compareValue(val1: LiteralValue, val2: LiteralValue): number {
+        // Handle undefined/nulls first.
+        if (val1 === undefined) val1 = null;
+        if (val2 === undefined) val2 = null;
+        if (val1 === null && val2 === null) return 0;
+        else if (val1 === null) return -1;
+        else if (val2 === null) return 1;
+
+        // A non-null value now which we can wrap & compare on.
+        let wrap1 = wrapValue(val1);
+        let wrap2 = wrapValue(val2);
+
+        if (wrap1 === undefined && wrap2 === undefined) return 0;
+        else if (wrap1 === undefined) return -1;
+        else if (wrap2 === undefined) return 1;
+
+        if (wrap1.type != wrap2.type) return wrap1.type.localeCompare(wrap2.type);
+
+        switch (wrap1.type) {
+            case "string":
+                return wrap1.value.localeCompare(wrap2.value as string);
+            case "number":
+                if (wrap1.value < (wrap2.value as number)) return -1;
+                else if (wrap1.value == (wrap2.value as number)) return 0;
+                return 1;
+            case "null":
+                return 0;
+            case "boolean":
+                if (wrap1.value == wrap2.value) return 0;
+                else return wrap1.value ? 1 : -1;
+            case "link":
+                return wrap1.value.path.localeCompare((wrap2.value as Link).path);
+            case "date":
+                return (wrap1.value < (wrap2.value as DateTime)) ? -1 : (wrap1.value.equals(wrap2.value as DateTime) ? 0 : 1);
+            case "duration":
+                return wrap1.value < (wrap2.value as Duration) ? -1 : (wrap1.value.equals(wrap2.value as Duration) ? 0 : 1);
+            case "array":
+                let f1 = wrap1.value;
+                let f2 = wrap2.value as any[];
+                for (let index = 0; index < Math.min(f1.length, f2.length); index++) {
+                    let comp = compareValue(f1[index], f2[index]);
+                    if (comp != 0) return comp;
+                }
+                return f1.length - f2.length;
+            case "object":
+                let o1 = wrap1.value;
+                let o2 = wrap2.value as Record<string, any>;
+                let k1 = Array.from(Object.keys(o1));
+                let k2 = Array.from(Object.keys(o2));
+                k1.sort(); k2.sort();
+
+                let keyCompare = compareValue(k1, k2);
+                if (keyCompare != 0) return keyCompare;
+
+                for (let key of k1) {
+                    let comp = compareValue(o1[key], o2[key]);
+                    if (comp != 0) return comp;
+                }
+                return 0;
+            case "html":
+                return 0;
+        }
+    }
+
     /** Find the corresponding Dataveiw type for an arbitrary value. */
     export function typeOf(val: any): LiteralType | undefined {
-        return asField(val)?.valueType;
+        return wrapValue(val)?.type;
     }
 
     export function binaryOp(left: Field, op: BinaryOp, right: Field): Field {
@@ -471,7 +568,7 @@ export namespace Fields {
         return val instanceof Duration;
     }
 
-    export function isNull(val: any): val is null {
+    export function isNull(val: any): val is null | undefined {
         return val === null || val === undefined;
     }
 

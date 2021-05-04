@@ -6,85 +6,88 @@ import { collectFromSource, createContext } from "./engine";
 import { Task } from "./file";
 import { EXPRESSION } from "./parse";
 import { Fields, Link, Sources } from "./query";
-import { renderList, renderTable } from "./render";
+import { renderList, renderTable, renderValue } from "./render";
 import { renderFileTasks, renderTasks, TaskViewLifecycle } from "./tasks";
 
-type ArrayFunc<O> = (elem: any, index: number, arr: any[]) => O;
+/** A function which maps an array element to some value. */
+export type ArrayFunc<T, O> = (elem: T, index: number, arr: T[]) => O;
+
+/** A function which compares two types (plus their indices, if relevant). */
+export type ArrayComparator<T> = (a: T, b: T) => number;
 
 /**
  * Proxied interface which allows manipulating array-based data. All functions on a data array produce a NEW array
  * (i.e., the arrays are immutable).
  */
-export interface DataArray {
+export interface DataArray<T> {
     /** The total number of elements in the array. */
     length: number;
 
     /** Filter the data array down to just elements which match the given predicate. */
-    where(predicate: ArrayFunc<boolean>): DataArray;
+    where(predicate: ArrayFunc<T, boolean>): DataArray<T>;
     /** Alias for 'where' for people who want array semantics. */
-    filter(predicate: ArrayFunc<boolean>): DataArray;
+    filter(predicate: ArrayFunc<T, boolean>): DataArray<T>;
 
     /** Map elements in the data array by applying a function to each. */
-    map(f: ArrayFunc<any>): DataArray;
+    map<U>(f: ArrayFunc<T, U>): DataArray<U>;
     /** Map elements in the data array by applying a function to each, then flatten the results to produce a new array. */
-    flatMap(f: ArrayFunc<any[]>): DataArray;
+    flatMap<U>(f: ArrayFunc<T, U[]>): DataArray<U>;
     /** Mutably change each value in the array, returning the same array which you can further chain off of. */
-    mutate(f: ArrayFunc<any>): DataArray;
+    mutate(f: ArrayFunc<T, any>): DataArray<any>;
 
     /** Limit the total number of entries in the array to the given value. */
-    limit(count: number): DataArray;
+    limit(count: number): DataArray<T>;
     /**
      * Take a slice of the array. If `start` is undefined, it is assumed to be 0; if `end` is undefined, it is assumbed
      * to be the end of the array.
      */
-    slice(start?: number, end?: number): DataArray;
+    slice(start?: number, end?: number): DataArray<T>;
 
     /**
      * Return a sorted array sorted by the given key; an optional comparator can be provided, which will
      * be used to compare the keys in leiu of the default dataview comparator.
      */
-    sort(key: ArrayFunc<any>, direction?: 'asc' | 'desc', comparator?: (a: any, b: any) => number): DataArray;
+    sort<U>(key: ArrayFunc<T, U>, direction?: 'asc' | 'desc', comparator?: ArrayComparator<U>): DataArray<T>;
 
     /**
      * Return an array where elements are grouped by the given key; the resulting array will have objects of the form
      * { key: <key value>, rows: DataArray }.
      */
-    groupBy(key: ArrayFunc<any>): DataArray;
+    groupBy<U>(key: ArrayFunc<T, U>, comparator?: ArrayComparator<U>): DataArray<{ key: U, rows: DataArray<T> }>;
 
     /**
-     * Return distinct entries. If a key is provided, then rows with distinct keys are returned. By default,
-     * the first row is taken for each key. You can provide a tiebreaker to choose which entry if you want.
+     * Return distinct entries. If a key is provided, then rows with distinct keys are returned.
      */
-    distinct(key?: ArrayFunc<any>, tiebreaker?: (a: any, b: any, ai: number, bi: number) => boolean): DataArray;
+    distinct<U>(key?: ArrayFunc<T, U>, comparator?: ArrayComparator<U>): DataArray<T>;
 
     /** Return true if the predicate is true for all values. */
-    every(f: ArrayFunc<boolean>): boolean;
+    every(f: ArrayFunc<T, boolean>): boolean;
     /** Return true if the predicate is true for at least one value. */
-    some(f: ArrayFunc<boolean>): boolean;
+    some(f: ArrayFunc<T, boolean>): boolean;
     /** Return true if the predicate is FALSE for all values. */
-    none(f: ArrayFunc<boolean>): boolean;
+    none(f: ArrayFunc<T, boolean>): boolean;
 
     /** Return the first element in the data array. Returns undefined if the array is empty. */
-    first(): any;
+    first(): T;
     /** Return the last element in the data array. Returns undefined if the array is empty. */
-    last(): any;
+    last(): T;
 
     /** Map every element in this data array to the given key, and then flatten it.*/
-    to(key: string): DataArray;
+    to(key: string): DataArray<any>;
     /**
      * Recursively expand the given key, flattening a tree structure based on the key into a flat array. Useful for handling
      * heirarchical data like tasks with 'subtasks'.
      */
-    expand(key: string): DataArray;
+    expand(key: string): DataArray<any>;
 
     /** Run a lambda on each element in the array. */
-    forEach(f: ArrayFunc<void>): void;
+    forEach(f: ArrayFunc<T, void>): void;
 
     /** Convert this to a plain javascript array. */
-    array(): any[];
+    array(): T[];
 
     /** Allow iterating directly over the array. */
-    [Symbol.iterator](): Iterator<any>;
+    [Symbol.iterator](): Iterator<T>;
 
     /** Map indexes to values. */
     [index: number]: any;
@@ -93,46 +96,47 @@ export interface DataArray {
 }
 
 /** Implementation of DataArray, minus the dynamic variable access, which is implemented via proxy. */
-class DataArrayImpl implements DataArray {
+class DataArrayImpl<T> implements DataArray<T> {
     private static ARRAY_FUNCTIONS: Set<string> = new Set([
-        "where", "filter", "map", "flatMap", "slice", "sort", "every", "some", "none", "first", "last", "to",
-        "expand", "forEach", "length", "values", "array"
+        "where", "filter", "map", "flatMap", "slice", "sort", "groupBy", "distinct", "every", "some", "none", "first", "last", "to",
+        "expand", "forEach", "length", "values", "array", "defaultComparator"
     ]);
 
-    private static ARRAY_PROXY: ProxyHandler<DataArrayImpl> = {
+    private static ARRAY_PROXY: ProxyHandler<DataArrayImpl<any>> = {
         get: function(target, prop, reciever) {
             if (typeof prop === "symbol") return (target as any)[prop];
             else if (typeof prop === "number") return target.values[prop];
+            else if (!isNaN(parseInt(prop))) return target.values[parseInt(prop)];
             else if (DataArrayImpl.ARRAY_FUNCTIONS.has(prop.toString())) return target[prop.toString()];
 
             return target.to(prop);
         }
     };
 
-    public static wrap(arr: any[]): DataArray {
-        return new Proxy(new DataArrayImpl(arr), DataArrayImpl.ARRAY_PROXY);
+    public static wrap<T>(arr: T[], defaultComparator: ArrayComparator<any> = Fields.compareValue): DataArray<T> {
+        return new Proxy(new DataArrayImpl(arr, defaultComparator), DataArrayImpl.ARRAY_PROXY);
     }
 
     public length: number;
     [key: string]: any;
 
-    private constructor(public values: any[]) {
+    private constructor(public values: any[], public defaultComparator: ArrayComparator<any> = Fields.compareValue) {
         this.length = values.length;
     }
 
-    public where(predicate: ArrayFunc<boolean>): DataArray {
-        return DataArrayImpl.wrap(this.values.filter(predicate));
+    public where(predicate: ArrayFunc<T, boolean>): DataArray<T> {
+        return DataArrayImpl.wrap(this.values.filter(predicate), this.defaultComparator);
     }
 
-    public filter(predicate: ArrayFunc<boolean>): DataArray {
+    public filter(predicate: ArrayFunc<T, boolean>): DataArray<T> {
         return this.where(predicate);
     }
 
-    public map(f: ArrayFunc<any>): DataArray {
-        return DataArrayImpl.wrap(this.values.map(f));
+    public map<U>(f: ArrayFunc<T, U>): DataArray<U> {
+        return DataArrayImpl.wrap(this.values.map(f), this.defaultComparator);
     }
 
-    public flatMap(f: ArrayFunc<any[]>): DataArray {
+    public flatMap<U>(f: ArrayFunc<T, U[]>): DataArray<U> {
         let result = [];
         for (let index = 0; index < this.length; index++) {
             let value = f(this.values[index], index, this.values);
@@ -141,47 +145,93 @@ class DataArrayImpl implements DataArray {
             for (let r of value) result.push(r);
         }
 
-        return DataArrayImpl.wrap(result);
+        return DataArrayImpl.wrap(result, this.defaultComparator);
     }
 
-    public mutate(f: ArrayFunc<any>): DataArray {
+    public mutate(f: ArrayFunc<T, any>): DataArray<any> {
         this.values.forEach(f);
         return this;
     }
 
-    public limit(count: number): DataArray {
-        return DataArrayImpl.wrap(this.values.slice(0, count));
+    public limit(count: number): DataArray<T> {
+        return DataArrayImpl.wrap(this.values.slice(0, count), this.defaultComparator);
     }
 
-    public slice(start?: number, end?: number): DataArray {
-        return DataArrayImpl.wrap(this.values.slice(start, end));
+    public slice(start?: number, end?: number): DataArray<T> {
+        return DataArrayImpl.wrap(this.values.slice(start, end), this.defaultComparator);
     }
 
-    public sort(key: ArrayFunc<any>, direction?: 'asc' | 'desc', comparator?: (a: any, b: any) => number): DataArray {
-        // todo: implement.
-        return this;
+    public sort<U>(key: ArrayFunc<T, U>, direction?: 'asc' | 'desc', comparator?: ArrayComparator<U>): DataArray<T> {
+        if (this.values.length == 0) return this;
+        let realComparator = comparator ?? this.defaultComparator;
+
+        // Associate each entry with it's index for the key function, and then do a normal sort.
+        let copy = ([] as any[]).concat(this.array()).map((elem, index) => { return { index: index, value: elem }});
+        copy.sort((a, b) => {
+            let aKey = key(a.value, a.index, this.values);
+            let bKey = key(b.value, b.index, this.values);
+            return direction === 'desc' ? -realComparator(aKey, bKey) : realComparator(aKey, bKey);
+        });
+
+        return DataArrayImpl.wrap(copy.map(e => e.value), this.defaultComparator);
     }
 
-    public groupBy(key: ArrayFunc<any>): DataArray {
-        // todo: implement.
-        return this;
+    public groupBy<U>(key: ArrayFunc<T, U>, comparator?: ArrayComparator<U>): DataArray<{ key: U, rows: DataArray<T> }> {
+        if (this.values.length == 0) return DataArrayImpl.wrap([], this.defaultComparator);
+
+        // JavaScript sucks and we can't make hash maps over arbitrary types (only strings/ints), so
+        // we do a poor man algorithm where we SORT, followed by grouping.
+        let intermediate = this.sort(key, "asc", comparator);
+        comparator = comparator ?? this.defaultComparator;
+
+        let result: {key: U, rows: DataArray<T> }[] = [];
+        let currentRow = [intermediate[0]];
+        let current = key(intermediate[0], 0, intermediate.values);
+        for (let index = 1; index < intermediate.length; index++) {
+            let newKey = key(intermediate[index], index, intermediate.values);
+            if (comparator(current, newKey) != 0) {
+                result.push({ key: current, rows: DataArrayImpl.wrap(currentRow, this.defaultComparator) });
+                current = newKey;
+                currentRow = [intermediate[index]];
+            } else {
+                currentRow.push(intermediate[index]);
+            }
+        }
+        result.push({ key: current, rows: DataArrayImpl.wrap(currentRow, this.defaultComparator) });
+
+        return DataArrayImpl.wrap(result, this.defaultComparator);
     }
 
-    public distinct(key?: ArrayFunc<any>, tiebreaker?: (a: any, b: any, ai: number, bi: number) => boolean): DataArray {
-        // todo: implement.
-        return this;
+    public distinct<U>(key?: ArrayFunc<T, U>, comparator?: ArrayComparator<U>): DataArray<T> {
+        if (this.values.length == 0) return this;
+        let realKey = key ?? (x => x as any as U);
+
+        // For similar reasons to groupBy, do a sort and take the first element of each block.
+        let intermediate = this
+            .map((x, index) => { return { key: realKey(x, index, this.values), value: x }})
+            .sort(x => x.key, "asc", comparator);
+        comparator = comparator ?? this.defaultComparator;
+
+        let result: T[] = [intermediate[0].value];
+        for (let index = 1; index < intermediate.length; index++) {
+            if (comparator(intermediate[index - 1].key, intermediate[index].key) != 0) {
+                result.push(intermediate[index].value);
+            }
+        }
+
+        return DataArrayImpl.wrap(result, this.defaultComparator);
     }
 
-    public every(f: ArrayFunc<boolean>): boolean { return this.values.every(f); }
+    public every(f: ArrayFunc<T, boolean>): boolean { return this.values.every(f); }
 
-    public some(f: ArrayFunc<boolean>): boolean { return this.values.some(f); }
+    public some(f: ArrayFunc<T, boolean>): boolean { return this.values.some(f); }
 
-    public none(f: ArrayFunc<boolean>): boolean { return this.values.every((v, i, a) => !f(v, i, a)); }
+    public none(f: ArrayFunc<T, boolean>): boolean { return this.values.every((v, i, a) => !f(v, i, a)); }
 
-    public first(): any { return this.values.length > 0 ? this.values[0] : undefined; }
-    public last(): any { return this.values.length > 0 ? this.values[this.values.length - 1] : undefined; }
+    public first(): T { return this.values.length > 0 ? this.values[0] : undefined; }
+    public last(): T { return this.values.length > 0 ? this.values[this.values.length - 1] : undefined; }
 
-    public to(key: string): DataArray {
+    public to(key: string): DataArray<any> {
         let result: any[] = [];
         for (let child of this.values) {
             let value = child[key];
@@ -191,10 +241,10 @@ class DataArrayImpl implements DataArray {
             else result.push(value);
         }
 
-        return DataArrayImpl.wrap(result);
+        return DataArrayImpl.wrap(result, this.defaultComparator);
     }
 
-    public expand(key: string): DataArray {
+    public expand(key: string): DataArray<any> {
         let result = [];
         let queue: any[] = ([] as any[]).concat(this.values);
 
@@ -213,15 +263,15 @@ class DataArrayImpl implements DataArray {
         return Data.array(result);
     }
 
-    public forEach(f: ArrayFunc<void>) {
+    public forEach(f: ArrayFunc<T, void>) {
         for (let index = 0; index < this.values.length; index++) {
             f(this.values[index], index, this.values);
         }
     }
 
-    public array(): any[] { return ([] as any[]).concat(this.values); }
+    public array(): T[] { return ([] as any[]).concat(this.values); }
 
-    public [Symbol.iterator](): Iterator<any> {
+    public [Symbol.iterator](): Iterator<T> {
         return this.values[Symbol.iterator]();
     }
 }
@@ -229,7 +279,7 @@ class DataArrayImpl implements DataArray {
 /** Provides utility functions for generating data arrays. */
 export namespace Data {
     /** Create a new Dataview data array. */
-    export function array(raw: any[]): DataArray {
+    export function array<T>(raw: T[]): DataArray<T> {
         return DataArrayImpl.wrap(raw);
     }
 }
@@ -264,30 +314,12 @@ export class DataviewInlineApi {
         this.currentFilePath = currentFilePath;
     }
 
-    /////////////////////////
-    // Rendering Functions //
-    /////////////////////////
-
-    /** Render an HTML header; the level can be anything from 1 - 6. */
-    public header(level: number, text: any) {
-        switch (level) {
-            case 1: this.container.createEl('h1', { text }); break;
-            case 2: this.container.createEl('h2', { text }); break;
-            case 3: this.container.createEl('h3', { text }); break;
-            case 4: this.container.createEl('h4', { text }); break;
-            case 5: this.container.createEl('h5', { text }); break;
-            case 6: this.container.createEl('h6', { text }); break;
-            default: throw new Error(`Invalid header level ${level}`);
-        }
-    }
-
-    /** Render an HTML paragraph, containing arbitrary text. */
-    public paragraph(text: any) {
-        this.container.createEl('p', { text });
-    }
+    /////////////////////////////
+    // Index + Data Collection //
+    /////////////////////////////
 
     /** Return an array of paths (as strings) corresponding to pages which match the query. */
-    public pagePaths(query?: string): DataArray {
+    public pagePaths(query?: string): DataArray<string> {
         try {
             let source;
             if (!query || query.trim() === "") source = Sources.folder("");
@@ -309,15 +341,47 @@ export class DataviewInlineApi {
     }
 
     /** Return an array of page objects corresponding to pages which match the query. */
-    public pages(query: string): DataArray {
+    public pages(query: string): DataArray<any> {
         return this.pagePaths(query).flatMap(p => {
             let res = this.page(p);
             return res ? [res] : [];
         });
     }
 
+    /////////////////////////
+    // Rendering Functions //
+    /////////////////////////
+
+    /** Render an HTML header; the level can be anything from 1 - 6. */
+    public header(level: number, text: any) {
+        let headerType: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
+        switch (level) {
+            case 1: headerType = 'h1'; break;
+            case 2: headerType = 'h2'; break;
+            case 3: headerType = 'h3'; break;
+            case 4: headerType = 'h4'; break;
+            case 5: headerType = 'h5'; break;
+            case 6: headerType = 'h6'; break;
+            default: throw new Error(`Invalid header level ${level}`);
+        }
+
+        let wrapped = Fields.wrapValue(text);
+        if (wrapped === null || wrapped === undefined) this.container.createEl(headerType, { text });
+
+        let header = this.container.createEl(headerType);
+        renderValue(wrapped?.value ?? null, header, this.currentFilePath, this.component, "\-", false);
+    }
+
+    /** Render an HTML paragraph, containing arbitrary text. */
+    public paragraph(text: any) {
+        let wrapped = Fields.wrapValue(text);
+        if (wrapped === null || wrapped === undefined) this.container.createEl('p', { text });
+
+        renderValue(wrapped?.value ?? null, this.container, this.currentFilePath, this.component, "\-", true);
+    }
+
     /** Render a dataview list of the given values. */
-    public list(values?: any[] | DataArray) {
+    public list(values?: any[] | DataArray<any>) {
         if (!values) return;
         if (values instanceof DataArrayImpl) values = values.array();
 
@@ -325,14 +389,14 @@ export class DataviewInlineApi {
     }
 
     /** Render a dataview table with the given headers, and the 2D array of values. */
-    public rawTable(headers: string[], values?: any[][] | DataArray) {
+    public table(headers: string[], values?: any[][] | DataArray<any>) {
         if (!values) values = [];
         if (values instanceof DataArrayImpl) values = values.array();
         renderTable(this.container, headers, values as any[][], this.component, this.currentFilePath, "\-");
     }
 
     /** Render a dataview task view with the given tasks. */
-    public tasks(tasks: Task[] | DataArray, groupByFile: boolean = false) {
+    public taskList(tasks: Task[] | DataArray<any>, groupByFile: boolean = false) {
         if (tasks instanceof DataArrayImpl) tasks = tasks.array();
 
         if (groupByFile) {
