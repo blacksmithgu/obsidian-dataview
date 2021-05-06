@@ -1,7 +1,9 @@
+---
+sidebar_position: 4
+---
 # Functions
 
-Functions provide various procedures and operations beyond simple arithmetic and comparisons. A list of all function
-references, sorted by general purpose, is shown below.
+Dataview functions provide more advanced ways to manipulate data.
 
 ## Function Vectorization
 
@@ -21,7 +23,7 @@ replace(list("yes", "ree"), "e", "a") = list("yas", "raa")
 
 Constructors which create values.
 
-##### `object(key1, value1, ...)`
+### `object(key1, value1, ...)`
 
 Creates a new object with the given keys and values. Keys and values should alternate in the call, and keys should
 always be strings/text.
@@ -32,7 +34,7 @@ object("a", 6) => object which maps "a" to 6
 object("a", 4, "c", "yes") => object which maps a to 4, and c to "yes"
 ```
 
-##### `list(value1, value2, ...)`
+### `list(value1, value2, ...)`
 
 Creates a new list with the given values in it.
 
@@ -42,7 +44,7 @@ list(1, 2, 3) => list with 1, 2, and 3
 list("a", "b", "c") => list with "a", "b", and "c"
 ```
 
-##### `date(string)`
+### `date(string)`
 
 Parses a date from the provided string argument, if possible, returning null otherwise.
 
@@ -50,7 +52,7 @@ Parses a date from the provided string argument, if possible, returning null oth
 date("2020-04-18") = <date object representing April 18th, 2020>
 ```
 
-##### `number(string)`
+### `number(string)`
 
 Pulls the first number out of the given string, returning it if possible. Returns null if there are no numbers in the
 string.
@@ -61,7 +63,7 @@ number(34) = 34
 number("hmm") = null
 ```
 
-##### `link(path)`
+### `link(path)`
 
 Construct a link object from the given file path or name.
 
@@ -69,7 +71,7 @@ Construct a link object from the given file path or name.
 link()
 ```
 
-##### `elink(url)`
+### `elink(url, [display])`
 
 Construct a link to an external url (like `www.google.com`). If provided with two arguments, the second
 argument is the display name for the link.
@@ -85,7 +87,7 @@ elink("www.google.com", "Google") => link element to google.com, displays as "Go
 
 Operations that manipulate values inside of container objects.
 
-##### `contains(object|list|string, value)`
+### `contains(object|list|string, value)`
 
 Checks if the given container type has the given value in it. This function behave slightly differently based on whether
 the first argument is an object, a list, or a string.
@@ -106,7 +108,7 @@ the first argument is an object, a list, or a string.
     contains("yes", "no") = false
     ```
 
-##### `extract(object, key1, key2, ...)`
+### `extract(object, key1, key2, ...)`
 
 Pulls multiple fields out of an object, creating a new object with just those fields.
 
@@ -115,7 +117,7 @@ extract(file, "ctime", "mtime") = object("ctime", file.ctime, "mtime", file.mtim
 extract(object("test", 1)) = object()
 ```
 
-##### `sort(list)`
+### `sort(list)`
 
 Sorts a list, returning a new list in sorted order.
 
@@ -124,7 +126,7 @@ sort(list(3, 2, 1)) = list(1, 2, 3)
 sort(list("a", "b", "aa")) = list("a", "aa", "b")
 ```
 
-##### `reverse(list)`
+### `reverse(list)`
 
 Reverses a list, returning a new list in reversed order.
 
@@ -133,7 +135,7 @@ reverse(list(1, 2, 3)) = list(3, 2, 1)
 reverse(list("a", "b", "c")) = list("c", "b", "a")
 ```
 
-##### `length(object|array)`
+### `length(object|array)`
 
 Returns the number of fields in an object, or the number of entries in an array.
 
@@ -143,7 +145,7 @@ length(list(1, 2, 3)) = 3
 length(object("hello", 1, "goodbye", 2)) = 2
 ```
 
-##### `sum(array)`
+### `sum(array)`
 
 Sums all numeric values in the array
 
@@ -151,7 +153,7 @@ Sums all numeric values in the array
 sum(list(1, 2, 3)) = 6
 ```
 
-##### `all(array)`
+### `all(array)`
 
 Returns `true` only if ALL values in the array are truthy. You can also pass multiple arguments to this function, in
 which case it returns `true` only if all arguments are truthy.
@@ -163,7 +165,7 @@ all(true, false) = false
 all(true, true, true) = true
 ```
 
-##### `any(array)`
+### `any(array)`
 
 Returns `true` if ANY of the values in the array are truthy. You can also pass multiple arguments to this function, in
 which case it returns `true` if any of the arguments are truthy.
@@ -177,7 +179,7 @@ all(false, false) = false
 ```
 
 
-##### `none(array)`
+### `none(array)`
 
 Returns `true` if NONE of the values in the array are truthy.
 
@@ -185,7 +187,7 @@ Returns `true` if NONE of the values in the array are truthy.
 
 ## String Operations
 
-##### `regexmatch(pattern, string)`
+### `regexmatch(pattern, string)`
 
 Checks if the given string matches the given pattern (using the JavaScript regex engine).
 
@@ -195,7 +197,7 @@ regexmatch(".", "a") = true
 regexmatch("yes|no", "maybe") = false
 ```
 
-##### `regexreplace(string, pattern, replacement)`
+### `regexreplace(string, pattern, replacement)`
 
 Replaces all instances where the *regex* `pattern` matches in `string`, with `replacement`. This uses the JavaScript
 replace method under the hood, so you can use special characters like `$1` to refer to the first capture group, and so on.
@@ -205,7 +207,7 @@ regexreplace("yes", "[ys]", "a") = "aea"
 regexreplace("Suite 1000", "\d+", "-") = "Suite -"
 ```
 
-##### `replace(string, pattern, replacement)`
+### `replace(string, pattern, replacement)`
 
 Replace all instances of `pattern` in `string` with `replacement`.
 
@@ -215,7 +217,7 @@ replace("The big dog chased the big cat.", "big", "small") = "The small dog chas
 replace("test", "test", "no") = "no"
 ```
 
-##### `lower(string)`
+### `lower(string)`
 
 Convert a string to all lower case.
 
@@ -224,7 +226,7 @@ lower("Test") = "test"
 lower("TEST") = "test"
 ```
 
-##### `upper(string)`
+### `upper(string)`
 
 Convert a string to all upper case.
 
@@ -235,7 +237,7 @@ upper("test") = "TEST"
 
 ## Utility Functions
 
-##### `default(field, value)`
+### `default(field, value)`
 
 If `field` is null, return `value`; otherwise return `field`. Useful for replacing null values with defaults. For example, to show projects which haven't been completed yet, use `"incomplete"` as their defualt value: 
 
@@ -251,7 +253,7 @@ default(list(1, 2, null), 3) = list(1, 2, 3)
 ldefault(list(1, 2, null), 3) = list(1, 2, null)
 ```
 
-##### `choice(bool, left, right)`
+### `choice(bool, left, right)`
 
 A primitive if statement - if the first argument is truthy, returns left; otherwise, returns right.
 
@@ -261,7 +263,7 @@ choice(false, "yes", "no") = "no"
 choice(x > 4, y, z) = y if x > 4, else z
 ```
 
-##### `striptime(date)`
+### `striptime(date)`
 
 Strip the time component of a date, leaving only the year, month, and day. Good for date comparisons if you don't care
 about the time.
