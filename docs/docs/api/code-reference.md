@@ -18,7 +18,7 @@ information, render HTML, and configure the view.
 
 ### `dv.pages(source)`
 
-Takes a single string argument, `source`, which is the same form as a [query language source](/docs/api/sources).
+Takes a single string argument, `source`, which is the same form as a [query language source](/docs/query/sources).
 Returns a [data array](/docs/api/data-array) of page objects, which are plain objects with all of the page fields as
 values.
 

@@ -2,13 +2,13 @@
 module.exports = {
   title: 'Dataview',
   tagline: 'Advanced queries for Obsidian.md.',
-  url: 'https://blacksmithgu.github.io/obsidian-dataview/',
-  baseUrl: '/',
+  url: 'https://blacksmithgu.github.io',
+  baseUrl: '/obsidian-dataview/',
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
   favicon: 'images/obsidian.ico',
   organizationName: 'blacksmithgu', // Usually your GitHub org/user name.
-  projectName: 'dataview', // Usually your repo name.
+  projectName: 'obsidian-dataview', // Usually your repo name.
   themeConfig: {
     navbar: {
       title: 'Dataview',
@@ -43,11 +43,11 @@ module.exports = {
             },
             {
               label: 'Query Reference',
-              to: '/docs/query',
+              to: '/docs/query/queries',
             },
             {
               label: 'API Reference',
-              to: '/docs/api',
+              to: '/docs/api/intro',
             },
           ],
         },
