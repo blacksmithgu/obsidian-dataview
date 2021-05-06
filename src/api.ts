@@ -103,7 +103,7 @@ class DataArrayImpl<T> implements DataArray<T> {
     ]);
 
     private static ARRAY_PROXY: ProxyHandler<DataArrayImpl<any>> = {
-        get: function(target, prop, reciever) {
+        get: function (target, prop, reciever) {
             if (typeof prop === "symbol") return (target as any)[prop];
             else if (typeof prop === "number") return target.values[prop];
             else if (!isNaN(parseInt(prop))) return target.values[parseInt(prop)];
@@ -166,7 +166,7 @@ class DataArrayImpl<T> implements DataArray<T> {
         let realComparator = comparator ?? this.defaultComparator;
 
         // Associate each entry with it's index for the key function, and then do a normal sort.
-        let copy = ([] as any[]).concat(this.array()).map((elem, index) => { return { index: index, value: elem }});
+        let copy = ([] as any[]).concat(this.array()).map((elem, index) => { return { index: index, value: elem } });
         copy.sort((a, b) => {
             let aKey = key(a.value, a.index, this.values);
             let bKey = key(b.value, b.index, this.values);
@@ -184,7 +184,7 @@ class DataArrayImpl<T> implements DataArray<T> {
         let intermediate = this.sort(key, "asc", comparator);
         comparator = comparator ?? this.defaultComparator;
 
-        let result: {key: U, rows: DataArray<T> }[] = [];
+        let result: { key: U, rows: DataArray<T> }[] = [];
         let currentRow = [intermediate[0]];
         let current = key(intermediate[0], 0, intermediate.values);
         for (let index = 1; index < intermediate.length; index++) {
@@ -208,7 +208,7 @@ class DataArrayImpl<T> implements DataArray<T> {
 
         // For similar reasons to groupBy, do a sort and take the first element of each block.
         let intermediate = this
-            .map((x, index) => { return { key: realKey(x, index, this.values), value: x }})
+            .map((x, index) => { return { key: realKey(x, index, this.values), value: x } })
             .sort(x => x.key, "asc", comparator);
         comparator = comparator ?? this.defaultComparator;
 
@@ -298,7 +298,7 @@ export class DataviewInlineApi {
     public currentFilePath: string;
 
     /**
-     * The container which holds the output of this view. You can directly append fields to this, if you wish, though 
+     * The container which holds the output of this view. You can directly append fields to this, if you wish, though
      * the rendering API is likely to be easier for straight-forward purposes.
     */
     public container: HTMLElement;
@@ -423,7 +423,7 @@ export class DataviewInlineApi {
 
 /** Evaluate a script where 'this' for the script is set to the given context. Allows you to define global variables. */
 export function evalInContext(script: string, context: any): any {
-    return function() { return eval(script); }.call(context);
+    return function () { return eval(script); }.call(context);
 }
 
 /** Make a full API context which a script can be evaluted in. */

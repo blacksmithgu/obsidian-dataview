@@ -43,7 +43,7 @@ See [expressions](expressions) for context on what expressions are, and [sources
 
 ### List Queries
 
-Lists are the simplest view, and simply render a list of pages (or custom fields) which match the query. 
+Lists are the simplest view, and simply render a list of pages (or custom fields) which match the query.
 To obtain a list of pages matching the query, simply use:
 
 ```
@@ -52,9 +52,7 @@ LIST FROM <source>
 
 For example, running `LIST FROM #games/moba or #games/crpg` might show:
 
-<p align="center">
-    <img width="300" height="150" src="/static/images/game-list.png"/>
-</p>
+![List Example](/images/game-list.png)
 
 You can render a single computed value in addition to each matching file, by adding an expression after `LIST`:
 
@@ -64,9 +62,7 @@ LIST <expression> FROM <source>
 
 For example, running `LIST "File Path: " + file.path FROM "4. Archive"` might show:
 
-<p align="center">
-    <img width="529" height="98" src="/static/images/file-path-list.png"/>
-</p>
+![List Example](/images/file-path-list.png)
 
 ### Table Queries
 
@@ -89,9 +85,7 @@ TABLE time-played AS "Time Played", length as "Length", rating as "Rating" FROM 
 SORT rating DESC
 ```
 
-<p align="center">
-    <img src="/static/images/game.png"/>
-</p>
+![Table Example](/images/game.png)
 
 ### Task Queries
 
@@ -103,9 +97,7 @@ TASK from <source>
 
 For example, `TASK FROM "dataview"` might show:
 
-<p align="center">
-    <img src="/static/images/project-task.png"/>
-</p>
+![Task Example](/images/project-task.png)
 
 ## Data Commands
 
@@ -120,12 +112,12 @@ filtering. You can select from any [source](/docs/query/sources), which currentl
 
 - **Tags**: To select from a tag (and all its subtags), use `FROM #tag`.
 - **Folders**: To select from a folder (and all its subfolders), use `FROM "folder"`.
-- **Links**: You can either select links TO a file, or all links FROM a file. 
-  - To obtain all pages which link TO `[[note]]`, use `FROM [[note]]`. 
+- **Links**: You can either select links TO a file, or all links FROM a file.
+  - To obtain all pages which link TO `[[note]]`, use `FROM [[note]]`.
   - To obtain all pages which link FROM `[[note]]` (i.e., all the links in that file), use `FROM outgoing([[note]])`.
 
-You can compose these filters in order to get more advanced sources using `and` and `or`. 
-- For example, `#tag and "folder"` will return all pages in `folder` and with `#tag`. 
+You can compose these filters in order to get more advanced sources using `and` and `or`.
+- For example, `#tag and "folder"` will return all pages in `folder` and with `#tag`.
 - `[[Food]] or [[Exercise]]` will give any pages which link to `[[Food]]` OR `[[Exercise]]`.
 
 ### WHERE
@@ -172,7 +164,7 @@ GROUP BY field
 GROUP BY (computed_field) AS name
 ```
 
-In order to make working with the `rows` array easier, Dataview supports field "swizzling". If you want the field `test` from every object in the `rows` array, then `rows.test` will automatically fetch the `test` field from every object in `rows`, yielding a new array. 
+In order to make working with the `rows` array easier, Dataview supports field "swizzling". If you want the field `test` from every object in the `rows` array, then `rows.test` will automatically fetch the `test` field from every object in `rows`, yielding a new array.
 You can then apply aggregation operators like `sum()` over the resulting array.
 
 ### FLATTEN
@@ -191,6 +183,4 @@ table authors from #LiteratureNote
 flatten authors
 ```
 
-<p align="center">
-    <img width="574" height="393" src="/static/images/flatten-authors.png"/>
-</p>
+![Flatten Example](/images/flatten-authors.png)
