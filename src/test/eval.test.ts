@@ -3,6 +3,7 @@
 import { EXPRESSION } from "src/parse";
 import { Context, LinkHandler } from "src/eval";
 import { LiteralField, Fields, LiteralFieldRepr, DurationField } from "src/query";
+import { DateTime } from "luxon";
 
 // <-- Numeric Operations -->
 
@@ -59,7 +60,6 @@ test("Evaluate date comparisons", () => {
 
 test("Evaluate date subtraction", () => {
     let duration = parseEval("date(2021-05-04) - date(1997-05-17)") as DurationField;
-    console.log(duration);
     expect(duration.value.years).toEqual(23);
 });
 
@@ -276,6 +276,13 @@ test("Evaluate number()", () => {
     expect(parseEval("number(\"34\")")).toEqual(Fields.number(34));
     expect(parseEval("number(\"17 years\")")).toEqual(Fields.number(17));
     expect(parseEval("number(\"-19\")")).toEqual(Fields.number(-19));
+});
+
+// <-- date() -->
+
+test("Evaluate date()", () => {
+    expect(parseEval("date([[2020-04-18]])")).toEqual(Fields.date(DateTime.fromObject({ year: 2020, month: 4, day: 18 })));
+    expect(parseEval("date([[Place|2021-04]])")).toEqual(Fields.date(DateTime.fromObject({ year: 2021, month: 4, day: 1 })));
 });
 
 // <-- regexreplace() -->

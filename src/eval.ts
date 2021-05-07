@@ -318,7 +318,6 @@ export const BINARY_OPS = BinaryOpHandler.create()
     })
     // Date Operations.
     .add("-", 'date', 'date', (a, b) => {
-        console.log(a, b);
         return Fields.literal('duration', normalizeDuration(a.value.diff(b.value, ['years', 'months', 'days', 'hours', 'minutes', 'seconds', 'milliseconds'])))
     })
     .addComparison('date', {
@@ -547,6 +546,10 @@ export const FUNCTIONS = new FunctionHandler()
             let parsedDate = EXPRESSION.date.parse(obj.value.display);
             if (parsedDate.status) return Fields.date(parsedDate.value);
         }
+
+        // Then try to parse from the path...
+        let parsedDate = EXPRESSION.date.parse(obj.value.path);
+        if (parsedDate.status) return Fields.date(parsedDate.value);
 
         // Then pull it from the file.
         let resolved = context.linkHandler.resolve(obj.value.path);
