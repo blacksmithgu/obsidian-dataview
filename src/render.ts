@@ -94,7 +94,7 @@ export function renderMinimalDuration(dur: Duration): string {
 	if (dur.minutes) result += `${dur.minutes} minutes, `;
 	if (dur.seconds) result += `${Math.round(dur.seconds)} seconds, `;
 	if (dur.milliseconds) result += `${Math.round(dur.milliseconds)} ms, `;
-	
+
 	if (result.endsWith(", ")) result = result.substring(0, result.length - 2);
 	return result;
 }
@@ -136,9 +136,7 @@ export async function renderValue(field: LiteralValue, container: HTMLElement, o
 				if (first) first = false;
 				else span.appendText(", ");
 
-				if (val.valueType == "array" || val.valueType == "object") span.appendText("[");
 				await renderValue(val, span, originFile, component, nullField, expandList);
-				if (val.valueType == "array" || val.valueType == "object") span.appendText("]");
 			}
 		}
 	} else if (Fields.isObject(field)) {
@@ -174,6 +172,6 @@ export async function renderValue(field: LiteralValue, container: HTMLElement, o
 	} else if (Fields.isHtml(field)) {
 		container.appendChild(field);
 	} else {
-		container.appendText("Unrecognized: " + field);
+		container.appendText("Unrecognized: " + JSON.stringify(field));
 	}
 }

@@ -89,7 +89,7 @@ export type LiteralTypeRepr<T extends LiteralType> =
     any;
 
 /** Maps the string type to it's external, API-facing representation. */
-export type ExternalTypeRepr<T extends LiteralType> = 
+export type ExternalTypeRepr<T extends LiteralType> =
     T extends 'boolean' ? boolean :
     T extends 'number' ? number :
     T extends 'string' ? string :
@@ -278,7 +278,7 @@ export namespace Fields {
     export function string(value: string): LiteralFieldRepr<'string'> {
         return Fields.literal('string', value);
     }
-    
+
     export function number(value: number): LiteralFieldRepr<'number'> {
         return Fields.literal('number', value);
     }
@@ -323,6 +323,7 @@ export namespace Fields {
             case "object":
                 let result: Record<string, any> = {};
                 for (let [key, value] of val.value.entries()) result[key] = fieldToValue(value);
+                console.log(result);
                 return result;
             default:
                 return val.value;
@@ -462,7 +463,7 @@ export namespace Fields {
         for (let index = 1; index < parts.length; index++) {
             result = Fields.index(result, Fields.string(parts[index]));
         }
-        
+
         return result;
     }
 

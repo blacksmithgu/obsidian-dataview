@@ -2,7 +2,7 @@ import { MarkdownRenderChild, Plugin, Workspace, Vault, MarkdownPostProcessorCon
 import { renderErrorPre, renderList, renderTable, renderValue } from 'src/render';
 import { FullIndex } from 'src/index';
 import * as Tasks from 'src/tasks';
-import { Field, Query, QuerySettings } from 'src/query';
+import { Field, Fields, Query, QuerySettings } from 'src/query';
 import { parseField, parseQuery } from "src/parse";
 import { execute, executeInline, executeTask } from 'src/engine';
 import { tryOrPropogate } from './util/normalize';
@@ -170,7 +170,7 @@ class DataviewSettingsTab extends PluginSettingTab {
 		new Setting(this.containerEl)
 			.setName("Dataview Refresh Interval (milliseconds)")
 			.setDesc("How frequently dataviews are updated in preview mode when files are changing.")
-			.addText(text => 
+			.addText(text =>
 				text.setPlaceholder("5000")
 				.setValue("" + this.plugin.settings.refreshInterval)
 				.onChange(async (value) => {
@@ -290,9 +290,9 @@ class DataviewListRenderer extends MarkdownRenderChild {
 				let rendered: HTMLElement[] = [];
 				for (let [file, value] of result.data) {
 					let span = document.createElement('span');
-					await renderValue(file.value, this.container, this.origin, this, this.settings.renderNullAs, true);
+					await renderValue(Fields.fieldToValue(file), span, this.origin, this, this.settings.renderNullAs, true);
 					span.appendText(": ");
-					await renderValue(value.value, this.container, this.origin, this, this.settings.renderNullAs, true);
+					await renderValue(Fields.fieldToValue(value), span, this.origin, this, this.settings.renderNullAs, true);
 
 					rendered.push(span);
 				}
@@ -382,7 +382,7 @@ class DataviewTaskRenderer extends MarkdownRenderChild {
 
 /** Renders inline query results. */
 class DataviewInlineRenderer extends MarkdownRenderChild {
-	
+
 	// The box that the error is rendered in, if relevant.
 	errorbox?: HTMLElement;
 
@@ -411,7 +411,10 @@ class DataviewInlineRenderer extends MarkdownRenderChild {
 			this.errorbox = this.container.createEl('div');
 			renderErrorPre(this.errorbox, "Dataview (for inline query '" + this.target.innerText + "'): " + result);
 		} else {
-			await renderValue(result.value, this.container, this.origin, this, this.settings.renderNullAs, false);
+            let temp = document.createElement("span");
+			await renderValue(Fields.fieldToValue(result), temp, this.origin, this, this.settings.renderNullAs, false);
+
+            this.target.replaceWith(temp);
 		}
 	}
 }
