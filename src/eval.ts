@@ -1,6 +1,6 @@
 /** Evaluates fields in the expression language. */
 import { DateTime } from 'luxon';
-import { BinaryOp, LiteralType, LiteralField, LiteralFieldRepr, Field, Fields, StringField, DateField, Link } from 'src/query';
+import { BinaryOp, LiteralType, LiteralField, LiteralFieldRepr, Field, Fields, StringField, DateField, Link, LinkField, NumberField } from 'src/query';
 import { normalizeDuration } from "src/util/normalize";
 import { EXPRESSION } from './parse';
 
@@ -541,6 +541,22 @@ export const FUNCTIONS = new FunctionHandler()
         else return Fields.NULL;
     })
     .add1("date", "date", (obj: DateField, context) => obj)
+    .add1("date", "link", (obj: LinkField, context) => {
+        // Try to parse from the display...
+        if (obj.value.display) {
+            let parsedDate = EXPRESSION.date.parse(obj.value.display);
+            if (parsedDate.status) return Fields.date(parsedDate.value);
+        }
+
+        // Then pull it from the file.
+        let resolved = context.linkHandler.resolve(obj.value.path);
+        if (resolved.valueType != "null") {
+            let maybeDay = context.evaluate(Fields.index(resolved, Fields.indexVariable("file.day")));
+            if (typeof maybeDay != "string") return maybeDay;
+        }
+
+        return Fields.NULL;
+    })
     .vectorize("date", [0])
     .add1("number", "string", (obj: StringField, context) => {
         let numMatch = /(-?[0-9]+(\.[0-9]+)?)/.exec(obj.value.trim());
@@ -553,6 +569,13 @@ export const FUNCTIONS = new FunctionHandler()
     })
     .add1("number", "number", (obj: LFR<"number">, context) => obj)
     .vectorize("number", [0])
+    .add1("round", "number", (obj: NumberField, context) => {
+        return Fields.number(Math.round(obj.value));
+    })
+    .add2("round", "number", "number", (obj: NumberField, decimals: NumberField, context) => {
+        if (decimals.value <= 0) return Fields.number(Math.round(obj.value));
+        return Fields.number(parseFloat(obj.value.toFixed(decimals.value)));
+    })
     .add1("striptime", "date", (obj: DateField, context) => Fields.literal('date', DateTime.fromObject({ year: obj.value.year, month: obj.value.month, day: obj.value.day })))
     .vectorize("striptime", [0])
     .add2("contains", "object", "string", (obj: LFR<"object">, key: LFR<"string">, context) => Fields.bool(obj.value.has(key.value)))

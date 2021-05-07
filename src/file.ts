@@ -233,7 +233,7 @@ export function parseInlineField(value: string): LiteralField {
 export const TASK_REGEX = /(\s*)[-*]\s*\[([ Xx\.]?)\]\s*(.+)/i;
 
 /**
- * A hacky approach to scanning for all tasks using regex. Does not support multiline 
+ * A hacky approach to scanning for all tasks using regex. Does not support multiline
  * tasks yet (though can probably be retro-fitted to do so).
 */
 export function findTasksInFile(path: string, file: string): Task[] {

@@ -44,12 +44,13 @@ list(1, 2, 3) => list with 1, 2, and 3
 list("a", "b", "c") => list with "a", "b", and "c"
 ```
 
-### `date(string)`
+### `date(any)`
 
-Parses a date from the provided string argument, if possible, returning null otherwise.
+Parses a date from the provided string, date, or link object, if possible, returning null otherwise.
 
 ```
 date("2020-04-18") = <date object representing April 18th, 2020>
+date([[2021-04-16]]) = <date object for the given page, refering to file.day>
 ```
 
 ### `number(string)`
@@ -84,6 +85,20 @@ elink("www.google.com", "Google") => link element to google.com, displays as "Go
 ```
 
 ---
+
+## Numeric Operations
+
+### `round(number, [digits])`
+
+Round a number to a given number of digits. If the second argument is not specified, rounds to the nearest whole number;
+otherwise, rounds to the given number of digits.
+
+```
+round(16.555555) = 7
+round(16.555555, 2) = 16.56
+```
+
+--
 
 ## Objects, Arrays, and String Operations
 
