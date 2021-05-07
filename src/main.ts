@@ -299,7 +299,7 @@ class DataviewListRenderer extends MarkdownRenderChild {
 
 				await renderList(this.container, rendered, this, this.origin, this.settings.renderNullAs);
 			} else {
-				await renderList(this.container, result.data.map(v => v.length == 0 ? null : v[0].value),
+				await renderList(this.container, result.data.map(v => v.length == 0 ? null : Fields.fieldToValue(v[0])),
 					this, this.origin, this.settings.renderNullAs);
 			}
 		}
@@ -332,7 +332,7 @@ class DataviewTableRenderer extends MarkdownRenderChild {
 			return;
 		}
 
-		await renderTable(this.container, result.names, result.data.map(l => l.map(v => v.value)),
+		await renderTable(this.container, result.names, result.data.map(l => l.map(Fields.fieldToValue)),
 			this, this.origin, this.settings.renderNullAs);
 
 		// Render after the empty table, so the table header still renders.
