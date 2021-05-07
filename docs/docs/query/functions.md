@@ -63,12 +63,14 @@ number(34) = 34
 number("hmm") = null
 ```
 
-### `link(path)`
+### `link(path, [display])`
 
-Construct a link object from the given file path or name.
+Construct a link object from the given file path or name. If provided with two arguments, the second argument is the
+display name for the link.
 
 ```
-link()
+link("Hello") => link to page named 'Hello'
+link("Hello", "Goodbye") => link to page named 'Hello', displays as 'Goodbye'
 ```
 
 ### `elink(url, [display])`
@@ -239,7 +241,7 @@ upper("test") = "TEST"
 
 ### `default(field, value)`
 
-If `field` is null, return `value`; otherwise return `field`. Useful for replacing null values with defaults. For example, to show projects which haven't been completed yet, use `"incomplete"` as their defualt value: 
+If `field` is null, return `value`; otherwise return `field`. Useful for replacing null values with defaults. For example, to show projects which haven't been completed yet, use `"incomplete"` as their defualt value:
 
 ```
 default(dateCompleted, "incomplete")

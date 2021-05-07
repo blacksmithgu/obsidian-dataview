@@ -104,7 +104,7 @@ export async function renderValue(field: LiteralValue, container: HTMLElement, o
 	nullField: string, expandList: boolean = false) {
 
 	if (Fields.isNull(field)) {
-		await renderCompactMarkdown("" + field, container, originFile, component);
+		await renderCompactMarkdown(nullField, container, originFile, component);
 	} else if (Fields.isDate(field)) {
 		container.appendText(renderMinimalDate(field));
 	} else if (Fields.isDuration(field)) {

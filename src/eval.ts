@@ -317,7 +317,10 @@ export const BINARY_OPS = BinaryOpHandler.create()
         le: (a, b) => Fields.bool(a.value.localeCompare(b.value) < 0)
     })
     // Date Operations.
-    .add("-", 'date', 'date', (a, b) => Fields.literal('duration', normalizeDuration(b.value.until(a.value).toDuration("seconds"))))
+    .add("-", 'date', 'date', (a, b) => {
+        console.log(a, b);
+        return Fields.literal('duration', normalizeDuration(a.value.diff(b.value, ['years', 'months', 'days', 'hours', 'minutes', 'seconds', 'milliseconds'])))
+    })
     .addComparison('date', {
         equals: (a, b) => Fields.bool(a.value.equals(b.value)),
         le: (a, b) => Fields.bool(a.value < b.value)
@@ -506,6 +509,12 @@ export const FUNCTIONS = new FunctionHandler()
     .add1("link", "string", (field: LFR<'string'>, context) => Fields.link(Link.file(context.linkHandler.normalize(field.value), false)))
     .add1("link", "link", (field: LFR<'link'>, _context) => field)
     .add1("link", "null", (_field, _context) => Fields.NULL)
+    .add2("link", "string", "string", (field: LFR<'string'>, display: LFR<'string'>, context) => {
+        return Fields.link(Link.file(context.linkHandler.normalize(field.value), false, display.value));
+    })
+    .add2("link", "link", "string", (field: LFR<'link'>, display: LFR<'string'>, _context) => {
+        return Fields.link(field.value.withDisplay(display.value));
+    })
     .vectorize("link", [0])
     .add1("elink", "string", (field: LFR<'string'>, context) => {
         let elem = document.createElement('a');

@@ -16,6 +16,10 @@ information, render HTML, and configure the view.
 
 ## Query
 
+### `dv.current()`
+
+Get page information (via `dv.page()`) for the page the script is currently executing on.
+
 ### `dv.pages(source)`
 
 Takes a single string argument, `source`, which is the same form as a [query language source](/docs/query/sources).

@@ -2,9 +2,9 @@
 
 import { EXPRESSION } from "src/parse";
 import { Context, LinkHandler } from "src/eval";
-import { LiteralField, Fields, LiteralFieldRepr } from "src/query";
+import { LiteralField, Fields, LiteralFieldRepr, DurationField } from "src/query";
 
-// <-- Simple Operations -->
+// <-- Numeric Operations -->
 
 test("Evaluate simple numeric operations", () => {
     expect(simpleContext().evaluate(Fields.binaryOp(Fields.number(2), '+', Fields.number(4))))
@@ -32,6 +32,8 @@ test("Evaluate complex numeric operations", () => {
     expect(parseEval("39 / 3 <= 14")).toEqual(Fields.bool(true));
 });
 
+// <-- String Operations -->
+
 test("Evaluate simple string operations", () => {
     expect(simpleContext().evaluate(Fields.binaryOp(Fields.string("a"), '+', Fields.string("b"))))
         .toEqual(Fields.string("ab"));
@@ -48,10 +50,18 @@ test("Evaluate string comparisons", () => {
         .toEqual(Fields.bool(true));
 });
 
+// <-- Date Operations -->
+
 test("Evaluate date comparisons", () => {
     expect(parseEval("date(2021-01-14) = date(2021-01-14)")).toEqual(Fields.bool(true));
     expect(parseEval("contains(list(date(2020-01-01)), date(2020-01-01))")).toEqual(Fields.bool(true));
-})
+});
+
+test("Evaluate date subtraction", () => {
+    let duration = parseEval("date(2021-05-04) - date(1997-05-17)") as DurationField;
+    console.log(duration);
+    expect(duration.value.years).toEqual(23);
+});
 
 // <-- Field resolution -->
 

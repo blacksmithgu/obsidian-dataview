@@ -348,6 +348,11 @@ export class DataviewInlineApi {
         });
     }
 
+    /** Return the information about the current page. */
+    public current(): Record<string, any> | undefined {
+        return this.page(this.currentFilePath);
+    }
+
     /////////////////////////
     // Rendering Functions //
     /////////////////////////

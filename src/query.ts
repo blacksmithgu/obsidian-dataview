@@ -54,6 +54,11 @@ export class Link {
             && this.subpath == other.subpath;
     }
 
+    /** Return a new link which points to the same location but with a new display value. */
+    public withDisplay(display?: string) {
+        return new Link(Object.assign({}, this, { display }));
+    }
+
     public markdown(): string {
         let result = (this.embed ? "!" : "") + "[[" + this.path;
 
