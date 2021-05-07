@@ -105,7 +105,7 @@ export default class DataviewPlugin extends Plugin {
 					renderErrorPre(errorBlock, `Dataview (inline field '${potentialField}'): ${field}`);
 				} else {
 					ctx.addChild(this.wrapInlineWithEnsureIndex(ctx, codeblock,
-						() => new DataviewInlineRenderer(field as Field, el, codeblock, this.index, ctx.sourcePath, this.settings)));
+						() => new DataviewInlineRenderer(field as Field, text, el, codeblock, this.index, ctx.sourcePath, this.settings)));
 				}
 			}
 		});
@@ -388,6 +388,7 @@ class DataviewInlineRenderer extends MarkdownRenderChild {
 
 	constructor(
 		public field: Field,
+        public fieldText: string,
 		public container: HTMLElement,
 		public target: HTMLElement,
 		public index: FullIndex,
@@ -409,7 +410,7 @@ class DataviewInlineRenderer extends MarkdownRenderChild {
 		let result = tryOrPropogate(() => executeInline(this.field, this.origin, this.index));
 		if (typeof result === 'string') {
 			this.errorbox = this.container.createEl('div');
-			renderErrorPre(this.errorbox, "Dataview (for inline query '" + this.target.innerText + "'): " + result);
+			renderErrorPre(this.errorbox, "Dataview (for inline query '" + this.fieldText + "'): " + result);
 		} else {
             let temp = document.createElement("span");
 			await renderValue(Fields.fieldToValue(result), temp, this.origin, this, this.settings.renderNullAs, false);
