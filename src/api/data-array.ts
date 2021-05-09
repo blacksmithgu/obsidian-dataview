@@ -33,6 +33,17 @@ export interface DataArray<T> {
      * to be the end of the array.
      */
     slice(start?: number, end?: number): DataArray<T>;
+    /** Concatenate the values in this data array with those of another data array. */
+    concat(other: DataArray<T>): DataArray<T>;
+
+    /** Return the first index of the given (optionally starting the search) */
+    indexOf(element: T, fromIndex?: number): number;
+    /** Return the first element that satisfies the given predicate. */
+    find(pred: ArrayFunc<T, boolean>): T | undefined;
+    /** Find the index of the first element that satisfies the given predicate. Returns -1 if nothing was found. */
+    findIndex(pred: ArrayFunc<T, boolean>): number;
+    /** Returns true if the array contains the given element, and false otherwise. */
+    includes(element: T): boolean;
 
     /**
      * Return a sorted array sorted by the given key; an optional comparator can be provided, which will
@@ -89,7 +100,8 @@ export interface DataArray<T> {
 /** Implementation of DataArray, minus the dynamic variable access, which is implemented via proxy. */
 class DataArrayImpl<T> implements DataArray<T> {
     private static ARRAY_FUNCTIONS: Set<string> = new Set([
-        "where", "filter", "map", "flatMap", "slice", "sort", "groupBy", "distinct", "every", "some", "none", "first", "last", "to",
+        "where", "filter", "map", "flatMap", "slice", "concat", "indexOf", "find", "findIndex", "includes",
+        "sort", "groupBy", "distinct", "every", "some", "none", "first", "last", "to",
         "expand", "forEach", "length", "values", "array", "defaultComparator"
     ]);
 
@@ -150,6 +162,34 @@ class DataArrayImpl<T> implements DataArray<T> {
 
     public slice(start?: number, end?: number): DataArray<T> {
         return DataArrayImpl.wrap(this.values.slice(start, end), this.defaultComparator);
+    }
+
+    public concat(other: DataArray<T>): DataArray<T> {
+        return DataArrayImpl.wrap(this.values.concat(other.values), this.defaultComparator);
+    }
+
+    /** Return the first index of the given (optionally starting the search) */
+    public indexOf(element: T, fromIndex?: number): number {
+        return this.findIndex(e => this.defaultComparator(e, element) == 0);
+    }
+
+    /** Return the first element that satisfies the given predicate. */
+    public find(pred: ArrayFunc<T, boolean>): T | undefined {
+        let index = this.findIndex(pred);
+        if (index == -1) return undefined;
+        else return this.values[index];
+    }
+
+    public findIndex(pred: ArrayFunc<T, boolean>): number {
+        for (let index = 0; index < this.length; index++) {
+            if (pred(this.values[index], index, this.values)) return index;
+        }
+
+        return -1;
+    }
+
+    public includes(element: T): boolean {
+        return this.indexOf(element, 0) != -1;
     }
 
     public sort<U>(key: ArrayFunc<T, U>, direction?: 'asc' | 'desc', comparator?: ArrayComparator<U>): DataArray<T> {

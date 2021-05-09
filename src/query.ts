@@ -328,7 +328,6 @@ export namespace Fields {
             case "object":
                 let result: Record<string, any> = {};
                 for (let [key, value] of val.value.entries()) result[key] = fieldToValue(value);
-                console.log(result);
                 return result;
             default:
                 return val.value;

@@ -61,6 +61,17 @@ export interface DataArray<T> {
      * to be the end of the array.
      */
     slice(start?: number, end?: number): DataArray<T>;
+    /** Concatenate the values in this data array with those of another data array. */
+    concat(other: DataArray<T>): DataArray<T>;
+
+    /** Return the first index of the given (optionally starting the search) */
+    indexOf(element: T, fromIndex?: number): number;
+    /** Return the first element that satisfies the given predicate. */
+    find(pred: ArrayFunc<T, boolean>): T | undefined;
+    /** Find the index of the first element that satisfies the given predicate. Returns -1 if nothing was found. */
+    findIndex(pred: ArrayFunc<T, boolean>): number;
+    /** Returns true if the array contains the given element, and false otherwise. */
+    includes(element: T): boolean;
 
     /**
      * Return a sorted array sorted by the given key; an optional comparator can be provided, which will
