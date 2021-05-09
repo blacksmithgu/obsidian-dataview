@@ -7,7 +7,7 @@ import { parseField, parseQuery } from "src/parse";
 import { execute, executeInline, executeTask } from 'src/engine';
 import { tryOrPropogate } from './util/normalize';
 import { waitFor } from './util/concurrency';
-import { evalInContext, makeApiContext } from './api';
+import { evalInContext, makeApiContext } from 'src/api/inline-api';
 
 interface DataviewSettings extends QuerySettings {
 	/** What to render 'null' as in tables. Defaults to '-'. */
