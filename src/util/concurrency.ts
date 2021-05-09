@@ -29,6 +29,6 @@ export async function waitFor(interval: number, predicate: () => boolean, cancel
 		if (cancel()) return false;
 		await wait(interval);
 	}
-	
+
 	return true;
 }

@@ -139,6 +139,10 @@ export async function renderValue(field: LiteralValue, container: HTMLElement, o
 				await renderValue(val, span, originFile, component, nullField, expandList);
 			}
 		}
+	} else if (Fields.isLink(field)) {
+		await renderCompactMarkdown(field.markdown(), container, originFile, component);
+	} else if (Fields.isHtml(field)) {
+		container.appendChild(field);
 	} else if (Fields.isObject(field)) {
 		if (expandList) {
 			if (field.size == 0) {
@@ -151,26 +155,22 @@ export async function renderValue(field: LiteralValue, container: HTMLElement, o
 			}
 
 			let list = container.createEl('ul', { cls: ['dataview', 'dataview-ul', 'dataview-result-object-ul' ]});
-			for (let entry of field) {
+			for (let [key, value] of Object.entries(field)) {
 				let li = list.createEl('li', { cls: ['dataview', 'dataview-li', 'dataview-result-object-li'] });
-				li.appendText(entry[0] + ": ");
-				await renderValue(entry[1], li, originFile, component, nullField, expandList);
+				li.appendText(key + ": ");
+				await renderValue(value, li, originFile, component, nullField, expandList);
 			}
 		} else {
 			let span = container.createEl("span", { cls: ['dataview', 'dataview-result-object-span'] });
 			let first = true;
-			for (let entry of field) {
+			for (let [key, value] of Object.entries(field)) {
 				if (first) first = false;
 				else span.appendText(", ");
 
-				span.appendText(entry[0] + ": ");
-				await renderValue(entry[1], span, originFile, component, nullField, expandList);
+				span.appendText(key + ": ");
+				await renderValue(value, span, originFile, component, nullField, expandList);
 			}
 		}
-	} else if (Fields.isLink(field)) {
-		await renderCompactMarkdown(field.markdown(), container, originFile, component);
-	} else if (Fields.isHtml(field)) {
-		container.appendChild(field);
 	} else {
 		container.appendText("Unrecognized: " + JSON.stringify(field));
 	}

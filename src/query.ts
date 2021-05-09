@@ -346,7 +346,7 @@ export namespace Fields {
         else if (isHtml(val)) return { type: 'html', value: val };
         else if (isArray(val)) return { type: 'array', value: val };
         else if (isLink(val)) return { type: 'link', value: val };
-        else if (typeof val === "object") return { type: 'object', value: val };
+        else if (isObject(val)) return { type: 'object', value: val };
         else return undefined;
     }
 
@@ -594,8 +594,8 @@ export namespace Fields {
         return val instanceof HTMLElement;
     }
 
-    export function isObject(val: any): val is Map<string, any> {
-        return val instanceof Map;
+    export function isObject(val: any): val is Record<string, any> {
+        return typeof val == "object";
     }
 
     export const NULL = Fields.literal('null', null);
