@@ -158,7 +158,7 @@ There is a lot of potential for a generic query system; here is the upcoming fea
     - [ ] Calendar view
     - [ ] Timeline view
     - [ ] Gallery view (primarily for images)
-    - [ ] Heirarchical view
+    - [ ] Hierarchical view
     - [ ] Object view (create custom objects anywhere in a file & collect them into a list)
 
 # Contributing
