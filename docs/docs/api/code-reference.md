@@ -110,3 +110,36 @@ dv.table(["File", "Genre", "Time Read", "Rating"], dv.pages("#book")
     .sort(b => b.rating)
     .map(b => [b.file.link, b.genre, b["time-read"], b.rating]))
 ```
+
+## Utility
+
+### `dv.array(value)`
+
+Convert a given value or array into a Dataview [data array](data-array). If the value is already a data array, returns
+it unchanged.
+
+```js
+dv.array([1, 2, 3]) => dataview data array [1, 2, 3]
+```
+
+### `dv.compare(a, b)`
+
+Compare two arbitrary JavaScript values according to dataview's default comparison rules; useful if you are writing a
+custom comparator and want to fall back to the default behavior. Returns a negative value if `a < b`, 0 if `a = b`, and
+a positive value if `a > b`.
+
+```
+dv.compare(1, 2) = -1
+dv.compare("yes", "no") = 1
+dv.compare({ what: 0 }, { what: 0 }) = 0
+```
+
+### `dv.equal(a, b)`
+
+Compare two arbitrary JavaScript values and return true if they are equal according to Dataview's default comparison
+rules.
+
+```
+dv.equal(1, 2) = false
+dv.equal(1, 1) = true
+```

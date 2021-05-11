@@ -93,6 +93,19 @@ export class DataviewInlineApi {
         return DataArray.wrap([raw]);
     }
 
+    /**
+     * Compare two arbitrary JavaScript values using Dataview's default comparison rules. Returns a negative value if
+     * a < b, 0 if a = b, and a positive value if a > b.
+     */
+    public compare(a: any, b: any): number {
+        return Fields.compareValue(a, b);
+    }
+
+    /** Return true if the two given JavaScript values are equal using Dataview's default comparison rules. */
+    public equal(a: any, b: any): boolean {
+        return this.compare(a, b) == 0;
+    }
+
     /////////////////////////
     // Rendering Functions //
     /////////////////////////

@@ -1,6 +1,7 @@
 /** Stores various indices on all files in the vault to make dataview generation fast. */
 import { MetadataCache, Vault, TFile } from 'obsidian';
 import { extractMarkdownMetadata, PageMetadata } from './file';
+import { getParentFolder } from './util/normalize';
 
 /** A generic index which indexes variables of the form key -> value[], allowing both forward and reverse lookups. */
 export class IndexMap {
@@ -105,6 +106,8 @@ export class FullIndex {
     public etags: IndexMap;
     /** Map files -> linked files in that file, and linked file -> files that link to it. */
     public links: IndexMap;
+    /** Map exact folder paths to files; the 'exact' version of 'prefix'. */
+    public folders: IndexMap;
     /** Search files by path prefix. */
     public prefix: PrefixIndex;
 
@@ -121,6 +124,7 @@ export class FullIndex {
         this.tags = new IndexMap();
         this.etags = new IndexMap();
         this.links = new IndexMap();
+        this.folders = new IndexMap();
 
         this.reloadQueue = [];
         this.reloadSet = new Set();
@@ -142,6 +146,7 @@ export class FullIndex {
             this.tags.rename(oldPath, file.path);
             this.etags.rename(oldPath, file.path);
             this.links.rename(oldPath, file.path);
+            this.folders.rename(oldPath, file.path); // TODO: Do renames include folder changes?
         });
 
         // File creation does cause a metadata change, but deletes do not. Clear the caches for this.
@@ -153,6 +158,7 @@ export class FullIndex {
             this.tags.delete(file.path);
             this.etags.delete(file.path);
             this.links.delete(file.path);
+            this.folders.delete(file.path);
         })
     }
 
@@ -192,6 +198,7 @@ export class FullIndex {
         this.tags.set(file.path, newPageMeta.fullTags());
         this.etags.set(file.path, newPageMeta.tags);
         this.links.set(file.path, new Set<string>(newPageMeta.links.map(l => l.path)));
+        this.folders.set(file.path, new Set<string>([getParentFolder(file.path)]));
     }
 }
 

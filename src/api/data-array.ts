@@ -3,7 +3,7 @@ import { Fields } from "src/query";
 /** A function which maps an array element to some value. */
 export type ArrayFunc<T, O> = (elem: T, index: number, arr: T[]) => O;
 
-/** A function which compares two types (plus their indices, if relevant). */
+/** A function which compares two types. */
 export type ArrayComparator<T> = (a: T, b: T) => number;
 
 /**
