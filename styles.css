@@ -16,10 +16,14 @@
     border-left: none;
     border-right: none;
     border-bottom: solid;
+
+    max-width: 100%;
 }
 
 .table-view-table > tbody > tr > td {
     text-align: left;
     border: none;
     font-weight: 400;
+
+    max-width: 100%;
 }

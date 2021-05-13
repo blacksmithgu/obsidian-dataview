@@ -139,7 +139,7 @@ export async function setTaskCheckedInFile(vault: Vault, path: string, taskLine:
 			.replace("- [x]", "- [ ]")
 			.replace("-[x]", "- [ ]");
 	}
-	
+
 	let hasRn = text.contains("\r");
 	if (hasRn) {
 		let final = splitText.join("\r\n");
