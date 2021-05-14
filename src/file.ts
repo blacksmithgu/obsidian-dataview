@@ -246,7 +246,13 @@ export function findTasksInFile(path: string, file: string): Task[] {
 		lineno += 1;
 
 		let match = TASK_REGEX.exec(line);
-		if (!match) continue;
+		if (!match) {
+            if (line.trim().length == 0) continue;
+
+            // Non-empty line that is not a task, reset.
+            while (stack.length > 1) stack.pop();
+            continue;
+        }
 
 		let indent = match[1].replace("\t" , "    ").length;
 		let task: Task = {
@@ -320,7 +326,8 @@ export async function extractMarkdownMetadata(file: TFile, vault: Vault, cache: 
 
         let inlineField = parseInlineField(match[2]);
         fields.set(match[1].trim(), inlineField);
-        fields.set(canonicalizeVarName(match[1].trim()), inlineField);
+        let simpleName = canonicalizeVarName(match[1].trim());
+        if (simpleName.length > 0) fields.set(simpleName, inlineField);
     }
 
     // And extract tasks...

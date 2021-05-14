@@ -1,6 +1,7 @@
 import { DateTime, Duration } from 'luxon';
 import { Component, MarkdownRenderer } from 'obsidian';
 import { Fields, LiteralValue } from 'src/query';
+import { DataArray } from './api/data-array';
 import { normalizeDuration } from './util/normalize';
 
 /** Make an Obsidian-friendly internal link. */
@@ -111,13 +112,12 @@ export async function renderValue(field: LiteralValue, container: HTMLElement, o
 		container.appendText(renderMinimalDuration(field));
 	} else if (Fields.isString(field) || Fields.isBoolean(field) || Fields.isNumber(field)) {
 		await renderCompactMarkdown("" + field, container, originFile, component);
-	} else if (Fields.isArray(field)) {
+	} else if (Fields.isArray(field) || DataArray.isDataArray(field)) {
 		if (expandList) {
-			if (field.length == 0) return;
-			else if (field.length == 1) {
-				await renderValue(field[0], container, originFile, component, nullField, expandList);
-				return;
-			}
+			if (field.length == 0) {
+                container.appendText("<empty list>");
+                return;
+            }
 
 			let list = container.createEl('ul', { cls: ['dataview', 'dataview-ul', 'dataview-result-list-ul'] });
 			for (let child of field) {
@@ -145,12 +145,8 @@ export async function renderValue(field: LiteralValue, container: HTMLElement, o
 		container.appendChild(field);
 	} else if (Fields.isObject(field)) {
 		if (expandList) {
-			if (field.size == 0) {
+			if (Object.keys(field).length == 0) {
 				container.appendText("<empty object>");
-				return;
-			} else if (field.size == 1) {
-				container.appendText(field.keys().next().value + ": ");
-				await renderValue(field.values().next().value, container, originFile, component, nullField, expandList);
 				return;
 			}
 
@@ -161,6 +157,11 @@ export async function renderValue(field: LiteralValue, container: HTMLElement, o
 				await renderValue(value, li, originFile, component, nullField, expandList);
 			}
 		} else {
+            if (Object.keys(field).length == 0) {
+                container.appendText("<empty object>");
+                return;
+            }
+
 			let span = container.createEl("span", { cls: ['dataview', 'dataview-result-object-span'] });
 			let first = true;
 			for (let [key, value] of Object.entries(field)) {

@@ -17,7 +17,7 @@ export function getFileName(path: string): string {
 	return path;
 }
 
-const ALLOWABLE_VAR_CHARACTERS = /[0-9\w\p{Letter}\p{Emoji_Presentation}\-]/;
+const ALLOWABLE_VAR_CHARACTERS = /[0-9\w\p{Letter}\p{Emoji_Presentation}\-]/u;
 const WHITESPACE = /\s/;
 
 /** Convert an arbitrary variable name into something JS/query friendly. */

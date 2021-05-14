@@ -83,7 +83,7 @@ export function chainOpt<T>(base: P.Parser<T>, ...funcs: ((r: T) => P.Parser<T>)
             for (let func of funcs) {
                 let next = (func(result.value as T) as any)._(input, result.index);
                 if (!next.status) return result;
-                
+
                 result = next;
             }
 
@@ -212,7 +212,7 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
 
     // Binary comparison operator.
     binaryCompareOp: q => P.regexp(/>=|<=|!=|>|<|=/).map(str => str as BinaryOp).desc("'>=' or '<=' or '!=' or '=' or '>' or '<'"),
-    
+
     // Binary boolean combination operator.
     binaryBooleanOp: q => P.regexp(/and|or|&|\|/i).map(str => {
         if (str.toLowerCase() == 'and') return '&';
@@ -250,7 +250,7 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
     durationType: q => P.alt(... Object.keys(DURATION_TYPES).map(P.string)) as P.Parser<keyof typeof DURATION_TYPES>,
     duration: q => P.seqMap(q.number, P.optWhitespace, q.durationType, P.string("s").atMost(1), (count, _, t, _2) =>
         DURATION_TYPES[t].mapUnits(x => x * count)),
-    
+
     // Source parsing.
     tagSource: q => q.tag.map(tag => Sources.tag(tag)),
     linkIncomingSource: q => q.link.map(link => Sources.link(link.path, true)),
@@ -317,7 +317,7 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
     }),
     negatedField: q => P.seqMap(P.string("!"), q.indexField, (_, field) => Fields.negate(field)).desc("negated field"),
     parensField: q => P.seqMap(P.string("("), P.optWhitespace, q.field, P.optWhitespace, P.string(")"), (_1, _2, field, _3, _4) => field),
-    
+
     dotPostfix: q => P.seqMap(P.string("."), q.identifier, (_, field) => { return { type: 'dot', field: Fields.string(field) } }),
     indexPostfix: q => P.seqMap(P.string("["), P.optWhitespace, q.field, P.optWhitespace, P.string("]"),
         (_, _2, field, _3, _4) => { return { type: 'index', field }}),
@@ -434,7 +434,7 @@ export function parseQuery(text: string, settings?: QuerySettings): Query | stri
 }
 
 /**
- * Attempt to parse a field from the given text, returning a string error if the 
+ * Attempt to parse a field from the given text, returning a string error if the
  * parse failed.
  */
 export function parseField(text: string): Field | string {
