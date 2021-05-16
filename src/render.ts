@@ -1,8 +1,8 @@
 import { DateTime, Duration } from 'luxon';
 import { Component, MarkdownRenderer } from 'obsidian';
 import { Fields, LiteralValue } from 'src/query';
-import { DataArray } from './api/data-array';
-import { normalizeDuration } from './util/normalize';
+import { DataArray } from 'src/api/data-array';
+import { normalizeDuration } from 'src/util/normalize';
 
 /** Make an Obsidian-friendly internal link. */
 export function createAnchor(text: string, target: string, internal: boolean): HTMLAnchorElement {

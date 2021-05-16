@@ -1,6 +1,6 @@
 /** Provides an AST for complex queries. */
 import { DateTime, Duration } from 'luxon';
-import { getFileName } from './util/normalize';
+import { getFileName } from 'src/util/normalize';
 
 /** An Obsidian link with all associated metadata. */
 export class Link {

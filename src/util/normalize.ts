@@ -17,6 +17,12 @@ export function getFileName(path: string): string {
 	return path;
 }
 
+/** Get the extension of a file from the file path. */
+export function getExtension(path: string): string {
+    if (!path.includes(".")) return "";
+    return path.substring(path.lastIndexOf(".") + 1);
+}
+
 const ALLOWABLE_VAR_CHARACTERS = /[0-9\w\p{Letter}\p{Emoji_Presentation}\-]/u;
 const WHITESPACE = /\s/;
 

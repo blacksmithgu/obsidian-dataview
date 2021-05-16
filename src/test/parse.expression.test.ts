@@ -1,7 +1,8 @@
-import { BinaryOpField, Fields, Link, LiteralFieldRepr, Sources } from "src/query";
+import { BinaryOpField, Fields, Link, LiteralFieldRepr } from "src/query";
 import { EXPRESSION } from "src/parse";
 import { DateTime, Duration } from 'luxon';
 import { Success } from "parsimmon";
+import { Sources } from "src/data/source";
 
 // <-- Integer Literals -->
 

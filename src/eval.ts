@@ -2,7 +2,7 @@
 import { DateTime } from 'luxon';
 import { BinaryOp, LiteralType, LiteralField, LiteralFieldRepr, Field, Fields, StringField, DateField, Link, LinkField, NumberField } from 'src/query';
 import { normalizeDuration } from "src/util/normalize";
-import { EXPRESSION } from './parse';
+import { EXPRESSION } from 'src/parse';
 
 /////////////////////////////////
 // Core Context Implementation //

@@ -314,6 +314,13 @@ export namespace DataArray {
         return DataArrayImpl.wrap(raw);
     }
 
+    /** Create a new DataArray from an iterable object. */
+    export function from<T>(raw: Iterable<T>): DataArray<T> {
+        let data = [];
+        for (let elem of raw) data.push(elem);
+        return DataArrayImpl.wrap(data);
+    }
+
     /** Return true if the given object is a data array. */
     export function isDataArray(obj: any): obj is DataArray<any> {
         return obj instanceof DataArrayImpl;

@@ -1,12 +1,12 @@
 import { MarkdownRenderChild, Plugin, Workspace, Vault, MarkdownPostProcessorContext, PluginSettingTab, App, Setting } from 'obsidian';
 import { renderErrorPre, renderList, renderTable, renderValue } from 'src/render';
-import { FullIndex } from 'src/index';
+import { FullIndex } from 'src/data/index';
 import * as Tasks from 'src/tasks';
 import { Field, Fields, Query, QuerySettings } from 'src/query';
 import { parseField, parseQuery } from "src/parse";
 import { execute, executeInline, executeTask } from 'src/engine';
-import { tryOrPropogate } from './util/normalize';
-import { waitFor } from './util/concurrency';
+import { tryOrPropogate } from 'src/util/normalize';
+import { waitFor } from 'src/util/concurrency';
 import { evalInContext, makeApiContext } from 'src/api/inline-api';
 
 interface DataviewSettings extends QuerySettings {

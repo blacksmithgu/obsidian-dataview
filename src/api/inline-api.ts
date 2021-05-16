@@ -1,14 +1,12 @@
 /** Fancy wrappers for the JavaScript API, used both by external plugins AND by the dataview javascript view. */
 
 import { App, Component } from "obsidian";
-import { FullIndex } from "src/index";
-import { collectFromSource, createContext } from "../engine";
-import { Task } from "../file";
-import { EXPRESSION } from "../parse";
-import { Fields, Link, Sources } from "../query";
-import { renderList, renderTable, renderValue } from "../render";
-import { renderFileTasks, renderTasks, TaskViewLifecycle } from "../tasks";
-import { DataArray } from "./data-array";
+import { FullIndex } from "src/data/index";
+import { Task } from "src/data/file";
+import { Fields, Link } from "src/query";
+import { renderValue } from "src/render";
+import { DataArray } from "src/api/data-array";
+import { DataviewApi } from "./plugin-api";
 
 export class DataviewInlineApi {
     /**
@@ -32,12 +30,17 @@ export class DataviewInlineApi {
     /** Directly access the Obsidian app object, such as for reaching out to other plugins. */
     public app: App;
 
+    /** The general plugin API which much of this inline API delegates to. */
+    public api: DataviewApi;
+
     constructor(index: FullIndex, component: Component, container: HTMLElement, app: App, currentFilePath: string) {
         this.index = index;
         this.component = component;
         this.container = container;
         this.app = app;
         this.currentFilePath = currentFilePath;
+
+        this.api = new DataviewApi(this.app, this.index);
     }
 
     /////////////////////////////
@@ -45,34 +48,13 @@ export class DataviewInlineApi {
     /////////////////////////////
 
     /** Return an array of paths (as strings) corresponding to pages which match the query. */
-    public pagePaths(query?: string): DataArray<string> {
-        try {
-            let source;
-            if (!query || query.trim() === "") source = Sources.folder("");
-            else source = EXPRESSION.source.tryParse(query);
-
-            return DataArray.wrap(Array.from(collectFromSource(source, this.index, this.currentFilePath)));
-        } catch (ex) {
-            throw new Error(`Failed to parse query in 'pagePaths': ${ex}`);
-        }
-    }
+    public pagePaths(query?: string): DataArray<string> { return this.api.pagePaths(query, this.currentFilePath); }
 
     /** Map a page path to the actual data contained within that page. */
-    public page(path: string | Link): Record<string, any> | undefined {
-        let rawPath = (path instanceof Link) ? path.path : path;
-        let rawData = createContext(rawPath, this.index, undefined)?.namespace;
-        if (rawData === undefined) return undefined;
-
-        return Fields.fieldToValue(rawData) as Record<string, any>;
-    }
+    public page(path: string | Link): Record<string, any> | undefined { return this.api.page(path, this.currentFilePath); }
 
     /** Return an array of page objects corresponding to pages which match the query. */
-    public pages(query: string): DataArray<any> {
-        return this.pagePaths(query).flatMap(p => {
-            let res = this.page(p);
-            return res ? [res] : [];
-        });
-    }
+    public pages(query: string): DataArray<any> { return this.api.pages(query, this.currentFilePath); }
 
     /** Return the information about the current page. */
     public current(): Record<string, any> | undefined {
@@ -140,42 +122,17 @@ export class DataviewInlineApi {
 
     /** Render a dataview list of the given values. */
     public list(values?: any[] | DataArray<any>) {
-        if (!values) return;
-        if (DataArray.isDataArray(values)) values = values.array();
-
-        renderList(this.container, values as any[], this.component, this.currentFilePath, "\-");
+        return this.api.list(values, this.container, this.component, this.currentFilePath);
     }
 
     /** Render a dataview table with the given headers, and the 2D array of values. */
     public table(headers: string[], values?: any[][] | DataArray<any>) {
-        if (!values) values = [];
-        if (DataArray.isDataArray(values)) values = values.array();
-        renderTable(this.container, headers, values as any[][], this.component, this.currentFilePath, "\-");
+        return this.api.table(headers, values, this.container, this.component, this.currentFilePath);
     }
 
     /** Render a dataview task view with the given tasks. */
-    public taskList(tasks: Task[] | DataArray<any>, groupByFile: boolean = false) {
-        if (DataArray.isDataArray(tasks)) tasks = tasks.array();
-
-        if (groupByFile) {
-            let byFile = new Map<string, Task[]>();
-            for (let task of (tasks as Task[])) {
-                if (!byFile.has(task.path)) byFile.set(task.path, []);
-                byFile.get(task.path)?.push(task);
-            }
-
-            let subcontainer = this.container.createDiv();
-            (async () => {
-                await renderFileTasks(subcontainer, byFile);
-                this.component.addChild(new TaskViewLifecycle(this.app.vault, subcontainer));
-            })();
-        } else {
-            let subcontainer = this.container.createDiv();
-            (async () => {
-                await renderTasks(subcontainer, tasks as Task[]);
-                this.component.addChild(new TaskViewLifecycle(this.app.vault, subcontainer));
-            })();
-        }
+    public taskList(tasks: Task[] | DataArray<any>, groupByFile: boolean = true) {
+        return this.api.taskList(tasks, groupByFile, this.container, this.component, this.currentFilePath);
     }
 }
 

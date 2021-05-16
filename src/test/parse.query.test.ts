@@ -1,5 +1,6 @@
-import { Query, Fields, Sources, TableQuery, ListQuery, SortByStep, DEFAULT_QUERY_SETTINGS } from "src/query";
+import { Query, Fields, TableQuery, ListQuery, SortByStep, DEFAULT_QUERY_SETTINGS } from "src/query";
 import { QUERY_LANGUAGE, parseQuery } from "src/parse";
+import { Sources } from "src/data/source";
 
 test("Parse Query Type", () => {
     let unknown = QUERY_LANGUAGE.queryType.parse("vehicle");

@@ -1,12 +1,11 @@
 /**
  * Takes a full query and a set of indices, and (hopefully quickly) returns all relevant files.
  */
-import { LiteralField, LiteralFieldRepr, Query, Fields, Source, NamedField, Field, Link } from 'src/query';
-import { FullIndex } from 'src/index';
-import { Task } from 'src/file';
-import { DateTime } from 'luxon';
-import { TFile } from 'obsidian';
+import { LiteralField, LiteralFieldRepr, Query, Fields, NamedField, Field, ObjectField } from 'src/query';
+import { FullIndex } from 'src/data/index';
+import { Task } from 'src/data/file';
 import { Context, BINARY_OPS, LinkHandler } from 'src/eval';
+import { collectPagePaths } from './data/collector';
 
 /** The result of executing a query over an index. */
 export interface QueryResult {
@@ -16,68 +15,6 @@ export interface QueryResult {
     data: LiteralField[][];
 }
 
-/** Recursively collect target files from the given source. */
-export function collectFromSource(source: Source, index: FullIndex, origin: string): Set<string> | string {
-    switch (source.type) {
-        case "empty": return new Set<string>();
-        case "tag": return index.tags.getInverse(source.tag);
-        case "folder": return index.prefix.get(source.folder);
-        case "link":
-            let fullPath = index.metadataCache.getFirstLinkpathDest(source.file, origin)?.path;
-            if (!fullPath) return `Could not resolve link "${source.file}" during link lookup - does it exist?`;
-
-            if (source.direction === 'incoming') {
-                // To find all incoming links (i.e., things that link to this), use the index that Obsidian provides.
-                // TODO: Use an actual index so this isn't a fullscan.
-                let resolved = index.metadataCache.resolvedLinks;
-                let incoming = new Set<string>();
-
-                for (let [key, value] of Object.entries(resolved)) {
-                    if (fullPath in value) incoming.add(key);
-                }
-
-                return incoming;
-            } else {
-                let resolved = index.metadataCache.resolvedLinks;
-                if (!(fullPath in resolved)) return `Could not find file "${source.file}" during link lookup - does it exist?`;
-
-                return new Set<string>(Object.keys(index.metadataCache.resolvedLinks[fullPath]));
-            }
-        case "binaryop":
-            let left = collectFromSource(source.left, index, origin);
-            if (typeof left === 'string') return left;
-            let right = collectFromSource(source.right, index, origin);
-            if (typeof right === 'string') return right;
-
-            if (source.op == '&') {
-                let result = new Set<string>();
-                for (let elem of right) {
-                    if (left.has(elem)) result.add(elem);
-                }
-
-                return result;
-            } else if (source.op == '|') {
-                let result = new Set(left);
-                for (let elem of right) result.add(elem);
-                return result;
-            } else {
-                return `Unrecognized operator '${source.op}'.`;
-            }
-        case "negate":
-            let child = collectFromSource(source.child, index, origin);
-            if (typeof child === 'string') return child;
-
-            // TODO: This is obviously very inefficient.
-            let allFiles = new Set<string>(index.vault.getMarkdownFiles().map(f => f.path));
-
-            for (let file of child) {
-                allFiles.delete(file);
-            }
-
-            return allFiles;
-    }
-}
-
 /** The default link resolver used when creating contexts. */
 export function defaultLinkHandler(index: FullIndex, origin: string): LinkHandler {
     return {
@@ -85,9 +22,10 @@ export function defaultLinkHandler(index: FullIndex, origin: string): LinkHandle
             let realFile = index.metadataCache.getFirstLinkpathDest(link, origin);
             if (!realFile) return Fields.NULL;
 
-            let context = createContext(realFile.path, index);
-            if (context) return context.namespace;
-            else return Fields.NULL;
+            let realPage = index.pages.get(realFile.path);
+            if (!realPage) return Fields.NULL;
+
+            return Fields.asField(realPage.toObject(index)) as ObjectField ?? Fields.NULL;
         },
         normalize: (link) => {
             let realFile = index.metadataCache.getFirstLinkpathDest(link, origin);
@@ -100,53 +38,18 @@ export function defaultLinkHandler(index: FullIndex, origin: string): LinkHandle
     }
 }
 
-/** Create a fully-filled context representing the given file. */
-export function createContext(file: string, index: FullIndex, rootContext: Context | undefined = undefined): Context | undefined {
-    let page = index.pages.get(file);
+export function createContext(path: string, index: FullIndex, parent?: Context): Context | undefined {
+    let page = index.pages.get(path);
     if (!page) return undefined;
 
-    // Create a context which uses the cache to look up link info.
-    let context = new Context(defaultLinkHandler(index, file), rootContext, Fields.object(page.fields));
-
-    // Fill out per-file metadata.
-    let fileMeta = new Map<string, LiteralField>();
-    fileMeta.set("path", Fields.string(file));
-    fileMeta.set("folder", Fields.string(page.folder()));
-    fileMeta.set("name", Fields.string(page.name()));
-    fileMeta.set("link", Fields.link(Link.file(file, false)));
-    fileMeta.set("outlinks", Fields.array(page.fileLinks().map(l => Fields.link(Link.file(l.path, false)))));
-    fileMeta.set("inlinks", Fields.array(Array.from(index.links.getInverse(page.path)).map(l => Fields.link(Link.file(l, false)))));
-    fileMeta.set("tags", Fields.array(Array.from(page.fullTags()).map(l => Fields.string(l))));
-    fileMeta.set("etags", Fields.array(Array.from(page.tags).map(l => Fields.string(l))));
-    fileMeta.set("aliases", Fields.array(Array.from(page.aliases).map(l => Fields.string(l))));
-    fileMeta.set("tasks", Fields.asField(page.tasks) ?? Fields.array([]));
-
-    if (page.day) fileMeta.set("day", Fields.date(page.day));
-
-    // Populate file metadata.
-    let afile = index.vault.getAbstractFileByPath(file);
-    if (afile && afile instanceof TFile) {
-        let ctime = DateTime.fromMillis(afile.stat.ctime);
-        let mtime = DateTime.fromMillis(afile.stat.mtime);
-
-        fileMeta.set('ctime', Fields.date(ctime));
-        fileMeta.set('cday', Fields.date(DateTime.fromObject({ year: ctime.year, month: ctime.month, day: ctime.day })));
-        fileMeta.set('mtime', Fields.date(mtime));
-        fileMeta.set('mday', Fields.date(DateTime.fromObject({ year: mtime.year, month: mtime.month, day: mtime.day })));
-        fileMeta.set('size', Fields.number(afile.stat.size));
-        fileMeta.set('ext', Fields.string(afile.extension));
-    }
-
-    context.set("file", Fields.object(fileMeta));
-
-    return context;
+    return new Context(defaultLinkHandler(index, path), parent, Fields.asField(page.toObject(index)) as ObjectField);
 }
 
 /** Execute a query over the given index, returning all matching rows. */
 export function execute(query: Query, index: FullIndex, origin: string): QueryResult | string {
     // Start by collecting all of the files that match the 'from' queries.
-    let fileset = collectFromSource(query.source, index, origin);
-    if (typeof fileset === 'string') return fileset;
+    let fileset = collectPagePaths(query.source, index, origin);
+    if (!fileset.successful) return fileset.error;
 
     let rootContext = new Context(defaultLinkHandler(index, origin));
 
@@ -158,7 +61,7 @@ export function execute(query: Query, index: FullIndex, origin: string): QueryRe
 
     // Then, map all of the files to their corresponding contexts.
     let rows: Context[] = [];
-    for (let file of fileset) {
+    for (let file of fileset.value) {
         let context = createContext(file, index, rootContext);
         if (context) rows.push(context);
     }

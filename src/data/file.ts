@@ -1,8 +1,10 @@
-import { canonicalizeVarName, getFileName, getParentFolder } from './util/normalize';
-import { Fields, LiteralField, LiteralFieldRepr } from './query';
+import { canonicalizeVarName, getExtension, getFileName, getParentFolder } from 'src/util/normalize';
+import { Fields, Link, LiteralField, LiteralFieldRepr } from 'src/query';
 import { getAllTags, MetadataCache, parseFrontMatterAliases, parseFrontMatterTags, TFile, Vault } from 'obsidian';
-import { EXPRESSION, parseInnerLink } from './parse';
+import { EXPRESSION, parseInnerLink } from 'src/parse';
 import { DateTime } from 'luxon';
+import { FullIndex } from '.';
+import { DataArray } from 'src/api/data-array';
 
 interface BaseLinkMetadata {
     path: string;
@@ -98,6 +100,9 @@ export class PageMetadata {
     /** The containing folder (based on path) of this file. */
     public folder(): string { return getParentFolder(this.path); }
 
+    /** The extension of this file (likely 'md'). */
+    public extension(): string { return getExtension(this.path); }
+
     /** Return a set of tags AND all of their parent tags (so #hello/yes would become #hello, #hello/yes). */
     public fullTags(): Set<string> {
         // TODO: Memoize this, probably.
@@ -128,6 +133,40 @@ export class PageMetadata {
                 } as FileLinkMetadata;
             }
         })
+    }
+
+    /** Map this metadata to a full object; uses the index for additional data lookups.  */
+    public toObject(index: FullIndex): Record<string, any> {
+        // Static fields first.
+        let result: Record<string, any> = {
+            "file": {
+                "path": this.path,
+                "folder": this.folder(),
+                "name": this.name(),
+                "link": Link.file(this.path, false),
+                "outlinks": DataArray.wrap(this.fileLinks().map(l => Link.file(l.path, false))),
+                "inlinks": DataArray.wrap(Array.from(index.links.getInverse(this.path))).map(l => Link.file(l, false)),
+                "etags": DataArray.wrap(Array.from(this.tags)),
+                "tags": DataArray.wrap(Array.from(this.fullTags())),
+                "aliases": DataArray.wrap(Array.from(this.aliases)),
+                "tasks": DataArray.wrap(this.tasks),
+                "day": this.day ?? undefined,
+                "ctime": this.ctime,
+                "cday": DateTime.fromObject({ year: this.ctime.year, month: this.ctime.month, day: this.ctime.day }),
+                "mtime": this.mtime,
+                "mday": DateTime.fromObject({ year: this.mtime.year, month: this.mtime.month, day: this.mtime.day }),
+                "size": this.size,
+                "ext": this.extension()
+            }
+        };
+
+        // Then append the computed fields.
+        for (let [key, value] of this.fields) {
+            if (key === "file") continue; // Don't allow 'file' to override.
+            result[key] = Fields.fieldToValue(value);
+        }
+
+        return result;
     }
 }
 

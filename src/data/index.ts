@@ -1,7 +1,7 @@
 /** Stores various indices on all files in the vault to make dataview generation fast. */
 import { MetadataCache, Vault, TFile } from 'obsidian';
 import { extractMarkdownMetadata, PageMetadata } from './file';
-import { getParentFolder } from './util/normalize';
+import { getParentFolder } from 'src/util/normalize';
 
 /** A generic index which indexes variables of the form key -> value[], allowing both forward and reverse lookups. */
 export class IndexMap {

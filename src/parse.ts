@@ -1,8 +1,9 @@
 import { DateTime, Duration } from 'luxon';
-import { BinaryOp, TagSource, FolderSource, Source, VariableField, Field, Fields, Sources, NegatedSource, WhereStep, SortByStep, LimitStep, QueryHeader, QueryOperation, FlattenStep, GroupStep, LiteralField, DEFAULT_QUERY_SETTINGS, QuerySettings, Link } from 'src/query';
+import { BinaryOp, VariableField, Field, Fields, WhereStep, SortByStep, LimitStep, QueryHeader, QueryOperation, FlattenStep, GroupStep, LiteralField, DEFAULT_QUERY_SETTINGS, QuerySettings, Link } from 'src/query';
 import { QueryType, NamedField, QuerySortBy, Query } from "src/query";
 import * as P from 'parsimmon';
-import { normalizeDuration } from './util/normalize';
+import { normalizeDuration } from 'src/util/normalize';
+import { FolderSource, NegatedSource, Source, SourceOp, Sources, TagSource } from './data/source';
 
 ///////////
 // TYPES //
@@ -260,7 +261,7 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
     parensSource: q => P.seqMap(P.string("("), P.optWhitespace, q.source, P.optWhitespace, P.string(")"), (_1, _2, field, _3, _4) => field),
     negateSource: q => P.seqMap(P.alt(P.string("-"), P.string("!")), q.atomSource, (_, source) => Sources.negate(source)),
     atomSource: q => P.alt<Source>(q.parensSource, q.negateSource, q.linkOutgoingSource, q.linkIncomingSource, q.folderSource, q.tagSource),
-    binaryOpSource: q => createBinaryParser(q.atomSource, q.binaryBooleanOp, Sources.binaryOp),
+    binaryOpSource: q => createBinaryParser(q.atomSource, q.binaryBooleanOp.map(s => s as SourceOp), Sources.binaryOp),
     source: q => q.binaryOpSource,
 
     // Field parsing.
