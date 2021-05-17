@@ -1,4 +1,4 @@
-import { MarkdownRenderChild, Plugin, Workspace, Vault, MarkdownPostProcessorContext, PluginSettingTab, App, Setting } from 'obsidian';
+import { MarkdownRenderChild, Plugin, Vault, MarkdownPostProcessorContext, PluginSettingTab, App, Setting, Component } from 'obsidian';
 import { renderErrorPre, renderList, renderTable, renderValue } from 'src/render';
 import { FullIndex } from 'src/data/index';
 import * as Tasks from 'src/tasks';
@@ -8,6 +8,7 @@ import { execute, executeInline, executeTask } from 'src/engine';
 import { tryOrPropogate } from 'src/util/normalize';
 import { waitFor } from 'src/util/concurrency';
 import { evalInContext, makeApiContext } from 'src/api/inline-api';
+import { DataviewApi } from './api/plugin-api';
 
 interface DataviewSettings extends QuerySettings {
 	/** What to render 'null' as in tables. Defaults to '-'. */
@@ -30,29 +31,37 @@ const DEFAULT_SETTINGS: DataviewSettings = {
 	renderNullAs: "\\-",
 	warnOnEmptyResult: true,
 	inlineQueryPrefix: "=",
-	refreshInterval: 5000,
+	refreshInterval: 1000,
 	schemaVersion: 1
 }
 
 export default class DataviewPlugin extends Plugin {
-	settings: DataviewSettings;
-	workspace: Workspace;
+    /** Plugin-wide default settigns. */
+	public settings: DataviewSettings;
 
-	index: FullIndex;
+    /** The index that stores all dataview data. */
+	public index: FullIndex;
+
+    /**
+     * The API for other plugins to access dataview functionality. Initialized once the index has been initalized,
+     * so may be null when the plugin is first initializing.
+     *
+     * TODO: JavaScript async a little annoying w/o multi-threading; how do you verify it exists?
+     */
+    public api: DataviewApi;
 
 	async onload() {
 		// Settings initialization; write defaults first time around.
 		this.settings = Object.assign(DEFAULT_SETTINGS, await this.loadData() ?? {});
-		this.workspace = this.app.workspace;
 
 		this.addSettingTab(new DataviewSettingsTab(this.app, this));
 
-		console.log("Dataview Plugin - Version 0.2.x Loaded");
+		console.log("Dataview Plugin - Version 0.3.x Loaded");
 
-		if (!this.workspace.layoutReady) {
-			this.workspace.on("layout-ready", async () => this.prepareIndexes());
+		if (!this.app.workspace.layoutReady) {
+			this.app.workspace.on("layout-ready", async () => this.prepareIndexes());
 		} else {
-			await this.prepareIndexes();
+			this.prepareIndexes();
 		}
 
 		// Main entry point for dataview. Runs at a very high priority before other tasks.
@@ -117,6 +126,7 @@ export default class DataviewPlugin extends Plugin {
 	async prepareIndexes() {
 		let index = await FullIndex.generate(this.app.vault, this.app.metadataCache);
 		this.index = index;
+        this.api = new DataviewApi(this.app, this.index);
 	}
 
 	/** Update plugin settings. */
@@ -273,10 +283,10 @@ class DataviewListRenderer extends MarkdownRenderChild {
 	async onload() {
 		await this.render();
 
-		this.registerInterval(window.setInterval(async () => {
+        onIndexChange(this.index, this.settings.refreshInterval, this, async () => {
 			this.container.innerHTML = "";
 			await this.render();
-		}, this.query.settings.refreshInterval));
+		});
 	}
 
 	async render() {
@@ -319,10 +329,10 @@ class DataviewTableRenderer extends MarkdownRenderChild {
 	async onload() {
 		await this.render();
 
-		this.registerInterval(window.setInterval(async () => {
+        onIndexChange(this.index, this.settings.refreshInterval, this, async () => {
 			this.container.innerHTML = "";
 			await this.render();
-		}, this.query.settings.refreshInterval));
+		});
 	}
 
 	async render() {
@@ -358,12 +368,12 @@ class DataviewTaskRenderer extends MarkdownRenderChild {
 	async onload() {
 		await this.render();
 
-		this.registerInterval(window.setInterval(async () => {
+        onIndexChange(this.index, this.settings.refreshInterval, this, async () => {
 			if (this.taskView) this.removeChild(this.taskView);
 
 			this.container.innerHTML = "";
 			await this.render();
-		}, this.query.settings.refreshInterval));
+		});
 	}
 
 	async render() {
@@ -400,10 +410,10 @@ class DataviewInlineRenderer extends MarkdownRenderChild {
 	async onload() {
 		await this.render();
 
-		this.registerInterval(window.setInterval(async () => {
+        onIndexChange(this.index, this.settings.refreshInterval, this, async () => {
 			this.errorbox?.remove();
 			await this.render();
-		}, this.settings.refreshInterval));
+		});
 	}
 
 	async render() {
@@ -434,6 +444,15 @@ class DataviewJSRenderer extends MarkdownRenderChild {
 	}
 
 	async onload() {
+        await this.render();
+
+        onIndexChange(this.index, this.settings.refreshInterval, this, async () => {
+            this.container.innerHTML = "";
+			await this.render();
+		});
+	}
+
+    async render() {
 		// Assume that the code is javascript, and try to eval it.
 		try {
 			evalInContext(DataviewJSRenderer.PREAMBLE + this.script,
@@ -442,5 +461,18 @@ class DataviewJSRenderer extends MarkdownRenderChild {
 			this.containerEl.innerHTML = "";
 			renderErrorPre(this.container, "Evaluation Error: " + e.stack);
 		}
-	}
+    }
+}
+
+function onIndexChange(index: FullIndex, interval: number, component: Component, action: () => any) {
+    let indexChanged = false;
+    let indexListener = index.on('reload', () => indexChanged = true);
+
+    component.register(() => index.off('reload', indexListener));
+    component.registerInterval(window.setInterval(() => {
+        if (indexChanged) {
+            action();
+            indexChanged = false;
+        }
+    }, interval));
 }

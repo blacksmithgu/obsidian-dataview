@@ -80,7 +80,7 @@ export class IndexMap {
 
 /** Aggregate index which has several sub-indices and will initialize all of them. */
 export class FullIndex {
-    /** How often the reload queue is checked for reloads. */
+    /** How often the reload queue is checked for reloads, in milliseconds. */
     static RELOAD_INTERVAL = 2_000;
 
     /** Generate a full index from the given vault. */
@@ -96,6 +96,11 @@ export class FullIndex {
     reloadQueue: TFile[];
     // Set of paths being reloaded, used for debouncing.
     reloadSet: Set<string>;
+
+    // Reload listeners which listen to index reloads; indexed by a unique ID.
+    reloadListeners: Map<number, () => void>;
+    // The next reload listener ID that will be handed out.
+    currentReloadId: number;
 
     /* Maps path -> markdown metadata for all markdown pages. */
     public pages: Map<string, PageMetadata>;
@@ -131,6 +136,9 @@ export class FullIndex {
 
         // Background task which regularly checks for reloads (with debouncing).
         this.reloadHandle = window.setInterval(() => this.reloadInternal(), FullIndex.RELOAD_INTERVAL);
+
+        this.reloadListeners = new Map();
+        this.currentReloadId = 0;
 
         // The metadatda cache is updated on file changes.
         metadataCache.on("changed", file => this.queueReload(file));
@@ -169,7 +177,8 @@ export class FullIndex {
 
         // Traverse all markdown files & fill in initial data.
         let start = new Date().getTime();
-        for (let file of this.vault.getMarkdownFiles()) this.reloadInternalFile(file);
+        let promises = this.vault.getMarkdownFiles().map(file => this.reloadInternalFile(file));
+        await Promise.all(promises);
         console.log("Dataview task & metadata indices prepared in %.3fs.", (new Date().getTime() - start) / 1000.0);
     }
 
@@ -180,13 +189,29 @@ export class FullIndex {
         this.reloadQueue.push(file);
     }
 
+    /** Subscribe a handler which is called when the index refreshes. Returns an ID which should be used to unsubscribe. */
+    public on(evt: 'reload', handler: () => void): number {
+        let nextID = this.currentReloadId++;
+        this.reloadListeners.set(nextID, handler);
+        return nextID;
+    }
+
+    /** Unsubscribe a handler with the given ID. */
+    public off(evt: 'reload', handlerId: number) {
+        this.reloadListeners.delete(handlerId);
+    }
+
     /** Utility method which regularly checks the reload queue. */
     private async reloadInternal() {
         let copy = Array.from(this.reloadQueue);
         this.reloadSet.clear();
         this.reloadQueue = [];
+        if (copy.length == 0) return;
 
         for (let file of copy) this.reloadInternalFile(file);
+
+        // TODO: Would like to do this on a separate thread than the index.
+        for (let [_, handler] of this.reloadListeners) handler();
     }
 
     private async reloadInternalFile(file: TFile) {
