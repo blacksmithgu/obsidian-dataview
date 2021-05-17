@@ -44,7 +44,7 @@ export class DataviewApi {
     }
 
     /** Return an array of page objects corresponding to pages which match the query. */
-    public pages(query: string, originFile?: string): DataArray<any> {
+    public pages(query?: string, originFile?: string): DataArray<any> {
         return this.pagePaths(query, originFile).flatMap(p => {
             let res = this.page(p, originFile);
             return res ? [res] : [];
@@ -101,6 +101,7 @@ export class DataviewApi {
     /** Render a dataview task view with the given tasks. */
     public taskList(tasks: Task[] | DataArray<any>, groupByFile: boolean = true, container: HTMLElement, component: Component, filePath: string) {
         if (DataArray.isDataArray(tasks)) tasks = tasks.array();
+        console.log(tasks);
 
         if (groupByFile) {
             let byFile = new Map<string, Task[]>();

@@ -66,10 +66,11 @@ export async function renderFileTasks(container: HTMLElement, tasks: Map<string,
 export async function renderTasks(container: HTMLElement, tasks: Task[]) {
 	let ul = container.createEl('ul', { cls: 'contains-task-list' });
 	for (let task of tasks) {
-		let li = ul.createEl('li', { cls: 'task-list-item' });
+		let li = ul.createEl('li');
 
-		if (task.completed) {
-			li.addClass('is-checked');
+		if (task.real) {
+            li.addClass('task-list-item');
+			if (task.completed) li.addClass('is-checked');
 		}
 
 		// Render the text as markdown so that bolds, links, and other things work properly.
@@ -82,8 +83,10 @@ export async function renderTasks(container: HTMLElement, tasks: Task[]) {
 			paragraph.remove();
 		}
 
-		let check = createCheckbox(task.path, task.line, task.text, task.completed);
-		li.prepend(check);
+        if (task.real) {
+            let check = createCheckbox(task.path, task.line, task.text, task.completed);
+            li.prepend(check);
+        }
 
 		if (task.subtasks.length > 0) {
 			renderTasks(li, task.subtasks);

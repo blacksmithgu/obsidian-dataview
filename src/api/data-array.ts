@@ -102,7 +102,7 @@ class DataArrayImpl<T> implements DataArray<T> {
     private static ARRAY_FUNCTIONS: Set<string> = new Set([
         "where", "filter", "map", "flatMap", "slice", "concat", "indexOf", "find", "findIndex", "includes",
         "sort", "groupBy", "distinct", "every", "some", "none", "first", "last", "to",
-        "expand", "forEach", "length", "values", "array", "defaultComparator"
+        "expand", "forEach", "length", "values", "array", "defaultComparator", "toString"
     ]);
 
     private static ARRAY_PROXY: ProxyHandler<DataArrayImpl<any>> = {
@@ -268,7 +268,7 @@ class DataArrayImpl<T> implements DataArray<T> {
             let value = child[key];
             if (value === undefined || value === null) continue;
 
-            if (Array.isArray(value)) value.forEach(v => result.push(v));
+            if (Array.isArray(value) || DataArray.isDataArray(value)) value.forEach(v => result.push(v));
             else result.push(value);
         }
 
@@ -304,6 +304,10 @@ class DataArrayImpl<T> implements DataArray<T> {
 
     public [Symbol.iterator](): Iterator<T> {
         return this.values[Symbol.iterator]();
+    }
+
+    public toString(): string {
+        return this.values.toString();
     }
 }
 

@@ -54,7 +54,7 @@ export class DataviewInlineApi {
     public page(path: string | Link): Record<string, any> | undefined { return this.api.page(path, this.currentFilePath); }
 
     /** Return an array of page objects corresponding to pages which match the query. */
-    public pages(query: string): DataArray<any> { return this.api.pages(query, this.currentFilePath); }
+    public pages(query?: string): DataArray<any> { return this.api.pages(query, this.currentFilePath); }
 
     /** Return the information about the current page. */
     public current(): Record<string, any> | undefined {

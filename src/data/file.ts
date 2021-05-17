@@ -41,8 +41,10 @@ export interface Task {
     path: string;
 	/** Whether or not this task was completed. */
 	completed: boolean;
-    /** The tags inside of this task description. */
-    tags?: Set<string>;
+    /** Whether or not this task and all of it's subtasks are completed. */
+    fullyCompleted: boolean;
+    /** If true, this is a real task; otherwise, it is a list element above/below a task. */
+    real: boolean;
 	/** Any subtasks of this task. */
 	subtasks: Task[];
 }
@@ -50,27 +52,27 @@ export interface Task {
 /** All extracted markdown file metadata obtained from a file. */
 export class PageMetadata {
     /** The path this file exists at. */
-    path: string;
+    public path: string;
     /** Obsidian-provided date this page was created. */
-    ctime: DateTime;
+    public ctime: DateTime;
     /** Obsidian-provided date this page was modified. */
-    mtime: DateTime;
+    public mtime: DateTime;
     /** Obsidian-provided size of this page in bytes. */
-    size: number;
+    public size: number;
     /** The day associated with this page, if relevant. */
-    day?: DateTime;
+    public day?: DateTime;
     /** The first H1/H2 header in the file. May not exist. */
-    title?: string;
+    public title?: string;
     /** All of the fields contained in this markdown file - both frontmatter AND in-file links. */
-    fields: Map<string, LiteralField>;
+    public fields: Map<string, LiteralField>;
     /** All of the exact tags (prefixed with '#') in this file overall. */
-    tags: Set<string>;
+    public tags: Set<string>;
     /** All of the aliases defined for this file. */
-    aliases: Set<string>;
+    public aliases: Set<string>;
     /** All OUTGOING links (including embeds, header + block links) in this file. */
-    links: LinkMetadata[];
+    public links: LinkMetadata[];
     /** All tasks contained within this file. */
-    tasks: Task[];
+    public tasks: Task[];
 
     public constructor(path: string, init?: Partial<PageMetadata>) {
         this.path = path;
@@ -269,7 +271,15 @@ export function parseInlineField(value: string): LiteralField {
 }
 
 /** Matches lines of the form "- [ ] <task thing>". */
-export const TASK_REGEX = /(\s*)[-*]\s*\[([ Xx\.]?)\]\s*(.+)/i;
+export const TASK_REGEX = /^(\s*)[-*]\s*(\[[ Xx\.]?\])?\s*([^-*].*)$/iu;
+
+/** Return true if the given predicate is true for the task or any subtasks. */
+export function taskAny(t: Task, f: (t: Task) => boolean): boolean {
+    if (f(t)) return true;
+    for (let sub of t.subtasks) if (taskAny(sub, f)) return true;
+
+    return false;
+}
 
 /**
  * A hacky approach to scanning for all tasks using regex. Does not support multiline
@@ -278,7 +288,7 @@ export const TASK_REGEX = /(\s*)[-*]\s*\[([ Xx\.]?)\]\s*(.+)/i;
 export function findTasksInFile(path: string, file: string): Task[] {
 	// Dummy top of the stack that we'll just never get rid of.
 	let stack: [Task, number][] = [];
-	stack.push([{ text: "Root", line: -1, path, completed: false, subtasks: [] }, -4]);
+	stack.push([{ text: "Root", line: -1, path, completed: false, fullyCompleted: false, real: false, subtasks: [] }, -4]);
 
 	let lineno = 0;
 	for (let line of file.replace("\r", "").split("\n")) {
@@ -294,21 +304,28 @@ export function findTasksInFile(path: string, file: string): Task[] {
         }
 
 		let indent = match[1].replace("\t" , "    ").length;
+        let isReal = !!match[2] && match[2].trim().length > 0;
+        let isCompleted = !isReal || (match[2] == '[X]' || match[2] == '[x]');
 		let task: Task = {
 			text: match[3],
-			completed: match[2] == 'X' || match[2] == 'x',
+			completed: isCompleted,
+            fullyCompleted: isCompleted,
+            real: isReal,
             path,
 			line: lineno,
 			subtasks: []
 		};
 
 		while (indent <= (stack.last()?.[1] ?? -4)) stack.pop();
-		stack.last()?.[0].subtasks.push(task);
+
+        for (let [elem, _] of stack) elem.fullyCompleted = elem.fullyCompleted && task.fullyCompleted;
+        stack.last()?.[0].subtasks.push(task);
 		stack.push([task, indent]);
 	}
 
 	// Return everything under the root, which should be all tasks.
-	return stack[0][0].subtasks;
+    // Strip trees of tasks which are purely not real (lol?).
+	return stack[0][0].subtasks.filter(t => taskAny(t, st => st.real));
 }
 
 /** Extract markdown metadata from the given Obsidian markdown file. */
