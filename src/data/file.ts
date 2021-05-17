@@ -3,8 +3,7 @@ import { Fields, Link, LiteralField, LiteralFieldRepr } from 'src/query';
 import { getAllTags, MetadataCache, parseFrontMatterAliases, parseFrontMatterTags, TFile, Vault } from 'obsidian';
 import { EXPRESSION, parseInnerLink } from 'src/parse';
 import { DateTime } from 'luxon';
-import { FullIndex } from '.';
-import { DataArray } from 'src/api/data-array';
+import { FullIndex } from 'src/data/index';
 
 interface BaseLinkMetadata {
     path: string;
@@ -146,12 +145,12 @@ export class PageMetadata {
                 "folder": this.folder(),
                 "name": this.name(),
                 "link": Link.file(this.path, false),
-                "outlinks": DataArray.wrap(this.fileLinks().map(l => Link.file(l.path, false))),
-                "inlinks": DataArray.wrap(Array.from(index.links.getInverse(this.path))).map(l => Link.file(l, false)),
-                "etags": DataArray.wrap(Array.from(this.tags)),
-                "tags": DataArray.wrap(Array.from(this.fullTags())),
-                "aliases": DataArray.wrap(Array.from(this.aliases)),
-                "tasks": DataArray.wrap(this.tasks),
+                "outlinks": this.fileLinks().map(l => Link.file(l.path, false)),
+                "inlinks": Array.from(index.links.getInverse(this.path)).map(l => Link.file(l, false)),
+                "etags": Array.from(this.tags),
+                "tags": Array.from(this.fullTags()),
+                "aliases": Array.from(this.aliases),
+                "tasks": this.tasks,
                 "day": this.day ?? undefined,
                 "ctime": this.ctime,
                 "cday": DateTime.fromObject({ year: this.ctime.year, month: this.ctime.month, day: this.ctime.day }),

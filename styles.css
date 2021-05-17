@@ -27,3 +27,9 @@
 
     max-width: 100%;
 }
+
+/** Rendered value styling for any view. */
+.dataview-result-list-ul {
+    padding: 0em !important;
+    margin: 0em !important;
+}

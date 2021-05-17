@@ -272,6 +272,32 @@ export namespace Fields {
         return Fields.literal('html', elem);
     }
 
+    export function toString(field: LiteralField, recursive: boolean = false): string {
+        switch (field.valueType) {
+            case "string": return field.value;
+            case "number":
+            case "boolean":
+            case "html":
+                return "" + field.value;
+            case "null":
+                return "\\-";
+            case "link":
+                return field.value.markdown();
+            case "array":
+                let result = "";
+                if (recursive) result += "[";
+                result += field.value.map(f => toString(f)).join(", ")
+                if (recursive) result += "]";
+                return result;
+            case "object":
+                return "{ " + Array.from(field.value.entries()).map(e => e[0] + ": " + toString(e[1])).join(", ") + " }";
+            case "date":
+                return field.value.toLocaleString(DateTime.DATETIME_SHORT);
+            case "duration":
+                return field.value.toISOTime();
+        }
+    }
+
     /** Convert a field to a raw JavaScript-friendly value. */
     export function fieldToValue(val: LiteralField): LiteralValue {
         switch (val.valueType) {

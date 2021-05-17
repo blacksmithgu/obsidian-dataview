@@ -309,8 +309,8 @@ export const BINARY_OPS = BinaryOpHandler.create()
         le: (a, b) => Fields.bool(a.value < b.value)
     })
     // String operations.
-    .add('+', 'string', '*', (a, b) => Fields.literal('string', a.value + b.value))
-    .add('+', '*', 'string', (a, b) => Fields.literal('string', a.value + b.value))
+    .add('+', 'string', '*', (a, b) => Fields.literal('string', a.value + Fields.toString(b)))
+    .add('+', '*', 'string', (a, b) => Fields.literal('string', Fields.toString(a) + b.value))
     .addComm("*", 'string', 'number', (a, b) => Fields.literal('string', a.value.repeat(Math.abs(b.value))))
     .addComparison('string', {
         equals: (a, b) => Fields.bool(a.value.localeCompare(b.value) == 0),
@@ -713,6 +713,9 @@ export const FUNCTIONS = new FunctionHandler()
         return context.evaluate(Fields.func(Fields.variable("reduce"), [list, Fields.string("*")]));
     })
     .add1("product", "null", (a: LFR<"null">, context) => Fields.NULL)
+    .add2("join", "array", "string", (a: LFR<"array">, b: LFR<"string">, context) => {
+        return Fields.string(a.value.map(v => Fields.toString(v)).join(b.value));
+    })
     .add1("any", "array", (list: LFR<"array">, context) => Fields.bool(list.value.some(v => Fields.isTruthy(v))))
     .addVararg("any", (args, context) => Fields.bool(args.some(v => Fields.isTruthy(v))))
     .add1("all", "array", (list: LFR<"array">, context) => Fields.bool(list.value.every(v => Fields.isTruthy(v))))
