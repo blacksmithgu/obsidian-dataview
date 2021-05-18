@@ -2,6 +2,7 @@
 import { DateTime, Duration } from 'luxon';
 import { getFileName } from 'src/util/normalize';
 import { Source } from './data/source';
+import { QuerySettings } from './settings';
 
 /** An Obsidian link with all associated metadata. */
 export class Link {
@@ -577,22 +578,6 @@ export namespace Fields {
 
     export const NULL = Fields.literal('null', null);
 }
-
-////////////////////
-// Query Settings //
-////////////////////
-
-export interface QuerySettings {
-    renderNullAs: string;
-    warnOnEmptyResult: boolean;
-    refreshInterval: number;
-}
-
-export const DEFAULT_QUERY_SETTINGS: QuerySettings = {
-    renderNullAs: "-",
-    warnOnEmptyResult: true,
-    refreshInterval: 5000
-};
 
 //////////////////////
 // Query Definition //

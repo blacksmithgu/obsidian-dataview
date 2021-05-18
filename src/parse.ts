@@ -1,9 +1,10 @@
 import { DateTime, Duration } from 'luxon';
-import { BinaryOp, VariableField, Field, Fields, WhereStep, SortByStep, LimitStep, QueryHeader, QueryOperation, FlattenStep, GroupStep, LiteralField, DEFAULT_QUERY_SETTINGS, QuerySettings, Link } from 'src/query';
+import { BinaryOp, VariableField, Field, Fields, WhereStep, SortByStep, LimitStep, QueryHeader, QueryOperation, FlattenStep, GroupStep, LiteralField, Link } from 'src/query';
 import { QueryType, NamedField, QuerySortBy, Query } from "src/query";
 import * as P from 'parsimmon';
 import { normalizeDuration } from 'src/util/normalize';
 import { FolderSource, NegatedSource, Source, SourceOp, Sources, TagSource } from './data/source';
+import { DEFAULT_QUERY_SETTINGS, QuerySettings } from './settings';
 
 ///////////
 // TYPES //

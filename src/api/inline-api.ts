@@ -6,7 +6,8 @@ import { Task } from "src/data/file";
 import { Fields, Link } from "src/query";
 import { renderValue } from "src/render";
 import { DataArray } from "src/api/data-array";
-import { DataviewApi } from "./plugin-api";
+import { DataviewApi } from "src/api/plugin-api";
+import { DataviewSettings } from "src/settings";
 
 export class DataviewInlineApi {
     /**
@@ -33,14 +34,18 @@ export class DataviewInlineApi {
     /** The general plugin API which much of this inline API delegates to. */
     public api: DataviewApi;
 
-    constructor(index: FullIndex, component: Component, container: HTMLElement, app: App, currentFilePath: string) {
+    /** Settings which determine defaults, incl. many rendering options. */
+    public settings: DataviewSettings;
+
+    constructor(index: FullIndex, component: Component, container: HTMLElement, app: App, settings: DataviewSettings, currentFilePath: string) {
         this.index = index;
         this.component = component;
         this.container = container;
         this.app = app;
         this.currentFilePath = currentFilePath;
+        this.settings = settings;
 
-        this.api = new DataviewApi(this.app, this.index);
+        this.api = new DataviewApi(this.app, this.index, this.settings);
     }
 
     /////////////////////////////
@@ -109,7 +114,7 @@ export class DataviewInlineApi {
         if (wrapped === null || wrapped === undefined) this.container.createEl(headerType, { text });
 
         let header = this.container.createEl(headerType);
-        renderValue(wrapped?.value ?? null, header, this.currentFilePath, this.component, "\-", false);
+        renderValue(wrapped?.value ?? null, header, this.currentFilePath, this.component, this.settings.renderNullAs, false);
     }
 
     /** Render an HTML paragraph, containing arbitrary text. */
@@ -117,7 +122,7 @@ export class DataviewInlineApi {
         let wrapped = Fields.wrapValue(text);
         if (wrapped === null || wrapped === undefined) this.container.createEl('p', { text });
 
-        renderValue(wrapped?.value ?? null, this.container, this.currentFilePath, this.component, "\-", true);
+        renderValue(wrapped?.value ?? null, this.container, this.currentFilePath, this.component, this.settings.renderNullAs, true);
     }
 
     /** Render a dataview list of the given values. */
@@ -142,6 +147,6 @@ export function evalInContext(script: string, context: any): any {
 }
 
 /** Make a full API context which a script can be evaluted in. */
-export function makeApiContext(index: FullIndex, component: Component, app: App, container: HTMLElement, originFile: string): DataviewInlineApi {
-    return new DataviewInlineApi(index, component, container, app, originFile);
+export function makeApiContext(index: FullIndex, component: Component, app: App, settings: DataviewSettings, container: HTMLElement, originFile: string): DataviewInlineApi {
+    return new DataviewInlineApi(index, component, container, app, settings, originFile);
 }

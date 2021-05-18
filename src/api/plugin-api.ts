@@ -8,11 +8,12 @@ import { Sources } from "src/data/source";
 import { EXPRESSION } from "src/parse";
 import { Fields, Link, LiteralValue } from "src/query";
 import { renderList, renderTable, renderValue } from "src/render";
+import { DataviewSettings } from "src/settings";
 import { renderFileTasks, renderTasks, TaskViewLifecycle } from "src/tasks";
 import { DataArray } from "./data-array";
 
 export class DataviewApi {
-    public constructor(public app: App, public index: FullIndex) { }
+    public constructor(public app: App, public index: FullIndex, public settings: DataviewSettings) { }
 
     /////////////////////////////
     // Index + Data Collection //
@@ -87,7 +88,7 @@ export class DataviewApi {
         if (!values) return;
         if (DataArray.isDataArray(values)) values = values.array();
 
-        renderList(container, values as any[], component, filePath, "\-");
+        renderList(container, values as any[], component, filePath, this.settings.renderNullAs);
     }
 
     /** Render a dataview table with the given headers, and the 2D array of values. */
@@ -95,7 +96,7 @@ export class DataviewApi {
         if (!values) values = [];
         if (DataArray.isDataArray(values)) values = values.array();
 
-        renderTable(container, headers, values as any[][], component, filePath, "\-");
+        renderTable(container, headers, values as any[][], component, filePath, this.settings.renderNullAs);
     }
 
     /** Render a dataview task view with the given tasks. */

@@ -2,38 +2,14 @@ import { MarkdownRenderChild, Plugin, Vault, MarkdownPostProcessorContext, Plugi
 import { renderErrorPre, renderList, renderTable, renderValue } from 'src/render';
 import { FullIndex } from 'src/data/index';
 import * as Tasks from 'src/tasks';
-import { Field, Fields, Query, QuerySettings } from 'src/query';
+import { Field, Fields, Query } from 'src/query';
 import { parseField, parseQuery } from "src/parse";
 import { execute, executeInline, executeTask } from 'src/engine';
 import { tryOrPropogate } from 'src/util/normalize';
 import { waitFor } from 'src/util/concurrency';
 import { evalInContext, makeApiContext } from 'src/api/inline-api';
 import { DataviewApi } from './api/plugin-api';
-
-interface DataviewSettings extends QuerySettings {
-	/** What to render 'null' as in tables. Defaults to '-'. */
-	renderNullAs: string;
-	/** If true, render a modal which shows no results were returned. */
-	warnOnEmptyResult: boolean;
-	/** The prefix for inline queries by default. */
-	inlineQueryPrefix: string;
-	/** The interval that views are refreshed, by default. */
-	refreshInterval: number;
-
-	// Internal properties //
-
-	/** A monotonically increasing version which tracks what schema we are on, used for migrations. */
-	schemaVersion: number;
-}
-
-/** Default settings for dataview on install. */
-const DEFAULT_SETTINGS: DataviewSettings = {
-	renderNullAs: "\\-",
-	warnOnEmptyResult: true,
-	inlineQueryPrefix: "=",
-	refreshInterval: 1000,
-	schemaVersion: 1
-}
+import { DataviewSettings, DEFAULT_SETTINGS } from './settings';
 
 export default class DataviewPlugin extends Plugin {
     /** Plugin-wide default settigns. */
@@ -126,12 +102,12 @@ export default class DataviewPlugin extends Plugin {
 	async prepareIndexes() {
 		let index = await FullIndex.generate(this.app.vault, this.app.metadataCache);
 		this.index = index;
-        this.api = new DataviewApi(this.app, this.index);
+        this.api = new DataviewApi(this.app, this.index, this.settings);
 	}
 
 	/** Update plugin settings. */
 	async updateSettings(settings: Partial<DataviewSettings>) {
-		this.settings = Object.assign(this.settings, settings);
+		Object.assign(this.settings, settings);
 		await this.saveData(this.settings);
 	}
 
@@ -456,7 +432,7 @@ class DataviewJSRenderer extends MarkdownRenderChild {
 		// Assume that the code is javascript, and try to eval it.
 		try {
 			evalInContext(DataviewJSRenderer.PREAMBLE + this.script,
-				makeApiContext(this.index, this, this.app, this.container, this.origin));
+				makeApiContext(this.index, this, this.app, this.settings, this.container, this.origin));
 		} catch (e) {
 			this.containerEl.innerHTML = "";
 			renderErrorPre(this.container, "Evaluation Error: " + e.stack);
