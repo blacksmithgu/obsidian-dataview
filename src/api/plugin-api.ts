@@ -102,7 +102,6 @@ export class DataviewApi {
     /** Render a dataview task view with the given tasks. */
     public taskList(tasks: Task[] | DataArray<any>, groupByFile: boolean = true, container: HTMLElement, component: Component, filePath: string) {
         if (DataArray.isDataArray(tasks)) tasks = tasks.array();
-        console.log(tasks);
 
         if (groupByFile) {
             let byFile = new Map<string, Task[]>();
