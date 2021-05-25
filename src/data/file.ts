@@ -87,7 +87,7 @@ export class PageMetadata {
     /** Parse all subtags out of the given tag. I.e., #hello/i/am would yield [#hello/i/am, #hello/i, #hello]. */
     public static parseSubtags(tag: string): string[] {
         let result = [tag];
-        while (tag.contains("/")) {
+        while (tag.includes("/")) {
             tag = tag.substring(0, tag.lastIndexOf("/"));
             result.push(tag);
         }
@@ -269,8 +269,19 @@ export function parseInlineField(value: string): LiteralField {
     else return Fields.string(value);
 }
 
+export function addInlineField(fields: Map<string, LiteralField>, name: string, value: LiteralField) {
+    if (fields.has(name)) {
+        let existing = fields.get(name) as LiteralField;
+        if (existing.valueType == "array") fields.set(name, Fields.array(existing.value.concat([value])));
+        else fields.set(name, Fields.array([existing, value]));
+    } else {
+        fields.set(name, value);
+    }
+}
+
 /** Matches lines of the form "- [ ] <task thing>". */
 export const TASK_REGEX = /^(\s*)[-*]\s*(\[[ Xx\.]?\])?\s*([^-*].*)$/iu;
+export const MAX_PARSED_LINE_LENGTH = 500;
 
 /** Return true if the given predicate is true for the task or any subtasks. */
 export function taskAny(t: Task, f: (t: Task) => boolean): boolean {
@@ -292,6 +303,12 @@ export function findTasksInFile(path: string, file: string): Task[] {
 	let lineno = 0;
 	for (let line of file.replace("\r", "").split("\n")) {
 		lineno += 1;
+
+        // Fast bail-out before running more expensive regex matching.
+        if (line.length > MAX_PARSED_LINE_LENGTH || !line.includes("[") || !line.includes("]")) {
+            while (stack.length > 1) stack.pop();
+            continue;
+        }
 
 		let match = TASK_REGEX.exec(line);
 		if (!match) {
@@ -375,14 +392,17 @@ export async function extractMarkdownMetadata(file: TFile, vault: Vault, cache: 
     // Trawl through file contents to locate custom inline file content...
     let fileContents = await vault.read(file);
     for (let line of fileContents.split("\n")) {
+        // Fast bail-out for lines that are too long.
+        if (line.length > MAX_PARSED_LINE_LENGTH || !line.includes("::")) continue;
         line = line.trim();
+
         let match = inlineRegex.exec(line);
         if (!match) continue;
 
         let inlineField = parseInlineField(match[2]);
-        fields.set(match[1].trim(), inlineField);
+        addInlineField(fields, match[1].trim(), inlineField);
         let simpleName = canonicalizeVarName(match[1].trim());
-        if (simpleName.length > 0) fields.set(simpleName, inlineField);
+        if (simpleName.length > 0) addInlineField(fields, simpleName, inlineField);
     }
 
     // And extract tasks...

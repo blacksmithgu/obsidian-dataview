@@ -177,9 +177,8 @@ export class FullIndex {
 
         // Traverse all markdown files & fill in initial data.
         let start = new Date().getTime();
-        let promises = this.vault.getMarkdownFiles().map(file => this.reloadInternalFile(file));
-        await Promise.all(promises);
-        console.log("Dataview task & metadata indices prepared in %.3fs.", (new Date().getTime() - start) / 1000.0);
+        this.vault.getMarkdownFiles().forEach(file => this.queueReload(file));
+        console.log("Dataview: Task & metadata parsing queued in %.3fs.", (new Date().getTime() - start) / 1000.0);
     }
 
     /** Queue the file for reloading; several fast reloads in a row will be debounced. */
@@ -191,6 +190,8 @@ export class FullIndex {
 
     /** Subscribe a handler which is called when the index refreshes. Returns an ID which should be used to unsubscribe. */
     public on(evt: 'reload', handler: () => void): number {
+        if (evt != "reload") return -1;
+
         let nextID = this.currentReloadId++;
         this.reloadListeners.set(nextID, handler);
         return nextID;
@@ -198,6 +199,7 @@ export class FullIndex {
 
     /** Unsubscribe a handler with the given ID. */
     public off(evt: 'reload', handlerId: number) {
+        if (evt != "reload" || handlerId < 0) return;
         this.reloadListeners.delete(handlerId);
     }
 

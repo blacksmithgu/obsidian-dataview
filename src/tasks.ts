@@ -132,9 +132,9 @@ export async function setTaskCheckedInFile(vault: Vault, path: string, taskLine:
 
 	if (check) {
 		splitText[taskLine - 1] = splitText[taskLine - 1]
-			.replace("- [ ]", "- [X]")
-			.replace("- []", "- [X]")
-			.replace("-[]", "- [X]");
+			.replace("- [ ]", "- [x]")
+			.replace("- []", "- [x]")
+			.replace("-[]", "- [x]");
 	} else {
 		splitText[taskLine - 1] = splitText[taskLine - 1]
 			.replace("- [X]", "- [ ]")

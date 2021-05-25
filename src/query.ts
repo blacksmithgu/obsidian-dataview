@@ -80,6 +80,8 @@ export type QueryType = 'list' | 'table' | 'task';
 
 /** The literal types supported by the query engine. */
 export type LiteralType = 'boolean' | 'number' | 'string' | 'date' | 'duration' | 'link' | 'array' | 'object' | 'html' | 'null';
+/** The raw values that a literal can take on. */
+export type LiteralValue = boolean | number | string | DateTime | Duration | Link | Array<LiteralValue> | { [key: string]: LiteralValue } | HTMLElement | null;
 
 /** Maps the string type to it's internal javascript representation. */
 export type LiteralTypeRepr<T extends LiteralType> =
@@ -104,13 +106,11 @@ export type ExternalTypeRepr<T extends LiteralType> =
     T extends 'date' ? DateTime :
     T extends 'null' ? null :
     T extends 'link' ? Link :
-    T extends 'array' ? Array<any> :
-    T extends 'object' ? Record<string, any> :
+    T extends 'array' ? Array<LiteralValue> :
+    T extends 'object' ? Record<string, LiteralValue> :
     T extends 'html' ? HTMLElement :
     any;
 
-/** The raw values that a literal can take on. */
-export type LiteralValue = ExternalTypeRepr<LiteralType>;
 /** A wrapped literal value which can be switched on. */
 export type WrappedLiteralValue =
     LiteralValueWrapper<'string'>

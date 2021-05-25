@@ -32,7 +32,7 @@ export default class DataviewPlugin extends Plugin {
 
 		this.addSettingTab(new DataviewSettingsTab(this.app, this));
 
-		console.log("Dataview Plugin - Version 0.3.x Loaded");
+		console.log("Dataview: Version 0.3.x Loaded");
 
 		if (!this.app.workspace.layoutReady) {
 			this.app.workspace.on("layout-ready", async () => this.prepareIndexes());
@@ -40,7 +40,7 @@ export default class DataviewPlugin extends Plugin {
 			this.prepareIndexes();
 		}
 
-		// Main entry point for dataview. Runs at a very high priority before other tasks.
+		// Main entry point for dataview.
 		this.registerMarkdownCodeBlockProcessor("dataview", async (source: string, el, ctx) => {
 			let query = tryOrPropogate(() => parseQuery(source, this.settings));
 
