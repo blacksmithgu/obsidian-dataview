@@ -114,11 +114,6 @@ export async function renderValue(field: LiteralValue, container: HTMLElement, o
 		await renderCompactMarkdown("" + field, container, originFile, component);
 	} else if (Fields.isArray(field) || DataArray.isDataArray(field)) {
 		if (expandList) {
-			if (field.length == 0) {
-                container.appendText("<empty list>");
-                return;
-            }
-
 			let list = container.createEl('ul', { cls: ['dataview', 'dataview-ul', 'dataview-result-list-ul'] });
 			for (let child of field) {
 				let li = list.createEl('li', { cls: 'dataview-result-list-li' });
@@ -145,11 +140,6 @@ export async function renderValue(field: LiteralValue, container: HTMLElement, o
 		container.appendChild(field);
 	} else if (Fields.isObject(field)) {
 		if (expandList) {
-			if (Object.keys(field).length == 0) {
-				container.appendText("<empty object>");
-				return;
-			}
-
 			let list = container.createEl('ul', { cls: ['dataview', 'dataview-ul', 'dataview-result-object-ul' ]});
 			for (let [key, value] of Object.entries(field)) {
 				let li = list.createEl('li', { cls: ['dataview', 'dataview-li', 'dataview-result-object-li'] });
