@@ -48,6 +48,15 @@ export interface Task {
 	subtasks: Task[];
 }
 
+export namespace Task {
+    /** Deep-copy a task. */
+    export function copy(input: Task): Task {
+        let partial = Object.assign({}, input) as Task;
+        partial.subtasks = partial.subtasks.map(t => copy(t));
+        return partial;
+    }
+}
+
 /** All extracted markdown file metadata obtained from a file. */
 export class PageMetadata {
     /** The path this file exists at. */
@@ -138,7 +147,8 @@ export class PageMetadata {
 
     /** Map this metadata to a full object; uses the index for additional data lookups.  */
     public toObject(index: FullIndex): Record<string, any> {
-        // Static fields first.
+        // Static fields first. Note this object should not have any pointers to the original object (so that the
+        // index cannot accidentally be mutated).
         let result: Record<string, any> = {
             "file": {
                 "path": this.path,
@@ -150,7 +160,7 @@ export class PageMetadata {
                 "etags": Array.from(this.tags),
                 "tags": Array.from(this.fullTags()),
                 "aliases": Array.from(this.aliases),
-                "tasks": this.tasks,
+                "tasks": this.tasks.map(t => Task.copy(t)),
                 "day": this.day ?? undefined,
                 "ctime": this.ctime,
                 "cday": DateTime.fromObject({ year: this.ctime.year, month: this.ctime.month, day: this.ctime.day }),
@@ -163,7 +173,7 @@ export class PageMetadata {
 
         // Then append the computed fields.
         for (let [key, value] of this.fields) {
-            if (key === "file") continue; // Don't allow 'file' to override.
+            if (key === "file") continue; // Don't allow fields to override 'file'.
             result[key] = Fields.fieldToValue(value);
         }
 
@@ -402,7 +412,7 @@ export async function extractMarkdownMetadata(file: TFile, vault: Vault, cache: 
         let inlineField = parseInlineField(match[2]);
         addInlineField(fields, match[1].trim(), inlineField);
         let simpleName = canonicalizeVarName(match[1].trim());
-        if (simpleName.length > 0) addInlineField(fields, simpleName, inlineField);
+        if (simpleName.length > 0 && simpleName != match[1].trim()) addInlineField(fields, simpleName, inlineField);
     }
 
     // And extract tasks...

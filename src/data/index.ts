@@ -78,6 +78,25 @@ export class IndexMap {
     }
 }
 
+/** Multi-threaded indexing job which indexes files passed to it's reload queue. Debounces frequent file changes automatically. */
+export class FileIndexer {
+    // Background workers which do the actual file parsing.
+    workers: Worker[];
+
+    public constructor(public numWorkers: number) {
+        this.workers = [];
+        for (let index = 0; index < numWorkers; index++) {
+            let workerFunc = URL.createObjectURL(new Blob(['(',
+            function() {
+
+            }.toString(),
+            ')()'], { type: 'application/javascript'}));
+
+            this.workers.push(new Worker(workerFunc));
+        }
+    }
+}
+
 /** Aggregate index which has several sub-indices and will initialize all of them. */
 export class FullIndex {
     /** How often the reload queue is checked for reloads, in milliseconds. */

@@ -66,6 +66,16 @@ export class DataviewApi {
         return DataArray.wrap([raw]);
     }
 
+    /** Return true if theg given value is a javascript array OR a dataview data array. */
+    public isArray(raw: any): raw is DataArray<any> | Array<any> {
+        return DataArray.isDataArray(raw) || Array.isArray(raw);
+    }
+
+    /** Create a dataview file link to the given path. */
+    public fileLink(path: string, embed: boolean = false, display?: string) {
+        return Link.file(path, embed, display);
+    }
+
     /**
      * Compare two arbitrary JavaScript values using Dataview's default comparison rules. Returns a negative value if
      * a < b, 0 if a = b, and a positive value if a > b.
