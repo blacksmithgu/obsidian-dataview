@@ -66,7 +66,7 @@ sort file.day desc
 
 **Note**: See the full documentation [here](https://blacksmithgu.github.io/obsidian-dataview/).
 
-Dataview allows you to write queries over markdown files which can be filtered by folder, tag, and markdown YAML fields; it can then display the resulting data in various formats. All dataviews are embedded code blocks with the general form
+Dataview allows you to write queries over markdown files which can be filtered by folder, tag, and markdown YAML fields; it can then display the resulting data in various formats. All dataviews are embedded code blocks with the general form:
 
 ~~~
 ```dataview
@@ -82,7 +82,7 @@ The first word in a query is always the view type - currently, either:
 - `table`, which renders files and any selected fields that pass the query filters.
 - `task`, which renders all tasks from any files that pass the query filters.
 
-You can query from either `#tags`, from `"folder"`, or from `[[link]]`. You can freely combine these filters into more complicated boolean expressions using `and` and `or`; if precedence is important, use parenthesis.
+You can query from either `#tags`, from `"folder"`, or from `[[link]]`. You can freely combine these filters into more complicated boolean expressions using `and` and `or`; if precedence is important, use parentheses.
 
 Fields can be any YAML front-matter field (currently, strings, numbers, ISO dates and durations are supported, with support for ratings, links, and intervals forthcoming), any custom defined field (using the `field as field2` syntax). You can obtain fields inside of YAML objects using the `.` operator - i.e., `Dates.Birthday` for example. Fields can also be functions of other fields - for example, `rating + offset`, is a valid field.
 
