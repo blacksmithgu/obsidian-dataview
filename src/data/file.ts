@@ -291,7 +291,6 @@ export function addInlineField(fields: Map<string, LiteralField>, name: string, 
 
 /** Matches lines of the form "- [ ] <task thing>". */
 export const TASK_REGEX = /^(\s*)[-*]\s*(\[[ Xx\.]?\])?\s*([^-*].*)$/iu;
-export const MAX_PARSED_LINE_LENGTH = 500;
 
 /** Return true if the given predicate is true for the task or any subtasks. */
 export function taskAny(t: Task, f: (t: Task) => boolean): boolean {
@@ -315,7 +314,7 @@ export function findTasksInFile(path: string, file: string): Task[] {
 		lineno += 1;
 
         // Fast bail-out before running more expensive regex matching.
-        if (line.length > MAX_PARSED_LINE_LENGTH || !line.includes("[") || !line.includes("]")) {
+        if (!line.includes("[") || !line.includes("]")) {
             while (stack.length > 1) stack.pop();
             continue;
         }
@@ -355,7 +354,7 @@ export function findTasksInFile(path: string, file: string): Task[] {
 }
 
 /** Extract markdown metadata from the given Obsidian markdown file. */
-export async function extractMarkdownMetadata(file: TFile, vault: Vault, cache: MetadataCache, inlineRegex: RegExp) {
+export async function extractMarkdownMetadata(file: TFile, vault: Vault, cache: MetadataCache, inlineRegex: RegExp): Promise<PageMetadata> {
     let tags = new Set<string>();
     let aliases = new Set<string>();
     let fields = new Map<string, LiteralField>();
@@ -403,7 +402,7 @@ export async function extractMarkdownMetadata(file: TFile, vault: Vault, cache: 
     let fileContents = await vault.read(file);
     for (let line of fileContents.split("\n")) {
         // Fast bail-out for lines that are too long.
-        if (line.length > MAX_PARSED_LINE_LENGTH || !line.includes("::")) continue;
+        if (!line.includes("::")) continue;
         line = line.trim();
 
         let match = inlineRegex.exec(line);

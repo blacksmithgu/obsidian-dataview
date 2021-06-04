@@ -34,6 +34,10 @@ export class DataviewApi {
 
     /** Map a page path to the actual data contained within that page. */
     public page(path: string | Link, originFile?: string): Record<string, any> | undefined {
+        if (!(typeof path === "string") && !Fields.isLink(path)) {
+            throw Error("dv.page only handles string and link paths; was provided type '" + (typeof path) + "'")
+        }
+
         let rawPath = (path instanceof Link) ? path.path : path;
         let normPath = this.app.metadataCache.getFirstLinkpathDest(rawPath, originFile ?? "");
         if (!normPath) return undefined;

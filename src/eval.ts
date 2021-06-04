@@ -716,6 +716,7 @@ export const FUNCTIONS = new FunctionHandler()
     .add2("join", "array", "string", (a: LFR<"array">, b: LFR<"string">, context) => {
         return Fields.string(a.value.map(v => Fields.toString(v)).join(b.value));
     })
+    .add1("join", "*", (a: LFR<"*">, context) => Fields.string(Fields.toString(a)))
     .add1("any", "array", (list: LFR<"array">, context) => Fields.bool(list.value.some(v => Fields.isTruthy(v))))
     .addVararg("any", (args, context) => Fields.bool(args.some(v => Fields.isTruthy(v))))
     .add1("all", "array", (list: LFR<"array">, context) => Fields.bool(list.value.every(v => Fields.isTruthy(v))))

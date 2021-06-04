@@ -174,6 +174,9 @@ export class FullIndex {
             this.etags.rename(oldPath, file.path);
             this.links.rename(oldPath, file.path);
             this.folders.rename(oldPath, file.path); // TODO: Do renames include folder changes?
+
+            // TODO: Would like to do this on a separate thread than the index.
+            for (let [_, handler] of this.reloadListeners) handler();
         });
 
         // File creation does cause a metadata change, but deletes do not. Clear the caches for this.
@@ -186,6 +189,9 @@ export class FullIndex {
             this.etags.delete(file.path);
             this.links.delete(file.path);
             this.folders.delete(file.path);
+
+            // TODO: Would like to do this on a separate thread than the index.
+            for (let [_, handler] of this.reloadListeners) handler();
         })
     }
 
@@ -238,7 +244,7 @@ export class FullIndex {
     private async reloadInternalFile(file: TFile) {
         // TODO: Hard-coding the inline field syntax here LMAO >.>
         let newPageMeta = await extractMarkdownMetadata(file, this.vault, this.metadataCache,
-            /[_\*~`]*([0-9\w\p{Letter}\p{Emoji_Presentation}][-0-9\w\p{Letter}\p{Emoji_Presentation}\s]*)[_\*~`]*\s*::\s*(.+)/u);
+            /[_\*~`]*([0-9\w\p{Letter}][-0-9\w\p{Letter}\p{Emoji_Presentation}\s/]*)[_\*~`]*\s*::\s*(.+)/u);
 
         this.pages.set(file.path, newPageMeta);
         this.tags.set(file.path, newPageMeta.fullTags());
