@@ -200,6 +200,18 @@ all(false, false) = false
 
 Returns `true` if NONE of the values in the array are truthy.
 
+### `join(array)`
+
+Joins elements in an array into a single string (i.e., rendering them all on the same line). If provided with a second
+argument, then each element will be separated by the given separator.
+
+```
+join(list(1, 2, 3)) = "1, 2, 3"
+join(list(1, 2, 3), " ") = "1 2 3"
+join(6) = "6"
+join(list()) = ""
+```
+
 ---
 
 ## String Operations
