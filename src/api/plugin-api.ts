@@ -13,7 +13,9 @@ import { renderFileTasks, renderTasks, TaskViewLifecycle } from "src/tasks";
 import { DataArray } from "./data-array";
 
 export class DataviewApi {
-    public constructor(public app: App, public index: FullIndex, public settings: DataviewSettings) { }
+    public constructor(public app: App, public index: FullIndex, public settings: DataviewSettings) {
+        app.metadataCache.trigger("dataview:api-ready");
+    }
 
     /////////////////////////////
     // Index + Data Collection //

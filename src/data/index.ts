@@ -177,6 +177,8 @@ export class FullIndex {
 
             // TODO: Would like to do this on a separate thread than the index.
             for (let [_, handler] of this.reloadListeners) handler();
+
+            metadataCache.trigger("dataview:metadata-change", "rename", file, oldPath)
         });
 
         // File creation does cause a metadata change, but deletes do not. Clear the caches for this.
@@ -192,6 +194,8 @@ export class FullIndex {
 
             // TODO: Would like to do this on a separate thread than the index.
             for (let [_, handler] of this.reloadListeners) handler();
+
+            metadataCache.trigger("dataview:metadata-change", "delete", file)
         })
     }
 
@@ -251,6 +255,8 @@ export class FullIndex {
         this.etags.set(file.path, newPageMeta.tags);
         this.links.set(file.path, new Set<string>(newPageMeta.links.map(l => l.path)));
         this.folders.set(file.path, new Set<string>([getParentFolder(file.path)]));
+
+        this.metadataCache.trigger("dataview:metadata-change", "update", file);
     }
 }
 
