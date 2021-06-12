@@ -1,7 +1,7 @@
 /** Core implementation of the query language evaluation engine. */
 
 import { LiteralValue, Values } from "src/data/value";
-import { Result } from "src/util/result";
+import { Result } from "src/api/result";
 import { BinaryOpHandler, DEFAULT_BINARY_OPS } from "./binaryop";
 import { Field, Fields } from "./field";
 import { DEFAULT_FUNCTIONS, FunctionImpl } from "./functions";
@@ -41,6 +41,11 @@ export class Context {
         return this;
     }
 
+    /** Get the value of a global variable by name. Returns null if not present. */
+    public get(name: string): LiteralValue {
+        return this.globals[name] ?? null;
+    }
+
     /** Try to evaluate an arbitary field in this context, raising an exception on failure. */
     public tryEvaluate(field: Field, data: Record<string, LiteralValue> = {}): LiteralValue {
         return this.evaluate(field, data).orElseThrow();
@@ -71,9 +76,10 @@ export class Context {
                     args.push(resolved.value);
                 }
 
-                let call;
-                if (Values.isFunction(func)) call = func;
+                let call: FunctionImpl;
+                if (Values.isFunction(func)) call = func as FunctionImpl;
                 else if (Values.isString(func) && func in this.functions) call = this.functions[func];
+                else if (Values.isString(func)) return Result.failure(`Unrecognized function name '${func}'`);
                 else return Result.failure(`Cannot call type '${Values.typeOf(func)}' as a function`);
 
                 try {
@@ -92,7 +98,7 @@ export class Context {
 
                 let checkedObject = field.object.type == "variable" && field.object.name == "row"
                     ? Result.success<LiteralValue, string>(Object.assign({}, this.globals, data))
-                    : this.evaluate(field.index, data);
+                    : this.evaluate(field.object, data);
                 if (!checkedObject.successful) return checkedObject;
 
                 let object = Values.wrapValue(checkedObject.value);

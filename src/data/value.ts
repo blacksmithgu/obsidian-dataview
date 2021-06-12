@@ -14,7 +14,7 @@ export class Link {
     /** The type of this link, which determines what 'subpath' refers to, if anything. */
     public type: 'file' | 'header' | 'block';
 
-    public static file(path: string, embed: boolean, display?: string) {
+    public static file(path: string, embed: boolean = false, display?: string) {
         return new Link({
             path,
             embed,
@@ -72,10 +72,12 @@ export class Link {
     }
 }
 
+/** Shorthand for a mapping from keys to values. */
+export type DataObject = { [key: string]: LiteralValue };
 /** The literal types supported by the query engine. */
 export type LiteralType = 'boolean' | 'number' | 'string' | 'date' | 'duration' | 'link' | 'array' | 'object' | 'html' | 'function' | 'null';
 /** The raw values that a literal can take on. */
-export type LiteralValue = boolean | number | string | DateTime | Duration | Link | Array<LiteralValue> | { [key: string]: LiteralValue } | HTMLElement | Function | null;
+export type LiteralValue = boolean | number | string | DateTime | Duration | Link | Array<LiteralValue> | DataObject | HTMLElement | Function | null;
 
 /** Maps the string type to it's external, API-facing representation. */
 export type LiteralRepr<T extends LiteralType> =
@@ -113,7 +115,7 @@ export interface LiteralValueWrapper<T extends LiteralType> {
 
 export namespace Values {
     /** Convert an arbitary value into a reasonable, Markdown-friendly string if possible. */
-    export function toString(field: LiteralValue, recursive: boolean = false): string {
+    export function toString(field: any, recursive: boolean = false): string {
         let wrapped = wrapValue(field);
         if (!wrapped) return "null";
 
@@ -259,6 +261,19 @@ export namespace Values {
                 return true;
             case "function":
                 return true;
+        }
+    }
+
+    /** Deep copy a field. */
+    export function deepCopy<T extends LiteralValue>(field: T): T {
+        if (Values.isArray(field)) {
+            return ([] as LiteralValue[]).concat(field.map(v => deepCopy(v))) as T;
+        } else if (Values.isObject(field)) {
+            let result: Record<string, LiteralValue> = {};
+            for (let [key, value] of Object.entries(field)) result[key] = deepCopy(value);
+            return result as T;
+        } else {
+            return field;
         }
     }
 

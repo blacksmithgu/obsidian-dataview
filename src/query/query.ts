@@ -83,7 +83,12 @@ export interface GroupStep {
     field: NamedField;
 }
 
-export type QueryOperation = WhereStep | SortByStep | LimitStep | FlattenStep | GroupStep;
+export interface ExtractStep {
+    type: 'extract';
+    fields: Record<string, Field>;
+}
+
+export type QueryOperation = WhereStep | SortByStep | LimitStep | FlattenStep | GroupStep | ExtractStep;
 
 /**
  * A query over the Obsidian database. Queries have a specific and deterministic execution order:

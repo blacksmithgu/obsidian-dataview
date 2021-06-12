@@ -3,15 +3,16 @@ import { renderErrorPre, renderList, renderTable, renderValue } from 'src/ui/ren
 import { FullIndex } from 'src/data/index';
 import * as Tasks from 'src/ui/tasks';
 import { Query } from 'src/query/query';
-import { Field, Fields } from 'src/expression/field';
+import { Field } from 'src/expression/field';
 import { parseField } from "src/expression/parse";
 import { parseQuery } from "src/query/parse";
-import { execute, executeInline, executeTask } from 'src/query/engine';
+import { executeInline, executeList, executeTable, executeTask } from 'src/query/engine';
 import { tryOrPropogate } from 'src/util/normalize';
 import { waitFor } from 'src/util/concurrency';
 import { evalInContext, makeApiContext } from 'src/api/inline-api';
 import { DataviewApi } from './api/plugin-api';
 import { DataviewSettings, DEFAULT_SETTINGS } from './settings';
+import { LiteralValue } from './data/value';
 
 export default class DataviewPlugin extends Plugin {
     /** Plugin-wide default settigns. */
@@ -44,14 +45,15 @@ export default class DataviewPlugin extends Plugin {
 
 		// Main entry point for dataview.
 		this.registerMarkdownCodeBlockProcessor("dataview", async (source: string, el, ctx) => {
-			let query = tryOrPropogate(() => parseQuery(source, this.settings));
+			let maybeQuery = tryOrPropogate(() => parseQuery(source, this.settings));
 
 			// In case of parse error, just render the error.
-			if (typeof query === 'string') {
-				renderErrorPre(el, "Dataview: " + query);
+			if (!maybeQuery.successful) {
+				renderErrorPre(el, "Dataview: " + maybeQuery.error);
 				return;
 			}
 
+            let query = maybeQuery.value;
 			switch (query.header.type) {
 				case 'task':
 					ctx.addChild(this.wrapWithEnsureIndex(ctx, el,
@@ -87,12 +89,13 @@ export default class DataviewPlugin extends Plugin {
 				let potentialField = text.substring(this.settings.inlineQueryPrefix.length).trim();
 
 				let field = tryOrPropogate(() => parseField(potentialField));
-				if (typeof field === "string") {
+				if (!field.successful) {
 					let errorBlock = el.createEl('div');
-					renderErrorPre(errorBlock, `Dataview (inline field '${potentialField}'): ${field}`);
+					renderErrorPre(errorBlock, `Dataview (inline field '${potentialField}'): ${field.error}`);
 				} else {
+                    let fieldValue = field.value;
 					ctx.addChild(this.wrapInlineWithEnsureIndex(ctx, codeblock,
-						() => new DataviewInlineRenderer(field as Field, text, el, codeblock, this.index, ctx.sourcePath, this.settings)));
+						() => new DataviewInlineRenderer(fieldValue, text, el, codeblock, this.index, ctx.sourcePath, this.settings)));
 				}
 			}
 		});
@@ -104,7 +107,9 @@ export default class DataviewPlugin extends Plugin {
 	async prepareIndexes() {
 		let index = await FullIndex.generate(this.app.vault, this.app.metadataCache);
 		this.index = index;
+
         this.api = new DataviewApi(this.app, this.index, this.settings);
+        this.app.metadataCache.trigger("dataview:api-ready", this.api);
 	}
 
 	/** Update plugin settings. */
@@ -268,29 +273,30 @@ class DataviewListRenderer extends MarkdownRenderChild {
 	}
 
 	async render() {
-		let result = tryOrPropogate(() => execute(this.query, this.index, this.origin));
-		if (typeof result === 'string') {
-			renderErrorPre(this.container, "Dataview: " + result);
-		} else if (result.data.length == 0 && this.settings.warnOnEmptyResult) {
+		let maybeResult = tryOrPropogate(() => executeList(this.query, this.index, this.origin));
+		if (!maybeResult.successful) {
+			renderErrorPre(this.container, "Dataview: " + maybeResult.error);
+            return;
+		} else if (maybeResult.value.data.length == 0 && this.settings.warnOnEmptyResult) {
 			renderErrorPre(this.container, "Dataview: Query returned 0 results.");
-		} else {
-			if (result.names.length == 2) {
-				let rendered: HTMLElement[] = [];
-				for (let [file, value] of result.data) {
-					let span = document.createElement('span');
-					await renderValue(Fields.fieldToValue(file), span, this.origin, this, this.settings.renderNullAs, true);
-					span.appendText(": ");
-					await renderValue(Fields.fieldToValue(value), span, this.origin, this, this.settings.renderNullAs, true);
-
-					rendered.push(span);
-				}
-
-				await renderList(this.container, rendered, this, this.origin, this.settings.renderNullAs);
-			} else {
-				await renderList(this.container, result.data.map(v => v.length == 0 ? null : Fields.fieldToValue(v[0])),
-					this, this.origin, this.settings.renderNullAs);
-			}
+            return;
 		}
+        let result = maybeResult.value;
+        let rendered: LiteralValue[] = [];
+        for (let row of result.data) {
+            if (row.value) {
+                let span = document.createElement('span');
+                await renderValue(row.primary, span, this.origin, this, this.settings.renderNullAs, true);
+                span.appendText(": ");
+                await renderValue(row.value, span, this.origin, this, this.settings.renderNullAs, true);
+
+                rendered.push(span);
+            } else {
+                rendered.push(row.primary);
+            }
+        }
+
+        await renderList(this.container, rendered, this, this.origin, this.settings.renderNullAs);
 	}
 }
 
@@ -314,14 +320,14 @@ class DataviewTableRenderer extends MarkdownRenderChild {
 	}
 
 	async render() {
-		let result = tryOrPropogate(() => execute(this.query, this.index, this.origin));
-		if (typeof result === 'string') {
-			renderErrorPre(this.container, "Dataview: " + result);
+		let maybeResult = tryOrPropogate(() => executeTable(this.query, this.index, this.origin));
+		if (!maybeResult.successful) {
+			renderErrorPre(this.container, "Dataview: " + maybeResult.error);
 			return;
 		}
 
-		await renderTable(this.container, result.names, result.data.map(l => l.map(Fields.fieldToValue)),
-			this, this.origin, this.settings.renderNullAs);
+        let result = maybeResult.value;
+		await renderTable(this.container, result.names, result.data, this, this.origin, this.settings.renderNullAs);
 
 		// Render after the empty table, so the table header still renders.
 		if (result.data.length == 0 && this.settings.warnOnEmptyResult) {
@@ -356,12 +362,13 @@ class DataviewTaskRenderer extends MarkdownRenderChild {
 
 	async render() {
 		let result = tryOrPropogate(() => executeTask(this.query, this.origin, this.index));
-		if (typeof result === 'string') {
-			renderErrorPre(this.container, "Dataview: " + result);
-		} else if (result.size == 0 && this.settings.warnOnEmptyResult) {
+		if (!result.successful) {
+			renderErrorPre(this.container, "Dataview: " + result.error);
+		} else if (result.value.tasks.size == 0 && this.settings.warnOnEmptyResult) {
 			renderErrorPre(this.container, "Query returned 0 results.");
 		} else {
-			await Tasks.renderFileTasks(this.container, result);
+			await Tasks.renderFileTasks(this.container, result.value.tasks);
+
 			// TODO: Merge this into this renderer.
 			this.addChild(this.taskView = new Tasks.TaskViewLifecycle(this.vault, this.container));
 		}
@@ -396,12 +403,12 @@ class DataviewInlineRenderer extends MarkdownRenderChild {
 
 	async render() {
 		let result = tryOrPropogate(() => executeInline(this.field, this.origin, this.index));
-		if (typeof result === 'string') {
+		if (!result.successful) {
 			this.errorbox = this.container.createEl('div');
-			renderErrorPre(this.errorbox, "Dataview (for inline query '" + this.fieldText + "'): " + result);
+			renderErrorPre(this.errorbox, "Dataview (for inline query '" + this.fieldText + "'): " + result.error);
 		} else {
             let temp = document.createElement("span");
-			await renderValue(Fields.fieldToValue(result), temp, this.origin, this, this.settings.renderNullAs, false);
+			await renderValue(result.value, temp, this.origin, this, this.settings.renderNullAs, false);
 
             this.target.replaceWith(temp);
 		}

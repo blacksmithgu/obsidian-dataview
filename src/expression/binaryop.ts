@@ -1,7 +1,7 @@
 /** Provides a global dispatch table for evaluating binary operators, including comparison. */
 import { LiteralRepr, LiteralType, LiteralValue, Values } from "src/data/value";
 import { normalizeDuration } from "src/util/normalize";
-import { Result } from "src/util/result";
+import { Result } from "src/api/result";
 import { BinaryOp } from "src/expression/field";
 
 /** A literal type or a catch-all '*'. */

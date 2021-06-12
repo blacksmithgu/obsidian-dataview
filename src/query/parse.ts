@@ -4,6 +4,7 @@ import { FlattenStep, GroupStep, LimitStep, NamedField, Query, QueryFields, Quer
 import { Source, Sources } from 'src/data/source';
 import { Fields } from 'src/expression/field';
 import { DEFAULT_QUERY_SETTINGS, QuerySettings } from 'src/settings';
+import { Result } from 'src/api/result';
 
 ///////////////////
 // Query Parsing //
@@ -92,13 +93,13 @@ export const QUERY_LANGUAGE = P.createLanguage<QueryLanguageTypes>({
  * Attempt to parse a query from the given query text, returning a string error
  * if the parse failed.
  */
-export function parseQuery(text: string, settings?: QuerySettings): Query | string {
+export function parseQuery(text: string, settings?: QuerySettings): Result<Query, string> {
     try {
         let query = QUERY_LANGUAGE.query.tryParse(text);
         if (settings) query.settings = Object.assign(query.settings, settings);
 
-        return query;
+        return Result.success(query);
     } catch (error) {
-        return "" + error;
+        return Result.failure("" + error);
     }
 }

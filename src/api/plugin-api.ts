@@ -6,15 +6,24 @@ import { collectPagePaths } from "src/data/collector";
 import { Task } from "src/data/file";
 import { Sources } from "src/data/source";
 import { Link, LiteralValue, Values } from "src/data/value";
-import { EXPRESSION } from "src/parse";
-import { renderList, renderTable, renderValue } from "src/render";
+import { EXPRESSION } from "src/expression/parse";
+import { renderList, renderTable, renderValue } from "src/ui/render";
 import { DataviewSettings } from "src/settings";
-import { renderFileTasks, renderTasks, TaskViewLifecycle } from "src/tasks";
+import { renderFileTasks, renderTasks, TaskViewLifecycle } from "src/ui/tasks";
 import { DataArray } from "./data-array";
+import { BoundFunctionImpl, DEFAULT_FUNCTIONS, Functions } from "src/expression/functions";
+import { Context } from "src/expression/context";
+import { defaultLinkHandler } from "src/query/engine";
 
 export class DataviewApi {
+    /** Evaluation context which expressions can be evaluated in. */
+    public evaluationContext: Context;
+    /** Dataview functions which can be called from DataviewJS. */
+    public func: Record<string, BoundFunctionImpl>;
+
     public constructor(public app: App, public index: FullIndex, public settings: DataviewSettings) {
-        app.metadataCache.trigger("dataview:api-ready");
+        this.evaluationContext = new Context(defaultLinkHandler(index, ""));
+        this.func = Functions.bindAll(DEFAULT_FUNCTIONS, this.evaluationContext);
     }
 
     /////////////////////////////

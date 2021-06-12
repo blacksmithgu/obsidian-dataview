@@ -1,7 +1,8 @@
-import { Query, Fields, TableQuery, ListQuery, SortByStep } from "src/query";
-import { QUERY_LANGUAGE, parseQuery } from "src/parse";
+import { TableQuery, ListQuery, SortByStep, QueryFields } from "src/query/query";
+import { QUERY_LANGUAGE, parseQuery } from "src/query/parse";
 import { Sources } from "src/data/source";
 import { DEFAULT_QUERY_SETTINGS } from "src/settings";
+import { Fields } from "src/expression/field";
 
 test("Parse Query Type", () => {
     let unknown = QUERY_LANGUAGE.queryType.parse("vehicle");
@@ -28,31 +29,31 @@ test("Link Source", () => {
 
 test("Named Fields", () => {
     let simple = QUERY_LANGUAGE.namedField.tryParse("time-played");
-    expect(simple).toEqual(Fields.named("time-played", Fields.variable("time-played")));
+    expect(simple).toEqual(QueryFields.named("time-played", Fields.variable("time-played")));
 
     let complex = QUERY_LANGUAGE.namedField.tryParse("(time-played + 4) as something");
-    expect(complex).toEqual(Fields.named("something", Fields.binaryOp(Fields.variable("time-played"), '+', Fields.literal('number', 4))));
+    expect(complex).toEqual(QueryFields.named("something", Fields.binaryOp(Fields.variable("time-played"), '+', Fields.literal(4))));
 });
 
 test("Sort Fields", () => {
     let simple = QUERY_LANGUAGE.sortField.tryParse("time-played DESC");
-    expect(simple).toEqual(Fields.sortBy(Fields.variable('time-played'), 'descending'));
+    expect(simple).toEqual(QueryFields.sortBy(Fields.variable('time-played'), 'descending'));
 
     let complex = QUERY_LANGUAGE.sortField.tryParse("(time-played - \"where\")");
-    expect(complex).toEqual(Fields.sortBy(
-        Fields.binaryOp(Fields.variable('time-played'), '-', Fields.literal('string', "where")),
+    expect(complex).toEqual(QueryFields.sortBy(
+        Fields.binaryOp(Fields.variable('time-played'), '-', Fields.literal("where")),
         'ascending'));
 });
 
 // <-- Full Queries -->
 
 test("Minimal Query", () => {
-    let simple = parseQuery("TABLE time-played, rating, length FROM #games") as Query;
+    let simple = parseQuery("TABLE time-played, rating, length FROM #games").orElseThrow();
     expect(simple.header.type).toBe('table');
     expect((simple.header as TableQuery).fields).toEqual([
-        Fields.named('time-played', Fields.variable('time-played')),
-        Fields.named('rating', Fields.variable('rating')),
-        Fields.named('length', Fields.variable('length')),
+        QueryFields.named('time-played', Fields.variable('time-played')),
+        QueryFields.named('rating', Fields.variable('rating')),
+        QueryFields.named('length', Fields.variable('length')),
     ]);
     expect(simple.source).toEqual(Sources.tag("#games"));
 });
@@ -61,7 +62,7 @@ test("Fat Query", () => {
     let fat = parseQuery("TABLE (time-played + 100) as long, rating as rate, length\n"
         + "FROM #games or #gaming\n"
         + "WHERE long > 150 and rate - 10 < 40\n"
-        + "SORT length + 8 + 4 DESCENDING, long ASC") as Query;
+        + "SORT length + 8 + 4 DESCENDING, long ASC").orElseThrow();
     expect(fat.header.type).toBe('table');
     expect((fat.header as TableQuery).fields.length).toBe(3);
     expect(fat.source).toEqual(Sources.binaryOp(Sources.tag("#games"), '|', Sources.tag("#gaming")));
@@ -69,13 +70,13 @@ test("Fat Query", () => {
 });
 
 test("List query with format", () => {
-    let query = parseQuery("LIST file.name FROM #games") as Query;
+    let query = parseQuery("LIST file.name FROM #games").orElseThrow();
     expect(query.header.type).toBe('list');
     expect((query.header as ListQuery).format).toEqual(Fields.indexVariable("file.name"));
 });
 
 test("Task query with no fields", () => {
-    let q = parseQuery("task from #games") as Query;
+    let q = parseQuery("task from #games").orElseThrow();
     expect(typeof q).toBe('object');
     expect(q.header.type).toBe('task');
     expect(q.source).toEqual(Sources.tag("#games"));

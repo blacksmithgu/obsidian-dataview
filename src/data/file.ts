@@ -1,8 +1,9 @@
 import { canonicalizeVarName, getExtension, getFileName, getParentFolder } from 'src/util/normalize';
 import { getAllTags, MetadataCache, parseFrontMatterAliases, parseFrontMatterTags, TFile, Vault } from 'obsidian';
-import { EXPRESSION, parseInnerLink } from 'src/parse';
+import { EXPRESSION, parseInnerLink } from 'src/expression/parse';
 import { DateTime } from 'luxon';
 import { FullIndex } from 'src/data/index';
+import { Link, LiteralValue, Values } from './value';
 
 interface BaseLinkMetadata {
     path: string;
@@ -71,7 +72,7 @@ export class PageMetadata {
     /** The first H1/H2 header in the file. May not exist. */
     public title?: string;
     /** All of the fields contained in this markdown file - both frontmatter AND in-file links. */
-    public fields: Map<string, LiteralField>;
+    public fields: Map<string, LiteralValue>;
     /** All of the exact tags (prefixed with '#') in this file overall. */
     public tags: Set<string>;
     /** All of the aliases defined for this file. */
@@ -83,7 +84,7 @@ export class PageMetadata {
 
     public constructor(path: string, init?: Partial<PageMetadata>) {
         this.path = path;
-        this.fields = new Map<string, LiteralField>();
+        this.fields = new Map<string, LiteralValue>();
         this.tags = new Set<string>();
         this.aliases = new Set<string>();
         this.links = [];
@@ -145,10 +146,10 @@ export class PageMetadata {
     }
 
     /** Map this metadata to a full object; uses the index for additional data lookups.  */
-    public toObject(index: FullIndex): Record<string, any> {
+    public toObject(index: FullIndex): Record<string, LiteralValue> {
         // Static fields first. Note this object should not have any pointers to the original object (so that the
         // index cannot accidentally be mutated).
-        let result: Record<string, any> = {
+        let result: Record<string, LiteralValue> = {
             "file": {
                 "path": this.path,
                 "folder": this.folder(),
@@ -160,7 +161,6 @@ export class PageMetadata {
                 "tags": Array.from(this.fullTags()),
                 "aliases": Array.from(this.aliases),
                 "tasks": this.tasks.map(t => Task.copy(t)),
-                "day": this.day ?? undefined,
                 "ctime": this.ctime,
                 "cday": DateTime.fromObject({ year: this.ctime.year, month: this.ctime.month, day: this.ctime.day }),
                 "mtime": this.mtime,
@@ -170,10 +170,13 @@ export class PageMetadata {
             }
         };
 
+        // Add the current day if present.
+        if (this.day) (result["file"] as Record<string, LiteralValue>)["day"] = this.day;
+
         // Then append the computed fields.
         for (let [key, value] of this.fields) {
             if (key === "file") continue; // Don't allow fields to override 'file'.
-            result[key] = Fields.fieldToValue(value);
+            result[key] = value;
         }
 
         return result;
@@ -195,20 +198,20 @@ function extractDate(str: string): DateTime | undefined {
 }
 
 /** Attempt to find a date associated with the given page from metadata or filenames. */
-function findDate(file: string, fields: Map<string, LiteralField>): DateTime | undefined {
+function findDate(file: string, fields: Map<string, LiteralValue>): DateTime | undefined {
     for (let key of fields.keys()) {
-        if (!(key.toLocaleLowerCase() == "date")) continue;
+        if (!(key.toLocaleLowerCase() == "date" || key.toLocaleLowerCase() == "day")) continue;
 
-        let value = fields.get(key) as LiteralField;
-        if (value.valueType == "date") return value.value;
-        else if (value.valueType == "link") {
-            let date = extractDate(value.value.path);
+        let value = fields.get(key) as LiteralValue;
+        if (Values.isDate(value)) return value;
+        else if (Values.isLink(value)) {
+            let date = extractDate(value.path);
             if (date) return date;
 
-            date = extractDate(value.value.subpath ?? "");
+            date = extractDate(value.subpath ?? "");
             if (date) return date;
 
-            date = extractDate(value.value.display ?? "");
+            date = extractDate(value.display ?? "");
             if (date) return date;
         }
     }
@@ -217,15 +220,16 @@ function findDate(file: string, fields: Map<string, LiteralField>): DateTime | u
 }
 
 /** Recursively convert frontmatter into fields. We have to dance around YAML structure. */
-export function parseFrontmatter(value: any): LiteralField {
+export function parseFrontmatter(value: any): LiteralValue {
     if (value == null) {
-        return Fields.NULL;
+        return null;
     } else if (typeof value === 'object') {
         if (Array.isArray(value)) {
             let object = (value as Array<any>);
             // Special case for link syntax, which shows up as double-nested arrays.
+            // TODO: Need to replace this with something else.
             if (object.length == 1 && Array.isArray(object[0]) && object[0].every(v => typeof v === 'string')) {
-                return Fields.link(parseInnerLink(object[0].join(", ")));
+                return parseInnerLink(object[0].join(", "));
             }
 
             let result = [];
@@ -233,56 +237,50 @@ export function parseFrontmatter(value: any): LiteralField {
                 result.push(parseFrontmatter(child));
             }
 
-            return Fields.array(result);
+            return result;
         } else {
             let object = (value as Record<string, any>);
-            let result = new Map<string, LiteralField>();
+            let result: Record<string, LiteralValue> = {};
             for (let key in object) {
-                result.set(key, parseFrontmatter(object[key]));
+                result[key] = parseFrontmatter(object[key]);
             }
 
-            return Fields.object(result);
+            return result;
         }
     } else if (typeof value === 'number') {
-        return Fields.number(value);
+        return value;
     } else if (typeof value === 'string') {
         let dateParse = EXPRESSION.date.parse(value);
-        if (dateParse.status) {
-            return Fields.literal('date', dateParse.value);
-        }
+        if (dateParse.status) return dateParse.value;
 
         let durationParse = EXPRESSION.duration.parse(value);
-        if (durationParse.status) {
-            return Fields.literal('duration', durationParse.value);
-        }
+        if (durationParse.status) return durationParse.value;
 
         let linkParse = EXPRESSION.embedLink.parse(value);
-        if (linkParse.status) {
-            return Fields.literal('link', linkParse.value);
-        }
+        if (linkParse.status) return linkParse.value;
 
-        return Fields.literal('string', value);
+        return value;
     }
 
     // Backup if we don't understand the type.
-    return Fields.NULL;
+    return null;
 }
 
 /** Parse a textual inline field value into something we can work with. */
-export function parseInlineField(value: string): LiteralField {
+export function parseInlineField(value: string): LiteralValue {
     // The stripped literal field parser understands all of the non-array/non-object fields and can parse them for us.
     // Inline field objects are not currently supported; inline array objects have to be handled by the parser
     // separately.
     let inline = EXPRESSION.inlineField.parse(value);
     if (inline.status) return inline.value;
-    else return Fields.string(value);
+    else return value;
 }
 
-export function addInlineField(fields: Map<string, LiteralField>, name: string, value: LiteralField) {
+export function addInlineField(fields: Map<string, LiteralValue>, name: string, value: LiteralValue) {
     if (fields.has(name)) {
-        let existing = fields.get(name) as LiteralField;
-        if (existing.valueType == "array") fields.set(name, Fields.array(existing.value.concat([value])));
-        else fields.set(name, Fields.array([existing, value]));
+        let existing = fields.get(name) as LiteralValue;
+        if (Values.isArray(existing)) fields.set(name, existing.concat([value]));
+        else fields.set(name, [existing, value]);
     } else {
         fields.set(name, value);
     }
@@ -356,7 +354,7 @@ export function findTasksInFile(path: string, file: string): Task[] {
 export async function extractMarkdownMetadata(file: TFile, vault: Vault, cache: MetadataCache, inlineRegex: RegExp): Promise<PageMetadata> {
     let tags = new Set<string>();
     let aliases = new Set<string>();
-    let fields = new Map<string, LiteralField>();
+    let fields = new Map<string, LiteralValue>();
 
     // Pull out the easy-to-extract information from the cache first...
     let fileCache = cache.getFileCache(file);
@@ -379,8 +377,8 @@ export async function extractMarkdownMetadata(file: TFile, vault: Vault, cache: 
                 for (let alias of frontAliases) aliases.add(alias);
             }
 
-            let frontFields = parseFrontmatter(fileCache.frontmatter) as LiteralFieldRepr<'object'>;
-            for (let [key, value] of frontFields.value) fields.set(key, value);
+            let frontFields = parseFrontmatter(fileCache.frontmatter) as Record<string, LiteralValue>;
+            for (let [key, value] of Object.entries(frontFields)) fields.set(key, value);
         }
     }
 

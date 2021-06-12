@@ -3,11 +3,14 @@
 import { App, Component } from "obsidian";
 import { FullIndex } from "src/data/index";
 import { Task } from "src/data/file";
-import { Fields, Link } from "src/query";
-import { renderValue } from "src/render";
+import { renderValue } from "src/ui/render";
 import { DataArray } from "src/api/data-array";
 import { DataviewApi } from "src/api/plugin-api";
 import { DataviewSettings } from "src/settings";
+import { Link, Values } from "src/data/value";
+import { BoundFunctionImpl, DEFAULT_FUNCTIONS, Functions } from "src/expression/functions";
+import { Context } from "src/expression/context";
+import { defaultLinkHandler } from "src/query/engine";
 
 export class DataviewInlineApi {
     /**
@@ -37,6 +40,12 @@ export class DataviewInlineApi {
     /** Settings which determine defaults, incl. many rendering options. */
     public settings: DataviewSettings;
 
+    /** Evaluation context which expressions can be evaluated in. */
+    public evaluationContext: Context;
+
+    /** Dataview functions which can be called from DataviewJS. */
+    public func: Record<string, BoundFunctionImpl>;
+
     constructor(index: FullIndex, component: Component, container: HTMLElement, app: App, settings: DataviewSettings, currentFilePath: string) {
         this.index = index;
         this.component = component;
@@ -46,6 +55,12 @@ export class DataviewInlineApi {
         this.settings = settings;
 
         this.api = new DataviewApi(this.app, this.index, this.settings);
+
+        // Set up the evaluation context with variables from the current file.
+        let fileMeta = this.index.pages.get(this.currentFilePath)?.toObject(this.index) ?? {};
+        this.evaluationContext = new Context(defaultLinkHandler(this.index, this.currentFilePath), fileMeta);
+
+        this.func = Functions.bindAll(DEFAULT_FUNCTIONS, this.evaluationContext);
     }
 
     /////////////////////////////
@@ -85,7 +100,7 @@ export class DataviewInlineApi {
      * a < b, 0 if a = b, and a positive value if a > b.
      */
     public compare(a: any, b: any): number {
-        return Fields.compareValue(a, b);
+        return Values.compareValue(a, b);
     }
 
     /** Return true if the two given JavaScript values are equal using Dataview's default comparison rules. */
@@ -110,19 +125,25 @@ export class DataviewInlineApi {
             default: throw new Error(`Invalid header level ${level}`);
         }
 
-        let wrapped = Fields.wrapValue(text);
-        if (wrapped === null || wrapped === undefined) this.container.createEl(headerType, { text });
+        let wrapped = Values.wrapValue(text);
+        if (wrapped === null || wrapped === undefined) {
+            this.container.createEl(headerType, { text });
+            return;
+        }
 
         let header = this.container.createEl(headerType);
-        renderValue(wrapped?.value ?? null, header, this.currentFilePath, this.component, this.settings.renderNullAs, false);
+        renderValue(wrapped.value, header, this.currentFilePath, this.component, this.settings.renderNullAs, false);
     }
 
     /** Render an HTML paragraph, containing arbitrary text. */
     public paragraph(text: any) {
-        let wrapped = Fields.wrapValue(text);
-        if (wrapped === null || wrapped === undefined) this.container.createEl('p', { text });
+        let wrapped = Values.wrapValue(text);
+        if (wrapped === null || wrapped === undefined) {
+            this.container.createEl('p', { text });
+            return;
+        }
 
-        renderValue(wrapped?.value ?? null, this.container, this.currentFilePath, this.component, this.settings.renderNullAs, true);
+        renderValue(wrapped.value, this.container, this.currentFilePath, this.component, this.settings.renderNullAs, true);
     }
 
     /** Render a dataview list of the given values. */

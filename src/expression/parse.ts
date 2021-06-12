@@ -4,6 +4,7 @@ import * as P from 'parsimmon';
 import { BinaryOp, Field, Fields, LiteralField, VariableField } from "./field";
 import { FolderSource, NegatedSource, Source, SourceOp, Sources, TagSource } from "src/data/source";
 import { normalizeDuration } from "src/util/normalize";
+import { Result } from "src/api/result";
 
 /** Provides a lookup table for unit durations of the given type. */
 export const DURATION_TYPES = {
@@ -339,10 +340,10 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
  * Attempt to parse a field from the given text, returning a string error if the
  * parse failed.
  */
-export function parseField(text: string): Field | string {
+export function parseField(text: string): Result<Field, string> {
     try {
-        return EXPRESSION.field.tryParse(text);
+        return Result.success(EXPRESSION.field.tryParse(text));
     } catch (error) {
-        return "" + error;
+        return Result.failure("" + error);
     }
 }

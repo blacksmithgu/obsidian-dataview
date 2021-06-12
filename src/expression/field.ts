@@ -57,8 +57,6 @@ export interface NegatedField {
 
 /** Utility methods for creating & comparing fields. */
 export namespace Fields {
-    export const NULL = Fields.literal(null);
-
     export function variable(name: string): VariableField {
         return { type: 'variable', name };
     }
@@ -97,4 +95,6 @@ export namespace Fields {
     export function isCompareOp(op: BinaryOp): op is CompareOp {
         return op == "<=" || op == "<" || op == ">" || op == ">=" || op == "!=" || op == "=";
     }
+
+    export const NULL = Fields.literal(null);
 }
