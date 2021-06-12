@@ -1,8 +1,8 @@
 import { DateTime, Duration } from 'luxon';
 import { Component, MarkdownRenderer } from 'obsidian';
-import { Fields, LiteralValue } from 'src/query';
 import { DataArray } from 'src/api/data-array';
 import { normalizeDuration } from 'src/util/normalize';
+import { LiteralValue, Values } from '../data/value';
 
 /** Make an Obsidian-friendly internal link. */
 export function createAnchor(text: string, target: string, internal: boolean): HTMLAnchorElement {
@@ -104,15 +104,15 @@ export function renderMinimalDuration(dur: Duration): string {
 export async function renderValue(field: LiteralValue, container: HTMLElement, originFile: string, component: Component,
 	nullField: string, expandList: boolean = false) {
 
-	if (Fields.isNull(field)) {
+	if (Values.isNull(field)) {
 		await renderCompactMarkdown(nullField, container, originFile, component);
-	} else if (Fields.isDate(field)) {
+	} else if (Values.isDate(field)) {
 		container.appendText(renderMinimalDate(field));
-	} else if (Fields.isDuration(field)) {
+	} else if (Values.isDuration(field)) {
 		container.appendText(renderMinimalDuration(field));
-	} else if (Fields.isString(field) || Fields.isBoolean(field) || Fields.isNumber(field)) {
+	} else if (Values.isString(field) || Values.isBoolean(field) || Values.isNumber(field)) {
 		await renderCompactMarkdown("" + field, container, originFile, component);
-	} else if (Fields.isArray(field) || DataArray.isDataArray(field)) {
+	} else if (Values.isArray(field) || DataArray.isDataArray(field)) {
 		if (expandList) {
 			let list = container.createEl('ul', { cls: ['dataview', 'dataview-ul', 'dataview-result-list-ul'] });
 			for (let child of field) {
@@ -134,11 +134,13 @@ export async function renderValue(field: LiteralValue, container: HTMLElement, o
 				await renderValue(val, span, originFile, component, nullField, expandList);
 			}
 		}
-	} else if (Fields.isLink(field)) {
+	} else if (Values.isLink(field)) {
 		await renderCompactMarkdown(field.markdown(), container, originFile, component);
-	} else if (Fields.isHtml(field)) {
+	} else if (Values.isHtml(field)) {
 		container.appendChild(field);
-	} else if (Fields.isObject(field)) {
+    } else if (Values.isFunction(field)) {
+        container.appendText("<function>");
+	} else if (Values.isObject(field)) {
 		if (expandList) {
 			let list = container.createEl('ul', { cls: ['dataview', 'dataview-ul', 'dataview-result-object-ul' ]});
 			for (let [key, value] of Object.entries(field)) {

@@ -1,14 +1,9 @@
-import { DateTime, Duration } from 'luxon';
-import { BinaryOp, VariableField, Field, Fields, WhereStep, SortByStep, LimitStep, QueryHeader, QueryOperation, FlattenStep, GroupStep, LiteralField, Link } from 'src/query';
-import { QueryType, NamedField, QuerySortBy, Query } from "src/query";
+import { DateTime, Duration } from "luxon";
+import { Link, LiteralValue } from "src/data/value";
 import * as P from 'parsimmon';
-import { normalizeDuration } from 'src/util/normalize';
-import { FolderSource, NegatedSource, Source, SourceOp, Sources, TagSource } from './data/source';
-import { DEFAULT_QUERY_SETTINGS, QuerySettings } from './settings';
-
-///////////
-// TYPES //
-///////////
+import { BinaryOp, Field, Fields, LiteralField, VariableField } from "./field";
+import { FolderSource, NegatedSource, Source, SourceOp, Sources, TagSource } from "src/data/source";
+import { normalizeDuration } from "src/util/normalize";
 
 /** Provides a lookup table for unit durations of the given type. */
 export const DURATION_TYPES = {
@@ -118,6 +113,7 @@ interface ExpressionLanguage {
     datePlus: DateTime;
     durationType: keyof typeof DURATION_TYPES;
     duration: Duration;
+    rawNull: string;
 
     binaryPlusMinus: BinaryOp;
     binaryMulDiv: BinaryOp;
@@ -146,9 +142,9 @@ interface ExpressionLanguage {
     nullField: LiteralField;
     literalField: LiteralField;
 
-    atomInlineField: LiteralField;
-    inlineFieldList: LiteralField[];
-    inlineField: LiteralField;
+    atomInlineField: LiteralValue;
+    inlineFieldList: LiteralValue[];
+    inlineField: LiteralValue;
 
     negatedField: Field;
     atomField: Field;
@@ -253,6 +249,9 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
     duration: q => P.seqMap(q.number, P.optWhitespace, q.durationType, P.string("s").atMost(1), (count, _, t, _2) =>
         DURATION_TYPES[t].mapUnits(x => x * count)),
 
+    // A raw null value.
+    rawNull: q => P.string("null"),
+
     // Source parsing.
     tagSource: q => q.tag.map(tag => Sources.tag(tag)),
     linkIncomingSource: q => q.link.map(link => Sources.link(link.path, true)),
@@ -273,30 +272,30 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
             return P.succeed(Fields.variable(r));
         }
     }).desc("variable"),
-    numberField: q => q.number.map(val => Fields.literal('number', val)).desc("number"),
-    stringField: q => q.string.map(val => Fields.literal('string', val)).desc("string"),
-    boolField: q => q.bool.map(val => Fields.literal('boolean', val)).desc("boolean"),
+    numberField: q => q.number.map(val => Fields.literal(val)).desc("number"),
+    stringField: q => q.string.map(val => Fields.literal(val)).desc("string"),
+    boolField: q => q.bool.map(val => Fields.literal(val)).desc("boolean"),
     dateField: q => P.seqMap(P.string("date("), P.optWhitespace, q.datePlus, P.optWhitespace, P.string(")"),
-        (prefix, _1, date, _2, postfix) => Fields.literal('date', date))
+        (prefix, _1, date, _2, postfix) => Fields.literal(date))
         .desc("date"),
     durationField: q => P.seqMap(P.string("dur("), P.optWhitespace, q.duration, P.optWhitespace, P.string(")"),
-        (prefix, _1, dur, _2, postfix) => Fields.literal('duration', dur))
+        (prefix, _1, dur, _2, postfix) => Fields.literal(dur))
         .desc("duration"),
-    nullField: q => P.string("null").map(_ => Fields.NULL),
-    linkField: q => q.link.map(f => Fields.link(f)),
+    nullField: q => q.rawNull.map(_ => Fields.NULL),
+    linkField: q => q.link.map(f => Fields.literal(f)),
 
     literalField: q => P.alt(q.nullField, q.numberField, q.stringField, q.boolField, q.dateField, q.durationField),
     atomInlineField: q => P.alt(
-        q.date.map(d => Fields.literal('date', d)),
-        q.duration.map(d => Fields.literal('duration', normalizeDuration(d))),
-        q.stringField,
-        q.linkField,
-        q.boolField,
-        q.numberField,
-        q.nullField),
+        q.date,
+        q.duration.map(d => normalizeDuration(d)),
+        q.string,
+        q.link,
+        q.bool,
+        q.number,
+        q.rawNull),
     inlineFieldList: q => q.atomInlineField.sepBy(P.string(",").trim(P.optWhitespace).lookahead(q.atomInlineField)),
     inlineField: q => P.alt(
-        P.seqMap(q.atomInlineField, P.string(",").trim(P.optWhitespace), q.inlineFieldList, (f, s, l) => Fields.array([f].concat(l))),
+        P.seqMap(q.atomInlineField, P.string(",").trim(P.optWhitespace), q.inlineFieldList, (f, _s, l) => [f].concat(l)),
         q.atomInlineField
     ),
 
@@ -320,7 +319,7 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
     negatedField: q => P.seqMap(P.string("!"), q.indexField, (_, field) => Fields.negate(field)).desc("negated field"),
     parensField: q => P.seqMap(P.string("("), P.optWhitespace, q.field, P.optWhitespace, P.string(")"), (_1, _2, field, _3, _4) => field),
 
-    dotPostfix: q => P.seqMap(P.string("."), q.identifier, (_, field) => { return { type: 'dot', field: Fields.string(field) } }),
+    dotPostfix: q => P.seqMap(P.string("."), q.identifier, (_, field) => { return { type: 'dot', field: Fields.literal(field) } }),
     indexPostfix: q => P.seqMap(P.string("["), P.optWhitespace, q.field, P.optWhitespace, P.string("]"),
         (_, _2, field, _3, _4) => { return { type: 'index', field }}),
     functionPostfix: q => P.seqMap(P.string("("), P.optWhitespace, q.field.sepBy(P.string(",").trim(P.optWhitespace)), P.optWhitespace, P.string(")"),
@@ -335,105 +334,6 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
 
     field: q => q.binaryOpField
 });
-
-
-///////////////////
-// Query Parsing //
-///////////////////
-
-/** Typings for the outputs of all of the parser combinators. */
-interface QueryLanguageTypes {
-    queryType: QueryType;
-
-    explicitNamedField: NamedField;
-    namedField: NamedField;
-    sortField: QuerySortBy;
-
-    // Entire clauses in queries.
-    headerClause: QueryHeader;
-    fromClause: Source;
-    whereClause: WhereStep;
-    sortByClause: SortByStep;
-    limitClause: LimitStep;
-    flattenClause: FlattenStep;
-    groupByClause: GroupStep;
-    clause: QueryOperation;
-    query: Query;
-}
-
-/** A parsimmon-powered parser-combinator implementation of the query language. */
-export const QUERY_LANGUAGE = P.createLanguage<QueryLanguageTypes>({
-    // Simple atom parsing, like words, identifiers, numbers.
-    queryType: q => P.alt<string>(P.regexp(/TABLE|LIST|TASK/i)).map(str => str.toLowerCase() as QueryType)
-        .desc("query type ('TABLE', 'LIST', or 'TASK')"),
-    explicitNamedField: q => P.seqMap(EXPRESSION.field.skip(P.whitespace), P.regexp(/AS/i).skip(P.whitespace), EXPRESSION.identifier.or(EXPRESSION.string),
-        (field, as, ident) => Fields.named(ident, field)),
-    namedField: q => P.alt<NamedField>(
-        q.explicitNamedField,
-        EXPRESSION.identifierDot.map(ident => Fields.named(ident, Fields.indexVariable(ident)))
-    ),
-    sortField: q => P.seqMap(EXPRESSION.field.skip(P.optWhitespace), P.regexp(/ASCENDING|DESCENDING|ASC|DESC/i).atMost(1),
-            (field, dir) => {
-                let direction = dir.length == 0 ? 'ascending' : dir[0].toLowerCase();
-                if (direction == 'desc') direction = 'descending';
-                if (direction == 'asc') direction = 'ascending';
-                return {
-                    field: field,
-                    direction: direction as 'ascending' | 'descending'
-                };
-            }),
-
-    headerClause: q => q.queryType.skip(P.whitespace).chain(qtype => {
-        switch (qtype) {
-            case "table":
-                return P.sepBy(q.namedField, P.string(',').trim(P.optWhitespace))
-                    .map(fields => { return { type: 'table', fields } as QueryHeader });
-            case "list":
-                return EXPRESSION.field.atMost(1)
-                    .map(format => { return { type: 'list', format: format.length == 1 ? format[0] : undefined }});
-            case "task":
-                return P.succeed({ type: 'task' });
-            default:
-                return P.fail(`Unrecognized query type '${qtype}'`);
-        }
-    }),
-    fromClause: q => P.seqMap(P.regexp(/FROM/i), P.whitespace, EXPRESSION.source, (_1, _2, source) => source),
-    whereClause: q => P.seqMap(P.regexp(/WHERE/i), P.whitespace, EXPRESSION.field,
-        (where, _, field) => { return { type: 'where', clause: field }}),
-    sortByClause: q => P.seqMap(P.regexp(/SORT/i), P.whitespace, q.sortField.sepBy1(P.string(',').trim(P.optWhitespace)),
-        (sort, _1, fields) => { return { type: 'sort', fields }}),
-    limitClause: q => P.seqMap(P.regexp(/LIMIT/i), P.whitespace, EXPRESSION.field,
-        (limit, _1, field) => { return { type: 'limit', amount: field }}),
-    flattenClause: q => P.seqMap(P.regexp(/FLATTEN/i).skip(P.whitespace), q.namedField,
-        (_, field) => { return { type: 'flatten', field }}),
-    groupByClause: q => P.seqMap(P.regexp(/GROUP BY/i).skip(P.whitespace), q.namedField,
-        (_, field) => { return { type: 'group', field }}),
-    // Full query parsing.
-    clause: q => P.alt(q.fromClause, q.whereClause, q.sortByClause, q.limitClause, q.groupByClause, q.flattenClause),
-    query: q => P.seqMap(q.headerClause.trim(P.optWhitespace), q.fromClause.trim(P.optWhitespace).atMost(1), q.clause.trim(P.optWhitespace).many(), (header, from, clauses) => {
-        return {
-            header,
-            source: from.length == 0 ? Sources.folder("") : from[0],
-            operations: clauses,
-            settings: DEFAULT_QUERY_SETTINGS
-        } as Query;
-    })
-});
-
-/**
- * Attempt to parse a query from the given query text, returning a string error
- * if the parse failed.
- */
-export function parseQuery(text: string, settings?: QuerySettings): Query | string {
-    try {
-        let query = QUERY_LANGUAGE.query.tryParse(text);
-        if (settings) query.settings = Object.assign(query.settings, settings);
-
-        return query;
-    } catch (error) {
-        return "" + error;
-    }
-}
 
 /**
  * Attempt to parse a field from the given text, returning a string error if the

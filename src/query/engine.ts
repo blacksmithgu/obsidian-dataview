@@ -5,7 +5,7 @@ import { LiteralField, LiteralFieldRepr, Query, Fields, NamedField, Field, Objec
 import { FullIndex } from 'src/data/index';
 import { Task } from 'src/data/file';
 import { Context, BINARY_OPS, LinkHandler } from 'src/eval';
-import { collectPagePaths } from './data/collector';
+import { collectPagePaths } from '../data/collector';
 
 /** The result of executing a query over an index. */
 export interface QueryResult {

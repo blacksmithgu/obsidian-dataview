@@ -1,5 +1,4 @@
 import { canonicalizeVarName, getExtension, getFileName, getParentFolder } from 'src/util/normalize';
-import { Fields, Link, LiteralField, LiteralFieldRepr } from 'src/query';
 import { getAllTags, MetadataCache, parseFrontMatterAliases, parseFrontMatterTags, TFile, Vault } from 'obsidian';
 import { EXPRESSION, parseInnerLink } from 'src/parse';
 import { DateTime } from 'luxon';

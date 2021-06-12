@@ -5,8 +5,8 @@ import { FullIndex } from "src/data";
 import { collectPagePaths } from "src/data/collector";
 import { Task } from "src/data/file";
 import { Sources } from "src/data/source";
+import { Link, LiteralValue, Values } from "src/data/value";
 import { EXPRESSION } from "src/parse";
-import { Fields, Link, LiteralValue } from "src/query";
 import { renderList, renderTable, renderValue } from "src/render";
 import { DataviewSettings } from "src/settings";
 import { renderFileTasks, renderTasks, TaskViewLifecycle } from "src/tasks";
@@ -36,7 +36,7 @@ export class DataviewApi {
 
     /** Map a page path to the actual data contained within that page. */
     public page(path: string | Link, originFile?: string): Record<string, any> | undefined {
-        if (!(typeof path === "string") && !Fields.isLink(path)) {
+        if (!(typeof path === "string") && !Values.isLink(path)) {
             throw Error("dv.page only handles string and link paths; was provided type '" + (typeof path) + "'")
         }
 
@@ -87,7 +87,7 @@ export class DataviewApi {
      * a < b, 0 if a = b, and a positive value if a > b.
      */
     public compare(a: any, b: any): number {
-        return Fields.compareValue(a, b);
+        return Values.compareValue(a, b);
     }
 
     /** Return true if the two given JavaScript values are equal using Dataview's default comparison rules. */
