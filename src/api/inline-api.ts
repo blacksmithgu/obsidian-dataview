@@ -135,7 +135,7 @@ export class DataviewInlineApi {
         }
 
         /** Check that a file exists for the requested view name. */
-        let viewPath = '.obsidian/dataviews/' + viewName + '.js';
+        let viewPath = '.obsidian/dataviews/' + viewName + '/view.js';
 
         this.app.vault.adapter.exists( viewPath ).then( viewExists => {
 
@@ -161,6 +161,22 @@ export class DataviewInlineApi {
         }).catch( error => {
 
             renderErrorPre( this.container, "Dataview: " + error.stack );
+
+        });
+
+        /** Check for optional CSS. */
+        let cssPath = '.obsidian/dataviews/' + viewName + '/view.css';
+
+        this.app.vault.adapter.exists( cssPath ).then( cssExists => {
+
+            if ( !cssExists ) return;
+
+            /** Read file contents to string. */
+            this.app.vault.adapter.read( cssPath ).then( viewCSS => {
+
+                this.container.createEl('style', { text: viewCSS, attr: { scoped: '' } });
+
+            });
 
         });
 
