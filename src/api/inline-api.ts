@@ -125,33 +125,33 @@ export class DataviewInlineApi {
         renderValue(wrapped?.value ?? null, this.container, this.currentFilePath, this.component, this.settings.renderNullAs, true);
     }
 
-    /** Render HTML from the output of a template file saved in the vault. Takes a filename and arbitrary input data. */
-    public template(templateName: string[], input: any) {
+    /** Render HTML from the output of a template "view" saved as a file in the vault. Takes a filename and arbitrary input data. */
+    public loadView( viewName: string[], input: any ) {
 
         /** This cannot be used on systems without file access (i.e. web and mobile devices). */
         if ( !( this.app.vault.adapter instanceof FileSystemAdapter ) ) {
             throw new Error(`File system access is not available.`);
         }
 
-        /** Check that a file exists for the requested template name. */
-        let templatePath = '.obsidian/dataview-templates/' + templateName + '.js';
+        /** Check that a file exists for the requested view name. */
+        let viewPath = '.obsidian/dataviews/' + viewName + '.js';
 
-        this.app.vault.adapter.exists( templatePath ).then( templateExists => {
+        this.app.vault.adapter.exists( viewPath ).then( viewExists => {
 
-            if ( !templateExists ) throw new Error( `Template file does not exist: ` + templatePath );
+            if ( !viewExists ) throw new Error( `view file does not exist: ` + viewPath );
 
             /** Read file contents to string. */
-            this.app.vault.adapter.read( templatePath ).then( templateData => {
+            this.app.vault.adapter.read( viewPath ).then( viewData => {
 
                 /** Create a function from file contents. This is the dangerous part: it’s basically eval(). Consider adding sanitization & filtering. */
-                let templateFunction = new Function(templateData);
+                let viewFunction = new Function( 'dv', 'input', viewData );
 
-                /** The template file code must return a string, which we treat as HTML. */
-                let text = templateFunction( this, input );
+                /** The view file code must return a string, which we treat as HTML. */
+                let text = viewFunction( this, input );
 
                 /** The rest is identical to `paragraph`. */
                 let wrapped = Fields.wrapValue(text);
-                if (wrapped === null || wrapped === undefined) this.container.createEl('p', { text });
+                if (wrapped === null || wrapped === undefined) this.container.createEl('div', { text });
         
                 renderValue(wrapped?.value ?? null, this.container, this.currentFilePath, this.component, this.settings.renderNullAs, true);
 

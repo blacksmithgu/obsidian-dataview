@@ -95,14 +95,14 @@ export default class DataviewPlugin extends Plugin {
 			}
 		});
 
-		/** Create folder for inline JS templates, if it doesn’t already exist. */
+		/** Create folder for inline JS template views, if it doesn’t already exist. */
         if ( this.app.vault.adapter instanceof FileSystemAdapter ) {
 
-			let templatesPath = '.obsidian/dataview-templates';
+			let viewsPath = '.obsidian/dataviews';
 
-			this.app.vault.adapter.exists( templatesPath ).then( pathExists => {
+			this.app.vault.adapter.exists( viewsPath ).then( pathExists => {
 
-				if ( !pathExists ) this.app.vault.adapter.mkdir( templatesPath );
+				if ( !pathExists ) this.app.vault.adapter.mkdir( viewsPath );
 
 			});
 	
