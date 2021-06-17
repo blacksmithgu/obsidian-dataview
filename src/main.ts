@@ -1,4 +1,4 @@
-import { MarkdownRenderChild, Plugin, Vault, MarkdownPostProcessorContext, PluginSettingTab, App, Setting, Component } from 'obsidian';
+import { MarkdownRenderChild, Plugin, Vault, MarkdownPostProcessorContext, PluginSettingTab, App, Setting, Component, FileSystemAdapter } from 'obsidian';
 import { renderErrorPre, renderList, renderTable, renderValue } from 'src/ui/render';
 import { FullIndex } from 'src/data/index';
 import * as Tasks from 'src/ui/tasks';
@@ -103,6 +103,20 @@ export default class DataviewPlugin extends Plugin {
                 }
 			}
 		});
+
+		/** Create folder for inline JS template views, if it doesn’t already exist. */
+        if ( this.app.vault.adapter instanceof FileSystemAdapter ) {
+
+			let viewsPath = '.obsidian/dataviews';
+
+			this.app.vault.adapter.exists( viewsPath ).then( pathExists => {
+
+				if ( !pathExists ) this.app.vault.adapter.mkdir( viewsPath );
+
+			});
+
+        }
+
 	}
 
 	onunload() { }
