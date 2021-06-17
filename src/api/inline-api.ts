@@ -4,7 +4,7 @@ import { App, Component, FileSystemAdapter } from "obsidian";
 import { FullIndex } from "src/data/index";
 import { Task } from "src/data/file";
 import { Fields, Link } from "src/query";
-import { renderValue } from "src/render";
+import { renderValue, renderErrorPre } from "src/render";
 import { DataArray } from "src/api/data-array";
 import { DataviewApi } from "src/api/plugin-api";
 import { DataviewSettings } from "src/settings";
@@ -130,7 +130,8 @@ export class DataviewInlineApi {
 
         /** This cannot be used on systems without file access (i.e. web and mobile devices). */
         if ( !( this.app.vault.adapter instanceof FileSystemAdapter ) ) {
-            throw new Error(`File system access is not available.`);
+            renderErrorPre( this.container, `Dataview: file system access is not available.` );
+            return;
         }
 
         /** Check that a file exists for the requested view name. */
@@ -157,6 +158,10 @@ export class DataviewInlineApi {
 
             });
     
+        }).catch( error => {
+
+            renderErrorPre( this.container, "Dataview: " + error.stack );
+
         });
 
     }
