@@ -1,6 +1,6 @@
 /** Fancy wrappers for the JavaScript API, used both by external plugins AND by the dataview javascript view. */
 
-import { App, Component } from "obsidian";
+import { App, Component, FileSystemAdapter } from "obsidian";
 import { FullIndex } from "src/data/index";
 import { Task } from "src/data/file";
 import { Fields, Link } from "src/query";
@@ -125,6 +125,42 @@ export class DataviewInlineApi {
         renderValue(wrapped?.value ?? null, this.container, this.currentFilePath, this.component, this.settings.renderNullAs, true);
     }
 
+    /** Render HTML from the output of a template file saved in the vault. Takes a filename and arbitrary input data. */
+    public template(templateName: string[], input: any) {
+
+        /** This cannot be used on systems without file access (i.e. web and mobile devices). */
+        if ( !( this.app.vault.adapter instanceof FileSystemAdapter ) ) {
+            throw new Error(`File system access is not available.`);
+        }
+
+        /** Check that a file exists for the requested template name. */
+        let templatePath = '.obsidian/dataview-templates/' + templateName + '.js';
+
+        this.app.vault.adapter.exists( templatePath ).then( templateExists => {
+
+            if ( !templateExists ) throw new Error( `Template file does not exist: ` + templatePath );
+
+            /** Read file contents to string. */
+            this.app.vault.adapter.read( templatePath ).then( templateData => {
+
+                /** Create a function from file contents. This is the dangerous part: it’s basically eval(). Consider adding sanitization & filtering. */
+                let templateFunction = new Function(templateData);
+
+                /** The template file code must return a string, which we treat as HTML. */
+                let text = templateFunction( this, input );
+
+                /** The rest is identical to `paragraph`. */
+                let wrapped = Fields.wrapValue(text);
+                if (wrapped === null || wrapped === undefined) this.container.createEl('p', { text });
+        
+                renderValue(wrapped?.value ?? null, this.container, this.currentFilePath, this.component, this.settings.renderNullAs, true);
+
+            });
+    
+        });
+
+    }
+
     /** Render a dataview list of the given values. */
     public list(values?: any[] | DataArray<any>) {
         return this.api.list(values, this.container, this.component, this.currentFilePath);
@@ -139,6 +175,7 @@ export class DataviewInlineApi {
     public taskList(tasks: Task[] | DataArray<any>, groupByFile: boolean = true) {
         return this.api.taskList(tasks, groupByFile, this.container, this.component, this.currentFilePath);
     }
+
 }
 
 /** Evaluate a script where 'this' for the script is set to the given context. Allows you to define global variables. */
