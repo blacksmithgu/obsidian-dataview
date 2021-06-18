@@ -199,11 +199,13 @@ export class DataviewInlineApi {
                 /** The view file code must return a string, which we treat as HTML. */
                 let text = viewFunction( this, input );
 
-                /** The rest is identical to `paragraph`. */
-                let wrapped = Fields.wrapValue(text);
-                if (wrapped === null || wrapped === undefined) this.container.createEl('div', { text });
+                let wrapped = Values.wrapValue(text);
+                if (wrapped === null || wrapped === undefined) {
+                    this.container.createEl('div', { text });
+                    return;
+                }
         
-                renderValue(wrapped?.value ?? null, this.container, this.currentFilePath, this.component, this.settings.renderNullAs, true);
+                renderValue(wrapped.value, this.container, this.currentFilePath, this.component, this.settings.renderNullAs, true);
 
             });
     
