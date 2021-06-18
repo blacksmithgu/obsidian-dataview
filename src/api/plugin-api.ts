@@ -14,6 +14,7 @@ import { DataArray } from "./data-array";
 import { BoundFunctionImpl, DEFAULT_FUNCTIONS, Functions } from "src/expression/functions";
 import { Context } from "src/expression/context";
 import { defaultLinkHandler } from "src/query/engine";
+import { DateTime } from "luxon";
 
 export class DataviewApi {
     /** Evaluation context which expressions can be evaluated in. */
@@ -89,6 +90,11 @@ export class DataviewApi {
     /** Create a dataview file link to the given path. */
     public fileLink(path: string, embed: boolean = false, display?: string) {
         return Link.file(path, embed, display);
+    }
+
+    /** Attempt to extract a date from a string, link or date. */
+    public date(pathlike: string | Link | DateTime): DateTime | null {
+        return this.func.date(pathlike) as DateTime | null;
     }
 
     /**

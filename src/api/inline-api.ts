@@ -11,6 +11,7 @@ import { Link, Values } from "src/data/value";
 import { BoundFunctionImpl, DEFAULT_FUNCTIONS, Functions } from "src/expression/functions";
 import { Context } from "src/expression/context";
 import { defaultLinkHandler } from "src/query/engine";
+import { DateTime } from "luxon";
 
 export class DataviewInlineApi {
     /**
@@ -95,6 +96,21 @@ export class DataviewInlineApi {
         return DataArray.wrap([raw]);
     }
 
+    /** Return true if theg given value is a javascript array OR a dataview data array. */
+    public isArray(raw: any): raw is DataArray<any> | Array<any> {
+        return DataArray.isDataArray(raw) || Array.isArray(raw);
+    }
+
+    /** Create a dataview file link to the given path. */
+    public fileLink(path: string, embed: boolean = false, display?: string) {
+        return Link.file(path, embed, display);
+    }
+
+    /** Attempt to extract a date from a string, link or date. */
+    public date(pathlike: string | Link | DateTime): DateTime | null {
+        return this.api.date(pathlike);
+    }
+
     /**
      * Compare two arbitrary JavaScript values using Dataview's default comparison rules. Returns a negative value if
      * a < b, 0 if a = b, and a positive value if a > b.
@@ -107,6 +123,7 @@ export class DataviewInlineApi {
     public equal(a: any, b: any): boolean {
         return this.compare(a, b) == 0;
     }
+
 
     /////////////////////////
     // Rendering Functions //
@@ -137,6 +154,17 @@ export class DataviewInlineApi {
 
     /** Render an HTML paragraph, containing arbitrary text. */
     public paragraph(text: any) {
+        let wrapped = Values.wrapValue(text);
+        if (wrapped === null || wrapped === undefined) {
+            this.container.createEl('p', { text });
+            return;
+        }
+
+        renderValue(wrapped.value, this.container, this.currentFilePath, this.component, this.settings.renderNullAs, true);
+    }
+
+    /** Render an inline span, containing arbitrary text. */
+    public span(text: any) {
         let wrapped = Values.wrapValue(text);
         if (wrapped === null || wrapped === undefined) {
             this.container.createEl('p', { text });
