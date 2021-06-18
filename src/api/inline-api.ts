@@ -126,7 +126,7 @@ export class DataviewInlineApi {
     }
 
     /** Render HTML from the output of a template "view" saved as a file in the vault. Takes a filename and arbitrary input data. */
-    public loadView( viewName: string[], input: any ) {
+    public view( viewName: string[], input: any ) {
 
         /** This cannot be used on systems without file access (i.e. web and mobile devices). */
         if ( !( this.app.vault.adapter instanceof FileSystemAdapter ) ) {
