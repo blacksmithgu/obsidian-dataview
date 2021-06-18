@@ -5,16 +5,26 @@ import { FullIndex } from "src/data";
 import { collectPagePaths } from "src/data/collector";
 import { Task } from "src/data/file";
 import { Sources } from "src/data/source";
-import { EXPRESSION } from "src/parse";
-import { Fields, Link, LiteralValue } from "src/query";
-import { renderList, renderTable, renderValue } from "src/render";
+import { Link, LiteralValue, Values } from "src/data/value";
+import { EXPRESSION } from "src/expression/parse";
+import { renderList, renderTable, renderValue } from "src/ui/render";
 import { DataviewSettings } from "src/settings";
-import { renderFileTasks, renderTasks, TaskViewLifecycle } from "src/tasks";
+import { renderFileTasks, renderTasks, TaskViewLifecycle } from "src/ui/tasks";
 import { DataArray } from "./data-array";
+import { BoundFunctionImpl, DEFAULT_FUNCTIONS, Functions } from "src/expression/functions";
+import { Context } from "src/expression/context";
+import { defaultLinkHandler } from "src/query/engine";
+import { DateTime } from "luxon";
 
 export class DataviewApi {
+    /** Evaluation context which expressions can be evaluated in. */
+    public evaluationContext: Context;
+    /** Dataview functions which can be called from DataviewJS. */
+    public func: Record<string, BoundFunctionImpl>;
+
     public constructor(public app: App, public index: FullIndex, public settings: DataviewSettings) {
-        app.metadataCache.trigger("dataview:api-ready");
+        this.evaluationContext = new Context(defaultLinkHandler(index, ""));
+        this.func = Functions.bindAll(DEFAULT_FUNCTIONS, this.evaluationContext);
     }
 
     /////////////////////////////
@@ -36,7 +46,7 @@ export class DataviewApi {
 
     /** Map a page path to the actual data contained within that page. */
     public page(path: string | Link, originFile?: string): Record<string, any> | undefined {
-        if (!(typeof path === "string") && !Fields.isLink(path)) {
+        if (!(typeof path === "string") && !Values.isLink(path)) {
             throw Error("dv.page only handles string and link paths; was provided type '" + (typeof path) + "'")
         }
 
@@ -82,12 +92,17 @@ export class DataviewApi {
         return Link.file(path, embed, display);
     }
 
+    /** Attempt to extract a date from a string, link or date. */
+    public date(pathlike: string | Link | DateTime): DateTime | null {
+        return this.func.date(pathlike) as DateTime | null;
+    }
+
     /**
      * Compare two arbitrary JavaScript values using Dataview's default comparison rules. Returns a negative value if
      * a < b, 0 if a = b, and a positive value if a > b.
      */
     public compare(a: any, b: any): number {
-        return Fields.compareValue(a, b);
+        return Values.compareValue(a, b);
     }
 
     /** Return true if the two given JavaScript values are equal using Dataview's default comparison rules. */

@@ -1,4 +1,5 @@
 import { Duration } from "luxon";
+import { Result } from "src/api/result";
 
 /** Normalize a duration to all of the proper units. */
 export function normalizeDuration(dur: Duration) {
@@ -45,10 +46,10 @@ export function canonicalizeVarName(name: string): string {
 }
 
 /** Try calling the given function; on failure, return the error message.  */
-export function tryOrPropogate<T>(func: () => T): T | string {
+export function tryOrPropogate<T>(func: () => Result<T, string>): Result<T, string> {
 	try {
 		return func();
 	} catch (error) {
-		return "" + error + "\n\n" + error.stack;
+		return Result.failure("" + error + "\n\n" + error.stack);
 	}
 }

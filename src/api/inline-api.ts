@@ -3,11 +3,15 @@
 import { App, Component, FileSystemAdapter } from "obsidian";
 import { FullIndex } from "src/data/index";
 import { Task } from "src/data/file";
-import { Fields, Link } from "src/query";
-import { renderValue, renderErrorPre } from "src/render";
+import { renderValue, renderErrorPre } from "src/ui/render";
 import { DataArray } from "src/api/data-array";
 import { DataviewApi } from "src/api/plugin-api";
 import { DataviewSettings } from "src/settings";
+import { Link, Values } from "src/data/value";
+import { BoundFunctionImpl, DEFAULT_FUNCTIONS, Functions } from "src/expression/functions";
+import { Context } from "src/expression/context";
+import { defaultLinkHandler } from "src/query/engine";
+import { DateTime } from "luxon";
 
 export class DataviewInlineApi {
     /**
@@ -37,6 +41,12 @@ export class DataviewInlineApi {
     /** Settings which determine defaults, incl. many rendering options. */
     public settings: DataviewSettings;
 
+    /** Evaluation context which expressions can be evaluated in. */
+    public evaluationContext: Context;
+
+    /** Dataview functions which can be called from DataviewJS. */
+    public func: Record<string, BoundFunctionImpl>;
+
     constructor(index: FullIndex, component: Component, container: HTMLElement, app: App, settings: DataviewSettings, currentFilePath: string) {
         this.index = index;
         this.component = component;
@@ -46,6 +56,12 @@ export class DataviewInlineApi {
         this.settings = settings;
 
         this.api = new DataviewApi(this.app, this.index, this.settings);
+
+        // Set up the evaluation context with variables from the current file.
+        let fileMeta = this.index.pages.get(this.currentFilePath)?.toObject(this.index) ?? {};
+        this.evaluationContext = new Context(defaultLinkHandler(this.index, this.currentFilePath), fileMeta);
+
+        this.func = Functions.bindAll(DEFAULT_FUNCTIONS, this.evaluationContext);
     }
 
     /////////////////////////////
@@ -80,18 +96,34 @@ export class DataviewInlineApi {
         return DataArray.wrap([raw]);
     }
 
+    /** Return true if theg given value is a javascript array OR a dataview data array. */
+    public isArray(raw: any): raw is DataArray<any> | Array<any> {
+        return DataArray.isDataArray(raw) || Array.isArray(raw);
+    }
+
+    /** Create a dataview file link to the given path. */
+    public fileLink(path: string, embed: boolean = false, display?: string) {
+        return Link.file(path, embed, display);
+    }
+
+    /** Attempt to extract a date from a string, link or date. */
+    public date(pathlike: string | Link | DateTime): DateTime | null {
+        return this.api.date(pathlike);
+    }
+
     /**
      * Compare two arbitrary JavaScript values using Dataview's default comparison rules. Returns a negative value if
      * a < b, 0 if a = b, and a positive value if a > b.
      */
     public compare(a: any, b: any): number {
-        return Fields.compareValue(a, b);
+        return Values.compareValue(a, b);
     }
 
     /** Return true if the two given JavaScript values are equal using Dataview's default comparison rules. */
     public equal(a: any, b: any): boolean {
         return this.compare(a, b) == 0;
     }
+
 
     /////////////////////////
     // Rendering Functions //
@@ -110,19 +142,36 @@ export class DataviewInlineApi {
             default: throw new Error(`Invalid header level ${level}`);
         }
 
-        let wrapped = Fields.wrapValue(text);
-        if (wrapped === null || wrapped === undefined) this.container.createEl(headerType, { text });
+        let wrapped = Values.wrapValue(text);
+        if (wrapped === null || wrapped === undefined) {
+            this.container.createEl(headerType, { text });
+            return;
+        }
 
         let header = this.container.createEl(headerType);
-        renderValue(wrapped?.value ?? null, header, this.currentFilePath, this.component, this.settings.renderNullAs, false);
+        renderValue(wrapped.value, header, this.currentFilePath, this.component, this.settings.renderNullAs, false);
     }
 
     /** Render an HTML paragraph, containing arbitrary text. */
     public paragraph(text: any) {
-        let wrapped = Fields.wrapValue(text);
-        if (wrapped === null || wrapped === undefined) this.container.createEl('p', { text });
+        let wrapped = Values.wrapValue(text);
+        if (wrapped === null || wrapped === undefined) {
+            this.container.createEl('p', { text });
+            return;
+        }
 
-        renderValue(wrapped?.value ?? null, this.container, this.currentFilePath, this.component, this.settings.renderNullAs, true);
+        renderValue(wrapped.value, this.container, this.currentFilePath, this.component, this.settings.renderNullAs, true);
+    }
+
+    /** Render an inline span, containing arbitrary text. */
+    public span(text: any) {
+        let wrapped = Values.wrapValue(text);
+        if (wrapped === null || wrapped === undefined) {
+            this.container.createEl('p', { text });
+            return;
+        }
+
+        renderValue(wrapped.value, this.container, this.currentFilePath, this.component, this.settings.renderNullAs, true);
     }
 
     /** Render HTML from the output of a template "view" saved as a file in the vault. Takes a filename and arbitrary input data. */

@@ -240,8 +240,6 @@ export class FullIndex {
         if (copy.length == 0) return;
 
         for (let file of copy) this.reloadInternalFile(file);
-
-        // TODO: Would like to do this on a separate thread than the index.
         for (let [_, handler] of this.reloadListeners) handler();
     }
 

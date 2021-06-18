@@ -1,4 +1,4 @@
-import { Fields } from "src/query";
+import { Values } from "src/data/value";
 
 /** A function which maps an array element to some value. */
 export type ArrayFunc<T, O> = (elem: T, index: number, arr: T[]) => O;
@@ -33,17 +33,23 @@ export interface DataArray<T> {
      * to be the end of the array.
      */
     slice(start?: number, end?: number): DataArray<T>;
-    /** Concatenate the values in this data array with those of another data array. */
-    concat(other: DataArray<T>): DataArray<T>;
+    /** Concatenate the values in this data array with those of another iterable / data array / array. */
+    concat(other: Iterable<T>): DataArray<T>;
 
     /** Return the first index of the given (optionally starting the search) */
     indexOf(element: T, fromIndex?: number): number;
     /** Return the first element that satisfies the given predicate. */
     find(pred: ArrayFunc<T, boolean>): T | undefined;
     /** Find the index of the first element that satisfies the given predicate. Returns -1 if nothing was found. */
-    findIndex(pred: ArrayFunc<T, boolean>): number;
+    findIndex(pred: ArrayFunc<T, boolean>, fromIndex?: number): number;
     /** Returns true if the array contains the given element, and false otherwise. */
     includes(element: T): boolean;
+
+    /**
+     * Return a string obtained by converting each element in the array to a string, and joining it with the
+     * given separator (which defaults to ', ').
+     */
+    join(sep?: string): string;
 
     /**
      * Return a sorted array sorted by the given key; an optional comparator can be provided, which will
@@ -101,7 +107,7 @@ export interface DataArray<T> {
 class DataArrayImpl<T> implements DataArray<T> {
     private static ARRAY_FUNCTIONS: Set<string> = new Set([
         "where", "filter", "map", "flatMap", "slice", "concat", "indexOf", "find", "findIndex", "includes",
-        "sort", "groupBy", "distinct", "every", "some", "none", "first", "last", "to",
+        "join", "sort", "groupBy", "distinct", "every", "some", "none", "first", "last", "to",
         "expand", "forEach", "length", "values", "array", "defaultComparator", "toString"
     ]);
 
@@ -116,14 +122,14 @@ class DataArrayImpl<T> implements DataArray<T> {
         }
     };
 
-    public static wrap<T>(arr: T[], defaultComparator: ArrayComparator<any> = Fields.compareValue): DataArray<T> {
+    public static wrap<T>(arr: T[], defaultComparator: ArrayComparator<any> = Values.compareValue): DataArray<T> {
         return new Proxy(new DataArrayImpl(arr, defaultComparator), DataArrayImpl.ARRAY_PROXY);
     }
 
     public length: number;
     [key: string]: any;
 
-    private constructor(public values: any[], public defaultComparator: ArrayComparator<any> = Fields.compareValue) {
+    private constructor(public values: any[], public defaultComparator: ArrayComparator<any> = Values.compareValue) {
         this.length = values.length;
     }
 
@@ -170,7 +176,7 @@ class DataArrayImpl<T> implements DataArray<T> {
 
     /** Return the first index of the given (optionally starting the search) */
     public indexOf(element: T, fromIndex?: number): number {
-        return this.findIndex(e => this.defaultComparator(e, element) == 0);
+        return this.findIndex(e => this.defaultComparator(e, element) == 0, fromIndex);
     }
 
     /** Return the first element that satisfies the given predicate. */
@@ -180,8 +186,8 @@ class DataArrayImpl<T> implements DataArray<T> {
         else return this.values[index];
     }
 
-    public findIndex(pred: ArrayFunc<T, boolean>): number {
-        for (let index = 0; index < this.length; index++) {
+    public findIndex(pred: ArrayFunc<T, boolean>, fromIndex?: number): number {
+        for (let index = fromIndex ?? 0; index < this.length; index++) {
             if (pred(this.values[index], index, this.values)) return index;
         }
 
@@ -190,6 +196,10 @@ class DataArrayImpl<T> implements DataArray<T> {
 
     public includes(element: T): boolean {
         return this.indexOf(element, 0) != -1;
+    }
+
+    public join(sep?: string): string {
+        return this.map(s => Values.toString(s)).array().join(sep ?? ", ");
     }
 
     public sort<U>(key: ArrayFunc<T, U>, direction?: 'asc' | 'desc', comparator?: ArrayComparator<U>): DataArray<T> {

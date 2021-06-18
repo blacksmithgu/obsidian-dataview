@@ -2,8 +2,12 @@
 
 import { DataArray } from "src/api/data-array";
 import { FullIndex } from "src/data/index";
-import { Result } from "src/util/result";
+import { Result } from "src/api/result";
 import { Source } from "./source";
+import { DataObject, Link, LiteralValue } from "./value";
+
+/** A data row which has an ID and associated data (like page link / page data). */
+export type Datarow<T> = { id: LiteralValue, data: T };
 
 /** Collect page paths which match the given source. */
 export function collectPagePaths(source: Source, index: FullIndex, originFile: string = ""): Result<Set<string>, string> {
@@ -63,12 +67,12 @@ export function collectPagePaths(source: Source, index: FullIndex, originFile: s
 }
 
 /** Collect full page metadata for pages which match the given source. */
-export function collectPages(source: Source, index: FullIndex, originFile: string = ""): Result<DataArray<Record<string, any>>, string> {
+export function collectPages(source: Source, index: FullIndex, originFile: string = ""): Result<Datarow<DataObject>[], string> {
     return collectPagePaths(source, index, originFile)
         .map(s => DataArray.from(s).flatMap(p => {
             let page = index.pages.get(p);
             if (!page) return [];
 
-            return [page.toObject(index)];
-        }));
+            return [{ id: Link.file(page.path), data: page.toObject(index) }];
+        }).array());
 }

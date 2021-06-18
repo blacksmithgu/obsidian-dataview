@@ -1,164 +1,161 @@
 /** Various tests for evaluating fields in context. */
 
-import { EXPRESSION } from "src/parse";
-import { Context, LinkHandler } from "src/eval";
-import { LiteralField, Fields, LiteralFieldRepr, DurationField } from "src/query";
-import { DateTime } from "luxon";
+import { EXPRESSION } from "src/expression/parse";
+import { Context, LinkHandler } from "src/expression/context";
+import { DateTime, Duration } from "luxon";
+import { Fields } from "src/expression/field";
+import { Link, LiteralValue } from "src/data/value";
+import { DefaultFunctions } from "src/expression/functions";
 
 // <-- Numeric Operations -->
 
 test("Evaluate simple numeric operations", () => {
-    expect(simpleContext().evaluate(Fields.binaryOp(Fields.number(2), '+', Fields.number(4))))
-        .toEqual(Fields.number(6));
-    expect(simpleContext().evaluate(Fields.binaryOp(Fields.number(2), '-', Fields.number(4))))
-        .toEqual(Fields.number(-2));
-    expect(simpleContext().evaluate(Fields.binaryOp(Fields.number(2), '*', Fields.number(4))))
-        .toEqual(Fields.number(8));
-    expect(simpleContext().evaluate(Fields.binaryOp(Fields.number(8), '/', Fields.number(4))))
-        .toEqual(Fields.number(2));
+    expect(simpleContext().tryEvaluate(Fields.binaryOp(Fields.literal(2), '+', Fields.literal(4))))
+        .toEqual(6);
+    expect(simpleContext().tryEvaluate(Fields.binaryOp(Fields.literal(2), '-', Fields.literal(4))))
+        .toEqual(-2);
+    expect(simpleContext().tryEvaluate(Fields.binaryOp(Fields.literal(2), '*', Fields.literal(4))))
+        .toEqual(8);
+    expect(simpleContext().tryEvaluate(Fields.binaryOp(Fields.literal(8), '/', Fields.literal(4))))
+        .toEqual(2);
 });
 
 test("Evaluate numeric comparisons", () => {
-    expect(simpleContext().evaluate(Fields.binaryOp(Fields.number(8), '<', Fields.number(4))))
-        .toEqual(Fields.bool(false));
-    expect(simpleContext().evaluate(Fields.binaryOp(Fields.number(-2), '=', Fields.number(-2))))
-        .toEqual(Fields.bool(true));
-    expect(simpleContext().evaluate(Fields.binaryOp(Fields.number(-2), '>=', Fields.number(-8))))
-        .toEqual(Fields.bool(true));
+    expect(simpleContext().tryEvaluate(Fields.binaryOp(Fields.literal(8), '<', Fields.literal(4))))
+        .toEqual(false);
+    expect(simpleContext().tryEvaluate(Fields.binaryOp(Fields.literal(-2), '=', Fields.literal(-2))))
+        .toEqual(true);
+    expect(simpleContext().tryEvaluate(Fields.binaryOp(Fields.literal(-2), '>=', Fields.literal(-8))))
+        .toEqual(true);
 });
 
 test("Evaluate complex numeric operations", () => {
-    expect(parseEval("12 + 8 - 4 / 2")).toEqual(Fields.number(18));
-    expect(parseEval("16 / 8 / 2")).toEqual(Fields.number(1));
-    expect(parseEval("39 / 3 <= 14")).toEqual(Fields.bool(true));
+    expect(parseEval("12 + 8 - 4 / 2")).toEqual(18);
+    expect(parseEval("16 / 8 / 2")).toEqual(1);
+    expect(parseEval("39 / 3 <= 14")).toEqual(true);
 });
 
 // <-- String Operations -->
 
 test("Evaluate simple string operations", () => {
-    expect(simpleContext().evaluate(Fields.binaryOp(Fields.string("a"), '+', Fields.string("b"))))
-        .toEqual(Fields.string("ab"));
-    expect(simpleContext().evaluate(Fields.binaryOp(Fields.string("a"), '+', Fields.number(12))))
-        .toEqual(Fields.string("a12"));
-    expect(simpleContext().evaluate(Fields.binaryOp(Fields.string("a"), '*', Fields.number(6))))
-        .toEqual(Fields.string("aaaaaa"));
+    expect(simpleContext().tryEvaluate(Fields.binaryOp(Fields.literal("a"), '+', Fields.literal("b"))))
+        .toEqual("ab");
+    expect(simpleContext().tryEvaluate(Fields.binaryOp(Fields.literal("a"), '+', Fields.literal(12))))
+        .toEqual("a12");
+    expect(simpleContext().tryEvaluate(Fields.binaryOp(Fields.literal("a"), '*', Fields.literal(6))))
+        .toEqual("aaaaaa");
 });
 
 test("Evaluate string comparisons", () => {
-    expect(simpleContext().evaluate(Fields.binaryOp(Fields.string("abc"), '<', Fields.string("abd"))))
-        .toEqual(Fields.bool(true));
-    expect(simpleContext().evaluate(Fields.binaryOp(Fields.string("xyz"), '=', Fields.string("xyz"))))
-        .toEqual(Fields.bool(true));
+    expect(simpleContext().tryEvaluate(Fields.binaryOp(Fields.literal("abc"), '<', Fields.literal("abd"))))
+        .toEqual(true);
+    expect(simpleContext().tryEvaluate(Fields.binaryOp(Fields.literal("xyz"), '=', Fields.literal("xyz"))))
+        .toEqual(true);
 });
 
 // <-- Date Operations -->
 
 test("Evaluate date comparisons", () => {
-    expect(parseEval("date(2021-01-14) = date(2021-01-14)")).toEqual(Fields.bool(true));
-    expect(parseEval("contains(list(date(2020-01-01)), date(2020-01-01))")).toEqual(Fields.bool(true));
+    expect(parseEval("date(2021-01-14) = date(2021-01-14)")).toEqual(true);
+    expect(parseEval("contains(list(date(2020-01-01)), date(2020-01-01))")).toEqual(true);
 });
 
 test("Evaluate date subtraction", () => {
-    let duration = parseEval("date(2021-05-04) - date(1997-05-17)") as DurationField;
-    expect(duration.value.years).toEqual(23);
+    let duration = parseEval("date(2021-05-04) - date(1997-05-17)") as Duration;
+    expect(duration.years).toEqual(23);
 });
 
 // <-- Field resolution -->
 
 test("Evaluate simple field resolution", () => {
-    let context = simpleContext().set("a", Fields.number(18)).set("b", Fields.string("hello"));
-    expect(context.get("a")).toEqual(Fields.number(18));
-    expect(context.get("b")).toEqual(Fields.string("hello"));
-    expect(context.get("c")).toEqual(Fields.NULL);
+    let context = simpleContext().set("a", 18).set("b", "hello");
+    expect(context.get("a")).toEqual(18);
+    expect(context.get("b")).toEqual("hello");
+    expect(context.get("c")).toEqual(null);
 });
 
 test("Evaluate simple object resolution", () => {
-    let rawRawObject = new Map<string, LiteralField>()
-        .set("final", Fields.number(6));
+    let object = { "inner": { final: 6 } };
+    let context = simpleContext().set("obj", object);
 
-    let rawObject = new Map<string, LiteralField>()
-        .set("inner", Fields.object(rawRawObject));
-
-    let context = simpleContext().set("obj", Fields.object(rawObject));
-
-    expect(context.get("obj").valueType).toEqual("object");
-    expect(context.evaluate(Fields.indexVariable("obj.inner"))).toEqual(Fields.object(rawRawObject));
-    expect(context.evaluate(Fields.indexVariable("obj.inner.final"))).toEqual(Fields.number(6));
+    expect(context.tryEvaluate(Fields.indexVariable("obj.inner"))).toEqual(object.inner);
+    expect(context.tryEvaluate(Fields.indexVariable("obj.inner.final"))).toEqual(object.inner.final);
 });
 
 test("Evaluate simple link resolution", () => {
-    let rawRawObject = new Map<string, LiteralField>()
-        .set("final", Fields.number(6));
-
-    let rawObject = new Map<string, LiteralField>()
-        .set("inner", Fields.object(rawRawObject));
-
-    let context = new Context({ resolve: path => Fields.object(rawObject), normalize: path => path, exists: path => false })
-        .set("link", Fields.fileLink("test"));
-    expect(context.get("link").valueType).toEqual("link");
-    expect(context.evaluate(Fields.indexVariable("link.inner"))).toEqual(Fields.object(rawRawObject));
-    expect(context.evaluate(Fields.indexVariable("link.inner.final"))).toEqual(Fields.number(6));
+    let object = { "inner": { final: 6 }};
+    let context = new Context({ resolve: path => object, normalize: path => path, exists: path => false })
+        .set("link", Link.file("test", false));
+    expect(context.tryEvaluate(Fields.indexVariable("link.inner"))).toEqual(object.inner);
+    expect(context.tryEvaluate(Fields.indexVariable("link.inner.final"))).toEqual(object.inner.final);
 });
 
 // <-- Functions -->
 // <-- Function vectorization -->
 
 test("Evaluate lower(list)", () => {
-    expect(parseEval("lower(list(\"A\", \"B\"))")).toEqual(Fields.array([Fields.string("a"), Fields.string("b")]));
+    expect(parseEval("lower(list(\"A\", \"B\"))")).toEqual(["a", "b"]);
 })
 
 test("Evaluate replace(list, string, string)", () => {
-    expect(parseEval("replace(list(\"yes\", \"re\"), \"e\", \"a\")")).toEqual(Fields.array([
-        Fields.string("yas"), Fields.string("ra")
-    ]));
+    expect(parseEval("replace(list(\"yes\", \"re\"), \"e\", \"a\")")).toEqual(["yas", "ra"]);
 })
 
 // <-- Length -->
 
 test("Evaluate length(array)", () => {
-    let array = Fields.array([Fields.number(1), Fields.number(2)]);
-
-    expect(simpleContext().evaluate(Fields.func(Fields.variable("length"), [array]))).toEqual(Fields.number(2));
-});
-
-test("Evaluate length(object)", () => {
-    let obj = Fields.object(new Map().set("a", Fields.number(1)));
-    expect(simpleContext().evaluate(Fields.func(Fields.variable("length"), [obj]))).toEqual(Fields.number(1));
+    expect(DefaultFunctions.length(simpleContext(), [1, 2])).toEqual(2);
+    expect(DefaultFunctions.length(simpleContext(), [])).toEqual(0);
 });
 
 test("Evaluate length(string)", () => {
-    expect(simpleContext().evaluate(Fields.func(Fields.variable("length"), [Fields.string("hello")]))).toEqual(Fields.number(5));
+    expect(DefaultFunctions.length(simpleContext(), "hello")).toEqual(5);
+    expect(DefaultFunctions.length(simpleContext(), "no")).toEqual(2);
+    expect(DefaultFunctions.length(simpleContext(), "")).toEqual(0);
 });
 
 // <-- list() -->
 
 test("Evaluate list()", () => {
-    expect(parseEval("list(1, 2, 3)")).toEqual(Fields.array([Fields.number(1), Fields.number(2), Fields.number(3)]));
+    expect(DefaultFunctions.list(simpleContext(), 1, 2, 3)).toEqual([1, 2, 3]);
+    expect(DefaultFunctions.list(simpleContext())).toEqual([]);
 });
 
 // <-- object() -->
 
 test("Evaluate object()", () => {
-    expect(parseEval("object()")).toEqual(Fields.object(new Map<string, LiteralField>()));
-    expect(parseEval("object(\"hello\", 1)")).toEqual(Fields.object(new Map<string, LiteralField>().set("hello", Fields.number(1))));
+    expect(parseEval("object()")).toEqual({});
+    expect(parseEval("object(\"hello\", 1)")).toEqual({ "hello": 1 });
 });
 
 // <-- contains() -->
 
 test("Evaluate contains(object)", () => {
-    expect(parseEval("contains(object(\"hello\", 1), \"hello\")")).toEqual(Fields.bool(true));
-    expect(parseEval("contains(object(\"hello\", 1), \"no\")")).toEqual(Fields.bool(false));
+    expect(parseEval("contains(object(\"hello\", 1), \"hello\")")).toEqual(true);
+    expect(parseEval("contains(object(\"hello\", 1), \"no\")")).toEqual(false);
 });
 
 test("Evaluate contains(array)", () => {
-    expect(parseEval("contains(list(\"hello\", 1), \"hello\")")).toEqual(Fields.bool(true));
-    expect(parseEval("contains(list(\"hello\", 1), 6)")).toEqual(Fields.bool(false));
+    expect(parseEval("contains(list(\"hello\", 1), \"hello\")")).toEqual(true);
+    expect(parseEval("contains(list(\"hello\", 1), 6)")).toEqual(false);
+});
+
+test("Evaluate fuzzy contains(array)", () => {
+    expect(parseEval(`contains(list("hello"), "he")`)).toEqual(true);
+    expect(parseEval(`contains(list("hello"), "no")`)).toEqual(false);
 });
 
 test("Evaluate contains(string)", () => {
-    expect(parseEval("contains(\"hello\", \"hello\")")).toEqual(Fields.bool(true));
-    expect(parseEval("contains(\"meep\", \"me\")")).toEqual(Fields.bool(true));
-    expect(parseEval("contains(\"hello\", \"xd\")")).toEqual(Fields.bool(false));
+    expect(parseEval("contains(\"hello\", \"hello\")")).toEqual(true);
+    expect(parseEval("contains(\"meep\", \"me\")")).toEqual(true);
+    expect(parseEval("contains(\"hello\", \"xd\")")).toEqual(false);
+});
+
+test("Evaluate non-fuzzy econtains(array)", () => {
+    expect(parseEval(`econtains(list("hello"), "he")`)).toEqual(false);
+    expect(parseEval(`econtains(list("hello"), "hello")`)).toEqual(true);
+    expect(parseEval(`econtains(list("hello", 19), 1)`)).toEqual(false);
+    expect(parseEval(`econtains(list("hello", 19), 19)`)).toEqual(true);
 });
 
 // <-- reverse() -->
@@ -177,133 +174,130 @@ test("Evaluate sort(list)", () => {
 
 // <-- sum() -->
 test("Evaluate sum(list)", () => {
-    expect(parseEval("sum(list(2, 3, 1))")).toEqual(Fields.number(6));
-    expect(parseEval("sum(list(\"a\", \"b\", \"c\"))")).toEqual(Fields.string("abc"));
-    expect(parseEval("sum(list())")).toEqual(Fields.NULL);
+    expect(parseEval("sum(list(2, 3, 1))")).toEqual(6);
+    expect(parseEval("sum(list(\"a\", \"b\", \"c\"))")).toEqual("abc");
+    expect(parseEval("sum(list())")).toEqual(null);
 });
 
 // <-- regexmatch() -->
 
 test("Evaluate regexmatch()", () => {
-    expect(parseEval('regexmatch(".+", "stuff")')).toEqual(Fields.bool(true));
-    expect(parseEval('regexmatch(".+", "")')).toEqual(Fields.bool(false));
-    expect(parseEval('regexmatch(".*", "")')).toEqual(Fields.bool(true));
-    expect(parseEval('regexmatch("\\w+", "m3me")')).toEqual(Fields.bool(true));
-    expect(parseEval('regexmatch("\\s+", "  ")')).toEqual(Fields.bool(true));
-    expect(parseEval('regexmatch("what", "what")')).toEqual(Fields.bool(true));
+    expect(parseEval('regexmatch(".+", "stuff")')).toEqual(true);
+    expect(parseEval('regexmatch(".+", "")')).toEqual(false);
+    expect(parseEval('regexmatch(".*", "")')).toEqual(true);
+    expect(parseEval('regexmatch("\\w+", "m3me")')).toEqual(true);
+    expect(parseEval('regexmatch("\\s+", "  ")')).toEqual(true);
+    expect(parseEval('regexmatch("what", "what")')).toEqual(true);
 });
 
 // <-- replace() -- >
 
 test("Evaluate replace()", () => {
-    expect(parseEval("replace(\"hello\", \"h\", \"me\")")).toEqual(Fields.string("meello"));
-    expect(parseEval("replace(\"meep\", \"meep\", \"pleh\")")).toEqual(Fields.string("pleh"));
+    expect(parseEval("replace(\"hello\", \"h\", \"me\")")).toEqual("meello");
+    expect(parseEval("replace(\"meep\", \"meep\", \"pleh\")")).toEqual("pleh");
 });
 
 // <-- lower/upper() -->
 
 test("Evaluate lower()/upper()", () => {
-    expect(parseEval("lower(\"Hello\")")).toEqual(Fields.string("hello"));
-    expect(parseEval("lower(\"hello\")")).toEqual(Fields.string("hello"));
-    expect(parseEval("upper(\"Hello\")")).toEqual(Fields.string("HELLO"));
-    expect(parseEval("upper(\"hello\")")).toEqual(Fields.string("HELLO"));
+    expect(parseEval("lower(\"Hello\")")).toEqual("hello");
+    expect(parseEval("lower(\"hello\")")).toEqual("hello");
+    expect(parseEval("upper(\"Hello\")")).toEqual("HELLO");
+    expect(parseEval("upper(\"hello\")")).toEqual("HELLO");
 })
 
 // <-- default() -->
 
 test("Evaluate default()", () => {
-    expect(parseEval("default(null, 1)")).toEqual(Fields.number(1));
-    expect(parseEval("default(2, 1)")).toEqual(Fields.number(2));
-    expect(parseEval("default(list(1, null, null), 2)")).toEqual(Fields.array([Fields.number(1), Fields.number(2), Fields.number(2)]));
+    expect(parseEval("default(null, 1)")).toEqual(1);
+    expect(parseEval("default(2, 1)")).toEqual(2);
+    expect(parseEval("default(list(1, null, null), 2)")).toEqual([1, 2, 2]);
 });
 
 test("Evaluate ldefault()", () => {
-    expect(parseEval("ldefault(null, 1)")).toEqual(Fields.number(1));
-    expect(parseEval("ldefault(2, 1)")).toEqual(Fields.number(2));
+    expect(parseEval("ldefault(null, 1)")).toEqual(1);
+    expect(parseEval("ldefault(2, 1)")).toEqual(2);
 });
 
 // <-- choice() -->
 
 test("Evaluate choose()", () => {
-    expect(parseEval("choice(true, 1, 2)")).toEqual(Fields.number(1));
-    expect(parseEval("choice(false, 1, 2)")).toEqual(Fields.number(2));
+    expect(parseEval("choice(true, 1, 2)")).toEqual(1);
+    expect(parseEval("choice(false, 1, 2)")).toEqual(2);
 })
 
 // <-- any/all() -->
 
 test("Evaluate any()", () => {
-    expect(parseEval("any(true, false)")).toEqual(Fields.bool(true));
-    expect(parseEval("any(list(true, false))")).toEqual(Fields.bool(true));
+    expect(parseEval("any(true, false)")).toEqual(true);
+    expect(parseEval("any(list(true, false))")).toEqual(true);
 })
 
 test("Evaluate all()", () => {
-    expect(parseEval("all(true, false)")).toEqual(Fields.bool(false));
-    expect(parseEval("all(true, list(false))")).toEqual(Fields.bool(true));
-    expect(parseEval("all(list(true, false))")).toEqual(Fields.bool(false));
-    expect(parseEval("all(list(true, list(false)))")).toEqual(Fields.bool(true));
+    expect(parseEval("all(true, false)")).toEqual(false);
+    expect(parseEval("all(true, list(false))")).toEqual(true);
+    expect(parseEval("all(list(true, false))")).toEqual(false);
+    expect(parseEval("all(list(true, list(false)))")).toEqual(true);
 })
 
 test("Evaluate vectorized all()", () => {
-    expect(parseEval("all(regexmatch(\"a+\", list(\"a\", \"aaaa\")))")).toEqual(Fields.bool(true));
-    expect(parseEval("all(regexmatch(\"a+\", list(\"a\", \"aaab\")))")).toEqual(Fields.bool(false));
-    expect(parseEval("any(regexmatch(\"a+\", list(\"a\", \"aaab\")))")).toEqual(Fields.bool(true));
+    expect(parseEval("all(regexmatch(\"a+\", list(\"a\", \"aaaa\")))")).toEqual(true);
+    expect(parseEval("all(regexmatch(\"a+\", list(\"a\", \"aaab\")))")).toEqual(false);
+    expect(parseEval("any(regexmatch(\"a+\", list(\"a\", \"aaab\")))")).toEqual(true);
 });
 
 // <-- extract() -->
 
 test("Evaluate 1 field extract()", () => {
     let res = parseEval("extract(object(\"mtime\", 1), \"mtime\")");
-    expect(res.valueType == "object");
-    let map = (res as LiteralFieldRepr<'object'>).value;
-    expect(map.size).toEqual(1);
-    expect(map.get("mtime")).toEqual(Fields.number(1));
+    expect(res).toEqual({ "mtime": 1 });
 });
 
 test("Evaluate 2 field extract()", () => {
     let res = parseEval("extract(object(\"mtime\", 1, \"yes\", \"hello\"), \"yes\", \"mtime\")");
-    expect(res.valueType == "object");
-    let map = (res as LiteralFieldRepr<'object'>).value;
-    expect(map.size).toEqual(2);
-    expect(map.get("mtime")).toEqual(Fields.number(1));
-    expect(map.get("yes")).toEqual(Fields.string("hello"));
+    expect(res).toEqual({
+        "yes": "hello",
+        "mtime": 1
+    });
 });
 
 // <-- number() -->
 
 test("Evaluate number()", () => {
-    expect(parseEval("number(\"hmm\")")).toEqual(Fields.NULL);
-    expect(parseEval("number(34)")).toEqual(Fields.number(34));
-    expect(parseEval("number(\"34\")")).toEqual(Fields.number(34));
-    expect(parseEval("number(\"17 years\")")).toEqual(Fields.number(17));
-    expect(parseEval("number(\"-19\")")).toEqual(Fields.number(-19));
+    expect(parseEval("number(\"hmm\")")).toEqual(null);
+    expect(parseEval("number(34)")).toEqual(34);
+    expect(parseEval("number(\"34\")")).toEqual(34);
+    expect(parseEval("number(\"17 years\")")).toEqual(17);
+    expect(parseEval("number(\"-19\")")).toEqual(-19);
 });
 
 // <-- date() -->
 
 test("Evaluate date()", () => {
-    expect(parseEval("date([[2020-04-18]])")).toEqual(Fields.date(DateTime.fromObject({ year: 2020, month: 4, day: 18 })));
-    expect(parseEval("date([[Place|2021-04]])")).toEqual(Fields.date(DateTime.fromObject({ year: 2021, month: 4, day: 1 })));
+    expect(parseEval("date([[2020-04-18]])")).toEqual(DateTime.fromObject({ year: 2020, month: 4, day: 18 }));
+    expect(parseEval("date([[Place|2021-04]])")).toEqual(DateTime.fromObject({ year: 2021, month: 4, day: 1 }));
 });
 
 // <-- regexreplace() -->
 
 test("Evaluate regexreplace", () => {
-    expect(parseEval('regexreplace("yes", ".+", "no")')).toEqual(Fields.string("no"));
-    expect(parseEval('regexreplace("yes", "y", "no")')).toEqual(Fields.string("noes"));
-    expect(parseEval('regexreplace("yes", "yes", "no")')).toEqual(Fields.string("no"));
+    expect(parseEval('regexreplace("yes", ".+", "no")')).toEqual("no");
+    expect(parseEval('regexreplace("yes", "y", "no")')).toEqual("noes");
+    expect(parseEval('regexreplace("yes", "yes", "no")')).toEqual("no");
 });
 
 /** Parse a field expression and evaluate it in the simple context. */
-function parseEval(text: string): LiteralField {
+function parseEval(text: string): LiteralValue {
     let field = EXPRESSION.field.tryParse(text);
-    return simpleContext().evaluate(field) as LiteralField;
+    return simpleContext().tryEvaluate(field);
 }
 
+/** Create a trivial link handler which never resolves links. */
 function simpleLinkHandler(): LinkHandler {
     return {
-        resolve: path => Fields.NULL,
+        resolve: path => null,
         normalize: path => path,
-        exists: path => false
+        exists: path => true
     }
 }
 
