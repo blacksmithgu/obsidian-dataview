@@ -88,7 +88,9 @@ export class FileIndexer {
         for (let index = 0; index < numWorkers; index++) {
             let workerFunc = URL.createObjectURL(new Blob(['(',
             function() {
-
+                onmessage = function(evt) {
+                    console.log(evt.data);
+                }
             }.toString(),
             ')()'], { type: 'application/javascript'}));
 

@@ -438,6 +438,10 @@ export namespace DefaultFunctions {
         .add1("array", arr => !arr.some(v => Values.isTruthy(v)))
         .vararg((_ctx, ...args) => !args.some(v => Values.isTruthy(v)))
         .build();
+
+    export const nonnull = new FunctionBuilder("nonnull")
+        .vararg((_ctx, ...args) => args.filter(v => Values.typeOf(v) != 'null'))
+        .build();
 }
 
 /** Default function implementations for the expression evaluator. */
@@ -479,6 +483,7 @@ export const DEFAULT_FUNCTIONS: Record<string, FunctionImpl> = {
     "all": DefaultFunctions.all,
     "any": DefaultFunctions.any,
     "none": DefaultFunctions.none,
+    "nonnull": DefaultFunctions.nonnull,
 
     // Object/Utility operations.
     "extract": DefaultFunctions.extract,

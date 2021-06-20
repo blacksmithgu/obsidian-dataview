@@ -25,6 +25,8 @@ export interface DataviewSettings extends QuerySettings {
 	warnOnEmptyResult: boolean;
 	/** The prefix for inline queries by default. */
 	inlineQueryPrefix: string;
+    /** The prefix for inline JS queries by default. */
+    inlineJsQueryPrefix: string;
 	/** The interval that views are refreshed, by default. */
 	refreshInterval: number;
 
@@ -39,6 +41,7 @@ export const DEFAULT_SETTINGS: DataviewSettings = {
 	renderNullAs: "\\-",
 	warnOnEmptyResult: true,
 	inlineQueryPrefix: "=",
+    inlineJsQueryPrefix: "$=",
 	refreshInterval: 1000,
 	schemaVersion: 1
 }

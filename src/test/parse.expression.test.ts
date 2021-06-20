@@ -120,6 +120,17 @@ test("Parse Year-Month-DayTHour:Minute:Second", () => {
     expect(date.second).toBe(59);
 });
 
+test("Parse Year-Month-DayTHour:Minute:Second-Offset", () => {
+    let date = EXPRESSION.date.tryParse("1984-08-15T12:40:50-07:00");
+    expect(date.zoneName).toBe("UTC-7");
+
+    let date2 = EXPRESSION.date.tryParse("1984-08-15T12:40:50+9");
+    expect(date2.zoneName).toBe("UTC+9");
+
+    let date3 = EXPRESSION.date.tryParse("1985-12-06T19:40:10+06:30");
+    expect(date3.zoneName).toBe("UTC+6:30");
+})
+
 test("Parse Today", () => {
     let date = EXPRESSION.dateField.tryParse("date(today)") as LiteralField;
     expect(Values.isDate(date.value)).toEqual(true);

@@ -124,7 +124,6 @@ export class DataviewInlineApi {
         return this.compare(a, b) == 0;
     }
 
-
     /////////////////////////
     // Rendering Functions //
     /////////////////////////

@@ -78,25 +78,29 @@ export default class DataviewPlugin extends Plugin {
 
 		// Dataview inline queries.
 		this.registerMarkdownPostProcessor(async (el, ctx) => {
-			// Search for <code> blocks inside this element; for each one, look for things of the form `
+			// Search for <code> blocks inside this element; for each one, look for things of the form `= ...`.
 			let codeblocks = el.querySelectorAll("code");
 			for (let index = 0; index < codeblocks.length; index++) {
 				let codeblock = codeblocks.item(index);
 
 				let text = codeblock.innerText.trim();
-				if (!text.startsWith(this.settings.inlineQueryPrefix)) continue;
+                if (text.startsWith(this.settings.inlineJsQueryPrefix)) {
+                    let code = text.substring(this.settings.inlineJsQueryPrefix.length).trim();
+                    ctx.addChild(this.wrapInlineWithEnsureIndex(ctx, codeblock,
+                        () => new DataviewInlineJSRenderer(code, el, codeblock, this.app, this.index, ctx.sourcePath, this.settings)));
+				} else if (text.startsWith(this.settings.inlineQueryPrefix)) {
+                    let potentialField = text.substring(this.settings.inlineQueryPrefix.length).trim();
 
-				let potentialField = text.substring(this.settings.inlineQueryPrefix.length).trim();
-
-				let field = tryOrPropogate(() => parseField(potentialField));
-				if (!field.successful) {
-					let errorBlock = el.createEl('div');
-					renderErrorPre(errorBlock, `Dataview (inline field '${potentialField}'): ${field.error}`);
-				} else {
-                    let fieldValue = field.value;
-					ctx.addChild(this.wrapInlineWithEnsureIndex(ctx, codeblock,
-						() => new DataviewInlineRenderer(fieldValue, text, el, codeblock, this.index, ctx.sourcePath, this.settings)));
-				}
+                    let field = tryOrPropogate(() => parseField(potentialField));
+                    if (!field.successful) {
+                        let errorBlock = el.createEl('div');
+                        renderErrorPre(errorBlock, `Dataview (inline field '${potentialField}'): ${field.error}`);
+                    } else {
+                        let fieldValue = field.value;
+                        ctx.addChild(this.wrapInlineWithEnsureIndex(ctx, codeblock,
+                            () => new DataviewInlineRenderer(fieldValue, text, el, codeblock, this.index, ctx.sourcePath, this.settings)));
+                    }
+                }
 			}
 		});
 	}
@@ -159,6 +163,14 @@ class DataviewSettingsTab extends PluginSettingTab {
 				text.setPlaceholder("=")
 				.setValue(this.plugin.settings.inlineQueryPrefix)
 				.onChange(async (value) => await this.plugin.updateSettings({ inlineQueryPrefix: value })))
+
+		new Setting(this.containerEl)
+			.setName("JavaScript Inline Query Prefix")
+			.setDesc("The prefix to JavaScript inline queries (to mark them as DataviewJS queries). Defaults to '$='.")
+			.addText(text =>
+				text.setPlaceholder("$=")
+				.setValue(this.plugin.settings.inlineJsQueryPrefix)
+				.onChange(async (value) => await this.plugin.updateSettings({ inlineJsQueryPrefix: value })))
 
 		new Setting(this.containerEl)
 			.setName("Dataview Refresh Interval (milliseconds)")
@@ -445,6 +457,51 @@ class DataviewJSRenderer extends MarkdownRenderChild {
 		} catch (e) {
 			this.containerEl.innerHTML = "";
 			renderErrorPre(this.container, "Evaluation Error: " + e.stack);
+		}
+    }
+}
+
+/** Inline JS renderer accessible using '=$' by default. */
+class DataviewInlineJSRenderer extends MarkdownRenderChild {
+    static PREAMBLE: string = "const dataview = this;const dv=this;";
+
+	// The box that the error is rendered in, if relevant.
+	errorbox?: HTMLElement;
+
+	constructor(
+		public script: string,
+		public container: HTMLElement,
+		public target: HTMLElement,
+		public app: App,
+		public index: FullIndex,
+		public origin: string,
+		public settings: DataviewSettings) {
+		super(container);
+	}
+
+	async onload() {
+        await this.render();
+
+        onIndexChange(this.index, this.settings.refreshInterval, this, async () => {
+			this.errorbox?.remove();
+			await this.render();
+		});
+	}
+
+    async render() {
+		// Assume that the code is javascript, and try to eval it.
+		try {
+            let temp = document.createElement("span");
+			let result = evalInContext(DataviewInlineJSRenderer.PREAMBLE + this.script,
+				makeApiContext(this.index, this, this.app, this.settings, temp, this.origin));
+            this.target.replaceWith(temp);
+            this.target = temp;
+            if (result === undefined) return;
+
+            renderValue(result, temp, this.origin, this, this.settings.renderNullAs, false);
+		} catch (e) {
+			this.errorbox = this.container.createEl('div');
+			renderErrorPre(this.errorbox, "Dataview (for inline JS query '" + this.script + "'): " + e);
 		}
     }
 }
