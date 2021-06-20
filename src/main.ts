@@ -35,7 +35,7 @@ export default class DataviewPlugin extends Plugin {
 
 		this.addSettingTab(new DataviewSettingsTab(this.app, this));
 
-		console.log("Dataview: Version 0.3.x Loaded");
+		console.log("Dataview: Version 0.4.x Loaded");
 
 		if (!this.app.workspace.layoutReady) {
 			this.app.workspace.on("layout-ready", async () => this.prepareIndexes());

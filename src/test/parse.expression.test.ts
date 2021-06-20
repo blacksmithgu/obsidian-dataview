@@ -10,11 +10,13 @@ import { Link, Values } from "src/data/value";
 test("Parse Integer Literal", () => {
     expect(EXPRESSION.number.parse("0no").status).toBe(false);
     expect(EXPRESSION.number.tryParse("123")).toBe(123);
+    expect(EXPRESSION.number.tryParse("-123")).toBe(-123);
 });
 
 test("Parse Float Literal", () => {
     expect(EXPRESSION.number.tryParse("123.45")).toBeCloseTo(123.45);
     expect(EXPRESSION.number.tryParse("1000.0")).toBeCloseTo(1000);
+    expect(EXPRESSION.number.tryParse("-123.18")).toBe(-123.18);
     expect(EXPRESSION.number.parse("123.0.0").status).toBe(false);
 });
 

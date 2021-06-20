@@ -168,7 +168,7 @@ interface ExpressionLanguage {
 
 export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
     // A floating point number; the decimal point is optional.
-    number: q => P.regexp(/[0-9]+(.[0-9]+)?/).map(str => Number.parseFloat(str)).desc("number"),
+    number: q => P.regexp(/-?[0-9]+(.[0-9]+)?/).map(str => Number.parseFloat(str)).desc("number"),
 
     // A quote-surrounded string which supports escape characters ('\').
     string: q => P.string('"')

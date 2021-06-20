@@ -249,6 +249,8 @@ export function parseFrontmatter(value: any): LiteralValue {
         }
     } else if (typeof value === 'number') {
         return value;
+    } else if (typeof value === 'boolean') {
+        return value;
     } else if (typeof value === 'string') {
         let dateParse = EXPRESSION.date.parse(value);
         if (dateParse.status) return dateParse.value;

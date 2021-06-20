@@ -319,7 +319,7 @@ export function executeTask(query: Query, origin: string, index: FullIndex): Res
 
 /** Execute a single field inline a file, returning the evaluated result. */
 export function executeInline(field: Field, origin: string, index: FullIndex): Result<LiteralValue, string> {
-    return new Context(defaultLinkHandler(index, origin), index.pages.get(origin)?.toObject(index) ?? {})
+    return new Context(defaultLinkHandler(index, origin), { "this": index.pages.get(origin)?.toObject(index) ?? {}})
         .evaluate(field);
 }
 
