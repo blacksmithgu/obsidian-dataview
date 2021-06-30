@@ -1,7 +1,9 @@
 /** Stores various indices on all files in the vault to make dataview generation fast. */
 import { MetadataCache, Vault, TFile } from 'obsidian';
-import { extractMarkdownMetadata, PageMetadata } from './file';
+import {extractMarkdownMetadata, PageMetadata, parseFrontmatter} from './file';
 import { getParentFolder } from 'src/util/normalize';
+import {LiteralValue} from "src/data/value";
+import parseCsv from "csv-parse/lib/sync";
 
 /** A generic index which indexes variables of the form key -> value[], allowing both forward and reverse lookups. */
 export class IndexMap {
@@ -126,6 +128,8 @@ export class FullIndex {
 
     /** Map files -> tags in that file, and tags -> files. This version includes subtags. */
     public tags: IndexMap;
+    /** Map files -> tags in that file, and tags -> files. This version includes subtags. */
+    public csv: CsvIndex;
     /** Map files -> exact tags in that file, and tags -> files. This version does not automatically add subtags. */
     public etags: IndexMap;
     /** Map files -> linked files in that file, and linked file -> files that link to it. */
@@ -203,6 +207,7 @@ export class FullIndex {
     private async initialize() {
         // Prefix listens to file creation/deletion/rename, and not modifies, so we let it set up it's own listeners.
         this.prefix = await PrefixIndex.generate(this.vault);
+        this.csv = await CsvIndex.generate(this.vault);
 
         // Traverse all markdown files & fill in initial data.
         let start = new Date().getTime();
@@ -378,5 +383,60 @@ export class PrefixIndex {
         if (node == null || node == undefined) return new Set();
 
         return PrefixIndexNode.gather(node);
+    }
+}
+
+export class CsvIndex {
+
+    vault: Vault;
+    cache: MetadataCache;
+    rows: Map<String, Array<Record<string, LiteralValue>>>
+
+    constructor(vault: Vault) {
+        this.vault = vault;
+        this.rows = new Map<String, Array<Record<string, LiteralValue>>>();
+    }
+
+    public static async generate(vault: Vault): Promise<CsvIndex> {
+        let index = new CsvIndex(vault);
+        for (let file of vault.getFiles().filter((f) => f.extension == "csv")) {
+            let timeStart = new Date().getTime();
+            const content = await vault.adapter.read(file.path);
+            const parsed = parseCsv(content, {
+                columns: true,
+                skip_empty_lines: true,
+                trim: true,
+                cast: true,
+            }) as Array<Object>;
+            let rows = [] as Record<string, LiteralValue>[];
+            for (let i = 0; i < parsed.length; ++i) {
+                let result: Record<string, LiteralValue> = {};
+                let fields = parseFrontmatter(parsed[i]) as Record<string, LiteralValue>;
+                if (fields != null) {
+                    let col_idx = 0;
+                    for (let [key, value] of Object.entries(fields)) {
+                        let strKey = key.toString().replace(/ /g, "_");
+                        result[strKey] = value;
+                        result[`col__${col_idx++}`] = value;
+                    }
+                }
+                rows.push(result);
+            }
+
+            let totalTimeMs = new Date().getTime() - timeStart;
+            console.log(`Dataview: Load ${parsed.length} rows in ${file.path} (${totalTimeMs / 1000.0}s)`);
+            index.rows.set(file.path, rows);
+        }
+
+        return index;
+    }
+
+    public get(path: string): Array<Record<string, LiteralValue>> {
+        let result = this.rows.get(path);
+        if (result) {
+            return result;
+        } else {
+            return [] as Array<Record<string, LiteralValue>>;
+        }
     }
 }

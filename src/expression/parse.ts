@@ -2,7 +2,7 @@ import { DateTime, Duration } from "luxon";
 import { Link, LiteralValue } from "src/data/value";
 import * as P from 'parsimmon';
 import { BinaryOp, Field, Fields, LiteralField, VariableField } from "./field";
-import { FolderSource, NegatedSource, Source, SourceOp, Sources, TagSource } from "src/data/source";
+import { FolderSource, NegatedSource, Source, SourceOp, Sources, TagSource, CsvSource } from "src/data/source";
 import { normalizeDuration } from "src/util/normalize";
 import { Result } from "src/api/result";
 
@@ -123,6 +123,7 @@ interface ExpressionLanguage {
 
     // Source-related parsers.
     tagSource: TagSource;
+    csvSource: CsvSource;
     folderSource: FolderSource;
     parensSource: Source;
     atomSource: Source;
@@ -255,13 +256,15 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
 
     // Source parsing.
     tagSource: q => q.tag.map(tag => Sources.tag(tag)),
+    csvSource: q => P.seqMap(P.string("csv(").skip(P.optWhitespace), q.string, P.string(")"),
+        (_1,path, _2) => Sources.csv(path)),
     linkIncomingSource: q => q.link.map(link => Sources.link(link.path, true)),
     linkOutgoingSource: q => P.seqMap(P.string("outgoing(").skip(P.optWhitespace), q.link, P.string(")"),
         (_1, link, _2) => Sources.link(link.path, false)),
     folderSource: q => q.string.map(str => Sources.folder(str)),
     parensSource: q => P.seqMap(P.string("("), P.optWhitespace, q.source, P.optWhitespace, P.string(")"), (_1, _2, field, _3, _4) => field),
     negateSource: q => P.seqMap(P.alt(P.string("-"), P.string("!")), q.atomSource, (_, source) => Sources.negate(source)),
-    atomSource: q => P.alt<Source>(q.parensSource, q.negateSource, q.linkOutgoingSource, q.linkIncomingSource, q.folderSource, q.tagSource),
+    atomSource: q => P.alt<Source>(q.parensSource, q.negateSource, q.linkOutgoingSource, q.linkIncomingSource, q.folderSource, q.tagSource, q.csvSource),
     binaryOpSource: q => createBinaryParser(q.atomSource, q.binaryBooleanOp.map(s => s as SourceOp), Sources.binaryOp),
     source: q => q.binaryOpSource,
 

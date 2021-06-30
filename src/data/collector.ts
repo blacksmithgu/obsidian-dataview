@@ -5,6 +5,7 @@ import { FullIndex } from "src/data/index";
 import { Result } from "src/api/result";
 import { Source } from "./source";
 import { DataObject, Link, LiteralValue } from "./value";
+import {getFileName} from "src/util/normalize";
 
 /** A data row which has an ID and associated data (like page link / page data). */
 export type Datarow<T> = { id: LiteralValue, data: T };
@@ -14,6 +15,7 @@ export function collectPagePaths(source: Source, index: FullIndex, originFile: s
     switch (source.type) {
         case "empty": return Result.success(new Set<string>());
         case "tag": return Result.success(index.tags.getInverse(source.tag));
+        case "csv": return Result.success(new Set<string>(["csv://"+source.path]));
         case "folder": return Result.success(index.prefix.get(source.folder));
         case "link":
             let fullPath = index.metadataCache.getFirstLinkpathDest(source.file, originFile)?.path;
@@ -70,6 +72,19 @@ export function collectPagePaths(source: Source, index: FullIndex, originFile: s
 export function collectPages(source: Source, index: FullIndex, originFile: string = ""): Result<Datarow<DataObject>[], string> {
     return collectPagePaths(source, index, originFile)
         .map(s => DataArray.from(s).flatMap(p => {
+            if (p.startsWith("csv://")) {
+                let filePath = p.substring("csv://".length);
+                let records = index.csv.get(filePath);
+                if (!records) return [];
+                return records.map((x) => {
+                    x['file'] = {
+                        link: null,
+                        name: getFileName(filePath),
+                        path: filePath,
+                    }
+                    return {id: null, data: x} as Datarow<DataObject>
+                })
+            }
             let page = index.pages.get(p);
             if (!page) return [];
 
