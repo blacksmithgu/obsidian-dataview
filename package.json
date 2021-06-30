@@ -18,6 +18,7 @@
     "@types/jest": "^26.0.20",
     "@types/luxon": "^1.25.1",
     "@types/node": "^14.14.2",
+    "@types/papaparse": "^5.2.6",
     "@types/parsimmon": "^1.10.6",
     "jest": "^26.6.3",
     "obsidian": "^0.12.0",
@@ -28,6 +29,7 @@
   },
   "dependencies": {
     "luxon": "^1.25.0",
+    "papaparse": "^5.3.1",
     "parsimmon": "^1.16.0",
     "rollup-plugin-web-worker-loader": "^1.6.1"
   }

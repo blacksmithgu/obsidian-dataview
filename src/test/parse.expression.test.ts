@@ -288,6 +288,7 @@ test("Parse binaryop negated field", () => {
 test("Parse simple sources", () => {
     expect(EXPRESSION.source.tryParse("\"hello\"")).toEqual(Sources.folder("hello"));
     expect(EXPRESSION.source.tryParse("#neat")).toEqual(Sources.tag("#neat"));
+    expect(EXPRESSION.source.tryParse("csv(\"data/a.csv\")")).toEqual(Sources.csv("data/a.csv"));
 });
 
 test("Parse negated source", () => {

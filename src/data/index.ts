@@ -1,7 +1,9 @@
 /** Stores various indices on all files in the vault to make dataview generation fast. */
 import { MetadataCache, Vault, TFile } from 'obsidian';
-import { fromTransferable, PageMetadata, ParsedMarkdown, parsePage } from './file';
+import { fromTransferable, PageMetadata, ParsedMarkdown, parsePage, parseFrontmatter } from './file';
 import { getParentFolder } from 'src/util/normalize';
+import {LiteralValue} from "src/data/value";
+import * as Papa from "papaparse";
 
 import DataviewImportWorker from 'web-worker:./importer.ts';
 
@@ -166,6 +168,8 @@ export class FullIndex {
 
     /** Map files -> tags in that file, and tags -> files. This version includes subtags. */
     public tags: IndexMap;
+    /** Map files -> tags in that file, and tags -> files. This version includes subtags. */
+    public csv: CsvIndex;
     /** Map files -> exact tags in that file, and tags -> files. This version does not automatically add subtags. */
     public etags: IndexMap;
     /** Map files -> linked files in that file, and linked file -> files that link to it. */
@@ -378,5 +382,60 @@ export class PrefixIndex {
         if (node == null || node == undefined) return new Set();
 
         return PrefixIndexNode.gather(node);
+    }
+}
+
+export class CsvIndex {
+
+    vault: Vault;
+    cache: MetadataCache;
+    rows: Map<String, Array<Record<string, LiteralValue>>>
+
+    constructor(vault: Vault) {
+        this.vault = vault;
+        this.rows = new Map<String, Array<Record<string, LiteralValue>>>();
+    }
+
+    public static async generate(vault: Vault): Promise<CsvIndex> {
+        let index = new CsvIndex(vault);
+        for (let file of vault.getFiles().filter((f) => f.extension == "csv")) {
+            let timeStart = new Date().getTime();
+            const content = await vault.adapter.read(file.path);
+            let parsed = Papa.parse(content, {
+                header: true,
+                skipEmptyLines: true,
+                comments: true,
+                dynamicTyping: true,
+            });
+            let rows = [] as Record<string, LiteralValue>[];
+            for (let i = 0; i < parsed.data.length; ++i) {
+                let result: Record<string, LiteralValue> = {};
+                let fields = parseFrontmatter(parsed.data[i]) as Record<string, LiteralValue>;
+                if (fields != null) {
+                    let col_idx = 0;
+                    for (let [key, value] of Object.entries(fields)) {
+                        let strKey = key.toString().replace(/ /g, "_");
+                        result[strKey] = value;
+                        result[`col__${col_idx++}`] = value;
+                    }
+                }
+                rows.push(result);
+            }
+
+            let totalTimeMs = new Date().getTime() - timeStart;
+            console.log(`Dataview: Load ${rows.length} rows in ${file.path} (${totalTimeMs / 1000.0}s)`);
+            index.rows.set(file.path, rows);
+        }
+
+        return index;
+    }
+
+    public get(path: string): Array<Record<string, LiteralValue>> {
+        let result = this.rows.get(path);
+        if (result) {
+            return result;
+        } else {
+            return [] as Array<Record<string, LiteralValue>>;
+        }
     }
 }
