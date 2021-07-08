@@ -43,6 +43,10 @@ export class Link {
         });
     }
 
+    public static fromObject(object: Record<string, any>) {
+        return new Link(object);
+    }
+
     private constructor(fields: Partial<Link>) {
         Object.assign(this, fields);
     }
@@ -53,11 +57,21 @@ export class Link {
             && this.subpath == other.subpath;
     }
 
+    public toString(): string {
+        return this.markdown();
+    }
+
+    /** Convert this link to a raw object which */
+    public toObject(): Record<string, any> {
+        return { path: this.path, type: this.type, subpath: this.subpath, display: this.display, embed: this.embed };
+    }
+
     /** Return a new link which points to the same location but with a new display value. */
     public withDisplay(display?: string) {
         return new Link(Object.assign({}, this, { display }));
     }
 
+    /** Convert this link to markdown so it can be rendered. */
     public markdown(): string {
         let result = (this.embed ? "!" : "") + "[[" + this.path;
 
@@ -69,6 +83,11 @@ export class Link {
 
         result += ']]';
         return result;
+    }
+
+    /** The stripped name of the file this link points into. */
+    public fileName(): string {
+        return getFileName(this.path).replace(".md", "");
     }
 }
 
@@ -310,7 +329,11 @@ export namespace Values {
     }
 
     export function isHtml(val: any): val is HTMLElement {
-        return val instanceof HTMLElement;
+        if (typeof HTMLElement !== 'undefined') {
+            return val instanceof HTMLElement;
+        } else {
+            return false;
+        }
     }
 
     export function isObject(val: any): val is Record<string, any> {
@@ -320,5 +343,56 @@ export namespace Values {
 
     export function isFunction(val: any): val is Function {
         return typeof val == "function";
+    }
+}
+
+/** An encoded type which can be transfered across threads. */
+export type TransferableValue = null | undefined | number | string | boolean | Array<any> | Record<string, any>
+    | { "___transfer-type": "date" | "duration" | "link", value: Record<string, any> };
+
+export namespace TransferableValues {
+    /** Convert a literal value to a serializer-friendly transferable value. Does not work for all types. */
+    export function transferable(value: LiteralValue): TransferableValue {
+        let wrapped = Values.wrapValue(value);
+        if (wrapped === undefined) return undefined;
+
+        switch (wrapped.type) {
+            case "null":
+            case "number":
+            case "string":
+            case "boolean":
+                return wrapped.value;
+            case "date":
+                return { "___transfer-type": "date", "value": wrapped.value.toObject({ includeConfig: true }) };
+            case "duration":
+                return { "___transfer-type": "duration", "value": wrapped.value.toObject({ includeConfig: true }) };
+            case "array":
+                return wrapped.value.map(v => transferable(v));
+            case "object":
+                let result: Record<string, any> = {};
+                for (let [key, value] of Object.entries(wrapped.value)) result[key] = transferable(value);
+                return result;
+            case "link":
+                return { "___transfer-type": "link", "value": wrapped.value.toObject() };
+            default:
+                return undefined;
+        }
+    }
+
+    /** Convert a transferable value back to a literal value we can work with. */
+    export function value(transferable: TransferableValue): LiteralValue {
+        if (transferable === null || transferable === undefined) {
+            return null;
+        } else if (typeof transferable === "object" && "___transfer-type" in transferable) {
+            switch (transferable["___transfer-type"]) {
+                case "date": return DateTime.fromObject(transferable.value);
+                case "duration": return Duration.fromObject(transferable.value);
+                case "link": return Link.fromObject(transferable.value);
+            }
+        } else if (Array.isArray(transferable)) {
+            return transferable.map(v => value(v));
+        }
+
+        return transferable as LiteralValue;
     }
 }

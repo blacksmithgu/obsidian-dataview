@@ -38,7 +38,7 @@ export default class DataviewPlugin extends Plugin {
 		console.log("Dataview: Version 0.4.x Loaded");
 
 		if (!this.app.workspace.layoutReady) {
-			this.app.workspace.on("layout-ready", async () => this.prepareIndexes());
+			this.app.workspace.onLayoutReady(async () => this.prepareIndexes());
 		} else {
 			this.prepareIndexes();
 		}
@@ -507,14 +507,13 @@ class DataviewInlineJSRenderer extends MarkdownRenderChild {
 }
 
 function onIndexChange(index: FullIndex, interval: number, component: Component, action: () => any) {
-    let indexChanged = false;
-    let indexListener = index.on('reload', () => indexChanged = true);
+    let lastReload = index.revision;
 
-    component.register(() => index.off('reload', indexListener));
     component.registerInterval(window.setInterval(() => {
-        if (indexChanged) {
+        // If the index revision has changed recently, then queue a reload.
+        if (lastReload != index.revision) {
             action();
-            indexChanged = false;
+            lastReload = index.revision;
         }
     }, interval));
 }

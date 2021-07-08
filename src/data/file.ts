@@ -1,9 +1,9 @@
 import { canonicalizeVarName, getExtension, getFileName, getParentFolder } from 'src/util/normalize';
-import { getAllTags, MetadataCache, parseFrontMatterAliases, parseFrontMatterTags, TFile, Vault } from 'obsidian';
+import { getAllTags, MetadataCache, parseFrontMatterAliases, parseFrontMatterTags, TFile } from 'obsidian';
 import { EXPRESSION, parseInnerLink } from 'src/expression/parse';
 import { DateTime } from 'luxon';
 import { FullIndex } from 'src/data/index';
-import { Link, LiteralValue, Values } from './value';
+import { Link, LiteralValue, TransferableValue, TransferableValues, Values } from './value';
 
 interface BaseLinkMetadata {
     path: string;
@@ -183,6 +183,47 @@ export class PageMetadata {
     }
 }
 
+/**
+ * Partial metadata object which contains all the information extracted from raw markdown. This is combined with the
+ * metadata cache to generate the final PageMetadata object.
+*/
+export interface ParsedMarkdown {
+    tasks: Task[];
+    fields: Map<string, LiteralValue[]>;
+}
+
+/** Encoded parsed markdown which can be transfered over the JavaScript web worker. */
+export interface TransferableMarkdown {
+    tasks: Task[];
+    fields: Map<string, TransferableValue[]>;
+}
+
+/** Convert parsed markdown to a transfer-friendly result. */
+export function toTransferable(parsed: ParsedMarkdown): TransferableMarkdown {
+    let newFields = new Map<string, TransferableValue[]>();
+    for (let [key, values] of parsed.fields.entries()) {
+        newFields.set(key, values.map(t => TransferableValues.transferable(t)));
+    }
+
+    return {
+        tasks: parsed.tasks,
+        fields: newFields
+    };
+}
+
+/** Convert transfer-friendly markdown to a result we can actually index and use. */
+export function fromTransferable(parsed: TransferableMarkdown): ParsedMarkdown {
+    let newFields = new Map<string, LiteralValue[]>();
+    for (let [key, values] of parsed.fields.entries()) {
+        newFields.set(key, values.map(t => TransferableValues.value(t)));
+    }
+
+    return {
+        tasks: parsed.tasks,
+        fields: newFields
+    };
+}
+
 /** Try to extract a YYYYMMDD date from a string. */
 function extractDate(str: string): DateTime | undefined {
     let dateMatch = /(\d{4})-(\d{2})-(\d{2})/.exec(str);
@@ -278,6 +319,7 @@ export function parseInlineField(value: string): LiteralValue {
     else return value;
 }
 
+/** Add an inline field to a nexisting field array, converting a single value into an array if it is present multiple times. */
 export function addInlineField(fields: Map<string, LiteralValue>, name: string, value: LiteralValue) {
     if (fields.has(name)) {
         let existing = fields.get(name) as LiteralValue;
@@ -297,6 +339,11 @@ export function taskAny(t: Task, f: (t: Task) => boolean): boolean {
     for (let sub of t.subtasks) if (taskAny(sub, f)) return true;
 
     return false;
+}
+
+export function alast<T>(arr: Array<T>): T | undefined {
+    if (arr.length > 0) return arr[arr.length - 1];
+    else return undefined;
 }
 
 /**
@@ -340,10 +387,10 @@ export function findTasksInFile(path: string, file: string): Task[] {
 			subtasks: []
 		};
 
-		while (indent <= (stack.last()?.[1] ?? -4)) stack.pop();
+		while (indent <= (alast(stack)?.[1] ?? -4)) stack.pop();
 
         for (let [elem, _] of stack) elem.fullyCompleted = elem.fullyCompleted && task.fullyCompleted;
-        stack.last()?.[0].subtasks.push(task);
+        alast(stack)?.[0].subtasks.push(task);
 		stack.push([task, indent]);
 	}
 
@@ -352,8 +399,36 @@ export function findTasksInFile(path: string, file: string): Task[] {
 	return stack[0][0].subtasks.filter(t => taskAny(t, st => st.real));
 }
 
+export async function parseMarkdown(path: string, contents: string, inlineRegex: RegExp): Promise<ParsedMarkdown> {
+    let fields: Map<string, LiteralValue[]> = new Map();
+
+    // Trawl through file contents to locate custom inline file content...
+    for (let line of contents.split("\n")) {
+        // Fast bail-out for lines that are too long.
+        if (!line.includes("::")) continue;
+        line = line.trim();
+
+        let match = inlineRegex.exec(line);
+        if (!match) continue;
+
+        let name = match[1].trim();
+        let inlineField = parseInlineField(match[2]);
+
+        fields.set(name, (fields.get(name) ?? []).concat([inlineField]));
+        let simpleName = canonicalizeVarName(match[1].trim());
+        if (simpleName.length > 0 && simpleName != match[1].trim()) {
+            fields.set(simpleName, (fields.get(simpleName) ?? []).concat([inlineField]));
+        }
+    }
+
+    // And extract tasks...
+    let tasks = findTasksInFile(path, contents);
+
+    return { fields, tasks };
+}
+
 /** Extract markdown metadata from the given Obsidian markdown file. */
-export async function extractMarkdownMetadata(file: TFile, vault: Vault, cache: MetadataCache, inlineRegex: RegExp): Promise<PageMetadata> {
+export function parsePage(file: TFile, cache: MetadataCache, markdownData: ParsedMarkdown): PageMetadata {
     let tags = new Set<string>();
     let aliases = new Set<string>();
     let fields = new Map<string, LiteralValue>();
@@ -397,27 +472,14 @@ export async function extractMarkdownMetadata(file: TFile, vault: Vault, cache: 
         }
     }
 
-    // Trawl through file contents to locate custom inline file content...
-    let fileContents = await vault.read(file);
-    for (let line of fileContents.split("\n")) {
-        // Fast bail-out for lines that are too long.
-        if (!line.includes("::")) continue;
-        line = line.trim();
-
-        let match = inlineRegex.exec(line);
-        if (!match) continue;
-
-        let inlineField = parseInlineField(match[2]);
-        addInlineField(fields, match[1].trim(), inlineField);
-        let simpleName = canonicalizeVarName(match[1].trim());
-        if (simpleName.length > 0 && simpleName != match[1].trim()) addInlineField(fields, simpleName, inlineField);
+    // Merge frontmatter fields with parsed fields.
+    for (let [name, values] of markdownData.fields.entries()) {
+        for (let value of values) addInlineField(fields, name, value);
     }
 
-    // And extract tasks...
-    let tasks = findTasksInFile(file.path, fileContents);
-
     return new PageMetadata(file.path, {
-        fields, tags, aliases, links, tasks,
+        fields, tags, aliases, links,
+        tasks: markdownData.tasks,
         ctime: DateTime.fromMillis(file.stat.ctime),
         mtime: DateTime.fromMillis(file.stat.mtime),
         size: file.stat.size,

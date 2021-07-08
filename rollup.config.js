@@ -4,7 +4,7 @@ import commonjs from '@rollup/plugin-commonjs';
 
 const isProd = process.env.BUILD === "production";
 
-export default {
+export default [{
   input: 'src/main.ts',
   output: {
     dir: 'build',
@@ -24,4 +24,19 @@ export default {
     if (/Use of eval is strongly discouraged/.test(warning.message)) return;
     warn(warning);
   }
-};
+},
+{
+  input: 'src/data/importer.ts',
+  output: {
+    dir: 'build',
+    sourcemap: true,
+    format: 'cjs'
+  },
+  treeshake: "smallest",
+  external: ['obsidian'],
+  plugins: [
+    typescript(),
+    nodeResolve({browser: true}),
+    commonjs(),
+  ]
+}];

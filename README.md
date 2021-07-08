@@ -100,9 +100,7 @@ If the file has a date inside its title (of form `yyyy-mm-dd`), it also obtains 
 
 - `file.day`: The date contained in the file title.
 
-Additionally, all of the fields defined in the YAML front-matter are available for querying. You can query inside nested
-objects using dot notation (so `dates.birthday` would get the `birthday` object inside the `dates` field). Fields can
-have the following types:
+Additionally, all of the fields defined in the YAML front-matter are available for querying. You can query inside nested objects using dot notation (so `dates.birthday` would get the `birthday` object inside the `dates` field). Fields can have the following types:
 
 - `number`: A number like `0` or `18` or `19.37`.
 - `date`: A date and time in ISO8601 format - `yyyy-mm-ddThh:mm:ss`. Everything after the year and month is optional, so
@@ -163,9 +161,7 @@ There is a lot of potential for a generic query system; here is the upcoming fea
 
 # Contributing
 
-Contributions via bug reports, bug fixes, documentation, and general improvements are always welcome. For more major
-feature work, make an issue about the feature idea / reach out to me so we can judge feasibility and how best to
-implement it.
+Contributions via bug reports, bug fixes, documentation, and general improvements are always welcome. For more major feature work, make an issue about the feature idea / reach out to me so we can judge feasibility and how best to implement it.
 
 # Support
 
