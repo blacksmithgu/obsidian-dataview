@@ -339,7 +339,13 @@ class DataviewTableRenderer extends MarkdownRenderChild {
 		}
 
         let result = maybeResult.value;
-		await renderTable(this.container, result.names, result.data, this, this.origin, this.settings.renderNullAs);
+        let dataWithNames: LiteralValue[][] = [];
+        for (let entry of result.data) {
+            dataWithNames.push([entry.id].concat(entry.values));
+        }
+        let name = result.idMeaning.type === "group" ? "Group" : "File";
+
+        await renderTable(this.container, [name].concat(result.names), dataWithNames, this, this.origin, this.settings.renderNullAs);
 
 		// Render after the empty table, so the table header still renders.
 		if (result.data.length == 0 && this.settings.warnOnEmptyResult) {
