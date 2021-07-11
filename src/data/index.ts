@@ -3,6 +3,8 @@ import { MetadataCache, Vault, TFile } from 'obsidian';
 import { fromTransferable, PageMetadata, ParsedMarkdown, parsePage } from './file';
 import { getParentFolder } from 'src/util/normalize';
 
+import DataviewImportWorker from 'web-worker:./importer.ts';
+
 /** A generic index which indexes variables of the form key -> value[], allowing both forward and reverse lookups. */
 export class IndexMap {
     /** Maps key -> values for that key. */
@@ -97,7 +99,7 @@ export class BackgroundFileParser {
     /** Paths -> promises waiting on the successful reload of this file. */
     pastPromises: Map<string, ((p: ParsedMarkdown) => void)[]>;
 
-    public constructor(public numWorkers: number, public vault: Vault, public script: string) {
+    public constructor(public numWorkers: number, public vault: Vault) {
         this.workers = [];
         this.nextWorkerId = 0;
 
@@ -105,10 +107,8 @@ export class BackgroundFileParser {
         this.waitingCallbacks = new Map();
         this.pastPromises = new Map();
 
-        let urlScript = URL.createObjectURL(new Blob([script], { type: 'application/javascript' }));
-
         for (let index = 0; index < numWorkers; index++) {
-            let worker = new Worker(urlScript, { name: "Dataview Indexer" });
+            let worker = new DataviewImportWorker({ name: "Dataview Indexer" });
             worker.onmessage = (evt) => {
                 let callbacks = this.pastPromises.get(evt.data.path);
                 let parsed = fromTransferable(evt.data.result);
@@ -231,8 +231,7 @@ export class FullIndex {
 
     /** I am not a fan of a separate "construct/initialize" step, but constructors cannot be async. */
     private async initialize() {
-        let workerScript = await this.vault.adapter.read(`${this.vault.configDir}/plugins/dataview/importer.js`);
-        this.backgroundParser = new BackgroundFileParser(4, this.vault, workerScript);
+        this.backgroundParser = new BackgroundFileParser(4, this.vault);
 
         // Prefix listens to file creation/deletion/rename, and not modifies, so we let it set up it's own listeners.
         this.prefix = await PrefixIndex.generate(this.vault, () => this.revision += 1);
