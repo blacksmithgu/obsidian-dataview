@@ -28,6 +28,7 @@
   },
   "dependencies": {
     "luxon": "^1.25.0",
-    "parsimmon": "^1.16.0"
+    "parsimmon": "^1.16.0",
+    "rollup-plugin-web-worker-loader": "^1.6.1"
   }
 }

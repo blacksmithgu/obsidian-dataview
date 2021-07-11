@@ -3,6 +3,8 @@ import { MetadataCache, Vault, TFile } from 'obsidian';
 import { fromTransferable, PageMetadata, ParsedMarkdown, parsePage } from './file';
 import { getParentFolder } from 'src/util/normalize';
 
+import DataviewImportWorker from 'web-worker:./importer.ts';
+
 /** A generic index which indexes variables of the form key -> value[], allowing both forward and reverse lookups. */
 export class IndexMap {
     /** Maps key -> values for that key. */
@@ -105,10 +107,8 @@ export class BackgroundFileParser {
         this.waitingCallbacks = new Map();
         this.pastPromises = new Map();
 
-        let urlScript = URL.createObjectURL(new Blob([script], { type: 'application/javascript' }));
-
         for (let index = 0; index < numWorkers; index++) {
-            let worker = new Worker(urlScript, { name: "Dataview Indexer" });
+            let worker = new DataviewImportWorker();
             worker.onmessage = (evt) => {
                 let callbacks = this.pastPromises.get(evt.data.path);
                 let parsed = fromTransferable(evt.data.result);
