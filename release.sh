@@ -11,7 +11,7 @@ rm versions.tmp.json
 # Rewrite versions in relevant files.
 jq ".version=\"${NEW_VERSION}\"" package.json > package.tmp.json && mv package.tmp.json package.json
 jq ".version=\"${NEW_VERSION}\"" manifest.json > manifest.tmp.json && mv manifest.tmp.json manifest.json
-jq ". + {\"${NEW_VERSION}\": \"0.11.10\"}" versions.json > versions.tmp.json && mv versions.tmp.json versions.json
+jq ". + {\"${NEW_VERSION}\": \"0.12.0\"}" versions.json > versions.tmp.json && mv versions.tmp.json versions.json
 
 # Create commit & commit.
 git commit -a -m "${NEW_VERSION}"
