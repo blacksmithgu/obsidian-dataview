@@ -169,8 +169,8 @@ export function executeCore(rows: Pagerow[], context: Context, ops: QueryOperati
                 return Result.failure("Unrecognized query operation '" + op.type + "'");
         }
 
-        if (errors.length >= incomingRows) {
-            return Result.failure(`Every row during operation '${op.type}' failed with an error; first three:\n
+        if (errors.length >= incomingRows && incomingRows > 0) {
+            return Result.failure(`Every row during operation '${op.type}' failed with an error; first ${Math.min(3, errors.length)}:\n
                 ${errors.slice(0, 3).map(d => "- " + d.message).join("\n")}`);
         }
 
@@ -215,8 +215,8 @@ export function executeCoreExtract(rows: Pagerow[], context: Context, ops: Query
         res.push(page);
     }
 
-    if (errors.length >= core.data.length) {
-        return Result.failure(`Every row during final data extraction failed with an error; first three:\n
+    if (errors.length >= core.data.length && core.data.length > 0) {
+        return Result.failure(`Every row during final data extraction failed with an error; first ${Math.max(errors.length, 3)}:\n
             ${errors.slice(0, 3).map(d => "- " + d.message).join("\n")}`);
     }
 
@@ -249,7 +249,7 @@ export function executeList(query: Query, index: FullIndex, origin: string): Res
 
     // Extract information about the origin page to add to the root context.
     let rootContext = new Context(defaultLinkHandler(index, origin),
-        index.pages.get(origin)?.toObject(index) ?? {});
+        { "this": index.pages.get(origin)?.toObject(index) ?? {} });
 
     let targetField = (query.header as ListQuery).format;
     let fields: Record<string, Field> = targetField ? { "target": targetField } : { };
@@ -280,7 +280,7 @@ export function executeTable(query: Query, index: FullIndex, origin: string): Re
 
     // Extract information about the origin page to add to the root context.
     let rootContext = new Context(defaultLinkHandler(index, origin),
-        index.pages.get(origin)?.toObject(index) ?? {});
+        { "this": index.pages.get(origin)?.toObject(index) ?? {} });
 
     let targetFields = (query.header as TableQuery).fields;
     let fields: Record<string, Field> = {};
@@ -312,7 +312,7 @@ export function executeTask(query: Query, origin: string, index: FullIndex): Res
 
     // Extract information about the origin page to add to the root context.
     let rootContext = new Context(defaultLinkHandler(index, origin),
-        index.pages.get(origin)?.toObject(index) ?? {});
+        { "this": index.pages.get(origin)?.toObject(index) ?? {} });
 
     return executeCoreExtract(fileset.value, rootContext, query.operations, {}).map(core => {
         let realResult = new Map<string, Task[]>();

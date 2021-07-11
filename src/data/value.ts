@@ -181,7 +181,7 @@ export namespace Values {
     }
 
     /** Compare two arbitrary JavaScript values. Produces a total ordering over ANY possible dataview value. */
-    export function compareValue(val1: LiteralValue, val2: LiteralValue): number {
+    export function compareValue(val1: LiteralValue, val2: LiteralValue, linkNormalizer?: (link: string) => string): number {
         // Handle undefined/nulls first.
         if (val1 === undefined) val1 = null;
         if (val2 === undefined) val2 = null;
@@ -212,7 +212,8 @@ export namespace Values {
                 if (wrap1.value == wrap2.value) return 0;
                 else return wrap1.value ? 1 : -1;
             case "link":
-                return wrap1.value.path.localeCompare((wrap2.value as Link).path);
+                let normalize = linkNormalizer ?? ((x: string) => x);
+                return normalize(wrap1.value.path).localeCompare(normalize((wrap2.value as Link).path));
             case "date":
                 return (wrap1.value < (wrap2.value as DateTime)) ? -1 : (wrap1.value.equals(wrap2.value as DateTime) ? 0 : 1);
             case "duration":
