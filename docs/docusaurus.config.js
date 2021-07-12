@@ -9,6 +9,10 @@ module.exports = {
   favicon: 'images/obsidian.ico',
   organizationName: 'blacksmithgu', // Usually your GitHub org/user name.
   projectName: 'obsidian-dataview', // Usually your repo name.
+  i18n: {
+    defaultLocale: 'en',
+    locales: ['en', 'zh-cn'],
+  },
   themeConfig: {
     navbar: {
       title: 'Dataview',
