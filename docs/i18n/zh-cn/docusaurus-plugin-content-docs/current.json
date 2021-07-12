@@ -1,0 +1,14 @@
+{
+  "version.label": {
+    "message": "Next",
+    "description": "The label for version current"
+  },
+  "sidebar.sidebar.category.Query Language": {
+    "message": "查询语言",
+    "description": "The label for category Query Language in sidebar sidebar"
+  },
+  "sidebar.sidebar.category.JavaScript API": {
+    "message": "JavaScript API",
+    "description": "The label for category JavaScript API in sidebar sidebar"
+  }
+}
