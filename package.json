@@ -1,6 +1,6 @@
 {
   "name": "obsidian-dataview",
-  "version": "0.3.13",
+  "version": "0.4.1",
   "description": "Advanced data views for Obsidian.md.",
   "main": "main.js",
   "scripts": {
@@ -28,6 +28,7 @@
   },
   "dependencies": {
     "luxon": "^1.25.0",
-    "parsimmon": "^1.16.0"
+    "parsimmon": "^1.16.0",
+    "rollup-plugin-web-worker-loader": "^1.6.1"
   }
 }

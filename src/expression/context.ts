@@ -2,7 +2,7 @@
 
 import { LiteralValue, Values } from "src/data/value";
 import { Result } from "src/api/result";
-import { BinaryOpHandler, DEFAULT_BINARY_OPS } from "./binaryop";
+import { BinaryOpHandler, createBinaryOps } from "./binaryop";
 import { Field, Fields } from "./field";
 import { DEFAULT_FUNCTIONS, FunctionImpl } from "./functions";
 
@@ -31,7 +31,7 @@ export class Context {
     public constructor(
         public linkHandler: LinkHandler,
         public globals: Record<string, LiteralValue> = {},
-        public binaryOps: BinaryOpHandler = DEFAULT_BINARY_OPS,
+        public binaryOps: BinaryOpHandler = createBinaryOps(linkHandler.normalize),
         public functions: Record<string, FunctionImpl> = DEFAULT_FUNCTIONS) {
     }
 

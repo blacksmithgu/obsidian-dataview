@@ -85,33 +85,35 @@ export class BinaryOpHandler {
     }
 }
 
-/** The default binary operator implementation. */
-export const DEFAULT_BINARY_OPS: BinaryOpHandler = BinaryOpHandler.create()
-    // TODO: Consider not using a universal comparison function.
-    .compare('*', Values.compareValue)
-    // Global boolean operations.
-    .register('*', '&', '*', (a, b) => Values.isTruthy(a) && Values.isTruthy(b))
-    .register('*', '|', '*', (a, b) => Values.isTruthy(a) || Values.isTruthy(b))
-    // Number implementations.
-    .register('number', '+', 'number', (a, b) => a + b)
-    .register('number', '-', 'number', (a, b) => a - b)
-    .register('number', '*', 'number', (a, b) => a * b)
-    .register('number', '/', 'number', (a, b) => a / b)
-    // String implementations.
-    .register('string', '+', '*', (a, b) => a + Values.toString(b))
-    .register('*', '+', 'string', (a, b) => Values.toString(a) + b)
-    .registerComm('string', '*', 'number', (a, b) => b < 0 ? "" : a.repeat(b))
-    // Date Operations.
-    .register('date', '-', 'date', (a, b) => {
-        return normalizeDuration(a.diff(b, ['years', 'months', 'days', 'hours', 'minutes', 'seconds', 'milliseconds']))
-    })
-    .register('date', '-', 'duration', (a, b) => a.minus(b))
-    .registerComm('date', '+', 'duration', (a, b) => a.plus(b))
-    // Duration Operations.
-    .register('duration', '+', 'duration', (a, b) => normalizeDuration(a.plus(b)))
-    .register('duration', '-', 'duration', (a, b) => normalizeDuration(a.minus(b)))
-    // Array operations.
-    .register('array', '+', 'array', (a, b) => ([] as LiteralValue[]).concat(a).concat(b))
-    // Object operations.
-    .register('object', '+', 'object', (a, b) => Object.assign({}, a, b))
-    ;
+/** Configure and create a binary OP handler with the given parameters. */
+export function createBinaryOps(linkNormalizer: (x: string) => string): BinaryOpHandler {
+    return BinaryOpHandler.create()
+        // TODO: Consider not using a universal comparison function.
+        .compare('*', (a, b) => Values.compareValue(a, b, linkNormalizer))
+        // Global boolean operations.
+        .register('*', '&', '*', (a, b) => Values.isTruthy(a) && Values.isTruthy(b))
+        .register('*', '|', '*', (a, b) => Values.isTruthy(a) || Values.isTruthy(b))
+        // Number implementations.
+        .register('number', '+', 'number', (a, b) => a + b)
+        .register('number', '-', 'number', (a, b) => a - b)
+        .register('number', '*', 'number', (a, b) => a * b)
+        .register('number', '/', 'number', (a, b) => a / b)
+        // String implementations.
+        .register('string', '+', '*', (a, b) => a + Values.toString(b))
+        .register('*', '+', 'string', (a, b) => Values.toString(a) + b)
+        .registerComm('string', '*', 'number', (a, b) => b < 0 ? "" : a.repeat(b))
+        // Date Operations.
+        .register('date', '-', 'date', (a, b) => {
+            return normalizeDuration(a.diff(b, ['years', 'months', 'days', 'hours', 'minutes', 'seconds', 'milliseconds']))
+        })
+        .register('date', '-', 'duration', (a, b) => a.minus(b))
+        .registerComm('date', '+', 'duration', (a, b) => a.plus(b))
+        // Duration Operations.
+        .register('duration', '+', 'duration', (a, b) => normalizeDuration(a.plus(b)))
+        .register('duration', '-', 'duration', (a, b) => normalizeDuration(a.minus(b)))
+        // Array operations.
+        .register('array', '+', 'array', (a, b) => ([] as LiteralValue[]).concat(a).concat(b))
+        // Object operations.
+        .register('object', '+', 'object', (a, b) => Object.assign({}, a, b))
+        ;
+}
