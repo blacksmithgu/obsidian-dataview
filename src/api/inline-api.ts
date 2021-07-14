@@ -1,6 +1,6 @@
 /** Fancy wrappers for the JavaScript API, used both by external plugins AND by the dataview javascript view. */
 
-import { App, Component, FileSystemAdapter } from "obsidian";
+import { App, Component } from "obsidian";
 import { FullIndex } from "src/data/index";
 import { Task } from "src/data/file";
 import { renderValue, renderErrorPre } from "src/ui/render";
@@ -178,23 +178,25 @@ export class DataviewInlineApi {
      * Takes a filename and arbitrary input data.
      */
     public view(viewName: string, input: any) {
-        /** This cannot be used on systems without file access (i.e. web and mobile devices). */
-        if (!(this.app.vault.adapter instanceof FileSystemAdapter)) {
-            renderErrorPre( this.container, `Dataview: file system access is not available.` );
+
+        let currentFile = this.app.workspace.getActiveFile();
+        let sourcePath  = currentFile?.path ?? '';
+        
+        let viewPath = `${viewName}/view.js`;
+        let viewFile = this.app.metadataCache.getFirstLinkpathDest( viewPath, sourcePath );
+
+        /** Check that a file exists for the requested view name. */
+        if ( !viewFile ) {
+            renderErrorPre( this.container, `Dataview: view file not found.` );
             return;
         }
 
-        /** Check that a file exists for the requested view name. */
-        let viewPath = `${this.app.vault.configDir}/dataviews/${viewName}/view.js`;
-        this.app.vault.adapter.exists(viewPath).then(viewExists => {
-            if ( !viewExists ) throw new Error(`view file does not exist: ${viewPath}`);
+        /**
+         * Create a function from file contents. This is the dangerous part:
+         * it’s basically eval(). Consider adding sanitization & filtering.
+         */
+        this.app.vault.read( viewFile ).then(viewData => {
 
-            return this.app.vault.adapter.read(viewPath);
-        }).then(viewData => {
-            /**
-             * Create a function from file contents. This is the dangerous part:
-             * it’s basically eval(). Consider adding sanitization & filtering.
-             */
             let viewFunction = new Function('dv', 'input', viewData);
             /** The view file code must return a string, which we treat as HTML. */
             let text = viewFunction(this, input);
@@ -211,13 +213,13 @@ export class DataviewInlineApi {
         });
 
         /** Check for optional CSS. */
-        let cssPath = `${this.app.vault.configDir}/dataviews/${viewName}/view.css`;
-        this.app.vault.adapter.exists(cssPath).then(cssExists => {
-            if (!cssExists) return;
+        let cssPath = `${viewName}/view.css`;
+        let cssFile = this.app.metadataCache.getFirstLinkpathDest( cssPath, sourcePath );
 
-            this.app.vault.adapter.read(cssPath).then(viewCSS => {
-                this.container.createEl('style', { text: viewCSS, attr: { scoped: '' } });
-            });
+        if ( !cssFile ) return;
+
+        this.app.vault.read(cssFile).then(viewCSS => {
+            this.container.createEl('style', { text: viewCSS, attr: { scoped: '' } });
         });
     }
 
