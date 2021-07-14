@@ -173,60 +173,52 @@ export class DataviewInlineApi {
         renderValue(wrapped.value, this.container, this.currentFilePath, this.component, this.settings.renderNullAs, true);
     }
 
-    /** Render HTML from the output of a template "view" saved as a file in the vault. Takes a filename and arbitrary input data. */
-    public view( viewName: string[], input: any ) {
-
+    /**
+     * Render HTML from the output of a template "view" saved as a file in the vault.
+     * Takes a filename and arbitrary input data.
+     */
+    public view(viewName: string, input: any) {
         /** This cannot be used on systems without file access (i.e. web and mobile devices). */
-        if ( !( this.app.vault.adapter instanceof FileSystemAdapter ) ) {
+        if (!(this.app.vault.adapter instanceof FileSystemAdapter)) {
             renderErrorPre( this.container, `Dataview: file system access is not available.` );
             return;
         }
 
         /** Check that a file exists for the requested view name. */
-        let viewPath = '.obsidian/dataviews/' + viewName + '/view.js';
+        let viewPath = `${this.app.vault.configDir}/dataviews/${viewName}/view.js`;
+        this.app.vault.adapter.exists(viewPath).then(viewExists => {
+            if ( !viewExists ) throw new Error(`view file does not exist: ${viewPath}`);
 
-        this.app.vault.adapter.exists( viewPath ).then( viewExists => {
+            return this.app.vault.adapter.read(viewPath);
+        }).then(viewData => {
+            /**
+             * Create a function from file contents. This is the dangerous part:
+             * it’s basically eval(). Consider adding sanitization & filtering.
+             */
+            let viewFunction = new Function('dv', 'input', viewData);
+            /** The view file code must return a string, which we treat as HTML. */
+            let text = viewFunction(this, input);
 
-            if ( !viewExists ) throw new Error( `view file does not exist: ` + viewPath );
+            let wrapped = Values.wrapValue(text);
+            if (wrapped === null || wrapped === undefined) {
+                this.container.createEl('div', { text });
+                return;
+            }
 
-            /** Read file contents to string. */
-            this.app.vault.adapter.read( viewPath ).then( viewData => {
-
-                /** Create a function from file contents. This is the dangerous part: it’s basically eval(). Consider adding sanitization & filtering. */
-                let viewFunction = new Function( 'dv', 'input', viewData );
-
-                /** The view file code must return a string, which we treat as HTML. */
-                let text = viewFunction( this, input );
-
-                let wrapped = Values.wrapValue(text);
-                if (wrapped === null || wrapped === undefined) {
-                    this.container.createEl('div', { text });
-                    return;
-                }
-
-                renderValue(wrapped.value, this.container, this.currentFilePath, this.component, this.settings.renderNullAs, true);
-            });
-        }).catch( error => {
-
-            renderErrorPre( this.container, "Dataview: " + error.stack );
+            renderValue(wrapped.value, this.container, this.currentFilePath, this.component, this.settings.renderNullAs, true);
+        }).catch(error => {
+            renderErrorPre(this.container, "Dataview: " + error.stack)
         });
 
         /** Check for optional CSS. */
-        let cssPath = '.obsidian/dataviews/' + viewName + '/view.css';
+        let cssPath = `${this.app.vault.configDir}/dataviews/${viewName}/view.css`;
+        this.app.vault.adapter.exists(cssPath).then(cssExists => {
+            if (!cssExists) return;
 
-        this.app.vault.adapter.exists( cssPath ).then( cssExists => {
-
-            if ( !cssExists ) return;
-
-            /** Read file contents to string. */
-            this.app.vault.adapter.read( cssPath ).then( viewCSS => {
-
+            this.app.vault.adapter.read(cssPath).then(viewCSS => {
                 this.container.createEl('style', { text: viewCSS, attr: { scoped: '' } });
-
             });
-
         });
-
     }
 
     /** Render a dataview list of the given values. */
