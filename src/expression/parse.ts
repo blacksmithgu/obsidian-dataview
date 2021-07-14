@@ -169,7 +169,7 @@ interface ExpressionLanguage {
 
 export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
     // A floating point number; the decimal point is optional.
-    number: q => P.regexp(/[0-9]+(.[0-9]+)?/).map(str => Number.parseFloat(str)).desc("number"),
+    number: q => P.regexp(/-?[0-9]+(.[0-9]+)?/).map(str => Number.parseFloat(str)).desc("number"),
 
     // A quote-surrounded string which supports escape characters ('\').
     string: q => P.string('"')
@@ -231,7 +231,7 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
         (ymd: DateTime) => P.seqMap(P.string("T"), P.regexp(/\d{2}/), (_, hour) => ymd.set({ hour: Number.parseInt(hour) })),
         (ymdh: DateTime) => P.seqMap(P.string(":"), P.regexp(/\d{2}/), (_, minute) => ymdh.set({ minute: Number.parseInt(minute) })),
         (ymdhm: DateTime) => P.seqMap(P.string(":"), P.regexp(/\d{2}/), (_, second) => ymdhm.set({ second: Number.parseInt(second) })),
-        (ymdhms: DateTime) => P.seqMap(P.string("."), P.regexp(/\d{3}/), (_, millisecond) => ymdhms.set({ millisecond: Number.parseInt(millisecond) }))
+        (dt: DateTime) => P.seqMap(P.string("+").or(P.string("-")), P.regexp(/\d{1,2}(:\d{2})?/), (pm, hr) => dt.setZone("UTC" + pm + hr))
     ),
 
     // A date, plus various shorthand times of day it could be.

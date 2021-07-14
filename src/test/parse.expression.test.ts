@@ -10,11 +10,13 @@ import { Link, Values } from "src/data/value";
 test("Parse Integer Literal", () => {
     expect(EXPRESSION.number.parse("0no").status).toBe(false);
     expect(EXPRESSION.number.tryParse("123")).toBe(123);
+    expect(EXPRESSION.number.tryParse("-123")).toBe(-123);
 });
 
 test("Parse Float Literal", () => {
     expect(EXPRESSION.number.tryParse("123.45")).toBeCloseTo(123.45);
     expect(EXPRESSION.number.tryParse("1000.0")).toBeCloseTo(1000);
+    expect(EXPRESSION.number.tryParse("-123.18")).toBe(-123.18);
     expect(EXPRESSION.number.parse("123.0.0").status).toBe(false);
 });
 
@@ -117,6 +119,17 @@ test("Parse Year-Month-DayTHour:Minute:Second", () => {
     expect(date.minute).toBe(42);
     expect(date.second).toBe(59);
 });
+
+test("Parse Year-Month-DayTHour:Minute:Second-Offset", () => {
+    let date = EXPRESSION.date.tryParse("1984-08-15T12:40:50-07:00");
+    expect(date.zoneName).toBe("UTC-7");
+
+    let date2 = EXPRESSION.date.tryParse("1984-08-15T12:40:50+9");
+    expect(date2.zoneName).toBe("UTC+9");
+
+    let date3 = EXPRESSION.date.tryParse("1985-12-06T19:40:10+06:30");
+    expect(date3.zoneName).toBe("UTC+6:30");
+})
 
 test("Parse Today", () => {
     let date = EXPRESSION.dateField.tryParse("date(today)") as LiteralField;

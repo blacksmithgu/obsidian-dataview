@@ -1,9 +1,11 @@
 /** Stores various indices on all files in the vault to make dataview generation fast. */
 import { MetadataCache, Vault, TFile } from 'obsidian';
-import {extractMarkdownMetadata, PageMetadata, parseFrontmatter} from './file';
+import { fromTransferable, PageMetadata, ParsedMarkdown, parsePage } from './file';
 import { getParentFolder } from 'src/util/normalize';
 import {LiteralValue} from "src/data/value";
 import parseCsv from "csv-parse/lib/sync";
+
+import DataviewImportWorker from 'web-worker:./importer.ts';
 
 /** A generic index which indexes variables of the form key -> value[], allowing both forward and reverse lookups. */
 export class IndexMap {
@@ -80,48 +82,86 @@ export class IndexMap {
     }
 }
 
-/** Multi-threaded indexing job which indexes files passed to it's reload queue. Debounces frequent file changes automatically. */
-export class FileIndexer {
-    // Background workers which do the actual file parsing.
+/** Multi-threaded file parser which debounces queues automatically. */
+export class BackgroundFileParser {
+    /** Time in milliseconds before a file is allowed to be requeued after being queued. */
+    static QUEUE_TIMEOUT = 500;
+
+    /* Background workers which do the actual file parsing. */
     workers: Worker[];
+    /** Index of the next worker which should recieve a job. */
+    nextWorkerId: number;
 
-    public constructor(public numWorkers: number) {
+    /* ID for the interval which regularly checks the reload queue and reloads files. */
+    reloadHandler: number;
+    /** Paths -> files which have been queued for a reload. */
+    reloadQueue: Map<string, TFile>;
+    /** Paths -> promises for file reloads which have not yet been queued. */
+    waitingCallbacks: Map<string, ((p: ParsedMarkdown) => void)[]>;
+    /** Paths -> promises waiting on the successful reload of this file. */
+    pastPromises: Map<string, ((p: ParsedMarkdown) => void)[]>;
+
+    public constructor(public numWorkers: number, public vault: Vault) {
         this.workers = [];
+        this.nextWorkerId = 0;
+
+        this.reloadQueue = new Map();
+        this.waitingCallbacks = new Map();
+        this.pastPromises = new Map();
+
         for (let index = 0; index < numWorkers; index++) {
-            let workerFunc = URL.createObjectURL(new Blob(['(',
-            function() {
+            let worker = new DataviewImportWorker({ name: "Dataview Indexer" });
+            worker.onmessage = (evt) => {
+                let callbacks = this.pastPromises.get(evt.data.path);
+                let parsed = fromTransferable(evt.data.result);
+                if (callbacks && callbacks.length > 0) {
+                    for (let callback of callbacks) callback(parsed);
+                }
 
-            }.toString(),
-            ')()'], { type: 'application/javascript'}));
+                this.pastPromises.delete(evt.data.path);
+            };
 
-            this.workers.push(new Worker(workerFunc));
+            this.workers.push(worker);
         }
+
+        this.reloadHandler = window.setInterval(() => {
+            let queueCopy = Array.from(this.reloadQueue.values());
+            this.reloadQueue.clear();
+
+            for (let [key, value] of this.waitingCallbacks.entries()) {
+                if (this.pastPromises.has(key)) this.pastPromises.set(key, this.pastPromises.get(key)?.concat(value) ?? []);
+                else this.pastPromises.set(key, value);
+            }
+            this.waitingCallbacks.clear();
+
+            for (let file of queueCopy) {
+                let workerId = this.nextWorkerId;
+                this.vault.read(file)
+                    .then(c => this.workers[workerId].postMessage({ path: file.path, contents: c }));
+
+                this.nextWorkerId = (this.nextWorkerId + 1) % this.numWorkers;
+            }
+        }, BackgroundFileParser.QUEUE_TIMEOUT);
+    }
+
+    /** Queue a file for reloading. Files which have recently been queued will not be reloaded. */
+    public reload(file: TFile): Promise<ParsedMarkdown> {
+        this.reloadQueue.set(file.path, file);
+        return new Promise((resolve, _reject) => {
+            if (this.waitingCallbacks.has(file.path)) this.waitingCallbacks.get(file.path)?.push(resolve);
+            else this.waitingCallbacks.set(file.path, [resolve]);
+        });
     }
 }
 
 /** Aggregate index which has several sub-indices and will initialize all of them. */
 export class FullIndex {
-    /** How often the reload queue is checked for reloads, in milliseconds. */
-    static RELOAD_INTERVAL = 2_000;
-
     /** Generate a full index from the given vault. */
     static async generate(vault: Vault, cache: MetadataCache): Promise<FullIndex> {
         let index = new FullIndex(vault, cache);
         await index.initialize();
         return Promise.resolve(index);
     }
-
-    // Handle for the interval which does the reloading.
-    reloadHandle: number;
-    // Files which are currently in queue to be reloaded.
-    reloadQueue: TFile[];
-    // Set of paths being reloaded, used for debouncing.
-    reloadSet: Set<string>;
-
-    // Reload listeners which listen to index reloads; indexed by a unique ID.
-    reloadListeners: Map<number, () => void>;
-    // The next reload listener ID that will be handed out.
-    currentReloadId: number;
 
     /* Maps path -> markdown metadata for all markdown pages. */
     public pages: Map<string, PageMetadata>;
@@ -139,32 +179,26 @@ export class FullIndex {
     /** Search files by path prefix. */
     public prefix: PrefixIndex;
 
-    /** Vault that this index was constructed over. */
-    public vault: Vault;
-    /** Metadata cache that this index was constructed over. */
-    public metadataCache: MetadataCache;
+    /**
+     * The current "revision" of the index, which monotonically increases for every index change. Use this to determine
+     * if you are up to date.
+     */
+    public revision: number;
 
-    private constructor(vault: Vault, metadataCache: MetadataCache) {
-        this.vault = vault;
-        this.metadataCache = metadataCache;
+    /** Asynchronously parses files in the background using web workers. */
+    public backgroundParser: BackgroundFileParser;
 
+    /** Construct a new index over the given vault and metadata cache. */
+    private constructor(public vault: Vault, public metadataCache: MetadataCache) {
         this.pages = new Map();
         this.tags = new IndexMap();
         this.etags = new IndexMap();
         this.links = new IndexMap();
         this.folders = new IndexMap();
+        this.revision = 0;
 
-        this.reloadQueue = [];
-        this.reloadSet = new Set();
-
-        // Background task which regularly checks for reloads (with debouncing).
-        this.reloadHandle = window.setInterval(() => this.reloadInternal(), FullIndex.RELOAD_INTERVAL);
-
-        this.reloadListeners = new Map();
-        this.currentReloadId = 0;
-
-        // The metadatda cache is updated on file changes.
-        metadataCache.on("changed", file => this.queueReload(file));
+        // The metadata cache is updated on file changes.
+        this.metadataCache.on("changed", file => this.reload(file));
 
         // Renames do not set off the metadata cache; catch these explicitly.
         vault.on("rename", (file, oldPath) => {
@@ -179,14 +213,12 @@ export class FullIndex {
             this.links.rename(oldPath, file.path);
             this.folders.rename(oldPath, file.path); // TODO: Do renames include folder changes?
 
-            // TODO: Would like to do this on a separate thread than the index.
-            for (let [_, handler] of this.reloadListeners) handler();
-
-            metadataCache.trigger("dataview:metadata-change", "rename", file, oldPath)
+            this.revision += 1;
+            this.metadataCache.trigger("dataview:metadata-change", "rename", file, oldPath)
         });
 
         // File creation does cause a metadata change, but deletes do not. Clear the caches for this.
-        vault.on("delete", file => {
+        this.vault.on("delete", file => {
             if (!(file instanceof TFile)) return;
             file = file as TFile;
 
@@ -196,69 +228,40 @@ export class FullIndex {
             this.links.delete(file.path);
             this.folders.delete(file.path);
 
-            // TODO: Would like to do this on a separate thread than the index.
-            for (let [_, handler] of this.reloadListeners) handler();
-
-            metadataCache.trigger("dataview:metadata-change", "delete", file)
-        })
+            this.revision += 1;
+            this.metadataCache.trigger("dataview:metadata-change", "delete", file)
+        });
     }
 
     /** I am not a fan of a separate "construct/initialize" step, but constructors cannot be async. */
     private async initialize() {
+        this.backgroundParser = new BackgroundFileParser(4, this.vault);
+
         // Prefix listens to file creation/deletion/rename, and not modifies, so we let it set up it's own listeners.
-        this.prefix = await PrefixIndex.generate(this.vault);
+        this.prefix = await PrefixIndex.generate(this.vault, () => this.revision += 1);
         this.csv = await CsvIndex.generate(this.vault);
 
         // Traverse all markdown files & fill in initial data.
         let start = new Date().getTime();
-        this.vault.getMarkdownFiles().forEach(file => this.queueReload(file));
+        this.vault.getMarkdownFiles().forEach(file => this.reload(file));
         console.log("Dataview: Task & metadata parsing queued in %.3fs.", (new Date().getTime() - start) / 1000.0);
     }
 
-    /** Queue the file for reloading; several fast reloads in a row will be debounced. */
-    public queueReload(file: TFile) {
-        if (this.reloadSet.has(file.path)) return;
-        this.reloadSet.add(file.path);
-        this.reloadQueue.push(file);
+    /** Queue a file for reloading; this is done asynchronously in the background and may take a few seconds. */
+    public reload(file: TFile) {
+        this.backgroundParser.reload(file).then(r => this.reloadInternal(file, r));
     }
 
-    /** Subscribe a handler which is called when the index refreshes. Returns an ID which should be used to unsubscribe. */
-    public on(evt: 'reload', handler: () => void): number {
-        if (evt != "reload") return -1;
+    private reloadInternal(file: TFile, parsed: ParsedMarkdown) {
+        let meta = parsePage(file, this.metadataCache, parsed);
 
-        let nextID = this.currentReloadId++;
-        this.reloadListeners.set(nextID, handler);
-        return nextID;
-    }
-
-    /** Unsubscribe a handler with the given ID. */
-    public off(evt: 'reload', handlerId: number) {
-        if (evt != "reload" || handlerId < 0) return;
-        this.reloadListeners.delete(handlerId);
-    }
-
-    /** Utility method which regularly checks the reload queue. */
-    private async reloadInternal() {
-        let copy = Array.from(this.reloadQueue);
-        this.reloadSet.clear();
-        this.reloadQueue = [];
-        if (copy.length == 0) return;
-
-        for (let file of copy) this.reloadInternalFile(file);
-        for (let [_, handler] of this.reloadListeners) handler();
-    }
-
-    private async reloadInternalFile(file: TFile) {
-        // TODO: Hard-coding the inline field syntax here LMAO >.>
-        let newPageMeta = await extractMarkdownMetadata(file, this.vault, this.metadataCache,
-            /[_\*~`]*([0-9\w\p{Letter}][-0-9\w\p{Letter}\p{Emoji_Presentation}\s/]*)[_\*~`]*\s*::\s*(.+)/u);
-
-        this.pages.set(file.path, newPageMeta);
-        this.tags.set(file.path, newPageMeta.fullTags());
-        this.etags.set(file.path, newPageMeta.tags);
-        this.links.set(file.path, new Set<string>(newPageMeta.links.map(l => l.path)));
+        this.pages.set(file.path, meta);
+        this.tags.set(file.path, meta.fullTags());
+        this.etags.set(file.path, meta.tags);
+        this.links.set(file.path, new Set<string>(meta.links.map(l => l.path)));
         this.folders.set(file.path, new Set<string>([getParentFolder(file.path)]));
 
+        this.revision += 1;
         this.metadataCache.trigger("dataview:metadata-change", "update", file);
     }
 }
@@ -340,7 +343,7 @@ export class PrefixIndexNode {
 /** Indexes files by their full prefix - essentially a simple prefix tree. */
 export class PrefixIndex {
 
-    public static async generate(vault: Vault): Promise<PrefixIndex> {
+    public static async generate(vault: Vault, updateRevision: () => void): Promise<PrefixIndex> {
         let root = new PrefixIndexNode("");
         let timeStart = new Date().getTime();
 
@@ -352,29 +355,26 @@ export class PrefixIndex {
         let totalTimeMs = new Date().getTime() - timeStart;
         console.log(`Dataview: Parsed all file prefixes (${totalTimeMs / 1000.0}s)`);
 
-        return Promise.resolve(new PrefixIndex(vault, root));
+        return Promise.resolve(new PrefixIndex(vault, root, updateRevision));
     }
 
-    root: PrefixIndexNode;
-    vault: Vault;
-
-    constructor(vault: Vault, root: PrefixIndexNode) {
-        this.vault = vault;
-        this.root = root;
-
+    constructor(public vault: Vault, public root: PrefixIndexNode, public updateRevision: () => void) {
         // TODO: I'm not sure if there is an event for all files in a folder, or just the folder.
         // I'm assuming the former naively for now until I inevitably fix it.
         this.vault.on("delete", file => {
             PrefixIndexNode.remove(this.root, file.path);
+            updateRevision();
         });
 
         this.vault.on("create", file => {
             PrefixIndexNode.add(this.root, file.path);
+            updateRevision();
         });
 
         this.vault.on("rename", (file, old) => {
             PrefixIndexNode.remove(this.root, old);
             PrefixIndexNode.add(this.root, file.path);
+            updateRevision();
         });
     }
 

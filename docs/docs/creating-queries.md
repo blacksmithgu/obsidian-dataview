@@ -13,6 +13,8 @@ displayed in the note preview. For writing such queries, you have three options:
    directly inside a page - for example, todays date via `= date(today)`, or a field from another page via `= [[Page]].value`.
 3. The dataview [JavaScript API](/docs/api/intro) gives you the full power of JavaScript and provides a DSL for pulling
    Dataview data and executing queries, allowing you to create arbitrarily complex queries and views.
+4. Similar to the query language, you can write JS inline queries, which let you embed a computed JS value directly. For
+   example, `$= dv.current().file.mtime`.
 
 The query language tends to lag in features compared to the JavaScript API, primarily since the JavaScript API lives
 closer to the actual code; the counter-argument to this fact is that the query language is also more stable and is less
@@ -53,4 +55,16 @@ You can create a JS dataview block in any note using the syntax:
 ~~~
 
 Inside of a JS dataview block, you have access to the full dataview API via the `dv` variable. For an explanation of
-what you can do with it, see the [API documentation](/docs/api/code-reference), or the [API examples](/docs/api/code-examples).
+what you can do with it, see the [API documentation](/docs/api/code-reference), or the [API
+examples](/docs/api/code-examples).
+
+### Using JavaScript Inline Queries
+
+You can use a JavaScript inline query via the syntax
+
+~~~
+`$= <js query language expression>`
+~~~
+
+You have access to the `dv` variable, as in `dataviewjs` codeblocks, and can make all of the same calls. The result
+should be something which evaluates to a JavaScript value, which Dataview will automatically render appropriately.

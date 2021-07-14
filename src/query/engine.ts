@@ -20,6 +20,10 @@ export interface OperationDiagnostics {
     errors: { index: number, message: string }[];
 }
 
+export type IdentifierMeaning =
+    { type: 'group', name: string, on: IdentifierMeaning } |
+    { type: 'path' };
+
 /** A data row over an object. */
 export type Pagerow = Datarow<DataObject>;
 /** An error during execution. */
@@ -28,6 +32,7 @@ export type ExecutionError = { index: number, message: string};
 /** The result of executing query operations over incoming data rows; includes timing and error information. */
 export interface CoreExecution {
     data: Pagerow[];
+    idMeaning: IdentifierMeaning;
     timeMs: number;
     ops: QueryOperation[];
     diagnostics: OperationDiagnostics[];
@@ -36,6 +41,7 @@ export interface CoreExecution {
 /** Shared execution code which just takes in arbitrary data, runs operations over it, and returns it + per-row errors. */
 export function executeCore(rows: Pagerow[], context: Context, ops: QueryOperation[]): Result<CoreExecution, string> {
     let diagnostics = [];
+    let identMeaning: IdentifierMeaning = { type: 'path' };
     let startTime = new Date().getTime();
 
     for (let op of ops) {
@@ -136,6 +142,7 @@ export function executeCore(rows: Pagerow[], context: Context, ops: QueryOperati
                 }
 
                 rows = finalGroupData.map(d => { return { id: d.key, data: d }});
+                identMeaning = { type: 'group', name: op.field.name, on: identMeaning };
                 break;
             case "flatten":
                 let flattenResult: Pagerow[] = [];
@@ -156,13 +163,14 @@ export function executeCore(rows: Pagerow[], context: Context, ops: QueryOperati
                 }
 
                 rows = flattenResult;
+                if (identMeaning.type == "group" && identMeaning.name == op.field.name) identMeaning = identMeaning.on;
                 break;
             default:
                 return Result.failure("Unrecognized query operation '" + op.type + "'");
         }
 
-        if (errors.length >= incomingRows) {
-            return Result.failure(`Every row during operation '${op.type}' failed with an error; first three:\n
+        if (errors.length >= incomingRows && incomingRows > 0) {
+            return Result.failure(`Every row during operation '${op.type}' failed with an error; first ${Math.min(3, errors.length)}:\n
                 ${errors.slice(0, 3).map(d => "- " + d.message).join("\n")}`);
         }
 
@@ -176,6 +184,7 @@ export function executeCore(rows: Pagerow[], context: Context, ops: QueryOperati
 
     return Result.success({
         data: rows,
+        idMeaning: identMeaning,
         ops,
         diagnostics,
         timeMs: new Date().getTime() - startTime,
@@ -206,14 +215,15 @@ export function executeCoreExtract(rows: Pagerow[], context: Context, ops: Query
         res.push(page);
     }
 
-    if (errors.length >= core.data.length) {
-        return Result.failure(`Every row during final data extraction failed with an error; first three:\n
+    if (errors.length >= core.data.length && core.data.length > 0) {
+        return Result.failure(`Every row during final data extraction failed with an error; first ${Math.max(errors.length, 3)}:\n
             ${errors.slice(0, 3).map(d => "- " + d.message).join("\n")}`);
     }
 
     let execTime = new Date().getTime() - startTime;
     return Result.success({
         data: res,
+        idMeaning: core.idMeaning,
         diagnostics: core.diagnostics.concat([{
             timeMs: execTime,
             incomingRows: core.data.length,
@@ -228,6 +238,7 @@ export function executeCoreExtract(rows: Pagerow[], context: Context, ops: Query
 export interface ListExecution {
     core: CoreExecution;
     data: { primary: LiteralValue, value?: LiteralValue }[];
+    primaryMeaning: IdentifierMeaning;
 }
 
 /** Execute a list-based query, returning the fina lresults. */
@@ -238,7 +249,7 @@ export function executeList(query: Query, index: FullIndex, origin: string): Res
 
     // Extract information about the origin page to add to the root context.
     let rootContext = new Context(defaultLinkHandler(index, origin),
-        index.pages.get(origin)?.toObject(index) ?? {});
+        { "this": index.pages.get(origin)?.toObject(index) ?? {} });
 
     let targetField = (query.header as ListQuery).format;
     let fields: Record<string, Field> = targetField ? { "target": targetField } : { };
@@ -249,7 +260,7 @@ export function executeList(query: Query, index: FullIndex, origin: string): Res
             value: p.data["target"] ?? undefined
         }));
 
-        return { core, data };
+        return { primaryMeaning: core.idMeaning, core, data };
     });
 }
 
@@ -257,7 +268,8 @@ export function executeList(query: Query, index: FullIndex, origin: string): Res
 export interface TableExecution {
     core: CoreExecution;
     names: string[];
-    data: LiteralValue[][];
+    data: { id: LiteralValue, values: LiteralValue[] }[];
+    idMeaning: IdentifierMeaning;
 }
 
 /** Execute a table query. */
@@ -268,7 +280,7 @@ export function executeTable(query: Query, index: FullIndex, origin: string): Re
 
     // Extract information about the origin page to add to the root context.
     let rootContext = new Context(defaultLinkHandler(index, origin),
-        index.pages.get(origin)?.toObject(index) ?? {});
+        { "this": index.pages.get(origin)?.toObject(index) ?? {} });
 
     let targetFields = (query.header as TableQuery).fields;
     let fields: Record<string, Field> = {};
@@ -276,9 +288,12 @@ export function executeTable(query: Query, index: FullIndex, origin: string): Re
 
     return executeCoreExtract(fileset.value, rootContext, query.operations, fields).map(core => {
         let names = targetFields.map(f => f.name);
-        let data = core.data.map(p => targetFields.map(f => p.data[f.name]));
+        let data = core.data.map(p => iden({
+            id: p.id,
+            values: targetFields.map(f => p.data[f.name])
+        }));
 
-        return { core, names, data };
+        return { core, names, data, idMeaning: core.idMeaning };
     });
 }
 
@@ -297,7 +312,7 @@ export function executeTask(query: Query, origin: string, index: FullIndex): Res
 
     // Extract information about the origin page to add to the root context.
     let rootContext = new Context(defaultLinkHandler(index, origin),
-        index.pages.get(origin)?.toObject(index) ?? {});
+        { "this": index.pages.get(origin)?.toObject(index) ?? {} });
 
     return executeCoreExtract(fileset.value, rootContext, query.operations, {}).map(core => {
         let realResult = new Map<string, Task[]>();
@@ -319,7 +334,7 @@ export function executeTask(query: Query, origin: string, index: FullIndex): Res
 
 /** Execute a single field inline a file, returning the evaluated result. */
 export function executeInline(field: Field, origin: string, index: FullIndex): Result<LiteralValue, string> {
-    return new Context(defaultLinkHandler(index, origin), index.pages.get(origin)?.toObject(index) ?? {})
+    return new Context(defaultLinkHandler(index, origin), { "this": index.pages.get(origin)?.toObject(index) ?? {}})
         .evaluate(field);
 }
 

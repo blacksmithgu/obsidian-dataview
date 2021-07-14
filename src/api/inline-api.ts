@@ -1,10 +1,9 @@
 /** Fancy wrappers for the JavaScript API, used both by external plugins AND by the dataview javascript view. */
 
-import { App, Component } from "obsidian";
+import { App, Component, FileSystemAdapter } from "obsidian";
 import { FullIndex } from "src/data/index";
 import { Task } from "src/data/file";
-import { renderValue } from "src/ui/render";
-import { DataArray } from "src/api/data-array";
+import { renderValue, renderErrorPre } from "src/ui/render";
 import { DataviewApi } from "src/api/plugin-api";
 import { DataviewSettings } from "src/settings";
 import { Link, Values } from "src/data/value";
@@ -12,6 +11,7 @@ import { BoundFunctionImpl, DEFAULT_FUNCTIONS, Functions } from "src/expression/
 import { Context } from "src/expression/context";
 import { defaultLinkHandler } from "src/query/engine";
 import { DateTime } from "luxon";
+import { DataArray } from "./data-array";
 
 export class DataviewInlineApi {
     /**
@@ -124,7 +124,6 @@ export class DataviewInlineApi {
         return this.compare(a, b) == 0;
     }
 
-
     /////////////////////////
     // Rendering Functions //
     /////////////////////////
@@ -174,6 +173,54 @@ export class DataviewInlineApi {
         renderValue(wrapped.value, this.container, this.currentFilePath, this.component, this.settings.renderNullAs, true);
     }
 
+    /**
+     * Render HTML from the output of a template "view" saved as a file in the vault.
+     * Takes a filename and arbitrary input data.
+     */
+    public view(viewName: string, input: any) {
+        /** This cannot be used on systems without file access (i.e. web and mobile devices). */
+        if (!(this.app.vault.adapter instanceof FileSystemAdapter)) {
+            renderErrorPre( this.container, `Dataview: file system access is not available.` );
+            return;
+        }
+
+        /** Check that a file exists for the requested view name. */
+        let viewPath = `${this.app.vault.configDir}/dataviews/${viewName}/view.js`;
+        this.app.vault.adapter.exists(viewPath).then(viewExists => {
+            if ( !viewExists ) throw new Error(`view file does not exist: ${viewPath}`);
+
+            return this.app.vault.adapter.read(viewPath);
+        }).then(viewData => {
+            /**
+             * Create a function from file contents. This is the dangerous part:
+             * it’s basically eval(). Consider adding sanitization & filtering.
+             */
+            let viewFunction = new Function('dv', 'input', viewData);
+            /** The view file code must return a string, which we treat as HTML. */
+            let text = viewFunction(this, input);
+
+            let wrapped = Values.wrapValue(text);
+            if (wrapped === null || wrapped === undefined) {
+                this.container.createEl('div', { text });
+                return;
+            }
+
+            renderValue(wrapped.value, this.container, this.currentFilePath, this.component, this.settings.renderNullAs, true);
+        }).catch(error => {
+            renderErrorPre(this.container, "Dataview: " + error.stack)
+        });
+
+        /** Check for optional CSS. */
+        let cssPath = `${this.app.vault.configDir}/dataviews/${viewName}/view.css`;
+        this.app.vault.adapter.exists(cssPath).then(cssExists => {
+            if (!cssExists) return;
+
+            this.app.vault.adapter.read(cssPath).then(viewCSS => {
+                this.container.createEl('style', { text: viewCSS, attr: { scoped: '' } });
+            });
+        });
+    }
+
     /** Render a dataview list of the given values. */
     public list(values?: any[] | DataArray<any>) {
         return this.api.list(values, this.container, this.component, this.currentFilePath);
@@ -188,6 +235,7 @@ export class DataviewInlineApi {
     public taskList(tasks: Task[] | DataArray<any>, groupByFile: boolean = true) {
         return this.api.taskList(tasks, groupByFile, this.container, this.component, this.currentFilePath);
     }
+
 }
 
 /** Evaluate a script where 'this' for the script is set to the given context. Allows you to define global variables. */

@@ -14,11 +14,11 @@ export class Success<T, E> {
         return f(this.value);
     }
 
-    public orElse(value: T): T {
+    public orElse(_value: T): T {
         return this.value;
     }
 
-    public orElseThrow(message?: (e: E) => string): T {
+    public orElseThrow(_message?: (e: E) => string): T {
         return this.value;
     }
 }
@@ -30,11 +30,11 @@ export class Failure<T, E> {
         this.successful = false;
     }
 
-    public map<U>(f: (a: T) => U): Failure<U, E> {
+    public map<U>(_f: (a: T) => U): Failure<U, E> {
         return this as any as Failure<U, E>;
     }
 
-    public flatMap<U>(f: (a: T) => Result<U, E>): Failure<U, E> {
+    public flatMap<U>(_f: (a: T) => Result<U, E>): Failure<U, E> {
         return this as any as Failure<U, E>;
     }
 
