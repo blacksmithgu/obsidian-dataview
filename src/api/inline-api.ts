@@ -179,15 +179,12 @@ export class DataviewInlineApi {
      */
     public view(viewName: string, input: any) {
 
-        let currentFile = this.app.workspace.getActiveFile();
-        let sourcePath  = currentFile?.path ?? '';
-        
         let viewPath = `${viewName}/view.js`;
-        let viewFile = this.app.metadataCache.getFirstLinkpathDest( viewPath, sourcePath );
+        let viewFile = this.app.metadataCache.getFirstLinkpathDest( viewPath, this.currentFilePath );
 
         /** Check that a file exists for the requested view name. */
         if ( !viewFile ) {
-            renderErrorPre( this.container, `Dataview: view file not found.` );
+            renderErrorPre( this.container, `Dataview: file not found at ${viewPath}` );
             return;
         }
 
@@ -214,12 +211,14 @@ export class DataviewInlineApi {
 
         /** Check for optional CSS. */
         let cssPath = `${viewName}/view.css`;
-        let cssFile = this.app.metadataCache.getFirstLinkpathDest( cssPath, sourcePath );
+        let cssFile = this.app.metadataCache.getFirstLinkpathDest( cssPath, this.currentFilePath );
 
         if ( !cssFile ) return;
 
         this.app.vault.read(cssFile).then(viewCSS => {
             this.container.createEl('style', { text: viewCSS, attr: { scoped: '' } });
+        }).catch(error => {
+            renderErrorPre(this.container, "Dataview: " + error.stack)
         });
     }
 
