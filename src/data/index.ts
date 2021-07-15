@@ -1,6 +1,6 @@
 /** Stores various indices on all files in the vault to make dataview generation fast. */
 import { MetadataCache, Vault, TFile } from 'obsidian';
-import { fromTransferable, PageMetadata, ParsedMarkdown, parsePage } from './file';
+import { fromTransferable, PageMetadata, ParsedMarkdown, parsePage, parseFrontmatter } from './file';
 import { getParentFolder } from 'src/util/normalize';
 import {LiteralValue} from "src/data/value";
 import parseCsv from "csv-parse/lib/sync";
