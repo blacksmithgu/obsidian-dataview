@@ -3,7 +3,7 @@ import { MetadataCache, Vault, TFile } from 'obsidian';
 import { fromTransferable, PageMetadata, ParsedMarkdown, parsePage, parseFrontmatter } from './file';
 import { getParentFolder } from 'src/util/normalize';
 import {LiteralValue} from "src/data/value";
-import parseCsv from "csv-parse/lib/sync";
+import * as Papa from "papaparse"
 
 import DataviewImportWorker from 'web-worker:./importer.ts';
 
@@ -402,16 +402,16 @@ export class CsvIndex {
         for (let file of vault.getFiles().filter((f) => f.extension == "csv")) {
             let timeStart = new Date().getTime();
             const content = await vault.adapter.read(file.path);
-            const parsed = parseCsv(content, {
-                columns: true,
-                skip_empty_lines: true,
-                trim: true,
-                cast: true,
-            }) as Array<Object>;
+            let parsed = Papa.parse(content, {
+                header: true,
+                skipEmptyLines: true,
+                comments: true,
+                dynamicTyping: true,
+            });
             let rows = [] as Record<string, LiteralValue>[];
-            for (let i = 0; i < parsed.length; ++i) {
+            for (let i = 0; i < parsed.data.length; ++i) {
                 let result: Record<string, LiteralValue> = {};
-                let fields = parseFrontmatter(parsed[i]) as Record<string, LiteralValue>;
+                let fields = parseFrontmatter(parsed.data[i]) as Record<string, LiteralValue>;
                 if (fields != null) {
                     let col_idx = 0;
                     for (let [key, value] of Object.entries(fields)) {
@@ -424,7 +424,7 @@ export class CsvIndex {
             }
 
             let totalTimeMs = new Date().getTime() - timeStart;
-            console.log(`Dataview: Load ${parsed.length} rows in ${file.path} (${totalTimeMs / 1000.0}s)`);
+            console.log(`Dataview: Load ${rows.length} rows in ${file.path} (${totalTimeMs / 1000.0}s)`);
             index.rows.set(file.path, rows);
         }
 
