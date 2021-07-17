@@ -178,13 +178,12 @@ export class DataviewInlineApi {
      * Takes a filename and arbitrary input data.
      */
     public view(viewName: string, input: any) {
-
         let viewPath = `${viewName}/view.js`;
         let viewFile = this.app.metadataCache.getFirstLinkpathDest( viewPath, this.currentFilePath );
 
         /** Check that a file exists for the requested view name. */
-        if ( !viewFile ) {
-            renderErrorPre( this.container, `Dataview: file not found at ${viewPath}` );
+        if (!viewFile) {
+            renderErrorPre(this.container, `Dataview: file not found at ${viewPath}`);
             return;
         }
 
@@ -192,8 +191,7 @@ export class DataviewInlineApi {
          * Create a function from file contents. This is the dangerous part:
          * it’s basically eval(). Consider adding sanitization & filtering.
          */
-        this.app.vault.read( viewFile ).then(viewData => {
-
+        this.app.vault.read(viewFile).then(viewData => {
             let viewFunction = new Function('dv', 'input', viewData);
             /** The view file code must return a string, which we treat as HTML. */
             let text = viewFunction(this, input);
@@ -211,9 +209,9 @@ export class DataviewInlineApi {
 
         /** Check for optional CSS. */
         let cssPath = `${viewName}/view.css`;
-        let cssFile = this.app.metadataCache.getFirstLinkpathDest( cssPath, this.currentFilePath );
+        let cssFile = this.app.metadataCache.getFirstLinkpathDest(cssPath, this.currentFilePath);
 
-        if ( !cssFile ) return;
+        if (!cssFile) return;
 
         this.app.vault.read(cssFile).then(viewCSS => {
             this.container.createEl('style', { text: viewCSS, attr: { scoped: '' } });
