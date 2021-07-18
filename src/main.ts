@@ -79,20 +79,15 @@ export default class DataviewPlugin extends Plugin {
 		// Dataview inline queries.
 		this.registerMarkdownPostProcessor(async (el, ctx) => {
 			// Search for <code> blocks inside this element; for each one, look for things of the form `= ...`.
-			let preblocks = el.querySelectorAll("pre");
-			for (let index = 0; index < preblocks.length; index++) {
-                let preblock = preblocks.item(index);
-                let maybeCodeblock = preblock.querySelector("code");
-                if (!maybeCodeblock) continue;
-
-                // Required to properly assert the codeblock is non-null for closures.
-                let codeblock = maybeCodeblock;
+			let codeblocks = el.querySelectorAll("code");
+			for (let index = 0; index < codeblocks.length; index++) {
+                let codeblock = codeblocks.item(index);
 
 				let text = codeblock.innerText.trim();
                 if (text.startsWith(this.settings.inlineJsQueryPrefix)) {
                     let code = text.substring(this.settings.inlineJsQueryPrefix.length).trim();
-                    ctx.addChild(this.wrapInlineWithEnsureIndex(ctx, preblock.parentElement ?? preblock,
-                        () => new DataviewInlineJSRenderer(code, el, preblock.parentElement ?? preblock, this.app, this.index, ctx.sourcePath, this.settings)));
+                    ctx.addChild(this.wrapInlineWithEnsureIndex(ctx, codeblock,
+                        () => new DataviewInlineJSRenderer(code, el, codeblock, this.app, this.index, ctx.sourcePath, this.settings)));
 				} else if (text.startsWith(this.settings.inlineQueryPrefix)) {
                     let potentialField = text.substring(this.settings.inlineQueryPrefix.length).trim();
 
@@ -102,8 +97,8 @@ export default class DataviewPlugin extends Plugin {
                         renderErrorPre(errorBlock, `Dataview (inline field '${potentialField}'): ${field.error}`);
                     } else {
                         let fieldValue = field.value;
-                        ctx.addChild(this.wrapInlineWithEnsureIndex(ctx, preblock.parentElement ?? preblock,
-                            () => new DataviewInlineRenderer(fieldValue, text, el, preblock.parentElement ?? preblock, this.index, ctx.sourcePath, this.settings)));
+                        ctx.addChild(this.wrapInlineWithEnsureIndex(ctx, codeblock,
+                            () => new DataviewInlineRenderer(fieldValue, text, el, codeblock, this.index, ctx.sourcePath, this.settings)));
                     }
                 }
 			}
@@ -116,18 +111,25 @@ export default class DataviewPlugin extends Plugin {
      */
     public registerHighPriorityCodeblockProcessor(language: string, processor: (source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext) => Promise<void>) {
         let postProcess: MarkdownPostProcessor = async (el, ctx) => {
-            let codeblocks = el.querySelectorAll("code");
+            let codeblocks = el.querySelectorAll("pre > code");
             if (!codeblocks) return;
 
             for (let index = 0; index < codeblocks.length; index++) {
-                let codeblock = codeblocks.item(index);
+                let codeblock = codeblocks.item(index) as HTMLElement;
                 let clanguages = Array.from(codeblock.classList)
                     .filter(c => c.startsWith("language-"))
                     .map(c => c.substring("language-".length));
 
                 if (!clanguages.contains(language)) continue;
+                if (!codeblock.parentElement) continue;
 
-                await processor(codeblock.innerText, codeblock, ctx);
+                let code = codeblock.innerText;
+
+                // We know the parent element is a pre, replace it.
+                let replacement = document.createElement("div");
+                codeblock.parentElement.replaceWith(replacement);
+
+                await processor(code, replacement, ctx);
             }
         };
         postProcess.sortOrder = -100;
@@ -494,9 +496,10 @@ class DataviewJSRenderer extends MarkdownRenderChild {
     async render() {
 		if (!this.settings.enableDataviewJs) {
 			this.containerEl.innerHTML = "";
-			renderErrorPre(this.container, "Dataview JS queries are disabled.")
-			return
+			renderErrorPre(this.container, "Dataview JS queries are disabled.");
+			return;
 		}
+
 		// Assume that the code is javascript, and try to eval it.
 		try {
 		    evalInContext(DataviewJSRenderer.PREAMBLE + this.script,
@@ -537,10 +540,13 @@ class DataviewInlineJSRenderer extends MarkdownRenderChild {
 
     async render() {
 		if (!this.settings.enableDataviewJs) {
-			this.errorbox = this.container.createEl('div')
-			renderErrorPre(this.errorbox, "Dataview JS queries are disabled.")
-			return
+            let temp = document.createElement("span");
+            temp.innerText = "<disabled>";
+            this.target.replaceWith(temp);
+            this.target = temp;
+            return;
 		}
+
 		// Assume that the code is javascript, and try to eval it.
 		try {
             let temp = document.createElement("span");
