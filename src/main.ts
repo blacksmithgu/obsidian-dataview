@@ -185,6 +185,13 @@ class DataviewSettingsTab extends PluginSettingTab {
 					parsed = (parsed < 100) ? 100 : parsed;
 					await this.plugin.updateSettings({ refreshInterval: parsed });
 				}));
+
+		new Setting(this.containerEl)
+			.setName("Enable JavaScript Queries")
+			.setDesc("Enable or disable executing DataviewJS queries.")
+			.addToggle(toggle =>
+				toggle.setValue(this.plugin.settings.enableDataviewJs)
+					.onChange(async (value) => await this.plugin.updateSettings({ enableDataviewJs: value })));
 	}
 }
 
@@ -457,10 +464,15 @@ class DataviewJSRenderer extends MarkdownRenderChild {
 	}
 
     async render() {
+		if (!this.settings.enableDataviewJs) {
+			this.containerEl.innerHTML = "";
+			renderErrorPre(this.container, "Dataview JS queries are disabled.")
+			return
+		}
 		// Assume that the code is javascript, and try to eval it.
 		try {
-			evalInContext(DataviewJSRenderer.PREAMBLE + this.script,
-				makeApiContext(this.index, this, this.app, this.settings, this.container, this.origin));
+		    evalInContext(DataviewJSRenderer.PREAMBLE + this.script,
+			    makeApiContext(this.index, this, this.app, this.settings, this.container, this.origin));
 		} catch (e) {
 			this.containerEl.innerHTML = "";
 			renderErrorPre(this.container, "Evaluation Error: " + e.stack);
@@ -496,11 +508,16 @@ class DataviewInlineJSRenderer extends MarkdownRenderChild {
 	}
 
     async render() {
+		if (!this.settings.enableDataviewJs) {
+			this.errorbox = this.container.createEl('div')
+			renderErrorPre(this.errorbox, "Dataview JS queries are disabled.")
+			return
+		}
 		// Assume that the code is javascript, and try to eval it.
 		try {
             let temp = document.createElement("span");
-			let result = evalInContext(DataviewInlineJSRenderer.PREAMBLE + this.script,
-				makeApiContext(this.index, this, this.app, this.settings, temp, this.origin));
+		    let result = evalInContext(DataviewInlineJSRenderer.PREAMBLE + this.script,
+		    	makeApiContext(this.index, this, this.app, this.settings, temp, this.origin));
             this.target.replaceWith(temp);
             this.target = temp;
             if (result === undefined) return;
