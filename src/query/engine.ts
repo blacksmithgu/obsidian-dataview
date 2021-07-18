@@ -6,7 +6,7 @@ import { Task } from 'src/data/file';
 import { Context, LinkHandler } from 'src/expression/context';
 import { collectPages, Datarow } from 'src/data/collector';
 import { DataObject, LiteralValue, Values } from 'src/data/value';
-import { ListQuery, Query, QueryOperation, TableQuery } from './query';
+import { ListQuery, Query, QueryOperation, TableQuery } from 'src/query/query';
 import { Result } from 'src/api/result';
 import { Field } from 'src/expression/field';
 
@@ -129,15 +129,23 @@ export function executeCore(rows: Pagerow[], context: Context, ops: QueryOperati
                 });
 
                 // Then walk through and find fields that are equal.
-                let finalGroupData: { key: LiteralValue; rows: DataObject[] }[] = [];
-                if (groupData.length > 0) finalGroupData.push({ key: groupData[0].key, rows: [groupData[0].data.data] });
+                let finalGroupData: { key: LiteralValue; rows: DataObject[], [groupKey: string]: LiteralValue }[] = [];
+                if (groupData.length > 0) finalGroupData.push({
+                    key: groupData[0].key,
+                    rows: [groupData[0].data.data],
+                    [op.field.name]: groupData[0].key
+                });
 
                 for (let index = 1; index < groupData.length; index++) {
                     let curr = groupData[index], prev = groupData[index - 1];
                     if (context.binaryOps.evaluate('=', curr.key, prev.key).orElse(false)) {
                         finalGroupData[finalGroupData.length - 1].rows.push(curr.data.data);
                     } else {
-                        finalGroupData.push({ key: curr.key, rows: [curr.data.data] });
+                        finalGroupData.push({
+                            key: curr.key,
+                            rows: [curr.data.data],
+                            [op.field.name]: groupData[0].key
+                        });
                     }
                 }
 

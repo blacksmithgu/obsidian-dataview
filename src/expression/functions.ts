@@ -269,6 +269,11 @@ export namespace DefaultFunctions {
         .vectorize(2, [1])
         .build();
 
+    export const icontains: FunctionImpl = new FunctionBuilder("icontains")
+        .add2("string", "string", (haystack, needle) => haystack.toLocaleLowerCase().includes(needle.toLocaleLowerCase()))
+        .vectorize(2, [1])
+        .build();
+
     export const econtains: FunctionImpl = new FunctionBuilder("econtains")
         .add2("array", "*", (l, elem, context) => l.some(e => context.evaluate(Fields.binaryOp(Fields.literal(elem), '=', Fields.literal(e))).orElseThrow()))
         .add2("string", "string", (haystack, needle) => haystack.includes(needle))
@@ -471,6 +476,7 @@ export const DEFAULT_FUNCTIONS: Record<string, FunctionImpl> = {
     // List operations.
     "length": DefaultFunctions.length,
     "contains": DefaultFunctions.contains,
+    "icontains": DefaultFunctions.icontains,
     "econtains": DefaultFunctions.econtains,
     "reverse": DefaultFunctions.reverse,
     "sort": DefaultFunctions.sort,

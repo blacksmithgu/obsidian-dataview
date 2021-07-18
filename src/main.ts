@@ -1,4 +1,4 @@
-import { MarkdownRenderChild, Plugin, Vault, MarkdownPostProcessorContext, PluginSettingTab, App, Setting, Component } from 'obsidian';
+import { MarkdownRenderChild, Plugin, Vault, MarkdownPostProcessorContext, PluginSettingTab, App, Setting, Component, MarkdownPostProcessor } from 'obsidian';
 import { renderErrorPre, renderList, renderTable, renderValue } from 'src/ui/render';
 import { FullIndex } from 'src/data/index';
 import * as Tasks from 'src/ui/tasks';
@@ -43,8 +43,8 @@ export default class DataviewPlugin extends Plugin {
 			this.prepareIndexes();
 		}
 
-		// Main entry point for dataview.
-		this.registerMarkdownCodeBlockProcessor("dataview", async (source: string, el, ctx) => {
+        // Dataview query language code blocks.
+		this.registerHighPriorityCodeblockProcessor("dataview", async (source: string, el, ctx) => {
 			let maybeQuery = tryOrPropogate(() => parseQuery(source, this.settings));
 
 			// In case of parse error, just render the error.
@@ -70,8 +70,8 @@ export default class DataviewPlugin extends Plugin {
 			}
 		});
 
-		// Main entry point for Dataview.
-		this.registerMarkdownCodeBlockProcessor("dataviewjs", async (source: string, el, ctx) => {
+        // DataviewJS codeblocks.
+		this.registerHighPriorityCodeblockProcessor("dataviewjs", async (source: string, el, ctx) => {
 			ctx.addChild(this.wrapWithEnsureIndex(ctx, el,
 				() => new DataviewJSRenderer(source, el, this.app, this.index, ctx.sourcePath, this.settings)));
 		});
@@ -79,15 +79,20 @@ export default class DataviewPlugin extends Plugin {
 		// Dataview inline queries.
 		this.registerMarkdownPostProcessor(async (el, ctx) => {
 			// Search for <code> blocks inside this element; for each one, look for things of the form `= ...`.
-			let codeblocks = el.querySelectorAll("code");
-			for (let index = 0; index < codeblocks.length; index++) {
-				let codeblock = codeblocks.item(index);
+			let preblocks = el.querySelectorAll("pre");
+			for (let index = 0; index < preblocks.length; index++) {
+                let preblock = preblocks.item(index);
+                let maybeCodeblock = preblock.querySelector("code");
+                if (!maybeCodeblock) continue;
+
+                // Required to properly assert the codeblock is non-null for closures.
+                let codeblock = maybeCodeblock;
 
 				let text = codeblock.innerText.trim();
                 if (text.startsWith(this.settings.inlineJsQueryPrefix)) {
                     let code = text.substring(this.settings.inlineJsQueryPrefix.length).trim();
-                    ctx.addChild(this.wrapInlineWithEnsureIndex(ctx, codeblock,
-                        () => new DataviewInlineJSRenderer(code, el, codeblock, this.app, this.index, ctx.sourcePath, this.settings)));
+                    ctx.addChild(this.wrapInlineWithEnsureIndex(ctx, preblock.parentElement ?? preblock,
+                        () => new DataviewInlineJSRenderer(code, el, preblock.parentElement ?? preblock, this.app, this.index, ctx.sourcePath, this.settings)));
 				} else if (text.startsWith(this.settings.inlineQueryPrefix)) {
                     let potentialField = text.substring(this.settings.inlineQueryPrefix.length).trim();
 
@@ -97,14 +102,37 @@ export default class DataviewPlugin extends Plugin {
                         renderErrorPre(errorBlock, `Dataview (inline field '${potentialField}'): ${field.error}`);
                     } else {
                         let fieldValue = field.value;
-                        ctx.addChild(this.wrapInlineWithEnsureIndex(ctx, codeblock,
-                            () => new DataviewInlineRenderer(fieldValue, text, el, codeblock, this.index, ctx.sourcePath, this.settings)));
+                        ctx.addChild(this.wrapInlineWithEnsureIndex(ctx, preblock.parentElement ?? preblock,
+                            () => new DataviewInlineRenderer(fieldValue, text, el, preblock.parentElement ?? preblock, this.index, ctx.sourcePath, this.settings)));
                     }
                 }
 			}
 		});
-
 	}
+
+    /**
+     * Utility function for registering high priority codeblocks which run before any other post processing, such as
+     * emoji-twitter.
+     */
+    public registerHighPriorityCodeblockProcessor(language: string, processor: (source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext) => Promise<void>) {
+        let postProcess: MarkdownPostProcessor = async (el, ctx) => {
+            let codeblocks = el.querySelectorAll("code");
+            if (!codeblocks) return;
+
+            for (let index = 0; index < codeblocks.length; index++) {
+                let codeblock = codeblocks.item(index);
+                let clanguages = Array.from(codeblock.classList)
+                    .filter(c => c.startsWith("language-"))
+                    .map(c => c.substring("language-".length));
+
+                if (!clanguages.contains(language)) continue;
+
+                await processor(codeblock.innerText, codeblock, ctx);
+            }
+        };
+        postProcess.sortOrder = -100;
+        this.registerMarkdownPostProcessor(postProcess);
+    }
 
 	onunload() { }
 
