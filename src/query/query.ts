@@ -1,7 +1,7 @@
 /** Provides an AST for complex queries. */
-import { Source } from '../data/source';
-import { Field } from '../expression/field';
-import { QuerySettings } from '../settings';
+import {Source} from '../data/source';
+import {Field} from '../expression/field';
+import {QuerySettings} from '../settings';
 
 /** The supported query types (corresponding to view types). */
 export type QueryType = 'list' | 'table' | 'task';
@@ -25,11 +25,14 @@ export interface QuerySortBy {
 /** Utility functions for quickly creating fields. */
 export namespace QueryFields {
     export function named(name: string, field: Field): NamedField {
-        return { name, field } as NamedField;
+        return {name, field} as NamedField;
     }
 
-    export function sortBy(field: Field, dir: 'ascending' | 'descending'): QuerySortBy {
-        return { field, direction: dir };
+    export function sortBy(
+        field: Field,
+        dir: 'ascending' | 'descending'
+    ): QuerySortBy {
+        return {field, direction: dir};
     }
 }
 
@@ -88,7 +91,13 @@ export interface ExtractStep {
     fields: Record<string, Field>;
 }
 
-export type QueryOperation = WhereStep | SortByStep | LimitStep | FlattenStep | GroupStep | ExtractStep;
+export type QueryOperation =
+    | WhereStep
+    | SortByStep
+    | LimitStep
+    | FlattenStep
+    | GroupStep
+    | ExtractStep;
 
 /**
  * A query over the Obsidian database. Queries have a specific and deterministic execution order:

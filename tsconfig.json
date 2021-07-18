@@ -1,27 +1,11 @@
 {
+  "extends": "./node_modules/gts/tsconfig-google.json",
   "compilerOptions": {
-    "baseUrl": "./",
-    "paths": {
-      "src/*": ["src/*"]
-    },
-    "typeRoots": ["node_modules/@types", "node_modules/obsidian", "types"],
-    "inlineSourceMap": true,
-    "inlineSources": true,
-    "module": "ESNext",
-    "target": "es6",
-    "allowJs": false,
-    "noImplicitAny": true,
-    "strictFunctionTypes": true,
-    "strictNullChecks": true,
-    "noImplicitReturns": true,
-    "noImplicitThis": true,
-    "noUnusedLocals": true,
-    "moduleResolution": "node",
-    "importHelpers": true,
-    "downlevelIteration": true,
-    "esModuleInterop": true,
-    "lib": [ "dom", "es5", "scripthost", "es2015" ]
+    "rootDir": ".",
+    "outDir": "build"
   },
-  "include": [ "**/*.ts" ],
-  "exclude": ["node_modules"]
+  "include": [
+    "src/**/*.ts",
+    "test/**/*.ts"
+  ]
 }

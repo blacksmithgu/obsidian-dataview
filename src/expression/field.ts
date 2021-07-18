@@ -1,5 +1,5 @@
 /** Defines the AST for a field which can be evaluated. */
-import { LiteralValue } from "src/data/value";
+import {LiteralValue} from 'src/data/value';
 
 /** Comparison operators which yield true/false. */
 export type CompareOp = '>' | '>=' | '<=' | '<' | '=' | '!=';
@@ -8,7 +8,13 @@ export type ArithmeticOp = '+' | '-' | '*' | '/' | '&' | '|';
 /** All valid binary operators. */
 export type BinaryOp = CompareOp | ArithmeticOp;
 /** A (potentially computed) field to select or compare against. */
-export type Field = BinaryOpField | VariableField | LiteralField | FunctionField | IndexField | NegatedField;
+export type Field =
+    | BinaryOpField
+    | VariableField
+    | LiteralField
+    | FunctionField
+    | IndexField
+    | NegatedField;
 
 /** Literal representation of some field type. */
 export interface LiteralField {
@@ -58,24 +64,24 @@ export interface NegatedField {
 /** Utility methods for creating & comparing fields. */
 export namespace Fields {
     export function variable(name: string): VariableField {
-        return { type: 'variable', name };
+        return {type: 'variable', name};
     }
 
     export function literal(value: LiteralValue): LiteralField {
-        return { type: 'literal', value };
+        return {type: 'literal', value};
     }
 
     export function binaryOp(left: Field, op: BinaryOp, right: Field): Field {
-        return { type: 'binaryop', left, op, right } as BinaryOpField;
+        return {type: 'binaryop', left, op, right} as BinaryOpField;
     }
 
     export function index(obj: Field, index: Field): IndexField {
-        return { type: 'index', object: obj, index };
+        return {type: 'index', object: obj, index};
     }
 
     /** Converts a string in dot-notation-format into a variable which indexes. */
     export function indexVariable(name: string): Field {
-        let parts = name.split(".");
+        const parts = name.split('.');
         let result: Field = Fields.variable(parts[0]);
         for (let index = 1; index < parts.length; index++) {
             result = Fields.index(result, Fields.literal(parts[index]));
@@ -85,15 +91,22 @@ export namespace Fields {
     }
 
     export function func(func: Field, args: Field[]): FunctionField {
-        return { type: 'function', func, arguments: args };
+        return {type: 'function', func, arguments: args};
     }
 
     export function negate(child: Field): NegatedField {
-        return { type: 'negated', child };
+        return {type: 'negated', child};
     }
 
     export function isCompareOp(op: BinaryOp): op is CompareOp {
-        return op == "<=" || op == "<" || op == ">" || op == ">=" || op == "!=" || op == "=";
+        return (
+            op == '<=' ||
+            op == '<' ||
+            op == '>' ||
+            op == '>=' ||
+            op == '!=' ||
+            op == '='
+        );
     }
 
     export const NULL = Fields.literal(null);

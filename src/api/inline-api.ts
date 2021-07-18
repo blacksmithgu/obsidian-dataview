@@ -1,17 +1,21 @@
 /** Fancy wrappers for the JavaScript API, used both by external plugins AND by the dataview javascript view. */
 
-import { App, Component } from "obsidian";
-import { FullIndex } from "src/data/index";
-import { Task } from "src/data/file";
-import { renderValue, renderErrorPre } from "src/ui/render";
-import { DataviewApi } from "src/api/plugin-api";
-import { DataviewSettings } from "src/settings";
-import { Link, Values } from "src/data/value";
-import { BoundFunctionImpl, DEFAULT_FUNCTIONS, Functions } from "src/expression/functions";
-import { Context } from "src/expression/context";
-import { defaultLinkHandler } from "src/query/engine";
-import { DateTime } from "luxon";
-import { DataArray } from "./data-array";
+import {App, Component} from 'obsidian';
+import {FullIndex} from 'src/data/index';
+import {Task} from 'src/data/file';
+import {renderValue, renderErrorPre} from 'src/ui/render';
+import {DataviewApi} from 'src/api/plugin-api';
+import {DataviewSettings} from 'src/settings';
+import {Link, Values} from 'src/data/value';
+import {
+    BoundFunctionImpl,
+    DEFAULT_FUNCTIONS,
+    Functions,
+} from 'src/expression/functions';
+import {Context} from 'src/expression/context';
+import {defaultLinkHandler} from 'src/query/engine';
+import {DateTime} from 'luxon';
+import {DataArray} from './data-array';
 
 export class DataviewInlineApi {
     /**
@@ -29,7 +33,7 @@ export class DataviewInlineApi {
     /**
      * The container which holds the output of this view. You can directly append fields to this, if you wish, though
      * the rendering API is likely to be easier for straight-forward purposes.
-    */
+     */
     public container: HTMLElement;
 
     /** Directly access the Obsidian app object, such as for reaching out to other plugins. */
@@ -47,7 +51,14 @@ export class DataviewInlineApi {
     /** Dataview functions which can be called from DataviewJS. */
     public func: Record<string, BoundFunctionImpl>;
 
-    constructor(index: FullIndex, component: Component, container: HTMLElement, app: App, settings: DataviewSettings, currentFilePath: string) {
+    constructor(
+        index: FullIndex,
+        component: Component,
+        container: HTMLElement,
+        app: App,
+        settings: DataviewSettings,
+        currentFilePath: string
+    ) {
         this.index = index;
         this.component = component;
         this.container = container;
@@ -58,10 +69,18 @@ export class DataviewInlineApi {
         this.api = new DataviewApi(this.app, this.index, this.settings);
 
         // Set up the evaluation context with variables from the current file.
-        let fileMeta = this.index.pages.get(this.currentFilePath)?.toObject(this.index) ?? {};
-        this.evaluationContext = new Context(defaultLinkHandler(this.index, this.currentFilePath), fileMeta);
+        const fileMeta =
+            this.index.pages.get(this.currentFilePath)?.toObject(this.index) ??
+            {};
+        this.evaluationContext = new Context(
+            defaultLinkHandler(this.index, this.currentFilePath),
+            fileMeta
+        );
 
-        this.func = Functions.bindAll(DEFAULT_FUNCTIONS, this.evaluationContext);
+        this.func = Functions.bindAll(
+            DEFAULT_FUNCTIONS,
+            this.evaluationContext
+        );
     }
 
     /////////////////////////////
@@ -69,13 +88,19 @@ export class DataviewInlineApi {
     /////////////////////////////
 
     /** Return an array of paths (as strings) corresponding to pages which match the query. */
-    public pagePaths(query?: string): DataArray<string> { return this.api.pagePaths(query, this.currentFilePath); }
+    public pagePaths(query?: string): DataArray<string> {
+        return this.api.pagePaths(query, this.currentFilePath);
+    }
 
     /** Map a page path to the actual data contained within that page. */
-    public page(path: string | Link): Record<string, any> | undefined { return this.api.page(path, this.currentFilePath); }
+    public page(path: string | Link): Record<string, any> | undefined {
+        return this.api.page(path, this.currentFilePath);
+    }
 
     /** Return an array of page objects corresponding to pages which match the query. */
-    public pages(query?: string): DataArray<any> { return this.api.pages(query, this.currentFilePath); }
+    public pages(query?: string): DataArray<any> {
+        return this.api.pages(query, this.currentFilePath);
+    }
 
     /** Return the information about the current page. */
     public current(): Record<string, any> | undefined {
@@ -102,7 +127,7 @@ export class DataviewInlineApi {
     }
 
     /** Create a dataview file link to the given path. */
-    public fileLink(path: string, embed: boolean = false, display?: string) {
+    public fileLink(path: string, embed = false, display?: string) {
         return Link.file(path, embed, display);
     }
 
@@ -132,45 +157,79 @@ export class DataviewInlineApi {
     public header(level: number, text: any) {
         let headerType: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
         switch (level) {
-            case 1: headerType = 'h1'; break;
-            case 2: headerType = 'h2'; break;
-            case 3: headerType = 'h3'; break;
-            case 4: headerType = 'h4'; break;
-            case 5: headerType = 'h5'; break;
-            case 6: headerType = 'h6'; break;
-            default: throw new Error(`Invalid header level ${level}`);
+            case 1:
+                headerType = 'h1';
+                break;
+            case 2:
+                headerType = 'h2';
+                break;
+            case 3:
+                headerType = 'h3';
+                break;
+            case 4:
+                headerType = 'h4';
+                break;
+            case 5:
+                headerType = 'h5';
+                break;
+            case 6:
+                headerType = 'h6';
+                break;
+            default:
+                throw new Error(`Invalid header level ${level}`);
         }
 
-        let wrapped = Values.wrapValue(text);
+        const wrapped = Values.wrapValue(text);
         if (wrapped === null || wrapped === undefined) {
-            this.container.createEl(headerType, { text });
+            this.container.createEl(headerType, {text});
             return;
         }
 
-        let header = this.container.createEl(headerType);
-        renderValue(wrapped.value, header, this.currentFilePath, this.component, this.settings.renderNullAs, false);
+        const header = this.container.createEl(headerType);
+        renderValue(
+            wrapped.value,
+            header,
+            this.currentFilePath,
+            this.component,
+            this.settings.renderNullAs,
+            false
+        );
     }
 
     /** Render an HTML paragraph, containing arbitrary text. */
     public paragraph(text: any) {
-        let wrapped = Values.wrapValue(text);
+        const wrapped = Values.wrapValue(text);
         if (wrapped === null || wrapped === undefined) {
-            this.container.createEl('p', { text });
+            this.container.createEl('p', {text});
             return;
         }
 
-        renderValue(wrapped.value, this.container, this.currentFilePath, this.component, this.settings.renderNullAs, true);
+        renderValue(
+            wrapped.value,
+            this.container,
+            this.currentFilePath,
+            this.component,
+            this.settings.renderNullAs,
+            true
+        );
     }
 
     /** Render an inline span, containing arbitrary text. */
     public span(text: any) {
-        let wrapped = Values.wrapValue(text);
+        const wrapped = Values.wrapValue(text);
         if (wrapped === null || wrapped === undefined) {
-            this.container.createEl('p', { text });
+            this.container.createEl('p', {text});
             return;
         }
 
-        renderValue(wrapped.value, this.container, this.currentFilePath, this.component, this.settings.renderNullAs, true);
+        renderValue(
+            wrapped.value,
+            this.container,
+            this.currentFilePath,
+            this.component,
+            this.settings.renderNullAs,
+            true
+        );
     }
 
     /**
@@ -178,12 +237,18 @@ export class DataviewInlineApi {
      * Takes a filename and arbitrary input data.
      */
     public view(viewName: string, input: any) {
-        let viewPath = `${viewName}/view.js`;
-        let viewFile = this.app.metadataCache.getFirstLinkpathDest( viewPath, this.currentFilePath );
+        const viewPath = `${viewName}/view.js`;
+        const viewFile = this.app.metadataCache.getFirstLinkpathDest(
+            viewPath,
+            this.currentFilePath
+        );
 
         /** Check that a file exists for the requested view name. */
         if (!viewFile) {
-            renderErrorPre(this.container, `Dataview: file not found at ${viewPath}`);
+            renderErrorPre(
+                this.container,
+                `Dataview: file not found at ${viewPath}`
+            );
             return;
         }
 
@@ -191,58 +256,109 @@ export class DataviewInlineApi {
          * Create a function from file contents. This is the dangerous part:
          * it’s basically eval(). Consider adding sanitization & filtering.
          */
-        this.app.vault.read(viewFile).then(viewData => {
-            let viewFunction = new Function('dv', 'input', viewData);
-            /** The view file code must return a string, which we treat as HTML. */
-            let text = viewFunction(this, input);
+        this.app.vault
+            .read(viewFile)
+            .then(viewData => {
+                const viewFunction = new Function('dv', 'input', viewData);
+                /** The view file code must return a string, which we treat as HTML. */
+                const text = viewFunction(this, input);
 
-            let wrapped = Values.wrapValue(text);
-            if (wrapped === null || wrapped === undefined) {
-                this.container.createEl('div', { text });
-                return;
-            }
+                const wrapped = Values.wrapValue(text);
+                if (wrapped === null || wrapped === undefined) {
+                    this.container.createEl('div', {text});
+                    return;
+                }
 
-            renderValue(wrapped.value, this.container, this.currentFilePath, this.component, this.settings.renderNullAs, true);
-        }).catch(error => {
-            renderErrorPre(this.container, "Dataview: " + error.stack)
-        });
+                renderValue(
+                    wrapped.value,
+                    this.container,
+                    this.currentFilePath,
+                    this.component,
+                    this.settings.renderNullAs,
+                    true
+                );
+            })
+            .catch(error => {
+                renderErrorPre(this.container, 'Dataview: ' + error.stack);
+            });
 
         /** Check for optional CSS. */
-        let cssPath = `${viewName}/view.css`;
-        let cssFile = this.app.metadataCache.getFirstLinkpathDest(cssPath, this.currentFilePath);
+        const cssPath = `${viewName}/view.css`;
+        const cssFile = this.app.metadataCache.getFirstLinkpathDest(
+            cssPath,
+            this.currentFilePath
+        );
 
         if (!cssFile) return;
 
-        this.app.vault.read(cssFile).then(viewCSS => {
-            this.container.createEl('style', { text: viewCSS, attr: { scoped: '' } });
-        }).catch(error => {
-            renderErrorPre(this.container, "Dataview: " + error.stack)
-        });
+        this.app.vault
+            .read(cssFile)
+            .then(viewCSS => {
+                this.container.createEl('style', {
+                    text: viewCSS,
+                    attr: {scoped: ''},
+                });
+            })
+            .catch(error => {
+                renderErrorPre(this.container, 'Dataview: ' + error.stack);
+            });
     }
 
     /** Render a dataview list of the given values. */
     public list(values?: any[] | DataArray<any>) {
-        return this.api.list(values, this.container, this.component, this.currentFilePath);
+        return this.api.list(
+            values,
+            this.container,
+            this.component,
+            this.currentFilePath
+        );
     }
 
     /** Render a dataview table with the given headers, and the 2D array of values. */
     public table(headers: string[], values?: any[][] | DataArray<any>) {
-        return this.api.table(headers, values, this.container, this.component, this.currentFilePath);
+        return this.api.table(
+            headers,
+            values,
+            this.container,
+            this.component,
+            this.currentFilePath
+        );
     }
 
     /** Render a dataview task view with the given tasks. */
-    public taskList(tasks: Task[] | DataArray<any>, groupByFile: boolean = true) {
-        return this.api.taskList(tasks, groupByFile, this.container, this.component, this.currentFilePath);
+    public taskList(tasks: Task[] | DataArray<any>, groupByFile = true) {
+        return this.api.taskList(
+            tasks,
+            groupByFile,
+            this.container,
+            this.component,
+            this.currentFilePath
+        );
     }
-
 }
 
 /** Evaluate a script where 'this' for the script is set to the given context. Allows you to define global variables. */
 export function evalInContext(script: string, context: any): any {
-    return function () { return eval(script); }.call(context);
+    return function () {
+        return eval(script);
+    }.call(context);
 }
 
 /** Make a full API context which a script can be evaluted in. */
-export function makeApiContext(index: FullIndex, component: Component, app: App, settings: DataviewSettings, container: HTMLElement, originFile: string): DataviewInlineApi {
-    return new DataviewInlineApi(index, component, container, app, settings, originFile);
+export function makeApiContext(
+    index: FullIndex,
+    component: Component,
+    app: App,
+    settings: DataviewSettings,
+    container: HTMLElement,
+    originFile: string
+): DataviewInlineApi {
+    return new DataviewInlineApi(
+        index,
+        component,
+        container,
+        app,
+        settings,
+        originFile
+    );
 }

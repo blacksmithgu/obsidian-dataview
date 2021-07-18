@@ -1,7 +1,13 @@
 /** AST implementation for queries over data sources. */
 
 /** The source of files for a query. */
-export type Source = TagSource | FolderSource | LinkSource | EmptySource | NegatedSource | BinaryOpSource;
+export type Source =
+    | TagSource
+    | FolderSource
+    | LinkSource
+    | EmptySource
+    | NegatedSource
+    | BinaryOpSource;
 export type SourceOp = '&' | '|';
 
 /** A tag as a source of data. */
@@ -53,26 +59,34 @@ export interface BinaryOpSource {
 /** Utility functions for creating and manipulating sources. */
 export namespace Sources {
     export function tag(tag: string): TagSource {
-        return { type: 'tag', tag };
+        return {type: 'tag', tag};
     }
 
     export function folder(prefix: string): FolderSource {
-        return { type: 'folder', folder: prefix };
+        return {type: 'folder', folder: prefix};
     }
 
     export function link(file: string, incoming: boolean): LinkSource {
-        return { type: 'link', file, direction: incoming ? 'incoming' : 'outgoing' };
+        return {
+            type: 'link',
+            file,
+            direction: incoming ? 'incoming' : 'outgoing',
+        };
     }
 
-    export function binaryOp(left: Source, op: SourceOp, right: Source): Source {
-        return { type: 'binaryop', left, op, right };
+    export function binaryOp(
+        left: Source,
+        op: SourceOp,
+        right: Source
+    ): Source {
+        return {type: 'binaryop', left, op, right};
     }
 
     export function negate(child: Source): NegatedSource {
-        return { type: 'negate', child };
+        return {type: 'negate', child};
     }
 
     export function empty(): EmptySource {
-        return { type: 'empty' };
+        return {type: 'empty'};
     }
 }
