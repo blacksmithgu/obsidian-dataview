@@ -29,6 +29,8 @@ export interface DataviewSettings extends QuerySettings {
     inlineJsQueryPrefix: string;
 	/** The interval that views are refreshed, by default. */
 	refreshInterval: number;
+	/** Enable or disable executing DataviewJS queries. */
+	enableDataviewJs: boolean;
 
 	// Internal properties //
 
@@ -43,5 +45,6 @@ export const DEFAULT_SETTINGS: DataviewSettings = {
 	inlineQueryPrefix: "=",
     inlineJsQueryPrefix: "$=",
 	refreshInterval: 1000,
+	enableDataviewJs: true,
 	schemaVersion: 1
 }
