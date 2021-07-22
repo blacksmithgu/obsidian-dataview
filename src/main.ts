@@ -2,7 +2,7 @@ import { MarkdownRenderChild, Plugin, Vault, MarkdownPostProcessorContext, Plugi
 import { renderErrorPre, renderList, renderTable, renderValue } from 'src/ui/render';
 import { FullIndex } from 'src/data/index';
 import * as Tasks from 'src/ui/tasks';
-import { Query } from 'src/query/query';
+import { Query, TableQuery } from 'src/query/query';
 import { Field } from 'src/expression/field';
 import { parseField } from "src/expression/parse";
 import { parseQuery } from "src/query/parse";
@@ -377,13 +377,28 @@ class DataviewTableRenderer extends MarkdownRenderChild {
 		}
 
         let result = maybeResult.value;
+
+		// If the query already contains file.link, omit the "File" column
+		let isIdColumnVisible = true;
+		if (result.idMeaning.type !== "group") {
+			let fields = (this.query.header as TableQuery).fields
+			let fileLinkField = fields.find(field => {
+				let f = field.field
+				return f.type == "index" && f.object.type == "variable" && f.object.name == "file" && f.index.type == "literal" && f.index.value == "link";
+			});
+		    isIdColumnVisible = fileLinkField === undefined
+		}
+
         let dataWithNames: LiteralValue[][] = [];
         for (let entry of result.data) {
-            dataWithNames.push([entry.id].concat(entry.values));
+			let idCol = isIdColumnVisible ? [entry.id] : []
+            dataWithNames.push(idCol.concat(entry.values));
         }
-        let name = result.idMeaning.type === "group" ? "Group" : "File";
 
-        await renderTable(this.container, [name].concat(result.names), dataWithNames, this, this.origin, this.settings.renderNullAs);
+        let idColName = result.idMeaning.type === "group" ? "Group" : "File";
+		let headers = isIdColumnVisible ? [idColName].concat(result.names) : result.names
+
+        await renderTable(this.container, headers, dataWithNames, this, this.origin, this.settings.renderNullAs);
 
 		// Render after the empty table, so the table header still renders.
 		if (result.data.length == 0 && this.settings.warnOnEmptyResult) {
