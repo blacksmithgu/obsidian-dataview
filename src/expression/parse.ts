@@ -221,17 +221,23 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
     }).desc("'and' or 'or'"),
 
     // A date which can be YYYY-MM[-DDTHH:mm:ss].
-    // TODO: Add time-zone support.
     // TODO: Will probably want a custom combinator for optional parsing.
     rootDate: q => P.seqMap(P.regexp(/\d{4}/), P.string("-"), P.regexp(/\d{2}/), (year, _, month) => {
         return DateTime.fromObject({ year: Number.parseInt(year), month: Number.parseInt(month) })
-    }).desc("date in format YYYY-MM[-DDTHH-MM-SS]"),
+    }).desc("date in format YYYY-MM[-DDTHH-MM-SS.MS]"),
     date: q => chainOpt<DateTime>(q.rootDate,
         (ym: DateTime) => P.seqMap(P.string("-"), P.regexp(/\d{2}/), (_, day) => ym.set({ day: Number.parseInt(day) })),
         (ymd: DateTime) => P.seqMap(P.string("T"), P.regexp(/\d{2}/), (_, hour) => ymd.set({ hour: Number.parseInt(hour) })),
         (ymdh: DateTime) => P.seqMap(P.string(":"), P.regexp(/\d{2}/), (_, minute) => ymdh.set({ minute: Number.parseInt(minute) })),
         (ymdhm: DateTime) => P.seqMap(P.string(":"), P.regexp(/\d{2}/), (_, second) => ymdhm.set({ second: Number.parseInt(second) })),
-        (dt: DateTime) => P.seqMap(P.string("+").or(P.string("-")), P.regexp(/\d{1,2}(:\d{2})?/), (pm, hr) => dt.setZone("UTC" + pm + hr))
+        (ymdhms: DateTime) => P.alt(
+            P.seqMap(P.string("."), P.regexp(/\d{3}/), (_, millisecond) => ymdhms.set({ millisecond: Number.parseInt(millisecond)})),
+            P.succeed(ymdhms) // pass
+        ),
+        (dt: DateTime) => P.alt(
+            P.seqMap(P.string("+").or(P.string("-")), P.regexp(/\d{1,2}(:\d{2})?/), (pm, hr) => dt.setZone("UTC" + pm + hr)),
+            P.seqMap(P.string("Z"), () => dt.setZone("utc"))
+        )
     ),
 
     // A date, plus various shorthand times of day it could be.

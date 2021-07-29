@@ -120,15 +120,56 @@ test("Parse Year-Month-DayTHour:Minute:Second", () => {
     expect(date.second).toBe(59);
 });
 
-test("Parse Year-Month-DayTHour:Minute:Second-Offset", () => {
-    let date = EXPRESSION.date.tryParse("1984-08-15T12:40:50-07:00");
-    expect(date.zoneName).toBe("UTC-7");
+test("Parse Year-Month-DayTHour:Minute:Second", () => {
+    let date = EXPRESSION.date.tryParse("1984-08-15T12:42:59");
+    expect(date.year).toBe(1984);
+    expect(date.month).toBe(8);
+    expect(date.day).toBe(15);
+    expect(date.hour).toBe(12);
+    expect(date.minute).toBe(42);
+    expect(date.second).toBe(59);
+});
 
-    let date2 = EXPRESSION.date.tryParse("1984-08-15T12:40:50+9");
-    expect(date2.zoneName).toBe("UTC+9");
+test("Parse Year-Month-DayTHour:Minute:Second.Millisecond", () => {
+    let date = EXPRESSION.date.tryParse("1984-08-15T12:42:59.123");
+    expect(date.year).toBe(1984);
+    expect(date.month).toBe(8);
+    expect(date.day).toBe(15);
+    expect(date.hour).toBe(12);
+    expect(date.minute).toBe(42);
+    expect(date.second).toBe(59);
+    expect(date.millisecond).toBe(123);
 
-    let date3 = EXPRESSION.date.tryParse("1985-12-06T19:40:10+06:30");
-    expect(date3.zoneName).toBe("UTC+6:30");
+    let builtin = EXPRESSION.date.tryParse(new Date("1984-08-15T12:42:59.123").toISOString());
+    // only seconds and milliseconds are inconsistent due to Javascript being bad with
+    // time zones, but the goal here is to ensure values are parsed appropriately at least
+    expect(builtin.second).toBe(59);
+    expect(builtin.millisecond).toBe(123);
+});
+
+describe("Parse Year-Month-DayTHour:Minute:Second(.Millisecond?)Timezone", () => {
+    test("Offset", () => {
+        let date = EXPRESSION.date.tryParse("1984-08-15T12:40:50-07:00");
+        expect(date.zoneName).toBe("UTC-7");
+
+        let date2 = EXPRESSION.date.tryParse("1984-08-15T12:40:50+9");
+        expect(date2.zoneName).toBe("UTC+9");
+
+        let date3 = EXPRESSION.date.tryParse("1985-12-06T19:40:10+06:30");
+        expect(date3.zoneName).toBe("UTC+6:30");
+    })
+
+    test("Z", () => {
+        let date1 = EXPRESSION.date.tryParse("1985-12-06T19:40:10Z");
+        expect(date1.zoneName).toBe("UTC");
+
+        let date2 = EXPRESSION.date.tryParse("1985-12-06T19:40:10.123Z");
+        expect(date2.zoneName).toBe("UTC");
+
+        // built-in always returns UTC
+        let date3 = EXPRESSION.date.tryParse(new Date().toISOString());
+        expect(date3.zoneName).toBe("UTC");
+    })
 })
 
 test("Parse Today", () => {
