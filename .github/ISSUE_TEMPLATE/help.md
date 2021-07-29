@@ -1,5 +1,5 @@
 ---
-name: help
+name: Help
 about: Get help with dataview
 title: ''
 labels: wontfix

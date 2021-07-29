@@ -19,6 +19,24 @@ Steps to reproduce the behavior:
 3. Scroll down to '....'
 4. See error
 
+If applicable, provide the folder structure of your vault
+
+If applicable, provide an example file including yaml frontmatter and/or
+inline fields
+
+If applicable, provide the query
+````
+```dataview
+list from #example
+```
+````
+or
+````
+```dataviewjs
+<code>
+```
+````
+
 **Expected behavior**
 A clear and concise description of what you expected to happen.
 

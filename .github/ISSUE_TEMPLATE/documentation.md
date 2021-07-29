@@ -1,5 +1,5 @@
 ---
-name: documentation
+name: Documentation
 about: Suggest improvements to documentation
 title: ''
 labels: documentation
