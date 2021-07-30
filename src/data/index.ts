@@ -201,19 +201,19 @@ export class FullIndex {
 
         // Renames do not set off the metadata cache; catch these explicitly.
         vault.on("rename", (file, oldPath) => {
-            let oldPage = this.pages.get(oldPath);
-            if (oldPage) {
+            this.folders.delete(oldPath);
+
+            if (file instanceof TFile) {
                 this.pages.delete(oldPath);
-                this.pages.set(file.path, oldPage);
+                this.tags.delete(oldPath);
+                this.etags.delete(oldPath);
+                this.links.delete(oldPath);
+
+                this.reload(file);
             }
 
-            this.tags.rename(oldPath, file.path);
-            this.etags.rename(oldPath, file.path);
-            this.links.rename(oldPath, file.path);
-            this.folders.rename(oldPath, file.path); // TODO: Do renames include folder changes?
-
             this.revision += 1;
-            this.metadataCache.trigger("dataview:metadata-change", "rename", file, oldPath)
+            this.metadataCache.trigger("dataview:metadata-change", "rename", file, oldPath);
         });
 
         // File creation does cause a metadata change, but deletes do not. Clear the caches for this.
@@ -228,7 +228,7 @@ export class FullIndex {
             this.folders.delete(file.path);
 
             this.revision += 1;
-            this.metadataCache.trigger("dataview:metadata-change", "delete", file)
+            this.metadataCache.trigger("dataview:metadata-change", "delete", file);
         });
     }
 
