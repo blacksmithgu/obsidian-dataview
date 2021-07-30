@@ -49,6 +49,8 @@ export interface TableQuery {
     type: 'table';
     /** The fields (computed or otherwise) to select. */
     fields: NamedField[];
+    /** If true, show the default ID field; otherwise, don't. */
+    showId: boolean;
 }
 
 /** A query which renders a collection of tasks. */

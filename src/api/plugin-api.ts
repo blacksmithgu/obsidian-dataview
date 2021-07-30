@@ -2,10 +2,10 @@
 
 import { App, Component } from "obsidian";
 import { FullIndex } from "src/data";
-import { collectPagePaths } from "src/data/collector";
+import { matchingSourcePaths } from "src/data/resolver";
 import { Task } from "src/data/file";
 import { Sources } from "src/data/source";
-import { Link, LiteralValue, Values } from "src/data/value";
+import { DataObject, Link, LiteralValue, Values } from "src/data/value";
 import { EXPRESSION } from "src/expression/parse";
 import { renderList, renderTable, renderValue } from "src/ui/render";
 import { DataviewSettings } from "src/settings";
@@ -41,7 +41,7 @@ export class DataviewApi {
             throw new Error(`Failed to parse query in 'pagePaths': ${ex}`);
         }
 
-        return collectPagePaths(source, this.index, originFile).map(s => DataArray.from(s)).orElseThrow();
+        return matchingSourcePaths(source, this.index, originFile).map(s => DataArray.from(s)).orElseThrow();
     }
 
     /** Map a page path to the actual data contained within that page. */
@@ -58,6 +58,20 @@ export class DataviewApi {
         if (!pageObject) return undefined;
 
         return pageObject.toObject(this.index);
+    }
+
+    /** Load the contents of a CSV file (with a header), returning it as a list of objects. */
+    public csv(path: string, originFile?: string): DataArray<DataObject> | undefined {
+        if (!(typeof path === "string")) {
+            throw Error("dv.csv only handles string paths; was provided type '" + (typeof path) + "'.");
+        }
+
+        let normPath = this.app.metadataCache.getFirstLinkpathDest(path, originFile ?? "");
+        if (!normPath) return undefined;
+
+        let data = this.index.csv.get(path);
+        if (data.successful) return DataArray.from(data.value);
+        else return undefined;
     }
 
     /** Return an array of page objects corresponding to pages which match the query. */

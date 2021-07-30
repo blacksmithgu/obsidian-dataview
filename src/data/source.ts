@@ -14,7 +14,7 @@ export interface TagSource {
 /** A csv as a source of data. */
 export interface CsvSource {
     type: 'csv';
-    /** The tag to source from. */
+    /** The path to the CSV file. */
     path: string;
 }
 

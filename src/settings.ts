@@ -11,7 +11,7 @@ export interface QuerySettings {
 export const DEFAULT_QUERY_SETTINGS: QuerySettings = {
     renderNullAs: "\\-",
     warnOnEmptyResult: true,
-    refreshInterval: 1000
+    refreshInterval: 1000,
 };
 
 ///////////////////////////////
@@ -23,12 +23,12 @@ export interface DataviewSettings extends QuerySettings {
 	renderNullAs: string;
 	/** If true, render a modal which shows no results were returned. */
 	warnOnEmptyResult: boolean;
+	/** The interval that views are refreshed, by default. */
+	refreshInterval: number;
 	/** The prefix for inline queries by default. */
 	inlineQueryPrefix: string;
     /** The prefix for inline JS queries by default. */
     inlineJsQueryPrefix: string;
-	/** The interval that views are refreshed, by default. */
-	refreshInterval: number;
 	/** Enable or disable executing DataviewJS queries. */
 	enableDataviewJs: boolean;
 
@@ -42,9 +42,9 @@ export interface DataviewSettings extends QuerySettings {
 export const DEFAULT_SETTINGS: DataviewSettings = {
 	renderNullAs: "\\-",
 	warnOnEmptyResult: true,
+	refreshInterval: 1000,
 	inlineQueryPrefix: "=",
     inlineJsQueryPrefix: "$=",
-	refreshInterval: 1000,
 	enableDataviewJs: true,
 	schemaVersion: 1
 }

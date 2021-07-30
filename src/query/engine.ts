@@ -4,7 +4,7 @@
 import { FullIndex } from 'src/data/index';
 import { Task } from 'src/data/file';
 import { Context, LinkHandler } from 'src/expression/context';
-import { collectPages, Datarow } from 'src/data/collector';
+import { resolveSource, Datarow } from 'src/data/resolver';
 import { DataObject, LiteralValue, Values } from 'src/data/value';
 import { ListQuery, Query, QueryOperation, TableQuery } from 'src/query/query';
 import { Result } from 'src/api/result';
@@ -144,7 +144,7 @@ export function executeCore(rows: Pagerow[], context: Context, ops: QueryOperati
                         finalGroupData.push({
                             key: curr.key,
                             rows: [curr.data.data],
-                            [op.field.name]: groupData[0].key
+                            [op.field.name]: curr.key
                         });
                     }
                 }
@@ -249,10 +249,10 @@ export interface ListExecution {
     primaryMeaning: IdentifierMeaning;
 }
 
-/** Execute a list-based query, returning the fina lresults. */
+/** Execute a list-based query, returning the final results. */
 export function executeList(query: Query, index: FullIndex, origin: string): Result<ListExecution, string> {
     // Start by collecting all of the files that match the 'from' queries.
-    let fileset = collectPages(query.source, index, origin);
+    let fileset = resolveSource(query.source, index, origin);
     if (!fileset.successful) return Result.failure(fileset.error);
 
     // Extract information about the origin page to add to the root context.
@@ -283,7 +283,7 @@ export interface TableExecution {
 /** Execute a table query. */
 export function executeTable(query: Query, index: FullIndex, origin: string): Result<TableExecution, string> {
     // Start by collecting all of the files that match the 'from' queries.
-    let fileset = collectPages(query.source, index, origin);
+    let fileset = resolveSource(query.source, index, origin);
     if (!fileset.successful) return Result.failure(fileset.error);
 
     // Extract information about the origin page to add to the root context.
@@ -315,7 +315,7 @@ export function executeTask(query: Query, origin: string, index: FullIndex): Res
     // This is a somewhat silly way to do this for now; call into regular execute on the full query,
     // yielding a list of files. Then map the files to their tasks.
     // TODO: Consider per-task or per-task-block filtering via a more nuanced algorithm.
-    let fileset = collectPages(query.source, index, origin);
+    let fileset = resolveSource(query.source, index, origin);
     if (!fileset.successful) return Result.failure(fileset.error);
 
     // Extract information about the origin page to add to the root context.

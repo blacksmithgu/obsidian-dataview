@@ -3,7 +3,7 @@ import { getAllTags, MetadataCache, parseFrontMatterAliases, parseFrontMatterTag
 import { EXPRESSION, parseInnerLink } from 'src/expression/parse';
 import { DateTime } from 'luxon';
 import { FullIndex } from 'src/data/index';
-import { Link, LiteralValue, TransferableValue, TransferableValues, Values } from './value';
+import { DataObject, Link, LiteralValue, TransferableValue, TransferableValues, Values } from './value';
 
 interface BaseLinkMetadata {
     path: string;
@@ -199,7 +199,7 @@ export interface TransferableMarkdown {
 }
 
 /** Convert parsed markdown to a transfer-friendly result. */
-export function toTransferable(parsed: ParsedMarkdown): TransferableMarkdown {
+export function markdownToTransferable(parsed: ParsedMarkdown): TransferableMarkdown {
     let newFields = new Map<string, TransferableValue[]>();
     for (let [key, values] of parsed.fields.entries()) {
         newFields.set(key, values.map(t => TransferableValues.transferable(t)));
@@ -212,7 +212,7 @@ export function toTransferable(parsed: ParsedMarkdown): TransferableMarkdown {
 }
 
 /** Convert transfer-friendly markdown to a result we can actually index and use. */
-export function fromTransferable(parsed: TransferableMarkdown): ParsedMarkdown {
+export function markdownFromTransferable(parsed: TransferableMarkdown): ParsedMarkdown {
     let newFields = new Map<string, LiteralValue[]>();
     for (let [key, values] of parsed.fields.entries()) {
         newFields.set(key, values.map(t => TransferableValues.value(t)));
@@ -222,6 +222,18 @@ export function fromTransferable(parsed: TransferableMarkdown): ParsedMarkdown {
         tasks: parsed.tasks,
         fields: newFields
     };
+}
+
+/** Convert any importable metadata to something that can be transferred. */
+export function toTransferable(value: ParsedMarkdown | DataObject[]): TransferableMarkdown | TransferableValue {
+    if ("tasks" in value) return markdownToTransferable(value);
+    else return TransferableValues.transferable(value);
+}
+
+/** Convert any transferable metadata back to Dataview API friendly data. */
+export function fromTransferable(value: TransferableValue | TransferableMarkdown): ParsedMarkdown | DataObject[] {
+    if (value != null && typeof value == "object" && "tasks" in value) return markdownFromTransferable(value as TransferableMarkdown);
+    else return TransferableValues.value(value) as DataObject[];
 }
 
 /** Try to extract a YYYYMMDD date from a string. */
@@ -399,7 +411,7 @@ export function findTasksInFile(path: string, file: string): Task[] {
 	return stack[0][0].subtasks.filter(t => taskAny(t, st => st.real));
 }
 
-export async function parseMarkdown(path: string, contents: string, inlineRegex: RegExp): Promise<ParsedMarkdown> {
+export function parseMarkdown(path: string, contents: string, inlineRegex: RegExp): ParsedMarkdown {
     let fields: Map<string, LiteralValue[]> = new Map();
 
     // Trawl through file contents to locate custom inline file content...

@@ -6,7 +6,7 @@ import { Task } from "src/data/file";
 import { renderValue, renderErrorPre } from "src/ui/render";
 import { DataviewApi } from "src/api/plugin-api";
 import { DataviewSettings } from "src/settings";
-import { Link, Values } from "src/data/value";
+import { DataObject, Link, Values } from "src/data/value";
 import { BoundFunctionImpl, DEFAULT_FUNCTIONS, Functions } from "src/expression/functions";
 import { Context } from "src/expression/context";
 import { defaultLinkHandler } from "src/query/engine";
@@ -72,7 +72,10 @@ export class DataviewInlineApi {
     public pagePaths(query?: string): DataArray<string> { return this.api.pagePaths(query, this.currentFilePath); }
 
     /** Map a page path to the actual data contained within that page. */
-    public page(path: string | Link): Record<string, any> | undefined { return this.api.page(path, this.currentFilePath); }
+    public page(path: string | Link): DataObject | undefined { return this.api.page(path, this.currentFilePath); }
+
+    /** Load the contents of a CSV from the given path. */
+    public csv(path: string): DataArray<DataObject> | undefined { return this.api.csv(path, this.currentFilePath); }
 
     /** Return an array of page objects corresponding to pages which match the query. */
     public pages(query?: string): DataArray<any> { return this.api.pages(query, this.currentFilePath); }

@@ -2,7 +2,7 @@ import { MarkdownRenderChild, Plugin, Vault, MarkdownPostProcessorContext, Plugi
 import { renderErrorPre, renderList, renderTable, renderValue } from 'src/ui/render';
 import { FullIndex } from 'src/data/index';
 import * as Tasks from 'src/ui/tasks';
-import { Query } from 'src/query/query';
+import { Query, TableQuery, } from 'src/query/query';
 import { Field } from 'src/expression/field';
 import { parseField } from "src/expression/parse";
 import { parseQuery } from "src/query/parse";
@@ -160,6 +160,14 @@ export default class DataviewPlugin extends Plugin {
 	private wrapInlineWithEnsureIndex(ctx: MarkdownPostProcessorContext, container: HTMLElement, success: () => MarkdownRenderChild): EnsurePredicateRenderer {
 		return new EnsureInlinePredicateRenderer(ctx, container, () => this.index != undefined && this.index.pages && this.index.pages.size > 0, success);
 	}
+
+    // User-facing utility functions.
+
+    /** Call the given callback when the dataview API has initialized. */
+    public withApi(callback: (api: DataviewApi) => void) {
+        if (this.api) callback(this.api);
+        else (this.app.metadataCache.on as any)("dataview:api-ready", callback);
+    }
 }
 
 /** All of the dataview settings in a single, nice tab. */
@@ -170,22 +178,7 @@ class DataviewSettingsTab extends PluginSettingTab {
 
 	display(): void {
 		this.containerEl.empty();
-		this.containerEl.createEl("h2", { text: "Dataview Settings" });
-
-		new Setting(this.containerEl)
-			.setName("Render Null As")
-			.setDesc("What null/non-existent should show up as in tables, by default.")
-			.addText(text =>
-				text.setPlaceholder("-")
-					.setValue(this.plugin.settings.renderNullAs)
-					.onChange(async (value) => await this.plugin.updateSettings({ renderNullAs: value })));
-
-		new Setting(this.containerEl)
-			.setName("Warn on Empty Result")
-			.setDesc("If set, queries which return 0 results will render a warning message.")
-			.addToggle(toggle =>
-				toggle.setValue(this.plugin.settings.warnOnEmptyResult)
-					.onChange(async (value) => await this.plugin.updateSettings({ warnOnEmptyResult: value })));
+		this.containerEl.createEl("h2", { text: "Dataview Codeblock Settings" });
 
 		new Setting(this.containerEl)
 			.setName("Inline Query Prefix")
@@ -204,6 +197,30 @@ class DataviewSettingsTab extends PluginSettingTab {
 				.onChange(async (value) => await this.plugin.updateSettings({ inlineJsQueryPrefix: value })))
 
 		new Setting(this.containerEl)
+			.setName("Enable JavaScript Queries")
+			.setDesc("Enable or disable executing DataviewJS queries.")
+			.addToggle(toggle =>
+				toggle.setValue(this.plugin.settings.enableDataviewJs)
+					.onChange(async (value) => await this.plugin.updateSettings({ enableDataviewJs: value })));
+
+        this.containerEl.createEl("h2", { text: "Query Settings" });
+
+		new Setting(this.containerEl)
+			.setName("Render Null As")
+			.setDesc("What null/non-existent should show up as in tables, by default.")
+			.addText(text =>
+				text.setPlaceholder("-")
+					.setValue(this.plugin.settings.renderNullAs)
+					.onChange(async (value) => await this.plugin.updateSettings({ renderNullAs: value })));
+
+		new Setting(this.containerEl)
+			.setName("Warn on Empty Result")
+			.setDesc("If set, queries which return 0 results will render a warning message.")
+			.addToggle(toggle =>
+				toggle.setValue(this.plugin.settings.warnOnEmptyResult)
+					.onChange(async (value) => await this.plugin.updateSettings({ warnOnEmptyResult: value })));
+
+		new Setting(this.containerEl)
 			.setName("Dataview Refresh Interval (milliseconds)")
 			.setDesc("How frequently dataviews are updated in preview mode when files are changing.")
 			.addText(text =>
@@ -215,13 +232,6 @@ class DataviewSettingsTab extends PluginSettingTab {
 					parsed = (parsed < 100) ? 100 : parsed;
 					await this.plugin.updateSettings({ refreshInterval: parsed });
 				}));
-
-		new Setting(this.containerEl)
-			.setName("Enable JavaScript Queries")
-			.setDesc("Enable or disable executing DataviewJS queries.")
-			.addToggle(toggle =>
-				toggle.setValue(this.plugin.settings.enableDataviewJs)
-					.onChange(async (value) => await this.plugin.updateSettings({ enableDataviewJs: value })));
 	}
 }
 
@@ -377,13 +387,18 @@ class DataviewTableRenderer extends MarkdownRenderChild {
 		}
 
         let result = maybeResult.value;
-        let dataWithNames: LiteralValue[][] = [];
-        for (let entry of result.data) {
-            dataWithNames.push([entry.id].concat(entry.values));
-        }
-        let name = result.idMeaning.type === "group" ? "Group" : "File";
 
-        await renderTable(this.container, [name].concat(result.names), dataWithNames, this, this.origin, this.settings.renderNullAs);
+        if ((this.query.header as TableQuery).showId) {
+            let dataWithNames: LiteralValue[][] = [];
+            for (let entry of result.data) {
+                dataWithNames.push([entry.id].concat(entry.values));
+            }
+            let name = result.idMeaning.type === "group" ? "Group" : "File";
+
+            await renderTable(this.container, [name].concat(result.names), dataWithNames, this, this.origin, this.settings.renderNullAs);
+        } else {
+            await renderTable(this.container, result.names, result.data.map(v => v.values), this, this.origin, this.settings.renderNullAs);
+        }
 
 		// Render after the empty table, so the table header still renders.
 		if (result.data.length == 0 && this.settings.warnOnEmptyResult) {

@@ -55,8 +55,10 @@ export const QUERY_LANGUAGE = P.createLanguage<QueryLanguageTypes>({
     headerClause: q => q.queryType.skip(P.whitespace).chain(qtype => {
         switch (qtype) {
             case "table":
-                return P.sepBy(q.namedField, P.string(',').trim(P.optWhitespace))
-                    .map(fields => { return { type: 'table', fields } as QueryHeader });
+                return P.seqMap(
+                    P.regexp(/WITHOUT\s+ID/i).skip(P.optWhitespace).atMost(1),
+                    P.sepBy(q.namedField, P.string(',').trim(P.optWhitespace)),
+                    (withoutId, fields) => { return { type: 'table', fields, showId: withoutId.length == 0 } as QueryHeader });
             case "list":
                 return EXPRESSION.field.atMost(1)
                     .map(format => { return { type: 'list', format: format.length == 1 ? format[0] : undefined }});
