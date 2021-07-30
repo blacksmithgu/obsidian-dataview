@@ -59,7 +59,7 @@ export class DataviewInlineApi {
 
         // Set up the evaluation context with variables from the current file.
         let fileMeta = this.index.pages.get(this.currentFilePath)?.toObject(this.index) ?? {};
-        this.evaluationContext = new Context(defaultLinkHandler(this.index, this.currentFilePath), fileMeta);
+        this.evaluationContext = new Context(defaultLinkHandler(this.index, this.currentFilePath), settings, fileMeta);
 
         this.func = Functions.bindAll(DEFAULT_FUNCTIONS, this.evaluationContext);
     }
@@ -93,16 +93,10 @@ export class DataviewInlineApi {
      * Convert an input element or array into a Dataview data-array. If the input is already a data array,
      * it is returned unchanged.
      */
-    public array(raw: any): DataArray<any> {
-        if (DataArray.isDataArray(raw)) return raw;
-        if (Array.isArray(raw)) return DataArray.wrap(raw);
-        return DataArray.wrap([raw]);
-    }
+    public array(raw: any): DataArray<any> { return this.api.array(raw); }
 
     /** Return true if theg given value is a javascript array OR a dataview data array. */
-    public isArray(raw: any): raw is DataArray<any> | Array<any> {
-        return DataArray.isDataArray(raw) || Array.isArray(raw);
-    }
+    public isArray(raw: any): raw is DataArray<any> | Array<any> { return this.api.isArray(raw); }
 
     /** Create a dataview file link to the given path. */
     public fileLink(path: string, embed: boolean = false, display?: string) {
@@ -110,9 +104,7 @@ export class DataviewInlineApi {
     }
 
     /** Attempt to extract a date from a string, link or date. */
-    public date(pathlike: string | Link | DateTime): DateTime | null {
-        return this.api.date(pathlike);
-    }
+    public date(pathlike: string | Link | DateTime): DateTime | null { return this.api.date(pathlike); }
 
     /**
      * Compare two arbitrary JavaScript values using Dataview's default comparison rules. Returns a negative value if
@@ -151,7 +143,7 @@ export class DataviewInlineApi {
         }
 
         let header = this.container.createEl(headerType);
-        renderValue(wrapped.value, header, this.currentFilePath, this.component, this.settings.renderNullAs, false);
+        renderValue(wrapped.value, header, this.currentFilePath, this.component, this.settings, false);
     }
 
     /** Render an HTML paragraph, containing arbitrary text. */
@@ -162,7 +154,7 @@ export class DataviewInlineApi {
             return;
         }
 
-        renderValue(wrapped.value, this.container, this.currentFilePath, this.component, this.settings.renderNullAs, true);
+        renderValue(wrapped.value, this.container, this.currentFilePath, this.component, this.settings, true);
     }
 
     /** Render an inline span, containing arbitrary text. */
@@ -173,7 +165,7 @@ export class DataviewInlineApi {
             return;
         }
 
-        renderValue(wrapped.value, this.container, this.currentFilePath, this.component, this.settings.renderNullAs, true);
+        renderValue(wrapped.value, this.container, this.currentFilePath, this.component, this.settings, true);
     }
 
     /**
@@ -205,7 +197,7 @@ export class DataviewInlineApi {
                 return;
             }
 
-            renderValue(wrapped.value, this.container, this.currentFilePath, this.component, this.settings.renderNullAs, true);
+            renderValue(wrapped.value, this.container, this.currentFilePath, this.component, this.settings, true);
         }).catch(error => {
             renderErrorPre(this.container, "Dataview: " + error.stack)
         });
@@ -237,7 +229,6 @@ export class DataviewInlineApi {
     public taskList(tasks: Task[] | DataArray<any>, groupByFile: boolean = true) {
         return this.api.taskList(tasks, groupByFile, this.container, this.component, this.currentFilePath);
     }
-
 }
 
 /** Evaluate a script where 'this' for the script is set to the given context. Allows you to define global variables. */

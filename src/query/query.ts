@@ -1,7 +1,6 @@
 /** Provides an AST for complex queries. */
 import { Source } from '../data/source';
 import { Field } from '../expression/field';
-import { QuerySettings } from '../settings';
 
 /** The supported query types (corresponding to view types). */
 export type QueryType = 'list' | 'table' | 'task';
@@ -102,6 +101,4 @@ export interface Query {
     source: Source;
     /** The operations to apply to the data to produce the final result that will be rendered. */
     operations: QueryOperation[];
-    /** Rendering and execution settings for this query. */
-    settings: QuerySettings;
 }

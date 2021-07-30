@@ -6,6 +6,7 @@ import { LiteralValue } from "src/data/value";
 import { Context, LinkHandler } from "src/expression/context";
 import { DefaultFunctions } from "src/expression/functions";
 import { EXPRESSION } from "src/expression/parse";
+import { DEFAULT_QUERY_SETTINGS } from "src/settings";
 
 test("Evaluate lower(list)", () => {
     expect(parseEval("lower(list(\"A\", \"B\"))")).toEqual(["a", "b"]);
@@ -224,5 +225,5 @@ function simpleLinkHandler(): LinkHandler {
 
 /** Create a trivial context good for evaluations that do not depend on links. */
 function simpleContext(): Context {
-    return new Context(simpleLinkHandler());
+    return new Context(simpleLinkHandler(), DEFAULT_QUERY_SETTINGS);
 }

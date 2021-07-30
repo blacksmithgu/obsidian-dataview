@@ -5,6 +5,7 @@ import { Result } from "src/api/result";
 import { BinaryOpHandler, createBinaryOps } from "./binaryop";
 import { Field, Fields } from "./field";
 import { DEFAULT_FUNCTIONS, FunctionImpl } from "./functions";
+import { QuerySettings } from "src/settings";
 
 /** Handles link resolution and normalization inside of a context. */
 export interface LinkHandler {
@@ -30,6 +31,7 @@ export class Context {
      */
     public constructor(
         public linkHandler: LinkHandler,
+        public settings: QuerySettings,
         public globals: Record<string, LiteralValue> = {},
         public binaryOps: BinaryOpHandler = createBinaryOps(linkHandler.normalize),
         public functions: Record<string, FunctionImpl> = DEFAULT_FUNCTIONS) {
@@ -63,7 +65,7 @@ export class Context {
                 return this.evaluate(field.child, data).map(s => !Values.isTruthy(s));
             case "binaryop":
                 return Result.flatMap2(this.evaluate(field.left, data), this.evaluate(field.right, data),
-                    (a, b) => this.binaryOps.evaluate(field.op, a, b));
+                    (a, b) => this.binaryOps.evaluate(field.op, a, b, this));
             case "function":
                 let rawFunc = field.func.type == "variable" ? Result.success<string, string>(field.func.name) : this.evaluate(field.func, data);
                 if (!rawFunc.successful) return rawFunc;

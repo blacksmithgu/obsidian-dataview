@@ -1,4 +1,5 @@
 import { DataArray } from "src/api/data-array";
+import { DEFAULT_QUERY_SETTINGS } from "src/settings";
 
 test("concat", () => {
     expect(da([1, 2]).concat(da([3, 4])).array()).toEqual([1, 2, 3, 4]);
@@ -6,5 +7,5 @@ test("concat", () => {
 });
 
 function da<T>(val: T[]): DataArray<T> {
-    return DataArray.wrap(val);
+    return DataArray.wrap(val, DEFAULT_QUERY_SETTINGS);
 }

@@ -2,6 +2,7 @@
 
 import { DateTime } from "luxon";
 import { Link, LiteralType, LiteralValue, Values } from "src/data/value";
+import { currentLocale } from "src/util/locale";
 import { LiteralReprAll, LiteralTypeOrAll } from "./binaryop";
 import type { Context } from "./context";
 import { Fields } from "./field";
@@ -227,6 +228,12 @@ export namespace DefaultFunctions {
         .vectorize(1, [0])
         .build();
 
+    /** Format a date using a luxon/moment-style date format. */
+    export const dateformat = new FunctionBuilder("dateformat")
+        .add2("date", "string", (date, format) => date.toFormat(format, { locale: currentLocale() }))
+        .vectorize(2, [0])
+        .build();
+
     const NUMBER_REGEX = /-?[0-9]+(\.[0-9]+)?/;
 
     /** Number constructor function. */
@@ -421,11 +428,11 @@ export namespace DefaultFunctions {
         .build();
 
     export const join: FunctionImpl = new FunctionBuilder("join")
-        .add2("array", "string", (arr, sep) => arr.map(e => Values.toString(e)).join(sep))
+        .add2("array", "string", (arr, sep, ctx) => arr.map(e => Values.toString(e, ctx.settings)).join(sep))
         .add2("array", "null", (arr, _s, context) => join(context, arr, ", "))
-        .add2("*", "string", (elem, sep) => Values.toString(elem))
+        .add2("*", "string", (elem, sep, ctx) => Values.toString(elem, ctx.settings))
         .add1("array", (arr, context) => join(context, arr, ", "))
-        .add1("*", e => Values.toString(e))
+        .add1("*", (e, ctx) => Values.toString(e, ctx.settings))
         .vectorize(2, [1])
         .build();
 
@@ -457,6 +464,7 @@ export const DEFAULT_FUNCTIONS: Record<string, FunctionImpl> = {
     "link": DefaultFunctions.link,
     "elink": DefaultFunctions.elink,
     "date": DefaultFunctions.date,
+    "dateformat": DefaultFunctions.dateformat,
     "number": DefaultFunctions.number,
     "object": DefaultFunctions.object,
 

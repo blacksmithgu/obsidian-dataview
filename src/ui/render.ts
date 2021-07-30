@@ -1,6 +1,8 @@
 import { DateTime, Duration } from 'luxon';
 import { Component, MarkdownRenderer } from 'obsidian';
 import { DataArray } from 'src/api/data-array';
+import { QuerySettings } from 'src/settings';
+import { currentLocale } from 'src/util/locale';
 import { normalizeDuration } from 'src/util/normalize';
 import { LiteralValue, Values } from '../data/value';
 
@@ -29,17 +31,17 @@ export async function renderCompactMarkdown(markdown: string, container: HTMLEle
 
 /** Create a list inside the given container, with the given data. */
 export async function renderList(container: HTMLElement, elements: LiteralValue[], component: Component, originFile: string,
-	nullField: string) {
+	settings: QuerySettings) {
 	let listEl = container.createEl('ul', { cls: ['dataview', 'list-view-ul'] });
 	for (let elem of elements) {
 		let li = listEl.createEl('li');
-		await renderValue(elem, li, originFile, component, nullField, true);
+		await renderValue(elem, li, originFile, component, settings, true, 'list');
 	}
 }
 
 /** Create a table inside the given container, with the given data. */
 export async function renderTable(container: HTMLElement, headers: string[], values: LiteralValue[][], component: Component,
-	originFile: string, nullField: string) {
+	originFile: string, settings: QuerySettings) {
 	let tableEl = container.createEl('table', { cls: ['dataview', 'table-view-table'] });
 
 	let theadEl = tableEl.createEl('thead', { cls: 'table-view-thead' });
@@ -53,7 +55,7 @@ export async function renderTable(container: HTMLElement, headers: string[], val
 		let rowEl = tbodyEl.createEl('tr');
 		for (let value of row) {
 			let td = rowEl.createEl('td');
-			await renderValue(value, td, originFile, component, nullField, true);
+			await renderValue(value, td, originFile, component, settings, true);
 		}
 	}
 }
@@ -73,13 +75,13 @@ export function renderErrorSpan(container: HTMLElement, error: string): HTMLElem
 }
 
 /** Render a DateTime in a minimal format to save space. */
-export function renderMinimalDate(time: DateTime): string {
+export function renderMinimalDate(time: DateTime, settings: QuerySettings): string {
 	// If there is no relevant time specified, fall back to just rendering the date.
 	if (time.second == 0 && time.minute == 0 && time.hour == 0) {
-		return time.toLocaleString(DateTime.DATE_MED_WITH_WEEKDAY);
+		return time.toFormat(settings.defaultDateFormat, { locale: currentLocale() });
 	}
 
-	return time.toLocaleString(DateTime.DATETIME_MED);
+	return time.toFormat(settings.defaultDateTimeFormat, { locale: currentLocale() });
 }
 
 /** Render a duration in a minimal format to save space. */
@@ -100,24 +102,27 @@ export function renderMinimalDuration(dur: Duration): string {
 	return result;
 }
 
+export type ValueRenderContext = 'root' | 'list';
+
 /** Prettily render a value into a container with the given settings. */
 export async function renderValue(field: LiteralValue, container: HTMLElement, originFile: string, component: Component,
-	nullField: string, expandList: boolean = false) {
+	settings: QuerySettings, expandList: boolean = false, context: ValueRenderContext = 'root') {
 
 	if (Values.isNull(field)) {
-		await renderCompactMarkdown(nullField, container, originFile, component);
+		await renderCompactMarkdown(settings.renderNullAs, container, originFile, component);
 	} else if (Values.isDate(field)) {
-		container.appendText(renderMinimalDate(field));
+		container.appendText(renderMinimalDate(field, settings));
 	} else if (Values.isDuration(field)) {
 		container.appendText(renderMinimalDuration(field));
 	} else if (Values.isString(field) || Values.isBoolean(field) || Values.isNumber(field)) {
 		await renderCompactMarkdown("" + field, container, originFile, component);
 	} else if (Values.isArray(field) || DataArray.isDataArray(field)) {
 		if (expandList) {
-			let list = container.createEl('ul', { cls: ['dataview', 'dataview-ul', 'dataview-result-list-ul'] });
+			let list = container.createEl('ul', { cls: ['dataview', 'dataview-ul',
+                (context == 'list' ? 'dataview-result-list-ul' : 'dataview-result-list-root-ul')] });
 			for (let child of field) {
 				let li = list.createEl('li', { cls: 'dataview-result-list-li' });
-				await renderValue(child, li, originFile, component, nullField, expandList);
+				await renderValue(child, li, originFile, component, settings, expandList, 'list');
 			}
 		} else {
 			if (field.length == 0) {
@@ -131,7 +136,7 @@ export async function renderValue(field: LiteralValue, container: HTMLElement, o
 				if (first) first = false;
 				else span.appendText(", ");
 
-				await renderValue(val, span, originFile, component, nullField, expandList);
+				await renderValue(val, span, originFile, component, settings, expandList, 'list');
 			}
 		}
 	} else if (Values.isLink(field)) {
@@ -146,7 +151,7 @@ export async function renderValue(field: LiteralValue, container: HTMLElement, o
 			for (let [key, value] of Object.entries(field)) {
 				let li = list.createEl('li', { cls: ['dataview', 'dataview-li', 'dataview-result-object-li'] });
 				li.appendText(key + ": ");
-				await renderValue(value, li, originFile, component, nullField, expandList);
+				await renderValue(value, li, originFile, component, settings, expandList);
 			}
 		} else {
             if (Object.keys(field).length == 0) {
@@ -161,7 +166,7 @@ export async function renderValue(field: LiteralValue, container: HTMLElement, o
 				else span.appendText(", ");
 
 				span.appendText(key + ": ");
-				await renderValue(value, span, originFile, component, nullField, expandList);
+				await renderValue(value, span, originFile, component, settings, expandList);
 			}
 		}
 	} else {

@@ -5,6 +5,7 @@ import { Context, LinkHandler } from "src/expression/context";
 import { Duration } from "luxon";
 import { Fields } from "src/expression/field";
 import { Link, LiteralValue } from "src/data/value";
+import { DEFAULT_QUERY_SETTINGS } from "src/settings";
 
 // <-- Numeric Operations -->
 
@@ -83,7 +84,7 @@ test("Evaluate simple object resolution", () => {
 
 test("Evaluate simple link resolution", () => {
     let object = { "inner": { final: 6 }};
-    let context = new Context({ resolve: path => object, normalize: path => path, exists: path => false })
+    let context = new Context({ resolve: path => object, normalize: path => path, exists: path => false }, DEFAULT_QUERY_SETTINGS)
         .set("link", Link.file("test", false));
     expect(context.tryEvaluate(Fields.indexVariable("link.inner"))).toEqual(object.inner);
     expect(context.tryEvaluate(Fields.indexVariable("link.inner.final"))).toEqual(object.inner.final);
@@ -106,5 +107,5 @@ function simpleLinkHandler(): LinkHandler {
 
 /** Create a trivial context good for evaluations that do not depend on links. */
 function simpleContext(): Context {
-    return new Context(simpleLinkHandler());
+    return new Context(simpleLinkHandler(), DEFAULT_QUERY_SETTINGS);
 }

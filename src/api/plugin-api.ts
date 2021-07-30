@@ -23,7 +23,7 @@ export class DataviewApi {
     public func: Record<string, BoundFunctionImpl>;
 
     public constructor(public app: App, public index: FullIndex, public settings: DataviewSettings) {
-        this.evaluationContext = new Context(defaultLinkHandler(index, ""));
+        this.evaluationContext = new Context(defaultLinkHandler(index, ""), settings);
         this.func = Functions.bindAll(DEFAULT_FUNCTIONS, this.evaluationContext);
     }
 
@@ -41,7 +41,7 @@ export class DataviewApi {
             throw new Error(`Failed to parse query in 'pagePaths': ${ex}`);
         }
 
-        return matchingSourcePaths(source, this.index, originFile).map(s => DataArray.from(s)).orElseThrow();
+        return matchingSourcePaths(source, this.index, originFile).map(s => DataArray.from(s, this.settings)).orElseThrow();
     }
 
     /** Map a page path to the actual data contained within that page. */
@@ -70,7 +70,7 @@ export class DataviewApi {
         if (!normPath) return undefined;
 
         let data = this.index.csv.get(path);
-        if (data.successful) return DataArray.from(data.value);
+        if (data.successful) return DataArray.from(data.value, this.settings);
         else return undefined;
     }
 
@@ -92,8 +92,8 @@ export class DataviewApi {
      */
     public array(raw: any): DataArray<any> {
         if (DataArray.isDataArray(raw)) return raw;
-        if (Array.isArray(raw)) return DataArray.wrap(raw);
-        return DataArray.wrap([raw]);
+        if (Array.isArray(raw)) return DataArray.wrap(raw, this.settings);
+        return DataArray.wrap([raw], this.settings);
     }
 
     /** Return true if theg given value is a javascript array OR a dataview data array. */
@@ -133,7 +133,7 @@ export class DataviewApi {
         if (!values) return;
         if (DataArray.isDataArray(values)) values = values.array();
 
-        renderList(container, values as any[], component, filePath, this.settings.renderNullAs);
+        renderList(container, values as any[], component, filePath, this.settings);
     }
 
     /** Render a dataview table with the given headers, and the 2D array of values. */
@@ -141,7 +141,7 @@ export class DataviewApi {
         if (!values) values = [];
         if (DataArray.isDataArray(values)) values = values.array();
 
-        renderTable(container, headers, values as any[][], component, filePath, this.settings.renderNullAs);
+        renderTable(container, headers, values as any[][], component, filePath, this.settings);
     }
 
     /** Render a dataview task view with the given tasks. */
@@ -171,6 +171,6 @@ export class DataviewApi {
 
     /** Render an arbitrary value into a container. */
     public async renderValue(value: any, container: HTMLElement, component: Component, filePath: string, inline: boolean = false) {
-        await renderValue(value as LiteralValue, container, filePath, component, "\-", !inline);
+        await renderValue(value as LiteralValue, container, filePath, component, this.settings, inline);
     }
 }
