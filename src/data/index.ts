@@ -417,11 +417,18 @@ export class CsvIndex {
         this.cache = new Map();
 
         this.vault.on("delete", file => {
-            if (this.isCsv(file)) this.reloadInternal(file);
+            if (this.isCsv(file)) this.cache.delete(file.path);
         });
 
         this.vault.on("modify", file => {
             if (this.isCsv(file)) this.reloadInternal(file);
+        });
+
+        this.vault.on("rename", (file, oldPath) => {
+            if (this.isCsv(file)) {
+                this.cache.delete(oldPath);
+                this.reloadInternal(file);
+            }
         });
     }
 
