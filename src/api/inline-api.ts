@@ -172,47 +172,48 @@ export class DataviewInlineApi {
      * Render HTML from the output of a template "view" saved as a file in the vault.
      * Takes a filename and arbitrary input data.
      */
-    public view(viewName: string, input: any) {
-        let viewPath = `${viewName}/view.js`;
-        let viewFile = this.app.metadataCache.getFirstLinkpathDest( viewPath, this.currentFilePath );
+    public async view(viewName: string, input: any) {
+        // Look for `${viewName}.js` first, then for `${viewName}/view.js`.
+        let simpleViewFile = this.app.metadataCache.getFirstLinkpathDest(viewName + ".js", this.currentFilePath);
+        if (simpleViewFile) {
+            let contents = await this.app.vault.read(simpleViewFile);
+            let func = new Function('dv', 'input', contents);
 
-        /** Check that a file exists for the requested view name. */
-        if (!viewFile) {
-            renderErrorPre(this.container, `Dataview: file not found at ${viewPath}`);
+            try {
+                // This may directly render, in which case it will likely return undefined or null.
+                let result = func(this, input);
+                if (result) renderValue(result as any, this.container, this.currentFilePath, this.component, this.settings, true);
+            } catch (ex) {
+                renderErrorPre(this.container, `Dataview: Failed to execute view '${simpleViewFile.path}'.\n\n${ex}`);
+            }
+
             return;
         }
 
-        /**
-         * Create a function from file contents. This is the dangerous part:
-         * it’s basically eval(). Consider adding sanitization & filtering.
-         */
-        this.app.vault.read(viewFile).then(viewData => {
-            let viewFunction = new Function('dv', 'input', viewData);
-            /** The view file code must return a string, which we treat as HTML. */
-            let text = viewFunction(this, input);
+        // No `{viewName}.js`, so look for a folder instead.
+        let viewPath = `${viewName}/view.js`;
+        let viewFile = this.app.metadataCache.getFirstLinkpathDest(viewPath, this.currentFilePath);
 
-            let wrapped = Values.wrapValue(text);
-            if (wrapped === null || wrapped === undefined) {
-                this.container.createEl('div', { text });
-                return;
-            }
+        if (!viewFile) {
+            renderErrorPre(this.container, `Dataview: custom view not found for '${viewPath}' or '${viewName}.js'.`);
+            return;
+        }
 
-            renderValue(wrapped.value, this.container, this.currentFilePath, this.component, this.settings, true);
-        }).catch(error => {
-            renderErrorPre(this.container, "Dataview: " + error.stack)
-        });
+        let viewContents = await this.app.vault.read(viewFile);
+        let viewFunction = new Function('dv', 'input', viewContents);
+        try {
+            let result = viewFunction(this, input);
+            if (result) renderValue(result as any, this.container, this.currentFilePath, this.component, this.settings, true);
+        } catch (ex) {
+            renderErrorPre(this.container, `Dataview: Error while executing view '${viewFile.path}'.\n\n${ex}`);
+        }
 
-        /** Check for optional CSS. */
-        let cssPath = `${viewName}/view.css`;
-        let cssFile = this.app.metadataCache.getFirstLinkpathDest(cssPath, this.currentFilePath);
-
+        // Check for optional CSS.
+        let cssFile = this.app.metadataCache.getFirstLinkpathDest(`${viewName}/view.css`, this.currentFilePath);
         if (!cssFile) return;
 
-        this.app.vault.read(cssFile).then(viewCSS => {
-            this.container.createEl('style', { text: viewCSS, attr: { scoped: '' } });
-        }).catch(error => {
-            renderErrorPre(this.container, "Dataview: " + error.stack)
-        });
+        let cssContents = await this.app.vault.read(cssFile);
+        this.container.createEl('style', { text: cssContents, attr: { scope: ' '}});
     }
 
     /** Render a dataview list of the given values. */
