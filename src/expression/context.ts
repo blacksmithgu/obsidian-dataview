@@ -66,6 +66,17 @@ export class Context {
             case "binaryop":
                 return Result.flatMap2(this.evaluate(field.left, data), this.evaluate(field.right, data),
                     (a, b) => this.binaryOps.evaluate(field.op, a, b, this));
+            case "lambda":
+                // Just relying on JS to capture 'data' for us implicitly; unsure
+                // if this is correct thing to do. Could cause wierd behaviors.
+                return Result.success((ctx: Context, ...args: LiteralValue[]) => {
+                    let copy: Record<string, LiteralValue> = Object.assign({}, data);
+                    for (let arg = 0; arg < Math.min(args.length, field.arguments.length); arg++) {
+                        copy[field.arguments[arg]] = args[arg];
+                    }
+
+                    return ctx.evaluate(field.value, copy).orElseThrow();
+                });
             case "function":
                 let rawFunc = field.func.type == "variable" ? Result.success<string, string>(field.func.name) : this.evaluate(field.func, data);
                 if (!rawFunc.successful) return rawFunc;

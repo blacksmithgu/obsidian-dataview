@@ -280,6 +280,33 @@ test("Parse function with mixed dot, index, and function call", () => {
         Fields.func(Fields.variable("list"), []), Fields.literal("parts")), Fields.literal(0)));
 });
 
+// <-- Lambdas -->
+describe("Lambda Expressions", () => {
+    test("Parse 0-argument constant lambda", () => {
+        expect(EXPRESSION.field.tryParse("() => 16")).toEqual(
+            Fields.lambda([], Fields.literal(16))
+        );
+    });
+
+    test("Parse 0-argument binary op lambda", () => {
+        expect(EXPRESSION.field.tryParse("() => a + 2")).toEqual(
+            Fields.lambda([], Fields.binaryOp(Fields.variable("a"), "+", Fields.literal(2)))
+        );
+    });
+
+    test("Parse 1-argument lambda", () => {
+        expect(EXPRESSION.field.tryParse("(v) => v")).toEqual(
+            Fields.lambda(["v"], Fields.variable("v"))
+        )
+    });
+
+    test("Parse 2-argument lambda", () => {
+        expect(EXPRESSION.field.tryParse("(yes, no) => yes - no")).toEqual(
+            Fields.lambda(["yes", "no"], Fields.binaryOp(Fields.variable("yes"), "-", Fields.variable("no")))
+        )
+    });
+});
+
 // <-- Binary Ops -->
 
 test("Parse Simple Addition", () => {

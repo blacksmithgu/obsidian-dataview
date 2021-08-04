@@ -90,6 +90,14 @@ test("Evaluate simple link resolution", () => {
     expect(context.tryEvaluate(Fields.indexVariable("link.inner.final"))).toEqual(object.inner.final);
 });
 
+// Lambda Calls.
+describe("Immediately Invoked Lambdas", () => {
+    test("Addition", () => expect(parseEval("((a, b) => a + b)(1, 2)")).toEqual(3));
+    test("Negation", () => expect(parseEval("((v) => 0-v)(6)")).toEqual(-6));
+    test("Curried", () => expect(parseEval("((a) => (b) => a + b)(1)(2)")).toEqual(3));
+    test("In Argument", () => expect(parseEval("((a) => 1 + a)(((a) => 2)(3))")).toEqual(3));
+});
+
 /** Parse a field expression and evaluate it in the simple context. */
 function parseEval(text: string): LiteralValue {
     let field = EXPRESSION.field.tryParse(text);

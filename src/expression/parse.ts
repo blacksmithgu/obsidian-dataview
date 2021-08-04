@@ -1,7 +1,7 @@
 import { DateTime, Duration } from "luxon";
 import { Link, LiteralValue } from "src/data/value";
 import * as P from 'parsimmon';
-import { BinaryOp, Field, Fields, LiteralField, VariableField } from "./field";
+import { BinaryOp, Field, Fields, LambdaField, LiteralField, VariableField } from "./field";
 import { FolderSource, NegatedSource, Source, SourceOp, Sources, TagSource, CsvSource } from "src/data/source";
 import { normalizeDuration } from "src/util/normalize";
 import { Result } from "src/api/result";
@@ -151,6 +151,7 @@ interface ExpressionLanguage {
     negatedField: Field;
     atomField: Field;
     indexField: Field;
+    lambdaField: LambdaField;
 
     // Postfix parsers for function calls & the like.
     dotPostfix: PostfixFragment;
@@ -309,7 +310,7 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
         q.atomInlineField
     ),
 
-    atomField: q => P.alt(q.negatedField, q.parensField, q.boolField, q.numberField, q.stringField, q.linkField, q.dateField, q.durationField, q.nullField, q.variableField),
+    atomField: q => P.alt(q.negatedField, q.lambdaField, q.parensField, q.boolField, q.numberField, q.stringField, q.linkField, q.dateField, q.durationField, q.nullField, q.variableField),
     indexField: q => P.seqMap(q.atomField, P.alt(q.dotPostfix, q.indexPostfix, q.functionPostfix).many(), (obj, postfixes) => {
         let result = obj;
         for (let post of postfixes) {
@@ -328,6 +329,13 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
     }),
     negatedField: q => P.seqMap(P.string("!"), q.indexField, (_, field) => Fields.negate(field)).desc("negated field"),
     parensField: q => P.seqMap(P.string("("), P.optWhitespace, q.field, P.optWhitespace, P.string(")"), (_1, _2, field, _3, _4) => field),
+    lambdaField: q => P.seqMap(
+        q.identifier.sepBy(P.string(",").trim(P.optWhitespace))
+            .wrap(P.string("(").trim(P.optWhitespace), P.string(")").trim(P.optWhitespace)),
+        P.string("=>").trim(P.optWhitespace),
+        q.field,
+        (ident, _ignore, value) => { return { type: 'lambda', arguments: ident, value }}
+    ),
 
     dotPostfix: q => P.seqMap(P.string("."), q.identifier, (_, field) => { return { type: 'dot', field: Fields.literal(field) } }),
     indexPostfix: q => P.seqMap(P.string("["), P.optWhitespace, q.field, P.optWhitespace, P.string("]"),

@@ -8,7 +8,7 @@ export type ArithmeticOp = '+' | '-' | '*' | '/' | '&' | '|';
 /** All valid binary operators. */
 export type BinaryOp = CompareOp | ArithmeticOp;
 /** A (potentially computed) field to select or compare against. */
-export type Field = BinaryOpField | VariableField | LiteralField | FunctionField | IndexField | NegatedField;
+export type Field = BinaryOpField | VariableField | LiteralField | FunctionField | IndexField | NegatedField | LambdaField;
 
 /** Literal representation of some field type. */
 export interface LiteralField {
@@ -33,10 +33,18 @@ export interface BinaryOpField {
 /** A function field which calls a function on 0 or more arguments. */
 export interface FunctionField {
     type: 'function';
-    /** The name of the function being called. */
+    /** Either the name of the function being called, or a Function object. */
     func: Field;
     /** The arguments being passed to the function. */
     arguments: Field[];
+}
+
+export interface LambdaField {
+    type: 'lambda';
+    /** An ordered list of named arguments. */
+    arguments: string[];
+    /** The field which should be evaluated with the arguments in context. */
+    value: Field;
 }
 
 /** A field which indexes a variable into another variable. */
@@ -82,6 +90,10 @@ export namespace Fields {
         }
 
         return result;
+    }
+
+    export function lambda(args: string[], value: Field): LambdaField {
+        return { type: 'lambda', arguments: args, value };
     }
 
     export function func(func: Field, args: Field[]): FunctionField {

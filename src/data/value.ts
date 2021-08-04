@@ -291,6 +291,8 @@ export namespace Values {
 
     /** Deep copy a field. */
     export function deepCopy<T extends LiteralValue>(field: T): T {
+        if (field === null || field === undefined) return field;
+
         if (Values.isArray(field)) {
             return ([] as LiteralValue[]).concat(field.map(v => deepCopy(v))) as T;
         } else if (Values.isObject(field)) {
