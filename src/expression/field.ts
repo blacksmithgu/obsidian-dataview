@@ -8,7 +8,8 @@ export type ArithmeticOp = '+' | '-' | '*' | '/' | '&' | '|';
 /** All valid binary operators. */
 export type BinaryOp = CompareOp | ArithmeticOp;
 /** A (potentially computed) field to select or compare against. */
-export type Field = BinaryOpField | VariableField | LiteralField | FunctionField | IndexField | NegatedField | LambdaField;
+export type Field = BinaryOpField | VariableField | LiteralField | FunctionField | IndexField | NegatedField | LambdaField
+    | ObjectField | ListField;
 
 /** Literal representation of some field type. */
 export interface LiteralField {
@@ -20,6 +21,18 @@ export interface LiteralField {
 export interface VariableField {
     type: 'variable';
     name: string;
+}
+
+/** A list, which is an ordered collection of fields. */
+export interface ListField {
+    type: 'list';
+    values: Field[];
+}
+
+/** An object, which is a mapping of name to field. */
+export interface ObjectField {
+    type: 'object';
+    values: Record<string, Field>;
 }
 
 /** A binary operator field which combines two subnodes somehow. */
@@ -98,6 +111,14 @@ export namespace Fields {
 
     export function func(func: Field, args: Field[]): FunctionField {
         return { type: 'function', func, arguments: args };
+    }
+
+    export function list(values: Field[]): ListField {
+        return { type: 'list', values };
+    }
+
+    export function object(values: Record<string, Field>): ObjectField {
+        return { type: 'object', values };
     }
 
     export function negate(child: Field): NegatedField {

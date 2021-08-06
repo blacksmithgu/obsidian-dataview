@@ -1,9 +1,9 @@
 import { expectEvals } from "src/test/common";
 
 describe("map()", () => {
-    test("empty list", () => expectEvals("map(list(), (k) => 6)", []));
-    test("number list", () => expectEvals("map(list(1, 2, 3), (k) => k + 4)", [5, 6, 7]));
-    test("string list", () => expectEvals('map(list("a", "be", "ced"), (k) => length(k))', [1, 2, 3]));
+    test("empty list", () => expectEvals("map([], (k) => 6)", []));
+    test("number list", () => expectEvals("map([1, 2, 3], (k) => k + 4)", [5, 6, 7]));
+    test("string list", () => expectEvals('map(["a", "be", "ced"], (k) => length(k))', [1, 2, 3]));
 });
 
 describe("filter()", () => {

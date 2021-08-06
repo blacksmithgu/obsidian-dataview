@@ -1,6 +1,6 @@
 /** Core implementation of the query language evaluation engine. */
 
-import { LiteralValue, Values } from "src/data/value";
+import { DataObject, LiteralValue, Values } from "src/data/value";
 import { Result } from "src/api/result";
 import { BinaryOpHandler, createBinaryOps } from "./binaryop";
 import { Field, Fields } from "./field";
@@ -66,6 +66,22 @@ export class Context {
             case "binaryop":
                 return Result.flatMap2(this.evaluate(field.left, data), this.evaluate(field.right, data),
                     (a, b) => this.binaryOps.evaluate(field.op, a, b, this));
+            case "list":
+                let result = [];
+                for (let child of field.values) {
+                    let subeval = this.evaluate(child, data);
+                    if (!subeval.successful) return subeval;
+                    result.push(subeval.value);
+                }
+                return Result.success(result);
+            case "object":
+                let objResult: DataObject = {};
+                for (let [key, child] of Object.entries(field)) {
+                    let subeval = this.evaluate(child, data);
+                    if (!subeval.successful) return subeval;
+                    objResult[key] = subeval.value;
+                }
+                return Result.success(objResult);
             case "lambda":
                 // Just relying on JS to capture 'data' for us implicitly; unsure
                 // if this is correct thing to do. Could cause wierd behaviors.

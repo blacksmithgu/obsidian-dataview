@@ -25,20 +25,6 @@ test("Evaluate length(string)", () => {
     expect(DefaultFunctions.length(simpleContext(), "")).toEqual(0);
 });
 
-// <-- list() -->
-
-test("Evaluate list()", () => {
-    expect(DefaultFunctions.list(simpleContext(), 1, 2, 3)).toEqual([1, 2, 3]);
-    expect(DefaultFunctions.list(simpleContext())).toEqual([]);
-});
-
-// <-- object() -->
-
-test("Evaluate object()", () => {
-    expect(parseEval("object()")).toEqual({});
-    expect(parseEval("object(\"hello\", 1)")).toEqual({ "hello": 1 });
-});
-
 // <-- contains() -->
 
 test("Evaluate contains(object)", () => {

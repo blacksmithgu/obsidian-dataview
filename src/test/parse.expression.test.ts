@@ -307,6 +307,41 @@ describe("Lambda Expressions", () => {
     });
 });
 
+// <-- Lists -->
+
+describe("Lists", () => {
+    test("[]", () => expect(EXPRESSION.field.tryParse("[]"))
+        .toEqual(Fields.list([])));
+    test("[1]", () => expect(EXPRESSION.field.tryParse("[1]"))
+        .toEqual(Fields.list([Fields.literal(1)])));
+    test("[1, 2]", () => expect(EXPRESSION.field.tryParse("[1,2]"))
+        .toEqual(Fields.list([Fields.literal(1), Fields.literal(2)])));
+    test("[1, 2, 3]", () => expect(EXPRESSION.field.tryParse("[ 1,  2, 3   ]"))
+        .toEqual(Fields.list([Fields.literal(1), Fields.literal(2), Fields.literal(3)])));
+
+    test('["a"]', () => expect(EXPRESSION.field.tryParse('["a" ]'))
+        .toEqual(Fields.list([Fields.literal("a")])));
+
+    test("[[]]", () => expect(EXPRESSION.field.tryParse('[[]]'))
+        .toEqual(Fields.list([Fields.list([])])));
+});
+
+// <-- Objects -->
+
+describe("Objects", () => {
+    test("{}", () => expect(EXPRESSION.field.tryParse("{}"))
+        .toEqual(Fields.object({})));
+    test("{ a: 1 }", () => expect(EXPRESSION.field.tryParse("{ a: 1 }"))
+        .toEqual(Fields.object({ a: Fields.literal(1) })));
+    test('{ "a": 1 }', () => expect(EXPRESSION.field.tryParse('{ "a": 1 }'))
+        .toEqual(Fields.object({ a: Fields.literal(1) })));
+    test('{ "yes no": 1 }', () => expect(EXPRESSION.field.tryParse('{ "yes no": 1 }'))
+        .toEqual(Fields.object({ "yes no": Fields.literal(1) })));
+
+    test("{a:1,b:[2]}", () => expect(EXPRESSION.field.tryParse("{ a: 1, b: [2] }"))
+        .toEqual(Fields.object({ a: Fields.literal(1), b: Fields.list([Fields.literal(2)]) })));
+});
+
 // <-- Binary Ops -->
 
 test("Parse Simple Addition", () => {
