@@ -11,7 +11,7 @@ onmessage = async (evt) => {
         (postMessage as any)({ path: evt.data.path, result: TransferableValues.transferable(parsed) });
     } else {
         let parsed = parseMarkdown(evt.data.path, evt.data.contents,
-            /[_\*~`]*([0-9\w\p{Letter}][-0-9\w\p{Letter}\p{Emoji_Presentation}\s/]*)[_\*~`]*\s*::\s*(.+)/u);
+            /[_\*~`]*([0-9\w\p{Letter}][-0-9\w\p{Letter}\p{Emoji_Presentation}\s/]*)[_\*~`]*\s*::\s*([^\/\/\n]+)/u);
 
         (postMessage as any)({ path: evt.data.path, result: markdownToTransferable(parsed) });
     }
