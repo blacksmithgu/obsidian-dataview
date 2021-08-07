@@ -1,7 +1,6 @@
 /** Provides an AST for complex queries. */
 import { Source } from '../data/source';
 import { Field } from '../expression/field';
-import { QuerySettings } from '../settings';
 
 /** The supported query types (corresponding to view types). */
 export type QueryType = 'list' | 'table' | 'task';
@@ -49,6 +48,8 @@ export interface TableQuery {
     type: 'table';
     /** The fields (computed or otherwise) to select. */
     fields: NamedField[];
+    /** If true, show the default ID field; otherwise, don't. */
+    showId: boolean;
 }
 
 /** A query which renders a collection of tasks. */
@@ -100,6 +101,4 @@ export interface Query {
     source: Source;
     /** The operations to apply to the data to produce the final result that will be rendered. */
     operations: QueryOperation[];
-    /** Rendering and execution settings for this query. */
-    settings: QuerySettings;
 }

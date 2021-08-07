@@ -6,7 +6,7 @@ import { Task } from "src/data/file";
 import { renderValue, renderErrorPre } from "src/ui/render";
 import { DataviewApi } from "src/api/plugin-api";
 import { DataviewSettings } from "src/settings";
-import { Link, Values } from "src/data/value";
+import { DataObject, Link, Values } from "src/data/value";
 import { BoundFunctionImpl, DEFAULT_FUNCTIONS, Functions } from "src/expression/functions";
 import { Context } from "src/expression/context";
 import { defaultLinkHandler } from "src/query/engine";
@@ -59,7 +59,7 @@ export class DataviewInlineApi {
 
         // Set up the evaluation context with variables from the current file.
         let fileMeta = this.index.pages.get(this.currentFilePath)?.toObject(this.index) ?? {};
-        this.evaluationContext = new Context(defaultLinkHandler(this.index, this.currentFilePath), fileMeta);
+        this.evaluationContext = new Context(defaultLinkHandler(this.index, this.currentFilePath), settings, fileMeta);
 
         this.func = Functions.bindAll(DEFAULT_FUNCTIONS, this.evaluationContext);
     }
@@ -72,7 +72,10 @@ export class DataviewInlineApi {
     public pagePaths(query?: string): DataArray<string> { return this.api.pagePaths(query, this.currentFilePath); }
 
     /** Map a page path to the actual data contained within that page. */
-    public page(path: string | Link): Record<string, any> | undefined { return this.api.page(path, this.currentFilePath); }
+    public page(path: string | Link): DataObject | undefined { return this.api.page(path, this.currentFilePath); }
+
+    /** Load the contents of a CSV from the given path. */
+    public csv(path: string): DataArray<DataObject> | undefined { return this.api.csv(path, this.currentFilePath); }
 
     /** Return an array of page objects corresponding to pages which match the query. */
     public pages(query?: string): DataArray<any> { return this.api.pages(query, this.currentFilePath); }
@@ -90,16 +93,10 @@ export class DataviewInlineApi {
      * Convert an input element or array into a Dataview data-array. If the input is already a data array,
      * it is returned unchanged.
      */
-    public array(raw: any): DataArray<any> {
-        if (DataArray.isDataArray(raw)) return raw;
-        if (Array.isArray(raw)) return DataArray.wrap(raw);
-        return DataArray.wrap([raw]);
-    }
+    public array(raw: any): DataArray<any> { return this.api.array(raw); }
 
     /** Return true if theg given value is a javascript array OR a dataview data array. */
-    public isArray(raw: any): raw is DataArray<any> | Array<any> {
-        return DataArray.isDataArray(raw) || Array.isArray(raw);
-    }
+    public isArray(raw: any): raw is DataArray<any> | Array<any> { return this.api.isArray(raw); }
 
     /** Create a dataview file link to the given path. */
     public fileLink(path: string, embed: boolean = false, display?: string) {
@@ -107,9 +104,7 @@ export class DataviewInlineApi {
     }
 
     /** Attempt to extract a date from a string, link or date. */
-    public date(pathlike: string | Link | DateTime): DateTime | null {
-        return this.api.date(pathlike);
-    }
+    public date(pathlike: string | Link | DateTime): DateTime | null { return this.api.date(pathlike); }
 
     /**
      * Compare two arbitrary JavaScript values using Dataview's default comparison rules. Returns a negative value if
@@ -148,7 +143,7 @@ export class DataviewInlineApi {
         }
 
         let header = this.container.createEl(headerType);
-        renderValue(wrapped.value, header, this.currentFilePath, this.component, this.settings.renderNullAs, false);
+        renderValue(wrapped.value, header, this.currentFilePath, this.component, this.settings, false);
     }
 
     /** Render an HTML paragraph, containing arbitrary text. */
@@ -159,7 +154,7 @@ export class DataviewInlineApi {
             return;
         }
 
-        renderValue(wrapped.value, this.container, this.currentFilePath, this.component, this.settings.renderNullAs, true);
+        renderValue(wrapped.value, this.container, this.currentFilePath, this.component, this.settings, true);
     }
 
     /** Render an inline span, containing arbitrary text. */
@@ -170,54 +165,55 @@ export class DataviewInlineApi {
             return;
         }
 
-        renderValue(wrapped.value, this.container, this.currentFilePath, this.component, this.settings.renderNullAs, true);
+        renderValue(wrapped.value, this.container, this.currentFilePath, this.component, this.settings, true);
     }
 
     /**
      * Render HTML from the output of a template "view" saved as a file in the vault.
      * Takes a filename and arbitrary input data.
      */
-    public view(viewName: string, input: any) {
-        let viewPath = `${viewName}/view.js`;
-        let viewFile = this.app.metadataCache.getFirstLinkpathDest( viewPath, this.currentFilePath );
+    public async view(viewName: string, input: any) {
+        // Look for `${viewName}.js` first, then for `${viewName}/view.js`.
+        let simpleViewFile = this.app.metadataCache.getFirstLinkpathDest(viewName + ".js", this.currentFilePath);
+        if (simpleViewFile) {
+            let contents = await this.app.vault.read(simpleViewFile);
+            let func = new Function('dv', 'input', contents);
 
-        /** Check that a file exists for the requested view name. */
-        if (!viewFile) {
-            renderErrorPre(this.container, `Dataview: file not found at ${viewPath}`);
+            try {
+                // This may directly render, in which case it will likely return undefined or null.
+                let result = func(this, input);
+                if (result) renderValue(result as any, this.container, this.currentFilePath, this.component, this.settings, true);
+            } catch (ex) {
+                renderErrorPre(this.container, `Dataview: Failed to execute view '${simpleViewFile.path}'.\n\n${ex}`);
+            }
+
             return;
         }
 
-        /**
-         * Create a function from file contents. This is the dangerous part:
-         * it’s basically eval(). Consider adding sanitization & filtering.
-         */
-        this.app.vault.read(viewFile).then(viewData => {
-            let viewFunction = new Function('dv', 'input', viewData);
-            /** The view file code must return a string, which we treat as HTML. */
-            let text = viewFunction(this, input);
+        // No `{viewName}.js`, so look for a folder instead.
+        let viewPath = `${viewName}/view.js`;
+        let viewFile = this.app.metadataCache.getFirstLinkpathDest(viewPath, this.currentFilePath);
 
-            let wrapped = Values.wrapValue(text);
-            if (wrapped === null || wrapped === undefined) {
-                this.container.createEl('div', { text });
-                return;
-            }
+        if (!viewFile) {
+            renderErrorPre(this.container, `Dataview: custom view not found for '${viewPath}' or '${viewName}.js'.`);
+            return;
+        }
 
-            renderValue(wrapped.value, this.container, this.currentFilePath, this.component, this.settings.renderNullAs, true);
-        }).catch(error => {
-            renderErrorPre(this.container, "Dataview: " + error.stack)
-        });
+        let viewContents = await this.app.vault.read(viewFile);
+        let viewFunction = new Function('dv', 'input', viewContents);
+        try {
+            let result = viewFunction(this, input);
+            if (result) renderValue(result as any, this.container, this.currentFilePath, this.component, this.settings, true);
+        } catch (ex) {
+            renderErrorPre(this.container, `Dataview: Error while executing view '${viewFile.path}'.\n\n${ex}`);
+        }
 
-        /** Check for optional CSS. */
-        let cssPath = `${viewName}/view.css`;
-        let cssFile = this.app.metadataCache.getFirstLinkpathDest(cssPath, this.currentFilePath);
-
+        // Check for optional CSS.
+        let cssFile = this.app.metadataCache.getFirstLinkpathDest(`${viewName}/view.css`, this.currentFilePath);
         if (!cssFile) return;
 
-        this.app.vault.read(cssFile).then(viewCSS => {
-            this.container.createEl('style', { text: viewCSS, attr: { scoped: '' } });
-        }).catch(error => {
-            renderErrorPre(this.container, "Dataview: " + error.stack)
-        });
+        let cssContents = await this.app.vault.read(cssFile);
+        this.container.createEl('style', { text: cssContents, attr: { scope: ' '}});
     }
 
     /** Render a dataview list of the given values. */
@@ -234,7 +230,6 @@ export class DataviewInlineApi {
     public taskList(tasks: Task[] | DataArray<any>, groupByFile: boolean = true) {
         return this.api.taskList(tasks, groupByFile, this.container, this.component, this.currentFilePath);
     }
-
 }
 
 /** Evaluate a script where 'this' for the script is set to the given context. Allows you to define global variables. */

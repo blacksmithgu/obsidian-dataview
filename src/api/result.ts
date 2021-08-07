@@ -6,7 +6,7 @@ export class Success<T, E> {
         this.successful = true;
     }
 
-    public map<U>(f: (a: T) => U): Success<U, E> {
+    public map<U>(f: (a: T) => U): Result<U, E> {
         return new Success(f(this.value));
     }
 
@@ -30,11 +30,11 @@ export class Failure<T, E> {
         this.successful = false;
     }
 
-    public map<U>(_f: (a: T) => U): Failure<U, E> {
+    public map<U>(_f: (a: T) => U): Result<U, E> {
         return this as any as Failure<U, E>;
     }
 
-    public flatMap<U>(_f: (a: T) => Result<U, E>): Failure<U, E> {
+    public flatMap<U>(_f: (a: T) => Result<U, E>): Result<U, E> {
         return this as any as Failure<U, E>;
     }
 

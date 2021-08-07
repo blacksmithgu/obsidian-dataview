@@ -4,11 +4,12 @@
 import { FullIndex } from 'src/data/index';
 import { Task } from 'src/data/file';
 import { Context, LinkHandler } from 'src/expression/context';
-import { collectPages, Datarow } from 'src/data/collector';
+import { resolveSource, Datarow } from 'src/data/resolver';
 import { DataObject, LiteralValue, Values } from 'src/data/value';
 import { ListQuery, Query, QueryOperation, TableQuery } from 'src/query/query';
 import { Result } from 'src/api/result';
 import { Field } from 'src/expression/field';
+import { QuerySettings } from 'src/settings';
 
 function iden<T>(x: T): T { return x; }
 
@@ -84,10 +85,10 @@ export function executeCore(rows: Pagerow[], context: Context, ops: QueryOperati
                 taggedData.sort((a, b) => {
                     for (let index = 0; index < sortFields.length; index++) {
                         let factor = sortFields[index].direction === 'ascending' ? 1 : -1;
-                        let le = context.binaryOps.evaluate('<', a.fields[index], b.fields[index]).orElse(false);
+                        let le = context.binaryOps.evaluate('<', a.fields[index], b.fields[index], context).orElse(false);
                         if (Values.isTruthy(le)) return factor * -1;
 
-                        let ge = context.binaryOps.evaluate('>', a.fields[index], b.fields[index]).orElse(false);
+                        let ge = context.binaryOps.evaluate('>', a.fields[index], b.fields[index], context).orElse(false);
                         if (Values.isTruthy(ge)) return factor * 1;
                     }
 
@@ -119,10 +120,10 @@ export function executeCore(rows: Pagerow[], context: Context, ops: QueryOperati
 
                 // Sort by the key, which we will group on shortly.
                 groupData.sort((a, b) => {
-                    let le = context.binaryOps.evaluate('<', a.key, b.key).orElse(false);
+                    let le = context.binaryOps.evaluate('<', a.key, b.key, context).orElse(false);
                     if (Values.isTruthy(le)) return -1;
 
-                    let ge = context.binaryOps.evaluate('>', a.key, b.key).orElse(false);
+                    let ge = context.binaryOps.evaluate('>', a.key, b.key, context).orElse(false);
                     if (Values.isTruthy(ge)) return 1;
 
                     return 0;
@@ -138,13 +139,13 @@ export function executeCore(rows: Pagerow[], context: Context, ops: QueryOperati
 
                 for (let index = 1; index < groupData.length; index++) {
                     let curr = groupData[index], prev = groupData[index - 1];
-                    if (context.binaryOps.evaluate('=', curr.key, prev.key).orElse(false)) {
+                    if (context.binaryOps.evaluate('=', curr.key, prev.key, context).orElse(false)) {
                         finalGroupData[finalGroupData.length - 1].rows.push(curr.data.data);
                     } else {
                         finalGroupData.push({
                             key: curr.key,
                             rows: [curr.data.data],
-                            [op.field.name]: groupData[0].key
+                            [op.field.name]: curr.key
                         });
                     }
                 }
@@ -249,14 +250,15 @@ export interface ListExecution {
     primaryMeaning: IdentifierMeaning;
 }
 
-/** Execute a list-based query, returning the fina lresults. */
-export function executeList(query: Query, index: FullIndex, origin: string): Result<ListExecution, string> {
+/** Execute a list-based query, returning the final results. */
+export function executeList(query: Query, index: FullIndex, origin: string, settings: QuerySettings): Result<ListExecution, string> {
     // Start by collecting all of the files that match the 'from' queries.
-    let fileset = collectPages(query.source, index, origin);
+    let fileset = resolveSource(query.source, index, origin);
     if (!fileset.successful) return Result.failure(fileset.error);
 
     // Extract information about the origin page to add to the root context.
     let rootContext = new Context(defaultLinkHandler(index, origin),
+        settings,
         { "this": index.pages.get(origin)?.toObject(index) ?? {} });
 
     let targetField = (query.header as ListQuery).format;
@@ -281,13 +283,14 @@ export interface TableExecution {
 }
 
 /** Execute a table query. */
-export function executeTable(query: Query, index: FullIndex, origin: string): Result<TableExecution, string> {
+export function executeTable(query: Query, index: FullIndex, origin: string, settings: QuerySettings): Result<TableExecution, string> {
     // Start by collecting all of the files that match the 'from' queries.
-    let fileset = collectPages(query.source, index, origin);
+    let fileset = resolveSource(query.source, index, origin);
     if (!fileset.successful) return Result.failure(fileset.error);
 
     // Extract information about the origin page to add to the root context.
     let rootContext = new Context(defaultLinkHandler(index, origin),
+        settings,
         { "this": index.pages.get(origin)?.toObject(index) ?? {} });
 
     let targetFields = (query.header as TableQuery).fields;
@@ -311,15 +314,16 @@ export interface TaskExecution {
 }
 
 /** Execute a task query, returning all matching tasks. */
-export function executeTask(query: Query, origin: string, index: FullIndex): Result<TaskExecution, string> {
+export function executeTask(query: Query, origin: string, index: FullIndex, settings: QuerySettings): Result<TaskExecution, string> {
     // This is a somewhat silly way to do this for now; call into regular execute on the full query,
     // yielding a list of files. Then map the files to their tasks.
     // TODO: Consider per-task or per-task-block filtering via a more nuanced algorithm.
-    let fileset = collectPages(query.source, index, origin);
+    let fileset = resolveSource(query.source, index, origin);
     if (!fileset.successful) return Result.failure(fileset.error);
 
     // Extract information about the origin page to add to the root context.
     let rootContext = new Context(defaultLinkHandler(index, origin),
+        settings,
         { "this": index.pages.get(origin)?.toObject(index) ?? {} });
 
     return executeCoreExtract(fileset.value, rootContext, query.operations, {}).map(core => {
@@ -341,8 +345,10 @@ export function executeTask(query: Query, origin: string, index: FullIndex): Res
 }
 
 /** Execute a single field inline a file, returning the evaluated result. */
-export function executeInline(field: Field, origin: string, index: FullIndex): Result<LiteralValue, string> {
-    return new Context(defaultLinkHandler(index, origin), { "this": index.pages.get(origin)?.toObject(index) ?? {}})
+export function executeInline(field: Field, origin: string, index: FullIndex, settings: QuerySettings): Result<LiteralValue, string> {
+    return new Context(defaultLinkHandler(index, origin),
+        settings,
+        { "this": index.pages.get(origin)?.toObject(index) ?? {}})
         .evaluate(field);
 }
 

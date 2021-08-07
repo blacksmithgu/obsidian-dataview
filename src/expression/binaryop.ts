@@ -3,6 +3,7 @@ import { LiteralRepr, LiteralType, LiteralValue, Values } from "src/data/value";
 import { normalizeDuration } from "src/util/normalize";
 import { Result } from "src/api/result";
 import { BinaryOp } from "src/expression/field";
+import type { Context } from "src/expression/context";
 
 /** A literal type or a catch-all '*'. */
 export type LiteralTypeOrAll = LiteralType | '*';
@@ -14,9 +15,9 @@ export type LiteralReprAll<T extends LiteralTypeOrAll> =
     any;
 
 /** An implementation for a binary operator. */
-export type BinaryOpImpl<A extends LiteralValue, B extends LiteralValue> = (first: A, second: B) => LiteralValue;
+export type BinaryOpImpl<A extends LiteralValue, B extends LiteralValue> = (first: A, second: B, ctx: Context) => LiteralValue;
 /** An implementation of a comparator (returning a number) which then automatically defines all of the comparison operators. */
-export type CompareImpl<T extends LiteralValue> = (first: T, second: T) => number;
+export type CompareImpl<T extends LiteralValue> = (first: T, second: T, ctx: Context) => number;
 
 /** Provides implementations for binary operators on two types using a registry. */
 export class BinaryOpHandler {
@@ -40,41 +41,41 @@ export class BinaryOpHandler {
         func: BinaryOpImpl<LiteralReprAll<T>, LiteralReprAll<U>>): BinaryOpHandler {
         return this
             .register(left, op, right, func)
-            .register(right, op, left, (a, b) => func(b, a));
+            .register(right, op, left, (a, b, ctx) => func(b, a, ctx));
     }
 
     /** Implement a comparison function. */
     public compare<T extends LiteralTypeOrAll>(type: T, compare: CompareImpl<LiteralReprAll<T>>): BinaryOpHandler {
         return this
-            .register(type, '<', type, (a, b) => compare(a, b) < 0)
-            .register(type, '<=', type, (a, b) => compare(a, b) <= 0)
-            .register(type, '>', type, (a, b) => compare(a, b) > 0)
-            .register(type, '>=', type, (a, b) => compare(a, b) >= 0)
-            .register(type, '=', type, (a, b) => compare(a, b) == 0)
-            .register(type, '!=', type, (a, b) => compare(a, b) != 0);
+            .register(type, '<', type, (a, b, ctx) => compare(a, b, ctx) < 0)
+            .register(type, '<=', type, (a, b, ctx) => compare(a, b, ctx) <= 0)
+            .register(type, '>', type, (a, b, ctx) => compare(a, b, ctx) > 0)
+            .register(type, '>=', type, (a, b, ctx) => compare(a, b, ctx) >= 0)
+            .register(type, '=', type, (a, b, ctx) => compare(a, b, ctx) == 0)
+            .register(type, '!=', type, (a, b, ctx) => compare(a, b, ctx) != 0);
     }
 
     /** Attempt to evaluate the given binary operator on the two literal fields. */
-    public evaluate(op: BinaryOp, left: LiteralValue, right: LiteralValue): Result<LiteralValue, string> {
+    public evaluate(op: BinaryOp, left: LiteralValue, right: LiteralValue, ctx: Context): Result<LiteralValue, string> {
         let leftType = Values.typeOf(left);
         let rightType = Values.typeOf(right);
         if (!leftType) return Result.failure(`Unrecognized value '${left}'`);
         else if (!rightType) return Result.failure(`Unrecognized value '${right}'`);
 
         let handler = this.map.get(BinaryOpHandler.repr(op, leftType, rightType));
-        if (handler) return Result.success(handler(left, right));
+        if (handler) return Result.success(handler(left, right, ctx));
 
         // Right-'*' fallback:
         let handler2 = this.map.get(BinaryOpHandler.repr(op, leftType, '*'));
-        if (handler2) return Result.success(handler2(left, right));
+        if (handler2) return Result.success(handler2(left, right, ctx));
 
         // Left-'*' fallback:
         let handler3 = this.map.get(BinaryOpHandler.repr(op, '*', rightType));
-        if (handler3) return Result.success(handler3(left, right));
+        if (handler3) return Result.success(handler3(left, right, ctx));
 
         // Double '*' fallback.
         let handler4 = this.map.get(BinaryOpHandler.repr(op, '*', '*'));
-        if (handler4) return Result.success(handler4(left, right));
+        if (handler4) return Result.success(handler4(left, right, ctx));
 
         return Result.failure(`Operator '${op}' is not supported for '${leftType}' and '${rightType}`);
     }
@@ -99,8 +100,8 @@ export function createBinaryOps(linkNormalizer: (x: string) => string): BinaryOp
         .register('number', '*', 'number', (a, b) => a * b)
         .register('number', '/', 'number', (a, b) => a / b)
         // String implementations.
-        .register('string', '+', '*', (a, b) => a + Values.toString(b))
-        .register('*', '+', 'string', (a, b) => Values.toString(a) + b)
+        .register('string', '+', '*', (a, b, ctx) => a + Values.toString(b, ctx.settings))
+        .register('*', '+', 'string', (a, b, ctx) => Values.toString(a, ctx.settings) + b)
         .registerComm('string', '*', 'number', (a, b) => b < 0 ? "" : a.repeat(b))
         // Date Operations.
         .register('date', '-', 'date', (a, b) => {

@@ -56,6 +56,7 @@ test("Minimal Query", () => {
         QueryFields.named('length', Fields.variable('length')),
     ]);
     expect(simple.source).toEqual(Sources.tag("#games"));
+    expect((simple.header as TableQuery).showId).toBe(true);
 });
 
 test("Fat Query", () => {
@@ -80,4 +81,22 @@ test("Task query with no fields", () => {
     expect(typeof q).toBe('object');
     expect(q.header.type).toBe('task');
     expect(q.source).toEqual(Sources.tag("#games"));
+});
+
+test("Table query without id", () => {
+    let q = parseQuery("TABLE WITHOUT ID name, value").orElseThrow();
+    expect(typeof q).toBe('object');
+    expect(q.header.type).toBe('table');
+
+    let tq = q.header as TableQuery;
+    expect(tq.showId).toBe(false);
+});
+
+test("Table query without id (wierd spacing)", () => {
+    let q = parseQuery("TABLE    WITHOUT     ID   name, value").orElseThrow();
+    expect(typeof q).toBe('object');
+    expect(q.header.type).toBe('table');
+
+    let tq = q.header as TableQuery;
+    expect(tq.showId).toBe(false);
 });

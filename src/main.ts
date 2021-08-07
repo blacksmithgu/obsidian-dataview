@@ -2,7 +2,7 @@ import { MarkdownRenderChild, Plugin, Vault, MarkdownPostProcessorContext, Plugi
 import { renderErrorPre, renderList, renderTable, renderValue } from 'src/ui/render';
 import { FullIndex } from 'src/data/index';
 import * as Tasks from 'src/ui/tasks';
-import { Query } from 'src/query/query';
+import { Query, TableQuery, } from 'src/query/query';
 import { Field } from 'src/expression/field';
 import { parseField } from "src/expression/parse";
 import { parseQuery } from "src/query/parse";
@@ -11,8 +11,10 @@ import { tryOrPropogate } from 'src/util/normalize';
 import { waitFor } from 'src/util/concurrency';
 import { evalInContext, makeApiContext } from 'src/api/inline-api';
 import { DataviewApi } from './api/plugin-api';
-import { DataviewSettings, DEFAULT_SETTINGS } from './settings';
+import { DataviewSettings, DEFAULT_QUERY_SETTINGS, DEFAULT_SETTINGS } from './settings';
 import { LiteralValue } from './data/value';
+import { DateTime } from 'luxon';
+import { currentLocale } from './util/locale';
 
 export default class DataviewPlugin extends Plugin {
     /** Plugin-wide default settigns. */
@@ -45,7 +47,7 @@ export default class DataviewPlugin extends Plugin {
 
         // Dataview query language code blocks.
 		this.registerHighPriorityCodeblockProcessor("dataview", async (source: string, el, ctx) => {
-			let maybeQuery = tryOrPropogate(() => parseQuery(source, this.settings));
+			let maybeQuery = tryOrPropogate(() => parseQuery(source));
 
 			// In case of parse error, just render the error.
 			if (!maybeQuery.successful) {
@@ -160,6 +162,14 @@ export default class DataviewPlugin extends Plugin {
 	private wrapInlineWithEnsureIndex(ctx: MarkdownPostProcessorContext, container: HTMLElement, success: () => MarkdownRenderChild): EnsurePredicateRenderer {
 		return new EnsureInlinePredicateRenderer(ctx, container, () => this.index != undefined && this.index.pages && this.index.pages.size > 0, success);
 	}
+
+    // User-facing utility functions.
+
+    /** Call the given callback when the dataview API has initialized. */
+    public withApi(callback: (api: DataviewApi) => void) {
+        if (this.api) callback(this.api);
+        else (this.app.metadataCache.on as any)("dataview:api-ready", callback);
+    }
 }
 
 /** All of the dataview settings in a single, nice tab. */
@@ -170,22 +180,7 @@ class DataviewSettingsTab extends PluginSettingTab {
 
 	display(): void {
 		this.containerEl.empty();
-		this.containerEl.createEl("h2", { text: "Dataview Settings" });
-
-		new Setting(this.containerEl)
-			.setName("Render Null As")
-			.setDesc("What null/non-existent should show up as in tables, by default.")
-			.addText(text =>
-				text.setPlaceholder("-")
-					.setValue(this.plugin.settings.renderNullAs)
-					.onChange(async (value) => await this.plugin.updateSettings({ renderNullAs: value })));
-
-		new Setting(this.containerEl)
-			.setName("Warn on Empty Result")
-			.setDesc("If set, queries which return 0 results will render a warning message.")
-			.addToggle(toggle =>
-				toggle.setValue(this.plugin.settings.warnOnEmptyResult)
-					.onChange(async (value) => await this.plugin.updateSettings({ warnOnEmptyResult: value })));
+		this.containerEl.createEl("h2", { text: "Dataview Codeblock Settings" });
 
 		new Setting(this.containerEl)
 			.setName("Inline Query Prefix")
@@ -204,6 +199,30 @@ class DataviewSettingsTab extends PluginSettingTab {
 				.onChange(async (value) => await this.plugin.updateSettings({ inlineJsQueryPrefix: value })))
 
 		new Setting(this.containerEl)
+			.setName("Enable JavaScript Queries")
+			.setDesc("Enable or disable executing DataviewJS queries.")
+			.addToggle(toggle =>
+				toggle.setValue(this.plugin.settings.enableDataviewJs)
+					.onChange(async (value) => await this.plugin.updateSettings({ enableDataviewJs: value })));
+
+        this.containerEl.createEl("h2", { text: "Query Settings" });
+
+		new Setting(this.containerEl)
+			.setName("Render Null As")
+			.setDesc("What null/non-existent should show up as in tables, by default.")
+			.addText(text =>
+				text.setPlaceholder("-")
+					.setValue(this.plugin.settings.renderNullAs)
+					.onChange(async (value) => await this.plugin.updateSettings({ renderNullAs: value })));
+
+		new Setting(this.containerEl)
+			.setName("Warn on Empty Result")
+			.setDesc("If set, queries which return 0 results will render a warning message.")
+			.addToggle(toggle =>
+				toggle.setValue(this.plugin.settings.warnOnEmptyResult)
+					.onChange(async (value) => await this.plugin.updateSettings({ warnOnEmptyResult: value })));
+
+		new Setting(this.containerEl)
 			.setName("Dataview Refresh Interval (milliseconds)")
 			.setDesc("How frequently dataviews are updated in preview mode when files are changing.")
 			.addText(text =>
@@ -216,12 +235,30 @@ class DataviewSettingsTab extends PluginSettingTab {
 					await this.plugin.updateSettings({ refreshInterval: parsed });
 				}));
 
-		new Setting(this.containerEl)
-			.setName("Enable JavaScript Queries")
-			.setDesc("Enable or disable executing DataviewJS queries.")
-			.addToggle(toggle =>
-				toggle.setValue(this.plugin.settings.enableDataviewJs)
-					.onChange(async (value) => await this.plugin.updateSettings({ enableDataviewJs: value })));
+        let dformat = new Setting(this.containerEl)
+            .setName("Date Format")
+            .setDesc("The default date format (see Luxon date format options)."
+                +" Currently: " + DateTime.now().toFormat(this.plugin.settings.defaultDateFormat,
+                { locale: currentLocale() }))
+            .addText(text => text.setPlaceholder(DEFAULT_QUERY_SETTINGS.defaultDateFormat)
+                .setValue(this.plugin.settings.defaultDateFormat)
+                .onChange(async (value) => {
+                    dformat.setDesc("The default date format (see Luxon date format options)."
+                     + " Currently: " + DateTime.now().toFormat(value, { locale: currentLocale() }));
+                    await this.plugin.updateSettings({ defaultDateFormat: value });
+                }));
+
+        let dtformat = new Setting(this.containerEl)
+            .setName("Datetime Format")
+            .setDesc("The default date and time format (see Luxon date format options)."
+                + " Currently: " + DateTime.now().toFormat(this.plugin.settings.defaultDateTimeFormat, { locale: currentLocale() }))
+            .addText(text => text.setPlaceholder(DEFAULT_QUERY_SETTINGS.defaultDateTimeFormat)
+                .setValue(this.plugin.settings.defaultDateTimeFormat)
+                .onChange(async (value) => {
+                    dtformat.setDesc("The default date and time format (see Luxon date format options)."
+                        + " Currently: " + DateTime.now().toFormat(value, { locale: currentLocale() }));
+                    await this.plugin.updateSettings({ defaultDateTimeFormat: value });
+                }));
 	}
 }
 
@@ -323,7 +360,7 @@ class DataviewListRenderer extends MarkdownRenderChild {
 	}
 
 	async render() {
-		let maybeResult = tryOrPropogate(() => executeList(this.query, this.index, this.origin));
+		let maybeResult = tryOrPropogate(() => executeList(this.query, this.index, this.origin, this.settings));
 		if (!maybeResult.successful) {
 			renderErrorPre(this.container, "Dataview: " + maybeResult.error);
             return;
@@ -336,9 +373,9 @@ class DataviewListRenderer extends MarkdownRenderChild {
         for (let row of result.data) {
             if (row.value) {
                 let span = document.createElement('span');
-                await renderValue(row.primary, span, this.origin, this, this.settings.renderNullAs, true);
+                await renderValue(row.primary, span, this.origin, this, this.settings, false, 'list');
                 span.appendText(": ");
-                await renderValue(row.value, span, this.origin, this, this.settings.renderNullAs, true);
+                await renderValue(row.value, span, this.origin, this, this.settings, true, 'list');
 
                 rendered.push(span);
             } else {
@@ -346,7 +383,7 @@ class DataviewListRenderer extends MarkdownRenderChild {
             }
         }
 
-        await renderList(this.container, rendered, this, this.origin, this.settings.renderNullAs);
+        await renderList(this.container, rendered, this, this.origin, this.settings);
 	}
 }
 
@@ -370,20 +407,25 @@ class DataviewTableRenderer extends MarkdownRenderChild {
 	}
 
 	async render() {
-		let maybeResult = tryOrPropogate(() => executeTable(this.query, this.index, this.origin));
+		let maybeResult = tryOrPropogate(() => executeTable(this.query, this.index, this.origin, this.settings));
 		if (!maybeResult.successful) {
 			renderErrorPre(this.container, "Dataview: " + maybeResult.error);
 			return;
 		}
 
         let result = maybeResult.value;
-        let dataWithNames: LiteralValue[][] = [];
-        for (let entry of result.data) {
-            dataWithNames.push([entry.id].concat(entry.values));
-        }
-        let name = result.idMeaning.type === "group" ? "Group" : "File";
 
-        await renderTable(this.container, [name].concat(result.names), dataWithNames, this, this.origin, this.settings.renderNullAs);
+        if ((this.query.header as TableQuery).showId) {
+            let dataWithNames: LiteralValue[][] = [];
+            for (let entry of result.data) {
+                dataWithNames.push([entry.id].concat(entry.values));
+            }
+            let name = result.idMeaning.type === "group" ? "Group" : "File";
+
+            await renderTable(this.container, [name].concat(result.names), dataWithNames, this, this.origin, this.settings);
+        } else {
+            await renderTable(this.container, result.names, result.data.map(v => v.values), this, this.origin, this.settings);
+        }
 
 		// Render after the empty table, so the table header still renders.
 		if (result.data.length == 0 && this.settings.warnOnEmptyResult) {
@@ -417,7 +459,7 @@ class DataviewTaskRenderer extends MarkdownRenderChild {
 	}
 
 	async render() {
-		let result = tryOrPropogate(() => executeTask(this.query, this.origin, this.index));
+		let result = tryOrPropogate(() => executeTask(this.query, this.origin, this.index, this.settings));
 		if (!result.successful) {
 			renderErrorPre(this.container, "Dataview: " + result.error);
 		} else if (result.value.tasks.size == 0 && this.settings.warnOnEmptyResult) {
@@ -458,13 +500,13 @@ class DataviewInlineRenderer extends MarkdownRenderChild {
 	}
 
 	async render() {
-		let result = tryOrPropogate(() => executeInline(this.field, this.origin, this.index));
+		let result = tryOrPropogate(() => executeInline(this.field, this.origin, this.index, this.settings));
 		if (!result.successful) {
 			this.errorbox = this.container.createEl('div');
 			renderErrorPre(this.errorbox, "Dataview (for inline query '" + this.fieldText + "'): " + result.error);
 		} else {
             let temp = document.createElement("span");
-			await renderValue(result.value, temp, this.origin, this, this.settings.renderNullAs, false);
+			await renderValue(result.value, temp, this.origin, this, this.settings, false);
 
             this.target.replaceWith(temp);
 		}
@@ -556,7 +598,7 @@ class DataviewInlineJSRenderer extends MarkdownRenderChild {
             this.target = temp;
             if (result === undefined) return;
 
-            renderValue(result, temp, this.origin, this, this.settings.renderNullAs, false);
+            renderValue(result, temp, this.origin, this, this.settings, false);
 		} catch (e) {
 			this.errorbox = this.container.createEl('div');
 			renderErrorPre(this.errorbox, "Dataview (for inline JS query '" + this.script + "'): " + e);

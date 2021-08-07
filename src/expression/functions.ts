@@ -2,6 +2,7 @@
 
 import { DateTime } from "luxon";
 import { Link, LiteralType, LiteralValue, Values } from "src/data/value";
+import { currentLocale } from "src/util/locale";
 import { LiteralReprAll, LiteralTypeOrAll } from "./binaryop";
 import type { Context } from "./context";
 import { Fields } from "./field";
@@ -227,6 +228,12 @@ export namespace DefaultFunctions {
         .vectorize(1, [0])
         .build();
 
+    /** Format a date using a luxon/moment-style date format. */
+    export const dateformat = new FunctionBuilder("dateformat")
+        .add2("date", "string", (date, format) => date.toFormat(format, { locale: currentLocale() }))
+        .vectorize(2, [0])
+        .build();
+
     const NUMBER_REGEX = /-?[0-9]+(\.[0-9]+)?/;
 
     /** Number constructor function. */
@@ -260,6 +267,7 @@ export namespace DefaultFunctions {
         .vectorize(1, [0])
         .build();
 
+    // Default contains, which looks through data structures recursively.
     export const contains: FunctionImpl = new FunctionBuilder("contains")
         .add2("array", "*", (l, elem, context) => l.some(e => contains(context, e, elem)))
         .add2("string", "string", (haystack, needle) => haystack.includes(needle))
@@ -269,11 +277,17 @@ export namespace DefaultFunctions {
         .vectorize(2, [1])
         .build();
 
+    // Case insensitive version of contains.
     export const icontains: FunctionImpl = new FunctionBuilder("icontains")
+        .add2("array", "*", (l, elem, context) => l.some(e => icontains(context, e, elem)))
         .add2("string", "string", (haystack, needle) => haystack.toLocaleLowerCase().includes(needle.toLocaleLowerCase()))
+        .add2("object", "string", (obj, key) => key in obj)
+        .add2("*", "*", (elem1, elem2, context) =>
+            context.evaluate(Fields.binaryOp(Fields.literal(elem1), '=', Fields.literal(elem2))).orElseThrow())
         .vectorize(2, [1])
         .build();
 
+    // "exact" contains, does not look recursively.
     export const econtains: FunctionImpl = new FunctionBuilder("econtains")
         .add2("array", "*", (l, elem, context) => l.some(e => context.evaluate(Fields.binaryOp(Fields.literal(elem), '=', Fields.literal(e))).orElseThrow()))
         .add2("string", "string", (haystack, needle) => haystack.includes(needle))
@@ -302,28 +316,37 @@ export namespace DefaultFunctions {
         return result;
     };
 
+    // Reverse aan array or string.
     export const reverse = new FunctionBuilder("reverse")
         .add1("array", l => {
             let result = [];
             for (let index = l.length - 1; index >= 0; index--) result.push(l[index]);
             return result;
         })
+        .add1("string", l => {
+            let result = "";
+            for (let c = 0; c < l.length; c++) result += l[l.length - c - 1];
+            return result;
+        })
         .add1("*", e => e)
         .build();
 
-    export const sort = new FunctionBuilder("sort")
-        .add1("array", (list, context) => {
+    // Sort an array; if given two arguments, sorts by the key returned.
+    export const sort: FunctionImpl = new FunctionBuilder("sort")
+        .add1("array", (list, context) => sort(context, list, (_ctx: Context, a: LiteralValue) => a))
+        .add2("array", "function", (list, key, context) => {
             let result = ([] as LiteralValue[]).concat(list);
             result.sort((a, b) => {
-                let le = context.evaluate(Fields.binaryOp(Fields.literal(a), "<", Fields.literal(b))).orElseThrow();
+                let akey = key(context, a);
+                let bkey = key(context, b);
+                let le = context.evaluate(Fields.binaryOp(Fields.literal(akey), "<", Fields.literal(bkey))).orElseThrow();
                 if (Values.isTruthy(le)) return -1;
 
-                let eq = context.evaluate(Fields.binaryOp(Fields.literal(a), "=", Fields.literal(b))).orElseThrow();
+                let eq = context.evaluate(Fields.binaryOp(Fields.literal(akey), "=", Fields.literal(bkey))).orElseThrow();
                 if (Values.isTruthy(eq)) return 0;
 
                 return 1;
             });
-
             return result;
         })
         .add1("*", e => e)
@@ -397,10 +420,21 @@ export namespace DefaultFunctions {
 
             let value = lis[0];
             for (let index = 1; index < lis.length; index++) {
+
+                value = context.evaluate(Fields.binaryOp(Fields.literal(value), op, Fields.literal(lis[index]))).orElseThrow();
+            }
+
+            return value;
+        })
+        .add2("array", "function", (lis, op, context) => {
+            if (lis.length == 0) return null;
+
+            let value = lis[0];
+            for (let index = 1; index < lis.length; index++) {
                 // Skip null values to reduce the pain of summing over fields that may or may not exist.
                 if (Values.isNull(lis[index])) continue;
 
-                value = context.evaluate(Fields.binaryOp(Fields.literal(value), op, Fields.literal(lis[index]))).orElseThrow();
+                value = op(context, value, lis[index]);
             }
 
             return value;
@@ -421,27 +455,38 @@ export namespace DefaultFunctions {
         .build();
 
     export const join: FunctionImpl = new FunctionBuilder("join")
-        .add2("array", "string", (arr, sep) => arr.map(e => Values.toString(e)).join(sep))
+        .add2("array", "string", (arr, sep, ctx) => arr.map(e => Values.toString(e, ctx.settings)).join(sep))
         .add2("array", "null", (arr, _s, context) => join(context, arr, ", "))
-        .add2("*", "string", (elem, sep) => Values.toString(elem))
+        .add2("*", "string", (elem, sep, ctx) => Values.toString(elem, ctx.settings))
         .add1("array", (arr, context) => join(context, arr, ", "))
-        .add1("*", e => Values.toString(e))
+        .add1("*", (e, ctx) => Values.toString(e, ctx.settings))
         .vectorize(2, [1])
         .build();
 
     export const any = new FunctionBuilder("any")
         .add1("array", arr => arr.some(v => Values.isTruthy(v)))
+        .add2("array", "function", (arr, f, ctx) => arr.some(v => Values.isTruthy(f(ctx, v))))
         .vararg((_ctx, ...args) => args.some(v => Values.isTruthy(v)))
         .build();
 
     export const all = new FunctionBuilder("all")
         .add1("array", arr => arr.every(v => Values.isTruthy(v)))
+        .add2("array", "function", (arr, f, ctx) => arr.every(v => Values.isTruthy(f(ctx, v))))
         .vararg((_ctx, ...args) => args.every(v => Values.isTruthy(v)))
         .build();
 
     export const none = new FunctionBuilder("all")
         .add1("array", arr => !arr.some(v => Values.isTruthy(v)))
+        .add2("array", "function", (arr, f, ctx) => !arr.some(v => Values.isTruthy(f(ctx, v))))
         .vararg((_ctx, ...args) => !args.some(v => Values.isTruthy(v)))
+        .build();
+
+    export const filter = new FunctionBuilder("filter")
+        .add2("array", "function", (arr, f, ctx) => arr.filter(v => Values.isTruthy(f(ctx, v))))
+        .build();
+
+    export const map = new FunctionBuilder("map")
+        .add2("array", "function", (arr, f, ctx) => arr.map(v => f(ctx, v)))
         .build();
 
     export const nonnull = new FunctionBuilder("nonnull")
@@ -457,6 +502,7 @@ export const DEFAULT_FUNCTIONS: Record<string, FunctionImpl> = {
     "link": DefaultFunctions.link,
     "elink": DefaultFunctions.elink,
     "date": DefaultFunctions.date,
+    "dateformat": DefaultFunctions.dateformat,
     "number": DefaultFunctions.number,
     "object": DefaultFunctions.object,
 
@@ -489,6 +535,8 @@ export const DEFAULT_FUNCTIONS: Record<string, FunctionImpl> = {
     "all": DefaultFunctions.all,
     "any": DefaultFunctions.any,
     "none": DefaultFunctions.none,
+    "filter": DefaultFunctions.filter,
+    "map": DefaultFunctions.map,
     "nonnull": DefaultFunctions.nonnull,
 
     // Object/Utility operations.

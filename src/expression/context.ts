@@ -1,10 +1,11 @@
 /** Core implementation of the query language evaluation engine. */
 
-import { LiteralValue, Values } from "src/data/value";
+import { DataObject, LiteralValue, Values } from "src/data/value";
 import { Result } from "src/api/result";
 import { BinaryOpHandler, createBinaryOps } from "./binaryop";
 import { Field, Fields } from "./field";
 import { DEFAULT_FUNCTIONS, FunctionImpl } from "./functions";
+import { QuerySettings } from "src/settings";
 
 /** Handles link resolution and normalization inside of a context. */
 export interface LinkHandler {
@@ -30,6 +31,7 @@ export class Context {
      */
     public constructor(
         public linkHandler: LinkHandler,
+        public settings: QuerySettings,
         public globals: Record<string, LiteralValue> = {},
         public binaryOps: BinaryOpHandler = createBinaryOps(linkHandler.normalize),
         public functions: Record<string, FunctionImpl> = DEFAULT_FUNCTIONS) {
@@ -63,7 +65,34 @@ export class Context {
                 return this.evaluate(field.child, data).map(s => !Values.isTruthy(s));
             case "binaryop":
                 return Result.flatMap2(this.evaluate(field.left, data), this.evaluate(field.right, data),
-                    (a, b) => this.binaryOps.evaluate(field.op, a, b));
+                    (a, b) => this.binaryOps.evaluate(field.op, a, b, this));
+            case "list":
+                let result = [];
+                for (let child of field.values) {
+                    let subeval = this.evaluate(child, data);
+                    if (!subeval.successful) return subeval;
+                    result.push(subeval.value);
+                }
+                return Result.success(result);
+            case "object":
+                let objResult: DataObject = {};
+                for (let [key, child] of Object.entries(field)) {
+                    let subeval = this.evaluate(child, data);
+                    if (!subeval.successful) return subeval;
+                    objResult[key] = subeval.value;
+                }
+                return Result.success(objResult);
+            case "lambda":
+                // Just relying on JS to capture 'data' for us implicitly; unsure
+                // if this is correct thing to do. Could cause wierd behaviors.
+                return Result.success((ctx: Context, ...args: LiteralValue[]) => {
+                    let copy: Record<string, LiteralValue> = Object.assign({}, data);
+                    for (let arg = 0; arg < Math.min(args.length, field.arguments.length); arg++) {
+                        copy[field.arguments[arg]] = args[arg];
+                    }
+
+                    return ctx.evaluate(field.value, copy).orElseThrow();
+                });
             case "function":
                 let rawFunc = field.func.type == "variable" ? Result.success<string, string>(field.func.name) : this.evaluate(field.func, data);
                 if (!rawFunc.successful) return rawFunc;

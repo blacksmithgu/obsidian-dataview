@@ -5,6 +5,7 @@ import { Context, LinkHandler } from "src/expression/context";
 import { Duration } from "luxon";
 import { Fields } from "src/expression/field";
 import { Link, LiteralValue } from "src/data/value";
+import { DEFAULT_QUERY_SETTINGS } from "src/settings";
 
 // <-- Numeric Operations -->
 
@@ -83,10 +84,18 @@ test("Evaluate simple object resolution", () => {
 
 test("Evaluate simple link resolution", () => {
     let object = { "inner": { final: 6 }};
-    let context = new Context({ resolve: path => object, normalize: path => path, exists: path => false })
+    let context = new Context({ resolve: path => object, normalize: path => path, exists: path => false }, DEFAULT_QUERY_SETTINGS)
         .set("link", Link.file("test", false));
     expect(context.tryEvaluate(Fields.indexVariable("link.inner"))).toEqual(object.inner);
     expect(context.tryEvaluate(Fields.indexVariable("link.inner.final"))).toEqual(object.inner.final);
+});
+
+// Lambda Calls.
+describe("Immediately Invoked Lambdas", () => {
+    test("Addition", () => expect(parseEval("((a, b) => a + b)(1, 2)")).toEqual(3));
+    test("Negation", () => expect(parseEval("((v) => 0-v)(6)")).toEqual(-6));
+    test("Curried", () => expect(parseEval("((a) => (b) => a + b)(1)(2)")).toEqual(3));
+    test("In Argument", () => expect(parseEval("((a) => 1 + a)(((a) => 2)(3))")).toEqual(3));
 });
 
 /** Parse a field expression and evaluate it in the simple context. */
@@ -106,5 +115,5 @@ function simpleLinkHandler(): LinkHandler {
 
 /** Create a trivial context good for evaluations that do not depend on links. */
 function simpleContext(): Context {
-    return new Context(simpleLinkHandler());
+    return new Context(simpleLinkHandler(), DEFAULT_QUERY_SETTINGS);
 }

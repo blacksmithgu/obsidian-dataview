@@ -1,11 +1,11 @@
 /** Stores various indices on all files in the vault to make dataview generation fast. */
-import { MetadataCache, Vault, TFile } from 'obsidian';
-import { fromTransferable, PageMetadata, ParsedMarkdown, parsePage, parseFrontmatter } from './file';
+import { MetadataCache, Vault, TFile, TAbstractFile } from 'obsidian';
+import { fromTransferable, PageMetadata, ParsedMarkdown, parsePage } from './file';
 import { getParentFolder } from 'src/util/normalize';
-import {LiteralValue} from "src/data/value";
-import * as Papa from "papaparse";
+import { DataObject } from "src/data/value";
 
 import DataviewImportWorker from 'web-worker:./importer.ts';
+import { Result } from 'src/api/result';
 
 /** A generic index which indexes variables of the form key -> value[], allowing both forward and reverse lookups. */
 export class IndexMap {
@@ -97,9 +97,9 @@ export class BackgroundFileParser {
     /** Paths -> files which have been queued for a reload. */
     reloadQueue: Map<string, TFile>;
     /** Paths -> promises for file reloads which have not yet been queued. */
-    waitingCallbacks: Map<string, ((p: ParsedMarkdown) => void)[]>;
+    waitingCallbacks: Map<string, ((p: any) => void)[]>;
     /** Paths -> promises waiting on the successful reload of this file. */
-    pastPromises: Map<string, ((p: ParsedMarkdown) => void)[]>;
+    pastPromises: Map<string, ((p: any) => void)[]>;
 
     public constructor(public numWorkers: number, public vault: Vault) {
         this.workers = [];
@@ -144,8 +144,7 @@ export class BackgroundFileParser {
         }, BackgroundFileParser.QUEUE_TIMEOUT);
     }
 
-    /** Queue a file for reloading. Files which have recently been queued will not be reloaded. */
-    public reload(file: TFile): Promise<ParsedMarkdown> {
+    public reload<T>(file: TFile): Promise<T> {
         this.reloadQueue.set(file.path, file);
         return new Promise((resolve, _reject) => {
             if (this.waitingCallbacks.has(file.path)) this.waitingCallbacks.get(file.path)?.push(resolve);
@@ -168,8 +167,6 @@ export class FullIndex {
 
     /** Map files -> tags in that file, and tags -> files. This version includes subtags. */
     public tags: IndexMap;
-    /** Map files -> tags in that file, and tags -> files. This version includes subtags. */
-    public csv: CsvIndex;
     /** Map files -> exact tags in that file, and tags -> files. This version does not automatically add subtags. */
     public etags: IndexMap;
     /** Map files -> linked files in that file, and linked file -> files that link to it. */
@@ -178,6 +175,8 @@ export class FullIndex {
     public folders: IndexMap;
     /** Search files by path prefix. */
     public prefix: PrefixIndex;
+    /** Caches rows of CSV files. */
+    public csv: CsvIndex;
 
     /**
      * The current "revision" of the index, which monotonically increases for every index change. Use this to determine
@@ -202,19 +201,19 @@ export class FullIndex {
 
         // Renames do not set off the metadata cache; catch these explicitly.
         vault.on("rename", (file, oldPath) => {
-            let oldPage = this.pages.get(oldPath);
-            if (oldPage) {
+            this.folders.delete(oldPath);
+
+            if (file instanceof TFile) {
                 this.pages.delete(oldPath);
-                this.pages.set(file.path, oldPage);
+                this.tags.delete(oldPath);
+                this.etags.delete(oldPath);
+                this.links.delete(oldPath);
+
+                this.reload(file);
             }
 
-            this.tags.rename(oldPath, file.path);
-            this.etags.rename(oldPath, file.path);
-            this.links.rename(oldPath, file.path);
-            this.folders.rename(oldPath, file.path); // TODO: Do renames include folder changes?
-
             this.revision += 1;
-            this.metadataCache.trigger("dataview:metadata-change", "rename", file, oldPath)
+            this.metadataCache.trigger("dataview:metadata-change", "rename", file, oldPath);
         });
 
         // File creation does cause a metadata change, but deletes do not. Clear the caches for this.
@@ -229,7 +228,7 @@ export class FullIndex {
             this.folders.delete(file.path);
 
             this.revision += 1;
-            this.metadataCache.trigger("dataview:metadata-change", "delete", file)
+            this.metadataCache.trigger("dataview:metadata-change", "delete", file);
         });
     }
 
@@ -239,6 +238,8 @@ export class FullIndex {
 
         // Prefix listens to file creation/deletion/rename, and not modifies, so we let it set up it's own listeners.
         this.prefix = await PrefixIndex.generate(this.vault, () => this.revision += 1);
+        // The CSV cache also needs to listen to filesystem events for cache invalidation.
+        this.csv = await CsvIndex.generate(this.vault, this.backgroundParser, () => this.revision += 1);
 
         // Traverse all markdown files & fill in initial data.
         let start = new Date().getTime();
@@ -248,7 +249,7 @@ export class FullIndex {
 
     /** Queue a file for reloading; this is done asynchronously in the background and may take a few seconds. */
     public reload(file: TFile) {
-        this.backgroundParser.reload(file).then(r => this.reloadInternal(file, r));
+        this.backgroundParser.reload<ParsedMarkdown>(file).then(r => this.reloadInternal(file, r));
     }
 
     private reloadInternal(file: TFile, parsed: ParsedMarkdown) {
@@ -385,57 +386,76 @@ export class PrefixIndex {
     }
 }
 
+/**
+ * Indexes 1the contents of CSV files in memory. You may be thinking that this
+ * seems ridiculous and a waste of memory, and you would be right. However,
+ * we need to do this in order for the query engine and DataviewJS APIs to
+ * remain fully synchronous. Otherwise, things like `dv.page()` would
+ * randomly become asynchronous due to file I/O, causing script breaks.
+ */
 export class CsvIndex {
 
-    vault: Vault;
-    cache: MetadataCache;
-    rows: Map<String, Array<Record<string, LiteralValue>>>
+    /**
+     * Asynchronously generate a new CSV row cache.
+     */
+    public static async generate(vault: Vault, reloader: BackgroundFileParser, updateRevision: () => void) {
+        let cache = new CsvIndex(vault, reloader, updateRevision);
+        let csvCount = 0;
+        for (let csv of vault.getFiles().filter(cache.isCsv)) {
+            cache.reloadInternal(csv);
+            csvCount += 1;
+        }
 
-    constructor(vault: Vault) {
-        this.vault = vault;
-        this.rows = new Map<String, Array<Record<string, LiteralValue>>>();
+        console.log(`Dataview: Initialized CSV row cache (loading ${csvCount} CSV files).`);
+        return cache;
     }
 
-    public static async generate(vault: Vault): Promise<CsvIndex> {
-        let index = new CsvIndex(vault);
-        for (let file of vault.getFiles().filter((f) => f.extension == "csv")) {
-            let timeStart = new Date().getTime();
-            const content = await vault.adapter.read(file.path);
-            let parsed = Papa.parse(content, {
-                header: true,
-                skipEmptyLines: true,
-                comments: true,
-                dynamicTyping: true,
-            });
-            let rows = [] as Record<string, LiteralValue>[];
-            for (let i = 0; i < parsed.data.length; ++i) {
-                let result: Record<string, LiteralValue> = {};
-                let fields = parseFrontmatter(parsed.data[i]) as Record<string, LiteralValue>;
-                if (fields != null) {
-                    let col_idx = 0;
-                    for (let [key, value] of Object.entries(fields)) {
-                        let strKey = key.toString().replace(/ /g, "_");
-                        result[strKey] = value;
-                        result[`col__${col_idx++}`] = value;
-                    }
-                }
-                rows.push(result);
+    /** Maps CSV file paths to the collection of data contained within the csv. */
+    private cache: Map<string, DataObject[]>;
+
+    public constructor(public vault: Vault, public reloader: BackgroundFileParser, public updateRevision: () => void) {
+        this.cache = new Map();
+
+        this.vault.on("delete", file => {
+            if (this.isCsv(file)) this.cache.delete(file.path);
+        });
+
+        this.vault.on("modify", file => {
+            if (this.isCsv(file)) this.reloadInternal(file);
+        });
+
+        this.vault.on("rename", (file, oldPath) => {
+            if (this.isCsv(file)) {
+                this.cache.delete(oldPath);
+                this.reloadInternal(file);
             }
-
-            let totalTimeMs = new Date().getTime() - timeStart;
-            console.log(`Dataview: Load ${rows.length} rows in ${file.path} (${totalTimeMs / 1000.0}s)`);
-            index.rows.set(file.path, rows);
-        }
-
-        return index;
+        });
     }
 
-    public get(path: string): Array<Record<string, LiteralValue>> {
-        let result = this.rows.get(path);
-        if (result) {
-            return result;
+    /** Determines if the given file is a CSV file which should be indexed. */
+    public isCsv(file: TAbstractFile): file is TFile {
+        if (!(file instanceof TFile)) return false;
+
+        if (file.name.endsWith("ignored.csv")) return false;
+        else if (file.name.endsWith("csv")) return true;
+
+        return false;
+    }
+
+    /** Try to fetch the contents of the CSV at the given path. */
+    public get(path: string): Result<DataObject[], string> {
+        let result = this.cache.get(path);
+        if (!result) {
+            return Result.failure(`Could not find a CSV with path '${path}'`);
         } else {
-            return [] as Array<Record<string, LiteralValue>>;
+            return Result.success(result);
         }
+    }
+
+    private reloadInternal(file: TFile) {
+        this.reloader.reload<DataObject[]>(file).then(values => {
+            this.cache.set(file.path, values);
+            this.updateRevision();
+        })
     }
 }

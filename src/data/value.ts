@@ -1,4 +1,5 @@
 import { DateTime, Duration } from "luxon";
+import { DEFAULT_QUERY_SETTINGS, QuerySettings } from "src/settings";
 import { getFileName } from "src/util/normalize";
 
 /** An Obsidian link with all associated metadata. */
@@ -134,7 +135,7 @@ export interface LiteralValueWrapper<T extends LiteralType> {
 
 export namespace Values {
     /** Convert an arbitary value into a reasonable, Markdown-friendly string if possible. */
-    export function toString(field: any, recursive: boolean = false): string {
+    export function toString(field: any, setting: QuerySettings = DEFAULT_QUERY_SETTINGS, recursive: boolean = false): string {
         let wrapped = wrapValue(field);
         if (!wrapped) return "null";
 
@@ -152,13 +153,17 @@ export namespace Values {
             case "array":
                 let result = "";
                 if (recursive) result += "[";
-                result += wrapped.value.map(f => toString(f, true)).join(", ")
+                result += wrapped.value.map(f => toString(f, setting, true)).join(", ")
                 if (recursive) result += "]";
                 return result;
             case "object":
-                return "{ " + Object.entries(wrapped.value).map(e => e[0] + ": " + toString(e[1], true)).join(", ") + " }";
+                return "{ " + Object.entries(wrapped.value).map(e => e[0] + ": " + toString(e[1], setting, true)).join(", ") + " }";
             case "date":
-                return wrapped.value.toLocaleString(DateTime.DATETIME_SHORT);
+                if (wrapped.value.second == 0 && wrapped.value.hour == 0 && wrapped.value.minute == 0) {
+                    return wrapped.value.toFormat(setting.defaultDateFormat);
+                }
+
+                return wrapped.value.toFormat(setting.defaultDateTimeFormat);
             case "duration":
                 return wrapped.value.toISOTime();
         }
@@ -286,6 +291,8 @@ export namespace Values {
 
     /** Deep copy a field. */
     export function deepCopy<T extends LiteralValue>(field: T): T {
+        if (field === null || field === undefined) return field;
+
         if (Values.isArray(field)) {
             return ([] as LiteralValue[]).concat(field.map(v => deepCopy(v))) as T;
         } else if (Values.isObject(field)) {

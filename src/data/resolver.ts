@@ -1,6 +1,5 @@
 /** Collect data matching a source query. */
 
-import { DataArray } from "src/api/data-array";
 import { FullIndex } from "src/data/index";
 import { Result } from "src/api/result";
 import { Source } from "./source";
@@ -10,12 +9,12 @@ import {getFileName} from "src/util/normalize";
 /** A data row which has an ID and associated data (like page link / page data). */
 export type Datarow<T> = { id: LiteralValue, data: T };
 
-/** Collect page paths which match the given source. */
-export function collectPagePaths(source: Source, index: FullIndex, originFile: string = ""): Result<Set<string>, string> {
+/** Find source paths which match the given source. */
+export function matchingSourcePaths(source: Source, index: FullIndex, originFile: string = ""): Result<Set<string>, string> {
     switch (source.type) {
         case "empty": return Result.success(new Set<string>());
         case "tag": return Result.success(index.tags.getInverse(source.tag));
-        case "csv": return Result.success(new Set<string>(["csv://"+source.path]));
+        case "csv": return Result.success(new Set<string>([source.path]));
         case "folder": return Result.success(index.prefix.get(source.folder));
         case "link":
             let fullPath = index.metadataCache.getFirstLinkpathDest(source.file, originFile)?.path;
@@ -40,8 +39,8 @@ export function collectPagePaths(source: Source, index: FullIndex, originFile: s
             }
         case "binaryop":
             return Result.flatMap2(
-                collectPagePaths(source.left, index, originFile),
-                collectPagePaths(source.right, index, originFile),
+                matchingSourcePaths(source.left, index, originFile),
+                matchingSourcePaths(source.right, index, originFile),
                 (left, right) => {
                 if (source.op == '&') {
                     let result = new Set<string>();
@@ -59,7 +58,7 @@ export function collectPagePaths(source: Source, index: FullIndex, originFile: s
                 }
             });
         case "negate":
-            return collectPagePaths(source.child, index, originFile).map(child => {
+            return matchingSourcePaths(source.child, index, originFile).map(child => {
                 // TODO: This is obviously very inefficient.
                 let allFiles = new Set<string>(index.vault.getMarkdownFiles().map(f => f.path));
                 child.forEach(f => allFiles.delete(f));
@@ -68,26 +67,47 @@ export function collectPagePaths(source: Source, index: FullIndex, originFile: s
     }
 }
 
-/** Collect full page metadata for pages which match the given source. */
-export function collectPages(source: Source, index: FullIndex, originFile: string = ""): Result<Datarow<DataObject>[], string> {
-    return collectPagePaths(source, index, originFile)
-        .map(s => DataArray.from(s).flatMap(p => {
-            if (p.startsWith("csv://")) {
-                let filePath = p.substring("csv://".length);
-                let records = index.csv.get(filePath);
-                if (!records) return [];
-                return records.map((x) => {
-                    x['file'] = {
-                        link: null,
-                        name: getFileName(filePath),
-                        path: filePath,
-                    }
-                    return {id: null, data: x} as Datarow<DataObject>
-                })
-            }
-            let page = index.pages.get(p);
-            if (!page) return [];
+/** Convert a path to the data for that path; usually markdown pages, but could also be other file types (like CSV).  */
+export function resolvePathData(path: string, index: FullIndex): Result<Datarow<DataObject>[], string> {
+    if (path.endsWith("csv")) {
+        // CSV file case: look up data rows in the CSV.
+        let records = index.csv.get(path);
+        return records.map(rows => rows.map((row, index) => {
+            let fileData = {
+                link: null,
+                name: getFileName(path),
+                path: path
+            };
 
-            return [{ id: Link.file(page.path), data: page.toObject(index) }];
-        }).array());
+            return {
+                id: `${path}#${index}`,
+                data: Object.assign(fileData, row)
+            }
+        }));
+    } else {
+        // Default case: Assume it is a markdown page (or has markdown metadata).
+        let page = index.pages.get(path);
+        if (!page) return Result.success([]);
+
+        return Result.success([{
+            id: Link.file(path),
+            data: page.toObject(index)
+        }]);
+    }
+}
+
+/** Resolve a source to the collection of data rows that it matches. */
+export function resolveSource(source: Source, index: FullIndex, originFile: string = ""): Result<Datarow<DataObject>[], string> {
+    let paths = matchingSourcePaths(source, index, originFile);
+    if (!paths.successful) return Result.failure(paths.error);
+
+    let result = [];
+    for (let path of paths.value) {
+        let resolved = resolvePathData(path, index);
+        if (!resolved.successful) return resolved;
+
+        for (let val of resolved.value) result.push(val);
+    }
+
+    return Result.success(result);
 }

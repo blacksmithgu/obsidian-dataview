@@ -120,15 +120,56 @@ test("Parse Year-Month-DayTHour:Minute:Second", () => {
     expect(date.second).toBe(59);
 });
 
-test("Parse Year-Month-DayTHour:Minute:Second-Offset", () => {
-    let date = EXPRESSION.date.tryParse("1984-08-15T12:40:50-07:00");
-    expect(date.zoneName).toBe("UTC-7");
+test("Parse Year-Month-DayTHour:Minute:Second", () => {
+    let date = EXPRESSION.date.tryParse("1984-08-15T12:42:59");
+    expect(date.year).toBe(1984);
+    expect(date.month).toBe(8);
+    expect(date.day).toBe(15);
+    expect(date.hour).toBe(12);
+    expect(date.minute).toBe(42);
+    expect(date.second).toBe(59);
+});
 
-    let date2 = EXPRESSION.date.tryParse("1984-08-15T12:40:50+9");
-    expect(date2.zoneName).toBe("UTC+9");
+test("Parse Year-Month-DayTHour:Minute:Second.Millisecond", () => {
+    let date = EXPRESSION.date.tryParse("1984-08-15T12:42:59.123");
+    expect(date.year).toBe(1984);
+    expect(date.month).toBe(8);
+    expect(date.day).toBe(15);
+    expect(date.hour).toBe(12);
+    expect(date.minute).toBe(42);
+    expect(date.second).toBe(59);
+    expect(date.millisecond).toBe(123);
 
-    let date3 = EXPRESSION.date.tryParse("1985-12-06T19:40:10+06:30");
-    expect(date3.zoneName).toBe("UTC+6:30");
+    let builtin = EXPRESSION.date.tryParse(new Date("1984-08-15T12:42:59.123").toISOString());
+    // only seconds and milliseconds are inconsistent due to Javascript being bad with
+    // time zones, but the goal here is to ensure values are parsed appropriately at least
+    expect(builtin.second).toBe(59);
+    expect(builtin.millisecond).toBe(123);
+});
+
+describe("Parse Year-Month-DayTHour:Minute:Second(.Millisecond?)Timezone", () => {
+    test("Offset", () => {
+        let date = EXPRESSION.date.tryParse("1984-08-15T12:40:50-07:00");
+        expect(date.zoneName).toBe("UTC-7");
+
+        let date2 = EXPRESSION.date.tryParse("1984-08-15T12:40:50+9");
+        expect(date2.zoneName).toBe("UTC+9");
+
+        let date3 = EXPRESSION.date.tryParse("1985-12-06T19:40:10+06:30");
+        expect(date3.zoneName).toBe("UTC+6:30");
+    })
+
+    test("Z", () => {
+        let date1 = EXPRESSION.date.tryParse("1985-12-06T19:40:10Z");
+        expect(date1.zoneName).toBe("UTC");
+
+        let date2 = EXPRESSION.date.tryParse("1985-12-06T19:40:10.123Z");
+        expect(date2.zoneName).toBe("UTC");
+
+        // built-in always returns UTC
+        let date3 = EXPRESSION.date.tryParse(new Date().toISOString());
+        expect(date3.zoneName).toBe("UTC");
+    })
 })
 
 test("Parse Today", () => {
@@ -237,6 +278,68 @@ test("Parse function with duration", () => {
 test("Parse function with mixed dot, index, and function call", () => {
     expect(EXPRESSION.field.tryParse("list().parts[0]")).toEqual(Fields.index(Fields.index(
         Fields.func(Fields.variable("list"), []), Fields.literal("parts")), Fields.literal(0)));
+});
+
+// <-- Lambdas -->
+describe("Lambda Expressions", () => {
+    test("Parse 0-argument constant lambda", () => {
+        expect(EXPRESSION.field.tryParse("() => 16")).toEqual(
+            Fields.lambda([], Fields.literal(16))
+        );
+    });
+
+    test("Parse 0-argument binary op lambda", () => {
+        expect(EXPRESSION.field.tryParse("() => a + 2")).toEqual(
+            Fields.lambda([], Fields.binaryOp(Fields.variable("a"), "+", Fields.literal(2)))
+        );
+    });
+
+    test("Parse 1-argument lambda", () => {
+        expect(EXPRESSION.field.tryParse("(v) => v")).toEqual(
+            Fields.lambda(["v"], Fields.variable("v"))
+        )
+    });
+
+    test("Parse 2-argument lambda", () => {
+        expect(EXPRESSION.field.tryParse("(yes, no) => yes - no")).toEqual(
+            Fields.lambda(["yes", "no"], Fields.binaryOp(Fields.variable("yes"), "-", Fields.variable("no")))
+        )
+    });
+});
+
+// <-- Lists -->
+
+describe("Lists", () => {
+    test("[]", () => expect(EXPRESSION.field.tryParse("[]"))
+        .toEqual(Fields.list([])));
+    test("[1]", () => expect(EXPRESSION.field.tryParse("[1]"))
+        .toEqual(Fields.list([Fields.literal(1)])));
+    test("[1, 2]", () => expect(EXPRESSION.field.tryParse("[1,2]"))
+        .toEqual(Fields.list([Fields.literal(1), Fields.literal(2)])));
+    test("[1, 2, 3]", () => expect(EXPRESSION.field.tryParse("[ 1,  2, 3   ]"))
+        .toEqual(Fields.list([Fields.literal(1), Fields.literal(2), Fields.literal(3)])));
+
+    test('["a"]', () => expect(EXPRESSION.field.tryParse('["a" ]'))
+        .toEqual(Fields.list([Fields.literal("a")])));
+
+    test("[[]]", () => expect(EXPRESSION.field.tryParse('[[]]'))
+        .toEqual(Fields.list([Fields.list([])])));
+});
+
+// <-- Objects -->
+
+describe("Objects", () => {
+    test("{}", () => expect(EXPRESSION.field.tryParse("{}"))
+        .toEqual(Fields.object({})));
+    test("{ a: 1 }", () => expect(EXPRESSION.field.tryParse("{ a: 1 }"))
+        .toEqual(Fields.object({ a: Fields.literal(1) })));
+    test('{ "a": 1 }', () => expect(EXPRESSION.field.tryParse('{ "a": 1 }'))
+        .toEqual(Fields.object({ a: Fields.literal(1) })));
+    test('{ "yes no": 1 }', () => expect(EXPRESSION.field.tryParse('{ "yes no": 1 }'))
+        .toEqual(Fields.object({ "yes no": Fields.literal(1) })));
+
+    test("{a:1,b:[2]}", () => expect(EXPRESSION.field.tryParse("{ a: 1, b: [2] }"))
+        .toEqual(Fields.object({ a: Fields.literal(1), b: Fields.list([Fields.literal(2)]) })));
 });
 
 // <-- Binary Ops -->

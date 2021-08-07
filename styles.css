@@ -29,7 +29,7 @@
 }
 
 /** Rendered value styling for any view. */
-.dataview-result-list-ul {
+.dataview-result-list-root-ul {
     padding: 0em !important;
     margin: 0em !important;
 }

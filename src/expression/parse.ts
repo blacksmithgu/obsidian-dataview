@@ -1,7 +1,7 @@
 import { DateTime, Duration } from "luxon";
 import { Link, LiteralValue } from "src/data/value";
 import * as P from 'parsimmon';
-import { BinaryOp, Field, Fields, LiteralField, VariableField } from "./field";
+import { BinaryOp, Field, Fields, LambdaField, ListField, LiteralField, ObjectField, VariableField } from "./field";
 import { FolderSource, NegatedSource, Source, SourceOp, Sources, TagSource, CsvSource } from "src/data/source";
 import { normalizeDuration } from "src/util/normalize";
 import { Result } from "src/api/result";
@@ -142,7 +142,9 @@ interface ExpressionLanguage {
     durationField: LiteralField;
     linkField: LiteralField;
     nullField: LiteralField;
-    literalField: LiteralField;
+
+    listField: ListField;
+    objectField: ObjectField;
 
     atomInlineField: LiteralValue;
     inlineFieldList: LiteralValue[];
@@ -151,6 +153,7 @@ interface ExpressionLanguage {
     negatedField: Field;
     atomField: Field;
     indexField: Field;
+    lambdaField: LambdaField;
 
     // Postfix parsers for function calls & the like.
     dotPostfix: PostfixFragment;
@@ -169,7 +172,7 @@ interface ExpressionLanguage {
 
 export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
     // A floating point number; the decimal point is optional.
-    number: q => P.regexp(/-?[0-9]+(.[0-9]+)?/).map(str => Number.parseFloat(str)).desc("number"),
+    number: q => P.regexp(/-?[0-9]+(\.[0-9]+)?/).map(str => Number.parseFloat(str)).desc("number"),
 
     // A quote-surrounded string which supports escape characters ('\').
     string: q => P.string('"')
@@ -198,7 +201,7 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
     identifierDot: q => P.regexp(/[\p{Letter}\p{Emoji_Presentation}][\p{Letter}\p{Emoji_Presentation}\.\w_-]*/u).desc("variable identifier"),
 
     // An Obsidian link of the form [[<link>]].
-    link: q => P.regexp(/\[\[([^\[\]]*?)\]\]/u, 1).map(linkInner => parseInnerLink(linkInner)).desc("file link"),
+    link: q => P.regexp(/\[\[([^\[\]]+?)\]\]/u, 1).map(linkInner => parseInnerLink(linkInner)).desc("file link"),
     embedLink: q => P.seqMap(P.string("!").atMost(1), q.link, (p, l) => {
         if (p.length > 0) l.embed = true;
         return l;
@@ -221,17 +224,22 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
     }).desc("'and' or 'or'"),
 
     // A date which can be YYYY-MM[-DDTHH:mm:ss].
-    // TODO: Add time-zone support.
-    // TODO: Will probably want a custom combinator for optional parsing.
     rootDate: q => P.seqMap(P.regexp(/\d{4}/), P.string("-"), P.regexp(/\d{2}/), (year, _, month) => {
         return DateTime.fromObject({ year: Number.parseInt(year), month: Number.parseInt(month) })
-    }).desc("date in format YYYY-MM[-DDTHH-MM-SS]"),
+    }).desc("date in format YYYY-MM[-DDTHH-MM-SS.MS]"),
     date: q => chainOpt<DateTime>(q.rootDate,
         (ym: DateTime) => P.seqMap(P.string("-"), P.regexp(/\d{2}/), (_, day) => ym.set({ day: Number.parseInt(day) })),
         (ymd: DateTime) => P.seqMap(P.string("T"), P.regexp(/\d{2}/), (_, hour) => ymd.set({ hour: Number.parseInt(hour) })),
         (ymdh: DateTime) => P.seqMap(P.string(":"), P.regexp(/\d{2}/), (_, minute) => ymdh.set({ minute: Number.parseInt(minute) })),
         (ymdhm: DateTime) => P.seqMap(P.string(":"), P.regexp(/\d{2}/), (_, second) => ymdhm.set({ second: Number.parseInt(second) })),
-        (dt: DateTime) => P.seqMap(P.string("+").or(P.string("-")), P.regexp(/\d{1,2}(:\d{2})?/), (pm, hr) => dt.setZone("UTC" + pm + hr))
+        (ymdhms: DateTime) => P.alt(
+            P.seqMap(P.string("."), P.regexp(/\d{3}/), (_, millisecond) => ymdhms.set({ millisecond: Number.parseInt(millisecond)})),
+            P.succeed(ymdhms) // pass
+        ),
+        (dt: DateTime) => P.alt(
+            P.seqMap(P.string("+").or(P.string("-")), P.regexp(/\d{1,2}(:\d{2})?/), (pm, hr) => dt.setZone("UTC" + pm + hr)),
+            P.seqMap(P.string("Z"), () => dt.setZone("utc"))
+        )
     ),
 
     // A date, plus various shorthand times of day it could be.
@@ -287,13 +295,29 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
         .desc("duration"),
     nullField: q => q.rawNull.map(_ => Fields.NULL),
     linkField: q => q.link.map(f => Fields.literal(f)),
+    listField: q => q.field.sepBy(P.string(",").trim(P.optWhitespace))
+        .wrap(P.string("[").skip(P.optWhitespace), P.optWhitespace.then(P.string("]")))
+        .map(l => Fields.list(l))
+        .desc("list ('[1, 2, 3]')"),
+    objectField: q => P.seqMap(
+            q.identifier.or(q.string),
+            P.string(":").trim(P.optWhitespace),
+            q.field,
+            (name, _sep, value) => { return {name, value} })
+        .sepBy(P.string(",").trim(P.optWhitespace))
+        .wrap(P.string("{").skip(P.optWhitespace), P.optWhitespace.then(P.string("}")))
+        .map(vals => {
+            let res: Record<string, Field> = {};
+            for (let entry of vals) res[entry.name] = entry.value;
+            return Fields.object(res);
+        })
+        .desc("object ('{ a: 1, b: 2 }')"),
 
-    literalField: q => P.alt(q.nullField, q.numberField, q.stringField, q.boolField, q.dateField, q.durationField),
     atomInlineField: q => P.alt(
         q.date,
         q.duration.map(d => normalizeDuration(d)),
         q.string,
-        q.link,
+        q.embedLink,
         q.bool,
         q.number,
         q.rawNull),
@@ -303,7 +327,7 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
         q.atomInlineField
     ),
 
-    atomField: q => P.alt(q.negatedField, q.parensField, q.boolField, q.numberField, q.stringField, q.linkField, q.dateField, q.durationField, q.nullField, q.variableField),
+    atomField: q => P.alt(q.negatedField, q.linkField, q.listField, q.objectField, q.lambdaField, q.parensField, q.boolField, q.numberField, q.stringField, q.dateField, q.durationField, q.nullField, q.variableField),
     indexField: q => P.seqMap(q.atomField, P.alt(q.dotPostfix, q.indexPostfix, q.functionPostfix).many(), (obj, postfixes) => {
         let result = obj;
         for (let post of postfixes) {
@@ -322,6 +346,13 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
     }),
     negatedField: q => P.seqMap(P.string("!"), q.indexField, (_, field) => Fields.negate(field)).desc("negated field"),
     parensField: q => P.seqMap(P.string("("), P.optWhitespace, q.field, P.optWhitespace, P.string(")"), (_1, _2, field, _3, _4) => field),
+    lambdaField: q => P.seqMap(
+        q.identifier.sepBy(P.string(",").trim(P.optWhitespace))
+            .wrap(P.string("(").trim(P.optWhitespace), P.string(")").trim(P.optWhitespace)),
+        P.string("=>").trim(P.optWhitespace),
+        q.field,
+        (ident, _ignore, value) => { return { type: 'lambda', arguments: ident, value }}
+    ),
 
     dotPostfix: q => P.seqMap(P.string("."), q.identifier, (_, field) => { return { type: 'dot', field: Fields.literal(field) } }),
     indexPostfix: q => P.seqMap(P.string("["), P.optWhitespace, q.field, P.optWhitespace, P.string("]"),

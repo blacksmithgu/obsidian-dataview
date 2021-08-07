@@ -3,7 +3,7 @@ import * as P from 'parsimmon';
 import { FlattenStep, GroupStep, LimitStep, NamedField, Query, QueryFields, QueryHeader, QueryOperation, QuerySortBy, QueryType, SortByStep, WhereStep } from './query';
 import { Source, Sources } from 'src/data/source';
 import { Fields } from 'src/expression/field';
-import { DEFAULT_QUERY_SETTINGS, QuerySettings } from 'src/settings';
+import { DEFAULT_QUERY_SETTINGS } from 'src/settings';
 import { Result } from 'src/api/result';
 
 ///////////////////
@@ -55,8 +55,10 @@ export const QUERY_LANGUAGE = P.createLanguage<QueryLanguageTypes>({
     headerClause: q => q.queryType.skip(P.whitespace).chain(qtype => {
         switch (qtype) {
             case "table":
-                return P.sepBy(q.namedField, P.string(',').trim(P.optWhitespace))
-                    .map(fields => { return { type: 'table', fields } as QueryHeader });
+                return P.seqMap(
+                    P.regexp(/WITHOUT\s+ID/i).skip(P.optWhitespace).atMost(1),
+                    P.sepBy(q.namedField, P.string(',').trim(P.optWhitespace)),
+                    (withoutId, fields) => { return { type: 'table', fields, showId: withoutId.length == 0 } as QueryHeader });
             case "list":
                 return EXPRESSION.field.atMost(1)
                     .map(format => { return { type: 'list', format: format.length == 1 ? format[0] : undefined }});
@@ -93,11 +95,9 @@ export const QUERY_LANGUAGE = P.createLanguage<QueryLanguageTypes>({
  * Attempt to parse a query from the given query text, returning a string error
  * if the parse failed.
  */
-export function parseQuery(text: string, settings?: QuerySettings): Result<Query, string> {
+export function parseQuery(text: string): Result<Query, string> {
     try {
         let query = QUERY_LANGUAGE.query.tryParse(text);
-        if (settings) query.settings = Object.assign(query.settings, settings);
-
         return Result.success(query);
     } catch (error) {
         return Result.failure("" + error);
