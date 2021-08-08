@@ -11,7 +11,7 @@ module.exports = {
   projectName: 'obsidian-dataview', // Usually your repo name.
   i18n: {
     defaultLocale: 'en',
-    locales: ['en', 'zh-cn'],
+    locales: ['en'],
   },
   themeConfig: {
     navbar: {
