@@ -16,7 +16,7 @@ SORT rating DESC
 ```
 ~~~
 
-![Game Example](/images/game.png)
+![Game Example](/assets/game.png)
 
 ---
 
@@ -28,7 +28,7 @@ LIST FROM #game/moba or #game/crpg
 ```
 ~~~
 
-![Game List](/images/game-list.png)
+![Game List](/assets/game-list.png)
 
 ---
 
@@ -40,7 +40,7 @@ TASK FROM #projects/active
 ```
 ~~~
 
-![Task List](/images/project-task.png)
+![Task List](/assets/project-task.png)
 
 ---
 

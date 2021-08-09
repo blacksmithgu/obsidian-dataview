@@ -1,0 +1,26 @@
+site_name: Dataview
+repo_url: https://github.com/blacksmithgu/obsidian-dataview
+markdown_extensions:
+  - pymdownx.highlight
+  - pymdownx.superfences
+theme:
+  name: material
+  palette:
+    primary: deep purple
+  logo: assets/obsidian.png
+  favicon: assets/obsidian.png
+nav:
+  - Introduction: 'intro.md'
+  - Pages and Fields: 'where-data-comes-from.md'
+  - Creating Queries: 'creating-queries.md'
+  - Query Language:
+    - Queries: 'query/queries.md'
+    - Expressions: 'query/expressions.md'
+    - Sources: 'query/sources.md'
+    - Functions: 'query/functions.md'
+    - Examples: 'query/examples.md'
+  - JavaScript API:
+    - Overview: 'api/intro.md'
+    - Data Arrays: 'api/data-array.md'
+    - Codeblock Reference: 'api/code-reference.md'
+    - Codeblock Examples: 'api/code-examples.md'

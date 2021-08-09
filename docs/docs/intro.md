@@ -27,7 +27,7 @@ table date, rating, woke-up, slept FROM #daily
 
 which would produce nice looking table like so:
 
-![](/images/daily-retro-example-table.png)
+![](/assets/daily-retro-example-table.png)
 
 You could then filter this view to show only days with a high rating; or sort days by their rating or the time you woke
 up, and so on so forth.

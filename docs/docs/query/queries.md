@@ -35,9 +35,9 @@ present, they are run in the order they are written. Duplicate statements are al
 
 - For the different view types, only the first line (the 'select' section, where you specify the view type and fields to
 display) differs. You can apply *data commands* like *WHERE* and *SORT* to any query, and you can select from any
-[source](/docs/query/sources) using *FROM*.
+[source](/query/sources) using *FROM*.
 
-See [expressions](expressions) for context on what expressions are, and [sources](sources) for context on what sources are.
+See [expressions](../expressions) for context on what expressions are, and [sources](../sources) for context on what sources are.
 
 ## Query Types
 
@@ -52,7 +52,7 @@ LIST FROM <source>
 
 For example, running `LIST FROM #games/moba or #games/crpg` might show:
 
-![List Example](/images/game-list.png)
+![List Example](/assets/game-list.png)
 
 You can render a single computed value in addition to each matching file, by adding an expression after `LIST`:
 
@@ -62,7 +62,7 @@ LIST <expression> FROM <source>
 
 For example, running `LIST "File Path: " + file.path FROM "4. Archive"` might show:
 
-![List Example](/images/file-path-list.png)
+![List Example](/assets/file-path-list.png)
 
 ### Table Queries
 
@@ -85,7 +85,7 @@ TABLE time-played AS "Time Played", length as "Length", rating as "Rating" FROM 
 SORT rating DESC
 ```
 
-![Table Example](/images/game.png)
+![Table Example](/assets/game.png)
 
 ### Task Queries
 
@@ -97,7 +97,7 @@ TASK from <source>
 
 For example, `TASK FROM "dataview"` might show:
 
-![Task Example](/images/project-task.png)
+![Task Example](/assets/project-task.png)
 
 ## Data Commands
 
@@ -108,7 +108,7 @@ blocks or multiple `GROUP BY` blocks, for example).
 ### FROM
 
 The `FROM` statement determines what pages will initially be collected and passed onto the other commands for further
-filtering. You can select from any [source](/docs/query/sources), which currently means by folder, by tag, or by incoming/outgoing links.
+filtering. You can select from any [source](/query/sources), which currently means by folder, by tag, or by incoming/outgoing links.
 
 - **Tags**: To select from a tag (and all its subtags), use `FROM #tag`.
 - **Folders**: To select from a folder (and all its subfolders), use `FROM "folder"`.
@@ -183,4 +183,4 @@ table authors from #LiteratureNote
 flatten authors
 ```
 
-![Flatten Example](/images/flatten-authors.png)
+![Flatten Example](/assets/flatten-authors.png)

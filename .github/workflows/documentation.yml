@@ -1,55 +1,16 @@
-name: Deploy project documentation
-
+name: docs
 on:
-  pull_request:
-    branches: [master]
   push:
-    branches: [master]
-
+    branches: 
+      - master
 jobs:
-  checks:
-    if: github.event_name != 'push'
+  deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
-      - uses: actions/setup-node@v1
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
         with:
-          node-version: '12.x'
-      - name: Test Build
-        run: |
-          cd docs
-          if [ -e yarn.lock ]; then
-            yarn install --frozen-lockfile
-          elif [ -e package-lock.json ]; then
-            npm ci
-          else
-            npm i
-          fi
-          npm run build
-  gh-release:
-    if: github.event_name != 'pull_request'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v1
-      - uses: actions/setup-node@v1
-        with:
-          node-version: '12.x'
-      - uses: webfactory/ssh-agent@v0.5.0
-        with:
-          ssh-private-key: ${{ secrets.GH_PAGES_DEPLOY }}
-      - name: Release to GitHub Pages
-        env:
-          USE_SSH: true
-          GIT_USER: git
-        run: |
-          cd docs
-          git config --global user.email "615536+M-bot@users.noreply.github.com"
-          git config --global user.name "Miguel Obregon"
-          if [ -e yarn.lock ]; then
-            yarn install --frozen-lockfile
-          elif [ -e package-lock.json ]; then
-            npm ci
-          else
-            npm i
-          fi
-          npm run deploy
+          python-version: 3.x
+      - run: pip install mkdocs-material 
+      - run: cd docs
+      - run: mkdocs gh-deploy --force
