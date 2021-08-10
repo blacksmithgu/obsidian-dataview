@@ -46,23 +46,33 @@ See [expressions](../expressions) for context on what expressions are, and [sour
 Lists are the simplest view, and simply render a list of pages (or custom fields) which match the query.
 To obtain a list of pages matching the query, simply use:
 
-```
-LIST FROM <source>
-```
-
-For example, running `LIST FROM #games/moba or #games/crpg` might show:
-
-![List Example](/assets/game-list.png)
+=== "Syntax"
+    ```
+    LIST FROM <source>
+    ```
+=== "Query"
+    ``` sql
+    LIST FROM #games/mobas OR #games/crpg
+    ```
+=== "Output"
+    - [League of Legends](#)
+    - [Pillars of Eternity 2](#)
 
 You can render a single computed value in addition to each matching file, by adding an expression after `LIST`:
 
-```
-LIST <expression> FROM <source>
-```
-
-For example, running `LIST "File Path: " + file.path FROM "4. Archive"` might show:
-
-![List Example](/assets/file-path-list.png)
+=== "Syntax"
+    ```
+    LIST <expression> FROM <source>
+    ```
+=== "Query"
+    ``` sql
+    LIST "File Path: " + file.path FROM "4. Archive"
+    ```
+=== "Output"
+    - [2020-12-18 DN](#): File path: 4. Archive/Daily Notes/2020-12-18 DN.md
+    - [2020-12-16 DN](#): File path: 4. Archive/Daily Notes/2020-12-16 DN.md
+    - [2020-12-17 DN](#): File path: 4. Archive/Daily Notes/2020-12-17 DN.md
+    - [2020-12-15 DN](#): File path: 4. Archive/Daily Notes/2020-12-15 DN.md
 
 ### Table Queries
 
@@ -80,24 +90,45 @@ TABLE (file.mtime + dur(1 day)) AS next_mtime, ... FROM <source>
 
 An example table query:
 
-```
-TABLE time-played AS "Time Played", length as "Length", rating as "Rating" FROM #game
-SORT rating DESC
-```
-
-![Table Example](/assets/game.png)
+=== "Query"
+    ``` sql
+    TABLE 
+      time-played AS "Time Played", 
+      length AS "Length", 
+      rating AS "Rating" 
+    FROM #game
+    SORT rating DESC
+    ```
+=== "Output"
+    |File|Time Played|Length|Rating|
+    |-|-|-|-|
+    |[Outer Wilds](#)|November 19th - 21st, 2020|15h|9.5|
+    |[Minecraft](#)|All the time.|2000h|9.5|
+    |[Pillars of Eternity 2](#)|August - October 2019|100h|9|
 
 ### Task Queries
 
 Task views render all tasks whose pages match the given predicate.
 
-```
-TASK from <source>
-```
+=== "Syntax"
+    ```
+    TASK FROM <source>
+    ```
+=== "Query"
+    ``` sql
+    TASK FROM "dataview"
+    ```
+=== "Output"
+    [dataview/Project A](#)
 
-For example, `TASK FROM "dataview"` might show:
+    - [ ] I am a task.
+    - [ ] I am another task.
 
-![Task Example](/assets/project-task.png)
+    [dataview/Project A](#)
+
+    - [ ] I could be a task, though who knows.
+        - [X] Determine if this is a task.
+    - [X] I'm a finished task.
 
 ## Data Commands
 

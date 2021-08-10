@@ -1,8 +1,11 @@
 site_name: Dataview
 repo_url: https://github.com/blacksmithgu/obsidian-dataview
 markdown_extensions:
+  - abbr
   - pymdownx.highlight
   - pymdownx.superfences
+  - pymdownx.tabbed
+  - pymdownx.tasklist
 theme:
   name: material
   palette:
