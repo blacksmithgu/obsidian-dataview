@@ -1,5 +1,6 @@
 site_name: Dataview
 repo_url: https://github.com/blacksmithgu/obsidian-dataview
+edit_uri: edit/master/docs/docs/
 markdown_extensions:
   - abbr
   - pymdownx.highlight
@@ -12,6 +13,7 @@ theme:
     primary: deep purple
   logo: assets/obsidian.png
   favicon: assets/obsidian.png
+  custom_dir: overrides
 nav:
   - Introduction: 'intro.md'
   - Pages and Fields: 'where-data-comes-from.md'
