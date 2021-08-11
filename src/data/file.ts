@@ -371,8 +371,8 @@ export function findTasksInFile(path: string, file: string): Task[] {
 	for (let line of file.replace("\r", "").split("\n")) {
 		lineno += 1;
 
-        // Fast bail-out before running more expensive regex matching.
-        if (!line.includes("[") || !line.includes("]")) {
+        // Check that we are actually a list element, to skip lines which obviously won't match.
+        if (!line.includes("*") && !line.includes("-")) {
             while (stack.length > 1) stack.pop();
             continue;
         }
