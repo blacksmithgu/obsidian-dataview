@@ -483,10 +483,12 @@ export namespace DefaultFunctions {
 
     export const filter = new FunctionBuilder("filter")
         .add2("array", "function", (arr, f, ctx) => arr.filter(v => Values.isTruthy(f(ctx, v))))
+        .add2("null", "*", () => null)
         .build();
 
     export const map = new FunctionBuilder("map")
         .add2("array", "function", (arr, f, ctx) => arr.map(v => f(ctx, v)))
+        .add2("null", "*", () => null)
         .build();
 
     export const nonnull = new FunctionBuilder("nonnull")
