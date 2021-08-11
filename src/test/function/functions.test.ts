@@ -91,6 +91,8 @@ test("Evaluate regexmatch()", () => {
 test("Evaluate replace()", () => {
     expect(parseEval("replace(\"hello\", \"h\", \"me\")")).toEqual("meello");
     expect(parseEval("replace(\"meep\", \"meep\", \"pleh\")")).toEqual("pleh");
+    expect(parseEval('replace(\"x.z\", \"x.\", \"z$\")')).toEqual("z$z");
+    expect(parseEval('replace(\"x.z\", \".\", \"z\")')).toEqual("xzz");
 });
 
 // <-- lower/upper() -->

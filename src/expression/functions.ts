@@ -390,7 +390,7 @@ export namespace DefaultFunctions {
         .build();
 
     export const replace = new FunctionBuilder("replace")
-        .add3("string", "string", "string", (str, pat, repr) => str.replace(pat, repr))
+        .add3("string", "string", "string", (str, pat, repr) => str.split(pat).join(repr))
         .add3("null", "*", "*", () => null)
         .add3("*", "null", "*", () => null)
         .add3("*", "*", "null", () => null)
