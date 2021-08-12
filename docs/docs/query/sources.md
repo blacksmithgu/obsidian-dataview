@@ -15,6 +15,7 @@ Dataview, so they are fast to query. Dataview currently supports three source ty
 You can compose these filters in order to get more advanced sources using `and` and `or`. 
 
 - For example, `#tag and "folder"` will return all pages in `folder` and with `#tag`. 
+- Querying from `#food and !#fastfood` will only return pages that contain `#food` but does not contain `#fastfood`.
 - `[[Food]] or [[Exercise]]` will give any pages which link to `[[Food]]` OR `[[Exercise]]`.
 
 Sources are used in both the [FROM query statement](/query/queries#from), as well as various JavaScript API query calls.
