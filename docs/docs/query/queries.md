@@ -161,16 +161,16 @@ WHERE <clause>
 
 1. Obtain all files which were modified in the last 24 hours:
 
-```
-LIST WHERE file.mtime >= date(today) - dur(1 day)
-```
+    ```sql
+    LIST WHERE file.mtime >= date(today) - dur(1 day)
+    ```
 
 2. Find all projects which are not marked complete and are more than a month old:
 
-```
-LIST FROM #projects
-WHERE !completed AND file.ctime <= date(today) - dur(1 month)
-```
+    ```sql
+    LIST FROM #projects
+    WHERE !completed AND file.ctime <= date(today) - dur(1 month)
+    ```
 
 ### SORT
 
@@ -202,16 +202,26 @@ You can then apply aggregation operators like `sum()` over the resulting array.
 
 Flatten an array in every row, yielding one result row per entry in the array.
 
-```
+``` 
 FLATTEN field
 FLATTEN (computed_field) AS name
 ```
 
 For example, flatten the `authors` field in each literature note to give one row per author:
 
-```
-table authors from #LiteratureNote
-flatten authors
-```
-
-![Flatten Example](/assets/flatten-authors.png)
+=== "Query"
+    ```sql
+    TABLE authors FROM #LiteratureNote
+    FLATTEN authors
+    ```
+=== "Output"
+    |File|authors|
+    |-|-|
+    |stegEnvironmentalPsychologyIntroduction2018 SN|Steg, L.|
+    |stegEnvironmentalPsychologyIntroduction2018 SN|Van den Berg, A. E.|
+    |stegEnvironmentalPsychologyIntroduction2018 SN|De Groot, J. I. M.|
+    |Soap Dragons SN|Robert Lamb|
+    |Soap Dragons SN|Joe McCormick|
+    |smithPainAssaultSelf2007 SN|Jonathan A. Smith|
+    |smithPainAssaultSelf2007 SN|Mike Osborn|
+    
