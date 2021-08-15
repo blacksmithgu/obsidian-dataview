@@ -7,3 +7,8 @@ node_modules
 
 # build
 build/
+
+test-vault/.obsidian/workspace
+test-vault/.obsidian/plugins/dataview/*.css
+test-vault/.obsidian/plugins/dataview/*.js
+test-vault/.obsidian/plugins/dataview/*.json
