@@ -194,7 +194,7 @@ export interface ParsedMarkdown {
 
 /** Encoded parsed markdown which can be transfered over the JavaScript web worker. */
 export interface TransferableMarkdown {
-    tasks: Task[];
+    tasks: TransferableValue[];
     fields: Map<string, TransferableValue[]>;
 }
 
@@ -206,7 +206,7 @@ export function markdownToTransferable(parsed: ParsedMarkdown): TransferableMark
     }
 
     return {
-        tasks: parsed.tasks,
+        tasks: TransferableValues.transferable(parsed.tasks) as TransferableValue[],
         fields: newFields
     };
 }
@@ -219,7 +219,7 @@ export function markdownFromTransferable(parsed: TransferableMarkdown): ParsedMa
     }
 
     return {
-        tasks: parsed.tasks,
+        tasks: TransferableValues.value(parsed.tasks) as Task[],
         fields: newFields
     };
 }
