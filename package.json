@@ -2,7 +2,8 @@
   "name": "obsidian-dataview",
   "version": "0.4.4",
   "description": "Advanced data views for Obsidian.md.",
-  "main": "main.js",
+  "main": "",
+  "types": "@types/main.d.ts",
   "scripts": {
     "dev": "rollup --config rollup.config.js -w",
     "build": "rollup --config rollup.config.js --environment BUILD:production",

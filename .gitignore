@@ -12,3 +12,7 @@ test-vault/.obsidian/workspace
 test-vault/.obsidian/plugins/dataview/*.css
 test-vault/.obsidian/plugins/dataview/*.js
 test-vault/.obsidian/plugins/dataview/*.json
+
+@types/
+package-lock.json
+yarn.lock
