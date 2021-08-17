@@ -17,6 +17,10 @@ jq ". + {\"${NEW_VERSION}\": \"0.12.0\"}" versions.json > versions.tmp.json && m
 git commit -a -m "${NEW_VERSION}"
 git push
 
+rm -rf @types
+tsc --declarationDir @types --declaration --emitDeclarationOnly
+npm publish --access public
+
 # Rebuild the project to prepare for a release.
 npm run build
 
