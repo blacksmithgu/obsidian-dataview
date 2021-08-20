@@ -1,4 +1,4 @@
-import { MarkdownRenderChild, Plugin, Vault, MarkdownPostProcessorContext, PluginSettingTab, App, Setting, Component, MarkdownPostProcessor } from 'obsidian';
+import { MarkdownRenderChild, Plugin, Vault, MarkdownPostProcessorContext, PluginSettingTab, App, Setting, Component, MarkdownPostProcessor, TAbstractFile, TFile } from 'obsidian';
 import { renderErrorPre, renderList, renderTable, renderValue } from 'src/ui/render';
 import { FullIndex } from 'src/data/index';
 import * as Tasks from 'src/ui/tasks';
@@ -30,6 +30,22 @@ export default class DataviewPlugin extends Plugin {
      * TODO: JavaScript async a little annoying w/o multi-threading; how do you verify it exists?
      */
     public api: DataviewApi;
+	
+    public trigger(
+        name: "dataview:metadata-change",
+        op: "rename",
+        file: TAbstractFile,
+        oldPath: string
+    ): void;
+    public trigger(
+        name: "dataview:metadata-change",
+        op: "delete" | "update",
+        file: TFile
+    ): void;
+    public trigger(name: "dataview:api-ready", api: DataviewApi): void;
+    public trigger(name: string, ...data: any[]): void {
+        this.app.metadataCache.trigger(name, ...data);
+    }
 
 	async onload() {
 		// Settings initialization; write defaults first time around.
@@ -142,11 +158,11 @@ export default class DataviewPlugin extends Plugin {
 
 	/** Prepare all dataview indices. */
 	async prepareIndexes() {
-		let index = await FullIndex.generate(this.app.vault, this.app.metadataCache);
+		let index = await FullIndex.generate(this);
 		this.index = index;
 
         this.api = new DataviewApi(this.app, this.index, this.settings);
-        this.app.metadataCache.trigger("dataview:api-ready", this.api);
+        this.trigger("dataview:api-ready", this.api);
 	}
 
 	/** Update plugin settings. */
@@ -168,7 +184,7 @@ export default class DataviewPlugin extends Plugin {
     /** Call the given callback when the dataview API has initialized. */
     public withApi(callback: (api: DataviewApi) => void) {
         if (this.api) callback(this.api);
-        else (this.app.metadataCache.on as any)("dataview:api-ready", callback);
+        else this.app.metadataCache.on("dataview:api-ready", callback);
     }
 }
 
