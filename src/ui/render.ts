@@ -1,10 +1,10 @@
 import { DateTime, Duration } from 'luxon';
 import { Component, MarkdownRenderer } from 'obsidian';
-import { DataArray } from 'src/api/data-array';
-import { QuerySettings } from 'src/settings';
-import { currentLocale } from 'src/util/locale';
-import { normalizeDuration } from 'src/util/normalize';
-import { LiteralValue, Values } from '../data/value';
+import { DataArray } from 'api/data-array';
+import { QuerySettings } from 'settings';
+import { currentLocale } from 'util/locale';
+import { normalizeDuration } from 'util/normalize';
+import { LiteralValue, Values } from 'data/value';
 
 /** Make an Obsidian-friendly internal link. */
 export function createAnchor(text: string, target: string, internal: boolean): HTMLAnchorElement {

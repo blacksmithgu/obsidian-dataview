@@ -1,10 +1,10 @@
 /** Collect data matching a source query. */
 
-import { FullIndex } from "src/data/index";
-import { Result } from "src/api/result";
+import { FullIndex } from "data/index";
+import { Result } from "api/result";
 import { Source } from "./source";
 import { DataObject, Link, LiteralValue } from "./value";
-import {getFileName} from "src/util/normalize";
+import {getFileName} from "util/normalize";
 
 /** A data row which has an ID and associated data (like page link / page data). */
 export type Datarow<T> = { id: LiteralValue, data: T };

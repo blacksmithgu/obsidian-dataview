@@ -1,5 +1,5 @@
 import { Duration } from "luxon";
-import { Result } from "src/api/result";
+import { Result } from "api/result";
 
 /** Normalize a duration to all of the proper units. */
 export function normalizeDuration(dur: Duration) {

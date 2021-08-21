@@ -1,19 +1,19 @@
 /** The general, externally accessible plugin API (available at `app.plugins.plugins.dataview.api`). */
 
 import { App, Component } from "obsidian";
-import { FullIndex } from "src/data";
-import { matchingSourcePaths } from "src/data/resolver";
-import { Task } from "src/data/file";
-import { Sources } from "src/data/source";
-import { DataObject, Link, LiteralValue, Values } from "src/data/value";
-import { EXPRESSION } from "src/expression/parse";
-import { renderList, renderTable, renderValue } from "src/ui/render";
-import { DataviewSettings } from "src/settings";
-import { renderFileTasks, renderTasks, TaskViewLifecycle } from "src/ui/tasks";
+import { FullIndex } from "data";
+import { matchingSourcePaths } from "data/resolver";
+import { Task } from "data/file";
+import { Sources } from "data/source";
+import { DataObject, Link, LiteralValue, Values } from "data/value";
+import { EXPRESSION } from "expression/parse";
+import { renderList, renderTable, renderValue } from "ui/render";
+import { DataviewSettings } from "settings";
+import { renderFileTasks, renderTasks, TaskViewLifecycle } from "ui/tasks";
 import { DataArray } from "./data-array";
-import { BoundFunctionImpl, DEFAULT_FUNCTIONS, Functions } from "src/expression/functions";
-import { Context } from "src/expression/context";
-import { defaultLinkHandler } from "src/query/engine";
+import { BoundFunctionImpl, DEFAULT_FUNCTIONS, Functions } from "expression/functions";
+import { Context } from "expression/context";
+import { defaultLinkHandler } from "query/engine";
 import { DateTime } from "luxon";
 
 export class DataviewApi {

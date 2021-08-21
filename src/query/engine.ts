@@ -1,15 +1,15 @@
 /**
  * Takes a full query and a set of indices, and (hopefully quickly) returns all relevant files.
  */
-import { FullIndex } from 'src/data/index';
-import { Task } from 'src/data/file';
-import { Context, LinkHandler } from 'src/expression/context';
-import { resolveSource, Datarow } from 'src/data/resolver';
-import { DataObject, LiteralValue, Values } from 'src/data/value';
-import { ListQuery, Query, QueryOperation, TableQuery } from 'src/query/query';
-import { Result } from 'src/api/result';
-import { Field } from 'src/expression/field';
-import { QuerySettings } from 'src/settings';
+import { FullIndex } from 'data/index';
+import { Task } from 'data/file';
+import { Context, LinkHandler } from 'expression/context';
+import { resolveSource, Datarow } from 'data/resolver';
+import { DataObject, LiteralValue, Values } from 'data/value';
+import { ListQuery, Query, QueryOperation, TableQuery } from 'query/query';
+import { Result } from 'api/result';
+import { Field } from 'expression/field';
+import { QuerySettings } from 'settings';
 
 function iden<T>(x: T): T { return x; }
 

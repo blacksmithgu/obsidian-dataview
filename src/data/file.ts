@@ -1,8 +1,8 @@
-import { canonicalizeVarName, getExtension, getFileName, getParentFolder } from 'src/util/normalize';
+import { canonicalizeVarName, getExtension, getFileName, getParentFolder } from 'util/normalize';
 import { getAllTags, MetadataCache, parseFrontMatterAliases, parseFrontMatterTags, TFile } from 'obsidian';
-import { EXPRESSION, parseInnerLink } from 'src/expression/parse';
+import { EXPRESSION, parseInnerLink } from 'expression/parse';
 import { DateTime } from 'luxon';
-import { FullIndex } from 'src/data/index';
+import { FullIndex } from 'data/index';
 import { DataObject, Link, LiteralValue, TransferableValue, TransferableValues, Values } from './value';
 
 interface BaseLinkMetadata {

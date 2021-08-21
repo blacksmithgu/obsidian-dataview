@@ -1,15 +1,15 @@
 /** Fancy wrappers for the JavaScript API, used both by external plugins AND by the dataview javascript view. */
 
 import { App, Component } from "obsidian";
-import { FullIndex } from "src/data/index";
-import { Task } from "src/data/file";
-import { renderValue, renderErrorPre } from "src/ui/render";
-import { DataviewApi } from "src/api/plugin-api";
-import { DataviewSettings } from "src/settings";
-import { DataObject, Link, Values } from "src/data/value";
-import { BoundFunctionImpl, DEFAULT_FUNCTIONS, Functions } from "src/expression/functions";
-import { Context } from "src/expression/context";
-import { defaultLinkHandler } from "src/query/engine";
+import { FullIndex } from "data/index";
+import { Task } from "data/file";
+import { renderValue, renderErrorPre } from "ui/render";
+import { DataviewApi } from "api/plugin-api";
+import { DataviewSettings } from "settings";
+import { DataObject, Link, Values } from "data/value";
+import { BoundFunctionImpl, DEFAULT_FUNCTIONS, Functions } from "expression/functions";
+import { Context } from "expression/context";
+import { defaultLinkHandler } from "query/engine";
 import { DateTime } from "luxon";
 import { DataArray } from "./data-array";
 
