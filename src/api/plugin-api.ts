@@ -45,7 +45,7 @@ export class DataviewApi {
     }
 
     /** Map a page path to the actual data contained within that page. */
-    public page(path: string | Link, originFile?: string): Record<string, any> | undefined {
+    public page(path: string | Link, originFile?: string): Record<string, LiteralValue> | undefined {
         if (!(typeof path === "string") && !Values.isLink(path)) {
             throw Error("dv.page only handles string and link paths; was provided type '" + (typeof path) + "'")
         }
@@ -75,7 +75,7 @@ export class DataviewApi {
     }
 
     /** Return an array of page objects corresponding to pages which match the query. */
-    public pages(query?: string, originFile?: string): DataArray<any> {
+    public pages(query?: string, originFile?: string): DataArray<Record<string, LiteralValue>> {
         return this.pagePaths(query, originFile).flatMap(p => {
             let res = this.page(p, originFile);
             return res ? [res] : [];
@@ -90,14 +90,14 @@ export class DataviewApi {
      * Convert an input element or array into a Dataview data-array. If the input is already a data array,
      * it is returned unchanged.
      */
-    public array(raw: any): DataArray<any> {
+    public array(raw: unknown): DataArray<any> {
         if (DataArray.isDataArray(raw)) return raw;
         if (Array.isArray(raw)) return DataArray.wrap(raw, this.settings);
         return DataArray.wrap([raw], this.settings);
     }
 
     /** Return true if theg given value is a javascript array OR a dataview data array. */
-    public isArray(raw: any): raw is DataArray<any> | Array<any> {
+    public isArray(raw: unknown): raw is DataArray<any> | Array<any> {
         return DataArray.isDataArray(raw) || Array.isArray(raw);
     }
 
