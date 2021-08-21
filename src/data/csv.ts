@@ -1,4 +1,4 @@
-import { canonicalizeVarName } from "src/util/normalize";
+import { canonicalizeVarName } from "util/normalize";
 import { parseFrontmatter } from "./file";
 import { DataObject } from "./value";
 import * as Papa from "papaparse";

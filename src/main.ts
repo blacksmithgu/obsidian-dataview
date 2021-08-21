@@ -1,15 +1,15 @@
-import { MarkdownRenderChild, Plugin, Vault, MarkdownPostProcessorContext, PluginSettingTab, App, Setting, Component, MarkdownPostProcessor } from 'obsidian';
-import { renderErrorPre, renderList, renderTable, renderValue } from 'src/ui/render';
-import { FullIndex } from 'src/data/index';
-import * as Tasks from 'src/ui/tasks';
-import { Query, TableQuery, } from 'src/query/query';
-import { Field } from 'src/expression/field';
-import { parseField } from "src/expression/parse";
-import { parseQuery } from "src/query/parse";
-import { executeInline, executeList, executeTable, executeTask } from 'src/query/engine';
-import { tryOrPropogate } from 'src/util/normalize';
-import { waitFor } from 'src/util/concurrency';
-import { evalInContext, makeApiContext } from 'src/api/inline-api';
+import { MarkdownRenderChild, Plugin, Vault, MarkdownPostProcessorContext, PluginSettingTab, App, Setting, Component, MarkdownPostProcessor, TAbstractFile, TFile } from 'obsidian';
+import { renderErrorPre, renderList, renderTable, renderValue } from 'ui/render';
+import { FullIndex } from 'data/index';
+import * as Tasks from 'ui/tasks';
+import { Query, TableQuery, } from 'query/query';
+import { Field } from 'expression/field';
+import { parseField } from "expression/parse";
+import { parseQuery } from "query/parse";
+import { executeInline, executeList, executeTable, executeTask } from 'query/engine';
+import { tryOrPropogate } from 'util/normalize';
+import { waitFor } from 'util/concurrency';
+import { evalInContext, makeApiContext } from 'api/inline-api';
 import { DataviewApi } from './api/plugin-api';
 import { DataviewSettings, DEFAULT_QUERY_SETTINGS, DEFAULT_SETTINGS } from './settings';
 import { LiteralValue } from './data/value';
@@ -30,6 +30,22 @@ export default class DataviewPlugin extends Plugin {
      * TODO: JavaScript async a little annoying w/o multi-threading; how do you verify it exists?
      */
     public api: DataviewApi;
+	
+    public trigger(
+        name: "dataview:metadata-change",
+        op: "rename",
+        file: TAbstractFile,
+        oldPath: string
+    ): void;
+    public trigger(
+        name: "dataview:metadata-change",
+        op: "delete" | "update",
+        file: TFile
+    ): void;
+    public trigger(name: "dataview:api-ready", api: DataviewApi): void;
+    public trigger(name: string, ...data: any[]): void {
+        this.app.metadataCache.trigger(name, ...data);
+    }
 
 	async onload() {
 		// Settings initialization; write defaults first time around.
@@ -142,11 +158,11 @@ export default class DataviewPlugin extends Plugin {
 
 	/** Prepare all dataview indices. */
 	async prepareIndexes() {
-		let index = await FullIndex.generate(this.app.vault, this.app.metadataCache);
+		let index = await FullIndex.generate(this);
 		this.index = index;
 
         this.api = new DataviewApi(this.app, this.index, this.settings);
-        this.app.metadataCache.trigger("dataview:api-ready", this.api);
+        this.trigger("dataview:api-ready", this.api);
 	}
 
 	/** Update plugin settings. */
@@ -168,7 +184,7 @@ export default class DataviewPlugin extends Plugin {
     /** Call the given callback when the dataview API has initialized. */
     public withApi(callback: (api: DataviewApi) => void) {
         if (this.api) callback(this.api);
-        else (this.app.metadataCache.on as any)("dataview:api-ready", callback);
+        else this.app.metadataCache.on("dataview:api-ready", callback);
     }
 }
 

@@ -1,5 +1,5 @@
 /** Defines the AST for a field which can be evaluated. */
-import { LiteralValue } from "src/data/value";
+import { LiteralValue } from "data/value";
 
 /** Comparison operators which yield true/false. */
 export type CompareOp = '>' | '>=' | '<=' | '<' | '=' | '!=';

@@ -1,8 +1,8 @@
 /** Default function implementations for the expression evaluator. */
 
 import { DateTime } from "luxon";
-import { Link, LiteralType, LiteralValue, Values } from "src/data/value";
-import { currentLocale } from "src/util/locale";
+import { Link, LiteralType, LiteralValue, Values } from "data/value";
+import { currentLocale } from "util/locale";
 import { LiteralReprAll, LiteralTypeOrAll } from "./binaryop";
 import type { Context } from "./context";
 import { Fields } from "./field";
@@ -390,7 +390,7 @@ export namespace DefaultFunctions {
         .build();
 
     export const replace = new FunctionBuilder("replace")
-        .add3("string", "string", "string", (str, pat, repr) => str.replace(pat, repr))
+        .add3("string", "string", "string", (str, pat, repr) => str.split(pat).join(repr))
         .add3("null", "*", "*", () => null)
         .add3("*", "null", "*", () => null)
         .add3("*", "*", "null", () => null)
@@ -483,10 +483,12 @@ export namespace DefaultFunctions {
 
     export const filter = new FunctionBuilder("filter")
         .add2("array", "function", (arr, f, ctx) => arr.filter(v => Values.isTruthy(f(ctx, v))))
+        .add2("null", "*", () => null)
         .build();
 
     export const map = new FunctionBuilder("map")
         .add2("array", "function", (arr, f, ctx) => arr.map(v => f(ctx, v)))
+        .add2("null", "*", () => null)
         .build();
 
     export const nonnull = new FunctionBuilder("nonnull")

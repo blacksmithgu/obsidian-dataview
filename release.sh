@@ -20,5 +20,8 @@ git push
 # Rebuild the project to prepare for a release.
 npm run build
 
+# release api
+npm publish --access public
+
 # And do a github release.
 gh release create "${NEW_VERSION}" build/main.js styles.css manifest.json

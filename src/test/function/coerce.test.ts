@@ -1,5 +1,5 @@
 import { DateTime } from "luxon";
-import { expectEvals, parseEval } from 'src/test/common';
+import { expectEvals, parseEval } from 'test/common';
 
 test("Evaluate number()", () => {
     expect(parseEval("number(\"hmm\")")).toEqual(null);

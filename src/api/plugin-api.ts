@@ -1,19 +1,19 @@
 /** The general, externally accessible plugin API (available at `app.plugins.plugins.dataview.api`). */
 
 import { App, Component } from "obsidian";
-import { FullIndex } from "src/data";
-import { matchingSourcePaths } from "src/data/resolver";
-import { Task } from "src/data/file";
-import { Sources } from "src/data/source";
-import { DataObject, Link, LiteralValue, Values } from "src/data/value";
-import { EXPRESSION } from "src/expression/parse";
-import { renderList, renderTable, renderValue } from "src/ui/render";
-import { DataviewSettings } from "src/settings";
-import { renderFileTasks, renderTasks, TaskViewLifecycle } from "src/ui/tasks";
+import { FullIndex } from "data";
+import { matchingSourcePaths } from "data/resolver";
+import { Task } from "data/file";
+import { Sources } from "data/source";
+import { DataObject, Link, LiteralValue, Values } from "data/value";
+import { EXPRESSION } from "expression/parse";
+import { renderList, renderTable, renderValue } from "ui/render";
+import { DataviewSettings } from "settings";
+import { renderFileTasks, renderTasks, TaskViewLifecycle } from "ui/tasks";
 import { DataArray } from "./data-array";
-import { BoundFunctionImpl, DEFAULT_FUNCTIONS, Functions } from "src/expression/functions";
-import { Context } from "src/expression/context";
-import { defaultLinkHandler } from "src/query/engine";
+import { BoundFunctionImpl, DEFAULT_FUNCTIONS, Functions } from "expression/functions";
+import { Context } from "expression/context";
+import { defaultLinkHandler } from "query/engine";
 import { DateTime } from "luxon";
 
 export class DataviewApi {
@@ -21,6 +21,8 @@ export class DataviewApi {
     public evaluationContext: Context;
     /** Dataview functions which can be called from DataviewJS. */
     public func: Record<string, BoundFunctionImpl>;
+
+    public valueUtil = Values;
 
     public constructor(public app: App, public index: FullIndex, public settings: DataviewSettings) {
         this.evaluationContext = new Context(defaultLinkHandler(index, ""), settings);
@@ -45,7 +47,7 @@ export class DataviewApi {
     }
 
     /** Map a page path to the actual data contained within that page. */
-    public page(path: string | Link, originFile?: string): Record<string, any> | undefined {
+    public page(path: string | Link, originFile?: string): Record<string, LiteralValue> | undefined {
         if (!(typeof path === "string") && !Values.isLink(path)) {
             throw Error("dv.page only handles string and link paths; was provided type '" + (typeof path) + "'")
         }
@@ -75,7 +77,7 @@ export class DataviewApi {
     }
 
     /** Return an array of page objects corresponding to pages which match the query. */
-    public pages(query?: string, originFile?: string): DataArray<any> {
+    public pages(query?: string, originFile?: string): DataArray<Record<string, LiteralValue>> {
         return this.pagePaths(query, originFile).flatMap(p => {
             let res = this.page(p, originFile);
             return res ? [res] : [];
@@ -90,14 +92,14 @@ export class DataviewApi {
      * Convert an input element or array into a Dataview data-array. If the input is already a data array,
      * it is returned unchanged.
      */
-    public array(raw: any): DataArray<any> {
+    public array(raw: unknown): DataArray<any> {
         if (DataArray.isDataArray(raw)) return raw;
         if (Array.isArray(raw)) return DataArray.wrap(raw, this.settings);
         return DataArray.wrap([raw], this.settings);
     }
 
     /** Return true if theg given value is a javascript array OR a dataview data array. */
-    public isArray(raw: any): raw is DataArray<any> | Array<any> {
+    public isArray(raw: unknown): raw is DataArray<any> | Array<any> {
         return DataArray.isDataArray(raw) || Array.isArray(raw);
     }
 

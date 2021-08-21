@@ -35,9 +35,9 @@ present, they are run in the order they are written. Duplicate statements are al
 
 - For the different view types, only the first line (the 'select' section, where you specify the view type and fields to
 display) differs. You can apply *data commands* like *WHERE* and *SORT* to any query, and you can select from any
-[source](/docs/query/sources) using *FROM*.
+[source](/query/sources) using *FROM*.
 
-See [expressions](expressions) for context on what expressions are, and [sources](sources) for context on what sources are.
+See [expressions](../expressions) for context on what expressions are, and [sources](../sources) for context on what sources are.
 
 ## Query Types
 
@@ -46,23 +46,33 @@ See [expressions](expressions) for context on what expressions are, and [sources
 Lists are the simplest view, and simply render a list of pages (or custom fields) which match the query.
 To obtain a list of pages matching the query, simply use:
 
-```
-LIST FROM <source>
-```
-
-For example, running `LIST FROM #games/moba or #games/crpg` might show:
-
-![List Example](/images/game-list.png)
+=== "Syntax"
+    ```
+    LIST FROM <source>
+    ```
+=== "Query"
+    ``` sql
+    LIST FROM #games/mobas OR #games/crpg
+    ```
+=== "Output"
+    - [League of Legends](#)
+    - [Pillars of Eternity 2](#)
 
 You can render a single computed value in addition to each matching file, by adding an expression after `LIST`:
 
-```
-LIST <expression> FROM <source>
-```
-
-For example, running `LIST "File Path: " + file.path FROM "4. Archive"` might show:
-
-![List Example](/images/file-path-list.png)
+=== "Syntax"
+    ```
+    LIST <expression> FROM <source>
+    ```
+=== "Query"
+    ``` sql
+    LIST "File Path: " + file.path FROM "4. Archive"
+    ```
+=== "Output"
+    - [2020-12-18 DN](#): File path: 4. Archive/Daily Notes/2020-12-18 DN.md
+    - [2020-12-16 DN](#): File path: 4. Archive/Daily Notes/2020-12-16 DN.md
+    - [2020-12-17 DN](#): File path: 4. Archive/Daily Notes/2020-12-17 DN.md
+    - [2020-12-15 DN](#): File path: 4. Archive/Daily Notes/2020-12-15 DN.md
 
 ### Table Queries
 
@@ -80,24 +90,45 @@ TABLE (file.mtime + dur(1 day)) AS next_mtime, ... FROM <source>
 
 An example table query:
 
-```
-TABLE time-played AS "Time Played", length as "Length", rating as "Rating" FROM #game
-SORT rating DESC
-```
-
-![Table Example](/images/game.png)
+=== "Query"
+    ``` sql
+    TABLE 
+      time-played AS "Time Played", 
+      length AS "Length", 
+      rating AS "Rating" 
+    FROM #game
+    SORT rating DESC
+    ```
+=== "Output"
+    |File|Time Played|Length|Rating|
+    |-|-|-|-|
+    |[Outer Wilds](#)|November 19th - 21st, 2020|15h|9.5|
+    |[Minecraft](#)|All the time.|2000h|9.5|
+    |[Pillars of Eternity 2](#)|August - October 2019|100h|9|
 
 ### Task Queries
 
 Task views render all tasks whose pages match the given predicate.
 
-```
-TASK from <source>
-```
+=== "Syntax"
+    ```
+    TASK FROM <source>
+    ```
+=== "Query"
+    ``` sql
+    TASK FROM "dataview"
+    ```
+=== "Output"
+    [dataview/Project A](#)
 
-For example, `TASK FROM "dataview"` might show:
+    - [ ] I am a task.
+    - [ ] I am another task.
 
-![Task Example](/images/project-task.png)
+    [dataview/Project A](#)
+
+    - [ ] I could be a task, though who knows.
+        - [X] Determine if this is a task.
+    - [X] I'm a finished task.
 
 ## Data Commands
 
@@ -108,7 +139,7 @@ blocks or multiple `GROUP BY` blocks, for example).
 ### FROM
 
 The `FROM` statement determines what pages will initially be collected and passed onto the other commands for further
-filtering. You can select from any [source](/docs/query/sources), which currently means by folder, by tag, or by incoming/outgoing links.
+filtering. You can select from any [source](/query/sources), which currently means by folder, by tag, or by incoming/outgoing links.
 
 - **Tags**: To select from a tag (and all its subtags), use `FROM #tag`.
 - **Folders**: To select from a folder (and all its subfolders), use `FROM "folder"`.
@@ -130,16 +161,16 @@ WHERE <clause>
 
 1. Obtain all files which were modified in the last 24 hours:
 
-```
-LIST WHERE file.mtime >= date(today) - dur(1 day)
-```
+    ```sql
+    LIST WHERE file.mtime >= date(today) - dur(1 day)
+    ```
 
 2. Find all projects which are not marked complete and are more than a month old:
 
-```
-LIST FROM #projects
-WHERE !completed AND file.ctime <= date(today) - dur(1 month)
-```
+    ```sql
+    LIST FROM #projects
+    WHERE !completed AND file.ctime <= date(today) - dur(1 month)
+    ```
 
 ### SORT
 
@@ -171,16 +202,26 @@ You can then apply aggregation operators like `sum()` over the resulting array.
 
 Flatten an array in every row, yielding one result row per entry in the array.
 
-```
+``` 
 FLATTEN field
 FLATTEN (computed_field) AS name
 ```
 
 For example, flatten the `authors` field in each literature note to give one row per author:
 
-```
-table authors from #LiteratureNote
-flatten authors
-```
-
-![Flatten Example](/images/flatten-authors.png)
+=== "Query"
+    ```sql
+    TABLE authors FROM #LiteratureNote
+    FLATTEN authors
+    ```
+=== "Output"
+    |File|authors|
+    |-|-|
+    |stegEnvironmentalPsychologyIntroduction2018 SN|Steg, L.|
+    |stegEnvironmentalPsychologyIntroduction2018 SN|Van den Berg, A. E.|
+    |stegEnvironmentalPsychologyIntroduction2018 SN|De Groot, J. I. M.|
+    |Soap Dragons SN|Robert Lamb|
+    |Soap Dragons SN|Joe McCormick|
+    |smithPainAssaultSelf2007 SN|Jonathan A. Smith|
+    |smithPainAssaultSelf2007 SN|Mike Osborn|
+    

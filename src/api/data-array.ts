@@ -1,5 +1,5 @@
-import { Values } from "src/data/value";
-import { QuerySettings } from "src/settings";
+import { Values } from "data/value";
+import { QuerySettings } from "settings";
 
 /** A function which maps an array element to some value. */
 export type ArrayFunc<T, O> = (elem: T, index: number, arr: T[]) => O;

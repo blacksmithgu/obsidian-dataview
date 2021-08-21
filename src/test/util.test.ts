@@ -1,4 +1,4 @@
-import { getFileName, getParentFolder, canonicalizeVarName } from "src/util/normalize"
+import { getFileName, getParentFolder, canonicalizeVarName } from "util/normalize"
 
 test("empty getFileName()", () => {
     expect(getFileName("")).toEqual("");

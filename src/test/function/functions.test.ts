@@ -1,8 +1,8 @@
 // <-- Functions -->
 // <-- Function vectorization -->
 
-import { DefaultFunctions } from "src/expression/functions";
-import { parseEval, simpleContext } from "src/test/common";
+import { DefaultFunctions } from "expression/functions";
+import { parseEval, simpleContext } from "test/common";
 
 test("Evaluate lower(list)", () => {
     expect(parseEval("lower(list(\"A\", \"B\"))")).toEqual(["a", "b"]);
@@ -91,6 +91,8 @@ test("Evaluate regexmatch()", () => {
 test("Evaluate replace()", () => {
     expect(parseEval("replace(\"hello\", \"h\", \"me\")")).toEqual("meello");
     expect(parseEval("replace(\"meep\", \"meep\", \"pleh\")")).toEqual("pleh");
+    expect(parseEval('replace(\"x.z\", \"x.\", \"z$\")')).toEqual("z$z");
+    expect(parseEval('replace(\"x.z\", \".\", \"z\")')).toEqual("xzz");
 });
 
 // <-- lower/upper() -->

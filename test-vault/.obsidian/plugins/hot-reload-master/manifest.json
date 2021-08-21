@@ -1,0 +1,8 @@
+{
+  "id": "hot-reload",
+  "name": "Hot Reload",
+  "version": "0.1.8",
+  "minAppVersion": "0.11.13",
+  "description": "Automatically reload in-development plugins when their files are changed",
+  "isDesktopOnly": true
+}

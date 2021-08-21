@@ -1,5 +1,5 @@
-import { EXPRESSION } from "src/expression/parse";
-import { Link } from "src/data/value";
+import { EXPRESSION } from "expression/parse";
+import { Link } from "data/value";
 
 // <-- Inline field wierd edge cases -->
 

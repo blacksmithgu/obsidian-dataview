@@ -2,6 +2,8 @@
 
 Treat your obsidian vault as a database which you can query from. Provides a fully-fledged query language for filtering, sorting, and extracting data from your pages. See the Examples section below for some quick examples, or the full [reference](https://blacksmithgu.github.io/obsidian-dataview/).
 
+For plugin developer who want to utilize dataview api, [check here](#type-definitions) to get type definitions and method to get api on load.
+
 ## Examples
 
 Show all games in the game folder, sorted by rating, with some metadata:
@@ -14,7 +16,7 @@ sort rating desc
 ```
 ~~~
 
-![Game Example](docs/static/images/game.png)
+![Game Example](docs/docs/assets/game.png)
 
 ---
 
@@ -26,7 +28,7 @@ list from #game/moba or #game/crpg
 ```
 ~~~
 
-![Game List](docs/static/images/game-list.png)
+![Game List](docs/docs/assets/game-list.png)
 
 ---
 
@@ -38,7 +40,7 @@ task from #projects/active
 ```
 ~~~
 
-![Task List](docs/static/images/project-task.png)
+![Task List](docs/docs/assets/project-task.png)
 
 ---
 
@@ -62,7 +64,7 @@ sort file.day desc
 ```
 ~~~
 
-# Usage
+## Usage
 
 **Note**: See the full documentation [here](https://blacksmithgu.github.io/obsidian-dataview/).
 
@@ -119,7 +121,84 @@ Additionally, all of the fields defined in the YAML front-matter are available f
   object using dot-notation or array notation (`object.field` or `object["field"]`).
 - `string`: Generic fallback; if a field is not a more specific type, it is a string, which is just text. To use a string in a query, use quotes - so `"string"`.
 
-# Roadmap
+## Type Definitions
+
+1. run `npm i -D obsidian-dataview` in your plugin dir
+2. create a new file named `types.d.ts` under the same dir as `main.ts`
+3. copy the following code into new file, then you can 
+   1. check if dataview enabled: `plugin.app.enabledPlugins.has("dataview")`
+   2. access dataview api: `plugin.app.plugins.dataview?.api` (may return undefined)
+   3. bind to dataview events: `plugin.registerEvent(plugin.app.metadataCache.on("dataview:...",(...)=>{...}))`
+
+~~~ts
+import "obsidian";
+import { DataviewApi } from "obsidian-dataview";
+
+declare module "obsidian" {
+  interface App {
+    plugins: {
+      enabledPlugins: Set<string>;
+      plugins: {
+        [id: string]: any;
+        dataview?: {
+          api?: DataviewApi;
+        };
+    };
+  }
+  interface MetadataCache {
+    on(
+      name: "dataview:api-ready",
+      callback: (api: DataviewPlugin["api"]) => any,
+      ctx?: any
+    ): EventRef;
+    on(
+      name: "dataview:metadata-change",
+      callback: (
+        ...args:
+          | [op: "rename", file: TAbstractFile, oldPath: string]
+          | [op: "delete", file: TFile]
+          | [op: "update", file: TFile]
+      ) => any,
+      ctx?: any
+    ): EventRef;
+  }
+}
+~~~
+
+PS: method to check if api is available when loading plugin:
+
+~~~ts
+async onload() {
+  const doSomethingWith = (api: DataviewPlugin["api"]) => {
+    // do something
+  };
+  if (this.app.enabledPlugins.has("dataview")) {
+    const api = this.app.plugins.dataview?.api;
+    if (api) doSomethingWith(api);
+    else
+      this.registerEvent(
+        this.app.metadataCache.on("dataview:api-ready", (api) =>
+          doSomethingWith(api)
+        )
+      );
+  }
+}
+~~~
+
+Value utils is exposed to check types of data:
+
+~~~ts
+import { Values } from "obsidian-dataview"
+
+const field = plugin.app.plugins.dataview?.api.page('sample.md').field;
+if (!field) return;
+
+if (Values.isHtml(field)) // do something
+else if (Values.isLink(field)) // do something
+// ...
+~~~
+
+## Roadmap
 
 There is a lot of potential for a generic query system; here is the upcoming features (roughly sorted in order in which I'll work on them):
 
@@ -159,11 +238,11 @@ There is a lot of potential for a generic query system; here is the upcoming fea
     - [ ] Hierarchical view
     - [ ] Object view (create custom objects anywhere in a file & collect them into a list)
 
-# Contributing
+## Contributing
 
 Contributions via bug reports, bug fixes, documentation, and general improvements are always welcome. For more major feature work, make an issue about the feature idea / reach out to me so we can judge feasibility and how best to implement it.
 
-# Support
+## Support
 
 Have you found the Dataview plugin helpful, and want to support it? I accept donations which go towards future development efforts.
 

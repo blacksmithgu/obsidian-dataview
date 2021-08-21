@@ -1,8 +1,8 @@
-import { canonicalizeVarName, getExtension, getFileName, getParentFolder } from 'src/util/normalize';
+import { canonicalizeVarName, getExtension, getFileName, getParentFolder } from 'util/normalize';
 import { getAllTags, MetadataCache, parseFrontMatterAliases, parseFrontMatterTags, TFile } from 'obsidian';
-import { EXPRESSION, parseInnerLink } from 'src/expression/parse';
+import { EXPRESSION, parseInnerLink } from 'expression/parse';
 import { DateTime } from 'luxon';
-import { FullIndex } from 'src/data/index';
+import { FullIndex } from 'data/index';
 import { DataObject, Link, LiteralValue, TransferableValue, TransferableValues, Values } from './value';
 
 interface BaseLinkMetadata {
@@ -194,7 +194,7 @@ export interface ParsedMarkdown {
 
 /** Encoded parsed markdown which can be transfered over the JavaScript web worker. */
 export interface TransferableMarkdown {
-    tasks: Task[];
+    tasks: TransferableValue[];
     fields: Map<string, TransferableValue[]>;
 }
 
@@ -206,7 +206,7 @@ export function markdownToTransferable(parsed: ParsedMarkdown): TransferableMark
     }
 
     return {
-        tasks: parsed.tasks,
+        tasks: TransferableValues.transferable(parsed.tasks) as TransferableValue[],
         fields: newFields
     };
 }
@@ -219,7 +219,7 @@ export function markdownFromTransferable(parsed: TransferableMarkdown): ParsedMa
     }
 
     return {
-        tasks: parsed.tasks,
+        tasks: TransferableValues.value(parsed.tasks) as Task[],
         fields: newFields
     };
 }
@@ -371,8 +371,8 @@ export function findTasksInFile(path: string, file: string): Task[] {
 	for (let line of file.replace("\r", "").split("\n")) {
 		lineno += 1;
 
-        // Fast bail-out before running more expensive regex matching.
-        if (!line.includes("[") || !line.includes("]")) {
+        // Check that we are actually a list element, to skip lines which obviously won't match.
+        if (!line.includes("*") && !line.includes("-")) {
             while (stack.length > 1) stack.pop();
             continue;
         }

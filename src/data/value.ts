@@ -1,6 +1,6 @@
 import { DateTime, Duration } from "luxon";
-import { DEFAULT_QUERY_SETTINGS, QuerySettings } from "src/settings";
-import { getFileName } from "src/util/normalize";
+import { DEFAULT_QUERY_SETTINGS, QuerySettings } from "settings";
+import { getFileName } from "util/normalize";
 
 /** An Obsidian link with all associated metadata. */
 export class Link {

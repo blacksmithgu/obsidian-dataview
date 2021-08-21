@@ -1,11 +1,12 @@
 /** Stores various indices on all files in the vault to make dataview generation fast. */
 import { MetadataCache, Vault, TFile, TAbstractFile } from 'obsidian';
 import { fromTransferable, PageMetadata, ParsedMarkdown, parsePage } from './file';
-import { getParentFolder } from 'src/util/normalize';
-import { DataObject } from "src/data/value";
+import { getParentFolder } from 'util/normalize';
+import { DataObject } from "data/value";
 
 import DataviewImportWorker from 'web-worker:./importer.ts';
-import { Result } from 'src/api/result';
+import { Result } from 'api/result';
+import DataviewPlugin from 'main';
 
 /** A generic index which indexes variables of the form key -> value[], allowing both forward and reverse lookups. */
 export class IndexMap {
@@ -156,10 +157,17 @@ export class BackgroundFileParser {
 /** Aggregate index which has several sub-indices and will initialize all of them. */
 export class FullIndex {
     /** Generate a full index from the given vault. */
-    static async generate(vault: Vault, cache: MetadataCache): Promise<FullIndex> {
-        let index = new FullIndex(vault, cache);
+    static async generate(plugin: DataviewPlugin): Promise<FullIndex> {
+        let index = new FullIndex(plugin);
         await index.initialize();
         return Promise.resolve(index);
+    }
+
+    public get vault(): Vault {
+        return this.plugin.app.vault;
+    }
+    public get metadataCache(): MetadataCache {
+        return this.plugin.app.metadataCache;
     }
 
     /* Maps path -> markdown metadata for all markdown pages. */
@@ -188,7 +196,7 @@ export class FullIndex {
     public backgroundParser: BackgroundFileParser;
 
     /** Construct a new index over the given vault and metadata cache. */
-    private constructor(public vault: Vault, public metadataCache: MetadataCache) {
+    private constructor(private plugin: DataviewPlugin) {
         this.pages = new Map();
         this.tags = new IndexMap();
         this.etags = new IndexMap();
@@ -200,7 +208,7 @@ export class FullIndex {
         this.metadataCache.on("changed", file => this.reload(file));
 
         // Renames do not set off the metadata cache; catch these explicitly.
-        vault.on("rename", (file, oldPath) => {
+        this.vault.on("rename", (file, oldPath) => {
             this.folders.delete(oldPath);
 
             if (file instanceof TFile) {
@@ -213,13 +221,13 @@ export class FullIndex {
             }
 
             this.revision += 1;
-            this.metadataCache.trigger("dataview:metadata-change", "rename", file, oldPath);
+            this.plugin.trigger("dataview:metadata-change", "rename", file, oldPath);
         });
 
         // File creation does cause a metadata change, but deletes do not. Clear the caches for this.
-        this.vault.on("delete", file => {
-            if (!(file instanceof TFile)) return;
-            file = file as TFile;
+        this.vault.on("delete", (af) => {
+            if (!(af instanceof TFile)) return;
+            let file = af as TFile;
 
             this.pages.delete(file.path);
             this.tags.delete(file.path);
@@ -228,7 +236,7 @@ export class FullIndex {
             this.folders.delete(file.path);
 
             this.revision += 1;
-            this.metadataCache.trigger("dataview:metadata-change", "delete", file);
+            this.plugin.trigger("dataview:metadata-change", "delete", file);
         });
     }
 
