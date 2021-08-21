@@ -4,9 +4,9 @@
 NEW_VERSION=$1
 
 # Delete old files if they exist
-rm package.tmp.json
-rm manifest.tmp.json
-rm versions.tmp.json
+#rm package.tmp.json
+#rm manifest.tmp.json
+#rm versions.tmp.json
 
 # Rewrite versions in relevant files.
 jq ".version=\"${NEW_VERSION}\"" package.json > package.tmp.json && mv package.tmp.json package.json
