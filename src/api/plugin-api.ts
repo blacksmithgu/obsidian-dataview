@@ -22,6 +22,8 @@ export class DataviewApi {
     /** Dataview functions which can be called from DataviewJS. */
     public func: Record<string, BoundFunctionImpl>;
 
+    public valueUtil = Values;
+
     public constructor(public app: App, public index: FullIndex, public settings: DataviewSettings) {
         this.evaluationContext = new Context(defaultLinkHandler(index, ""), settings);
         this.func = Functions.bindAll(DEFAULT_FUNCTIONS, this.evaluationContext);
