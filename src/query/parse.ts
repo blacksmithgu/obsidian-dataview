@@ -1,10 +1,10 @@
-import { EXPRESSION } from 'src/expression/parse';
+import { EXPRESSION } from 'expression/parse';
 import * as P from 'parsimmon';
 import { FlattenStep, GroupStep, LimitStep, NamedField, Query, QueryFields, QueryHeader, QueryOperation, QuerySortBy, QueryType, SortByStep, WhereStep } from './query';
-import { Source, Sources } from 'src/data/source';
-import { Fields } from 'src/expression/field';
-import { DEFAULT_QUERY_SETTINGS } from 'src/settings';
-import { Result } from 'src/api/result';
+import { Source, Sources } from 'data/source';
+import { Fields } from 'expression/field';
+import { DEFAULT_QUERY_SETTINGS } from 'settings';
+import { Result } from 'api/result';
 
 ///////////////////
 // Query Parsing //

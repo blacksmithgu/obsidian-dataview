@@ -1,7 +1,7 @@
-import { LiteralValue } from "src/data/value";
-import { Context, LinkHandler } from 'src/expression/context';
-import { EXPRESSION } from 'src/expression/parse';
-import { DEFAULT_QUERY_SETTINGS } from 'src/settings';
+import { LiteralValue } from "data/value";
+import { Context, LinkHandler } from 'expression/context';
+import { EXPRESSION } from 'expression/parse';
+import { DEFAULT_QUERY_SETTINGS } from 'settings';
 
 /** Expect that the given dataview expression resolves to the given value. */
 export function expectEvals(text: string, result: LiteralValue) {

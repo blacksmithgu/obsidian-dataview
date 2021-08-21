@@ -1,5 +1,5 @@
 import "obsidian";
-import DataviewPlugin from "../src/main";
+import DataviewPlugin from "main";
 
 declare module "obsidian" {
   interface MetadataCache {

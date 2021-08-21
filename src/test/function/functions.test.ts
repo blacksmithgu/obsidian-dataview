@@ -1,8 +1,8 @@
 // <-- Functions -->
 // <-- Function vectorization -->
 
-import { DefaultFunctions } from "src/expression/functions";
-import { parseEval, simpleContext } from "src/test/common";
+import { DefaultFunctions } from "expression/functions";
+import { parseEval, simpleContext } from "test/common";
 
 test("Evaluate lower(list)", () => {
     expect(parseEval("lower(list(\"A\", \"B\"))")).toEqual(["a", "b"]);

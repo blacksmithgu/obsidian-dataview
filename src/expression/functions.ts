@@ -1,8 +1,8 @@
 /** Default function implementations for the expression evaluator. */
 
 import { DateTime } from "luxon";
-import { Link, LiteralType, LiteralValue, Values } from "src/data/value";
-import { currentLocale } from "src/util/locale";
+import { Link, LiteralType, LiteralValue, Values } from "data/value";
+import { currentLocale } from "util/locale";
 import { LiteralReprAll, LiteralTypeOrAll } from "./binaryop";
 import type { Context } from "./context";
 import { Fields } from "./field";

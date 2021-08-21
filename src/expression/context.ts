@@ -1,11 +1,11 @@
 /** Core implementation of the query language evaluation engine. */
 
-import { DataObject, LiteralValue, Values } from "src/data/value";
-import { Result } from "src/api/result";
+import { DataObject, LiteralValue, Values } from "data/value";
+import { Result } from "api/result";
 import { BinaryOpHandler, createBinaryOps } from "./binaryop";
 import { Field, Fields } from "./field";
 import { DEFAULT_FUNCTIONS, FunctionImpl } from "./functions";
-import { QuerySettings } from "src/settings";
+import { QuerySettings } from "settings";
 
 /** Handles link resolution and normalization inside of a context. */
 export interface LinkHandler {

@@ -1,10 +1,6 @@
 {
   "compilerOptions": {
-    "baseUrl": "./",
-    "paths": {
-      "src/*": ["src/*"]
-    },
-    "typeRoots": ["node_modules/@types", "node_modules/obsidian", "types"],
+    "baseUrl": "src",
     "inlineSourceMap": true,
     "inlineSources": true,
     "module": "ESNext",
@@ -20,8 +16,7 @@
     "importHelpers": true,
     "downlevelIteration": true,
     "esModuleInterop": true,
-    "lib": [ "dom", "es5", "scripthost", "es2015" ]
+    "lib": ["dom", "es5", "scripthost", "es2015"]
   },
-  "include": [ "**/*.ts" ],
-  "exclude": ["node_modules"]
+  "include": ["src/**/*.ts"]
 }

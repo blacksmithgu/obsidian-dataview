@@ -1,10 +1,10 @@
 import { DateTime, Duration } from "luxon";
-import { Link, LiteralValue } from "src/data/value";
+import { Link, LiteralValue } from "data/value";
 import * as P from 'parsimmon';
 import { BinaryOp, Field, Fields, LambdaField, ListField, LiteralField, ObjectField, VariableField } from "./field";
-import { FolderSource, NegatedSource, Source, SourceOp, Sources, TagSource, CsvSource } from "src/data/source";
-import { normalizeDuration } from "src/util/normalize";
-import { Result } from "src/api/result";
+import { FolderSource, NegatedSource, Source, SourceOp, Sources, TagSource, CsvSource } from "data/source";
+import { normalizeDuration } from "util/normalize";
+import { Result } from "api/result";
 
 /** Provides a lookup table for unit durations of the given type. */
 export const DURATION_TYPES = {

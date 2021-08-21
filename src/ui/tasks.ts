@@ -1,7 +1,7 @@
 import { Vault, MarkdownRenderChild, MarkdownRenderer, Component } from 'obsidian';
-import { Task, TASK_REGEX } from 'src/data/file';
+import { Task, TASK_REGEX } from 'data/file';
 import { createAnchor } from './render';
-import { getFileName } from 'src/util/normalize';
+import { getFileName } from 'util/normalize';
 
 /** Holds DOM events for a rendered task view, including check functionality. */
 export class TaskViewLifecycle extends MarkdownRenderChild {
