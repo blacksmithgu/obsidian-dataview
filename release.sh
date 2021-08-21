@@ -17,12 +17,11 @@ jq ". + {\"${NEW_VERSION}\": \"0.12.0\"}" versions.json > versions.tmp.json && m
 git commit -a -m "${NEW_VERSION}"
 git push
 
-rm -rf @types
-tsc --declarationDir @types --declaration --emitDeclarationOnly
-npm publish --access public
-
 # Rebuild the project to prepare for a release.
 npm run build
+
+# release api
+npm publish --access public
 
 # And do a github release.
 gh release create "${NEW_VERSION}" build/main.js styles.css manifest.json

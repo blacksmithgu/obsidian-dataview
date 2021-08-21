@@ -132,7 +132,7 @@ Additionally, all of the fields defined in the YAML front-matter are available f
 
 ~~~ts
 import "obsidian";
-import DataviewPlugin from "obsidian-dataview";
+import { DataviewApi } from "obsidian-dataview";
 
 declare module "obsidian" {
   interface App {
@@ -140,8 +140,9 @@ declare module "obsidian" {
       enabledPlugins: Set<string>;
       plugins: {
         [id: string]: any;
-        dataview?: DataviewPlugin;
-      };
+        dataview?: {
+          api?: DataviewApi;
+        };
     };
   }
   interface MetadataCache {
@@ -182,6 +183,19 @@ async onload() {
       );
   }
 }
+~~~
+
+Value utils is exposed to check types of data:
+
+~~~ts
+import { Values } from "obsidian-dataview"
+
+const field = plugin.app.plugins.dataview?.api.page('sample.md').field;
+if (!field) return;
+
+if (Values.isHtml(field)) // do something
+else if (Values.isLink(field)) // do something
+// ...
 ~~~
 
 ## Roadmap

@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "baseUrl": "src",
+    "module": "ESNext",
+    "declaration": true,
+    "outDir": "lib",
+    "target": "es6",
+    "allowJs": false,
+    "noImplicitAny": true,
+    "strictFunctionTypes": true,
+    "strictNullChecks": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "noUnusedLocals": true,
+    "moduleResolution": "node",
+    "importHelpers": true,
+    "downlevelIteration": true,
+    "esModuleInterop": true,
+    "plugins": [{ "transform": "@zerollup/ts-transform-paths" }],
+    "lib": ["dom", "es5", "scripthost", "es2015"]
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/test/**/*"]
+}
