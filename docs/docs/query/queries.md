@@ -71,6 +71,26 @@ You can render a single computed value in addition to each matching file, by add
     - [2020-12-17 DN](#): File path: 4. Archive/Daily Notes/2020-12-17 DN.md
     - [2020-12-15 DN](#): File path: 4. Archive/Daily Notes/2020-12-15 DN.md
 
+##### LIST WITHOUT ID
+
+If you don't want the file name / group key included in the list view, you can use `LIST WITHOUT ID`:
+
+=== "Syntax"
+    ```
+    LIST WITHOUT ID <expression> FROM <source>
+    ```
+=== "Query"
+    ```sql
+    LIST WITHOUT ID file.path FROM "4. Archive"
+    ```
+=== "Output"
+    - 4. Archive/Daily Notes/2020-12-18 DN.md
+    - 4. Archive/Daily Notes/2020-12-16 DN.md
+    - 4. Archive/Daily Notes/2020-12-17 DN.md
+    - 4. Archive/Daily Notes/2020-12-15 DN.md
+
+---
+
 ### Table Queries
 
 Tables support tabular views of page data. You construct a table by giving a comma separated list of the YAML frontmatter fields you want to render, as so:
@@ -96,12 +116,36 @@ An example table query:
     FROM #game
     SORT rating DESC
     ```
+
 === "Output"
     |File|Time Played|Length|Rating|
     |-|-|-|-|
     |[Outer Wilds](#)|November 19th - 21st, 2020|15h|9.5|
     |[Minecraft](#)|All the time.|2000h|9.5|
     |[Pillars of Eternity 2](#)|August - October 2019|100h|9|
+
+##### TABLE WITHOUT ID
+
+If you don't want the default "File" or "Group" field in your output (either to replace it or because it is unneeded), you can use
+`TABLE WITHOUT ID`:
+
+=== "Query"
+    ``` sql
+    TABLE WITHOUT ID
+      time-played AS "Time Played",
+      length AS "Length",
+      rating AS "Rating"
+    FROM #game
+    SORT rating DESC
+    ```
+=== "Output"
+    |Time Played|Length|Rating|
+    |-|-|-|
+    |November 19th - 21st, 2020|15h|9.5|
+    |All the time.|2000h|9.5|
+    |August - October 2019|100h|9|
+
+---
 
 ### Task Queries
 
@@ -145,8 +189,14 @@ filtering. You can select from any [source](/query/sources), which currently mea
   - To obtain all pages which link FROM `[[note]]` (i.e., all the links in that file), use `FROM outgoing([[note]])`.
 
 You can compose these filters in order to get more advanced sources using `and` and `or`.
+
 - For example, `#tag and "folder"` will return all pages in `folder` and with `#tag`.
 - `[[Food]] or [[Exercise]]` will give any pages which link to `[[Food]]` OR `[[Exercise]]`.
+
+You can also "negate" sources to obtain anything that does NOT match a source using `-`:
+
+- `-#tag` will exclude files which have the given tag.
+- `#tag and -"folder"` will only include files tagged `#tag` which are NOT in `"folder"`.
 
 ### WHERE
 

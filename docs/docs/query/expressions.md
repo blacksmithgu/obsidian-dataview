@@ -4,7 +4,20 @@ Dataview query language *expressions* are anything that yields a value - all fie
 values (like `6`), as are computed values (like `field - 9`). For a very high level summary:
 
 ```
-# General
+# Literals
+1                   (number)
+true/false          (boolean)
+"text"              (text)
+date(2021-04-18)    (date)
+dur(1 day)          (duration)
+[[Link]]            (link)
+[1, 2, 3]           (list)
+{ a: 1, b: 2 }      (object)
+
+# Lambdas
+(x1, x2) => ...     (lambda)
+
+# References
 field               (directly refer to a field)
 simple-field        (refer to fields with spaces/punctuation in them like "Simple Field!")
 a.b                 (if a is an object, retrieve field named 'b')
@@ -40,6 +53,11 @@ refer to it directly by name - `field`. If the field name has spaces, punctuatio
 characters, then you can refer to it using Dataview's simplified name, which is all lower case with spaces replaced with
 "-". For example, `this is a field` becomes `this-is-a-field`; `Hello!` becomes `hello`, and so on.
 
+### Literals
+
+Constant values - things like `1` or `"hello"` or `date(som)` ("start of month"). There are literals for each data type
+that dataview supports; you can see the reference above for examples of what each literal type looks like.
+
 ### Arithmetic
 
 You can use standard arithmetic operators to combine fields: addition (`+`), subtraction (`-`), multiplication (`*`),
@@ -65,6 +83,24 @@ to retrieve. For example `object("yes", 1).yes = 1`.
 Dataview supports various functions for manipulating data, which are described in full in the [functions
 documentation](functions). They have the general syntax `function(arg1, arg2, ...)` - i.e., `lower("yes")` or
 `regexmatch("text", ".+")`.
+
+### Lambdas
+
+Lambdas are advanced literals which let you define a function that takes some number of inputs, and produces an output.
+They have the general form:
+
+```
+(arg1, arg2, arg3, ...) => <expression using args>
+```
+
+Lambdas are used in several advanced operators like `reduce` and `map` to allow for complex transformations of data. A
+few examples:
+
+```
+(x, y) => x + y                 (sum x and y)
+(x) => 2 * x                    (double x)
+(value) => length(value) = 4    (return true if value is length 4)
+```
 
 ---
 

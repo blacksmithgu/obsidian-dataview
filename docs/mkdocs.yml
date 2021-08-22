@@ -16,9 +16,9 @@ theme:
   favicon: assets/obsidian.png
   custom_dir: overrides
 nav:
-  - Introduction: 'intro.md'
-  - Pages and Fields: 'where-data-comes-from.md'
-  - Creating Queries: 'creating-queries.md'
+  - Overview: 'index.md'
+  - Data Annotation: 'data-annotation.md'
+  - Data Querying: 'data-queries.md'
   - Query Language:
     - Queries: 'query/queries.md'
     - Expressions: 'query/expressions.md'
@@ -35,7 +35,6 @@ nav:
 plugins:
   - redirects:
       redirect_maps:
-        docs/intro.md: intro.md
         docs/where-data-comes-from.md: where-data-comes-from.md
         docs/creating-queries.md: creating-queries.md
         docs/query/queries.md: query/queries.md
