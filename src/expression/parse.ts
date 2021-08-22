@@ -224,7 +224,7 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
 
     // An Obsidian link of the form [[<link>]].
     link: q =>
-        P.regexp(/\[\[([^\[\]]+?)\]\]/u, 1)
+        P.regexp(/\[\[([^\[\]]*?)\]\]/u, 1)
             .map(linkInner => parseInnerLink(linkInner))
             .desc("file link"),
     embedLink: q =>

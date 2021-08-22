@@ -53,3 +53,11 @@ export function tryOrPropogate<T>(func: () => Result<T, string>): Result<T, stri
         return Result.failure("" + error + "\n\n" + error.stack);
     }
 }
+
+/**
+ * Escape regex characters in a string.
+ * See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions.
+ */
+export function escapeRegex(str: string) {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}

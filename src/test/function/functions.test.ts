@@ -147,6 +147,18 @@ test("Evaluate regexreplace", () => {
     expect(parseEval('regexreplace("yes", "yes", "no")')).toEqual("no");
 });
 
+// <-- containsword() -->
+
+describe("containsword()", () => {
+    test("single word", () => expect(parseEval('containsword("yes", "yes")')).toEqual(true));
+    test("two word", () => expect(parseEval('containsword("yes no", "no")')).toEqual(true));
+    test("negative two word", () => expect(parseEval('containsword("yes no", "maybe")')).toEqual(false));
+    test("subword", () => expect(parseEval('containsword("Hello there, chap!", "the")')).toEqual(false));
+    test("punctuation", () => expect(parseEval('containsword("Hello there, chap!", "there")')).toEqual(true));
+    test("case insensitive", () => expect(parseEval('containsword("Hello there, chap!", "hello")')).toEqual(true));
+    test("case insensitive 2", () => expect(parseEval('containsword("Hello there, chap!", "HELLO")')).toEqual(true));
+});
+
 // <-- nonnull() -->
 
 test("Evaluate nonnull()", () => {

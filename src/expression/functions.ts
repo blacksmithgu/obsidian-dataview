@@ -7,6 +7,7 @@ import { LiteralReprAll, LiteralTypeOrAll } from "./binaryop";
 import type { Context } from "./context";
 import { Fields } from "./field";
 import { EXPRESSION } from "./parse";
+import { escapeRegex } from "util/normalize";
 
 /**
  * A function implementation which takes in a function context and a variable number of arguments. Throws an error if an
@@ -319,6 +320,18 @@ export namespace DefaultFunctions {
         .vectorize(2, [1])
         .build();
 
+    // Case insensitive contains which looks for exact word matches (i.e., boundry-to-boundry match).
+    export const containsword: FunctionImpl = new FunctionBuilder("containsword")
+        .add2(
+            "string",
+            "string",
+            (hay, needle) => !!hay.match(new RegExp(".*\\b" + escapeRegex(needle) + "\\b.*", "i"))
+        )
+        .add2("null", "*", (_a, _b) => null)
+        .add2("*", "null", (_a, _b) => null)
+        .vectorize(2, [0, 1])
+        .build();
+
     /** Extract 0 or more keys from a given object via indexing. */
     export const extract: FunctionImpl = (context: Context, ...args: LiteralValue[]) => {
         if (args.length == 0) return "extract(object, key1, ...) requires at least 1 argument";
@@ -553,6 +566,7 @@ export const DEFAULT_FUNCTIONS: Record<string, FunctionImpl> = {
     contains: DefaultFunctions.contains,
     icontains: DefaultFunctions.icontains,
     econtains: DefaultFunctions.econtains,
+    containsword: DefaultFunctions.containsword,
     reverse: DefaultFunctions.reverse,
     sort: DefaultFunctions.sort,
 

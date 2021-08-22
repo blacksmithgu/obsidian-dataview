@@ -353,7 +353,7 @@ describe("Lists", () => {
 
     test('["a"]', () => expect(EXPRESSION.field.tryParse('["a" ]')).toEqual(Fields.list([Fields.literal("a")])));
 
-    test("[[]]", () => expect(EXPRESSION.field.tryParse("[[]]")).toEqual(Fields.list([Fields.list([])])));
+    test("[[]]", () => expect(EXPRESSION.field.tryParse("[ [] ]")).toEqual(Fields.list([Fields.list([])])));
 });
 
 // <-- Objects -->

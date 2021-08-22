@@ -91,9 +91,19 @@ export const QUERY_LANGUAGE = P.createLanguage<QueryLanguageTypes>({
                         }
                     );
                 case "list":
-                    return EXPRESSION.field.atMost(1).map(format => {
-                        return { type: "list", format: format.length == 1 ? format[0] : undefined };
-                    });
+                    return P.seqMap(
+                        P.regexp(/WITHOUT\s+ID/i)
+                            .skip(P.optWhitespace)
+                            .atMost(1),
+                        EXPRESSION.field.atMost(1),
+                        (withoutId, format) => {
+                            return {
+                                type: "list",
+                                format: format.length == 1 ? format[0] : undefined,
+                                showId: withoutId.length == 0,
+                            };
+                        }
+                    );
                 case "task":
                     return P.succeed({ type: "task" });
                 default:

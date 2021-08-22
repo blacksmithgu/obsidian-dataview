@@ -1,6 +1,6 @@
 import { canonicalizeVarName, getExtension, getFileName, getParentFolder } from "util/normalize";
 import { getAllTags, MetadataCache, parseFrontMatterAliases, parseFrontMatterTags, TFile } from "obsidian";
-import { EXPRESSION, parseInnerLink } from "expression/parse";
+import { EXPRESSION } from "expression/parse";
 import { DateTime } from "luxon";
 import { FullIndex } from "data/index";
 import { DataObject, Link, LiteralValue, TransferableValue, TransferableValues, Values } from "./value";
@@ -294,15 +294,8 @@ export function parseFrontmatter(value: any): LiteralValue {
         return null;
     } else if (typeof value === "object") {
         if (Array.isArray(value)) {
-            let object = value as Array<any>;
-            // Special case for link syntax, which shows up as double-nested arrays.
-            // TODO: Need to replace this with something else.
-            if (object.length == 1 && Array.isArray(object[0]) && object[0].every(v => typeof v === "string")) {
-                return parseInnerLink(object[0].join(", "));
-            }
-
             let result = [];
-            for (let child of object) {
+            for (let child of value as Array<any>) {
                 result.push(parseFrontmatter(child));
             }
 

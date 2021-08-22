@@ -41,6 +41,8 @@ export interface ListQuery {
     type: "list";
     /** What should be rendered in the list. */
     format?: Field;
+    /** If true, show the default DI field; otherwise, don't. */
+    showId: boolean;
 }
 
 /** A query which renders a table of elements. */

@@ -14,7 +14,7 @@ import {
 import { renderErrorPre, renderList, renderTable, renderValue } from "ui/render";
 import { FullIndex } from "data/index";
 import * as Tasks from "ui/tasks";
-import { Query, TableQuery } from "query/query";
+import { ListQuery, Query, TableQuery } from "query/query";
 import { Field } from "expression/field";
 import { parseField } from "expression/parse";
 import { parseQuery } from "query/parse";
@@ -516,18 +516,24 @@ class DataviewListRenderer extends MarkdownRenderChild {
             renderErrorPre(this.container, "Dataview: Query returned 0 results.");
             return;
         }
+
+        let showId = (this.query.header as ListQuery).showId;
+        let showValue = !!(this.query.header as ListQuery).format;
+
         let result = maybeResult.value;
         let rendered: LiteralValue[] = [];
         for (let row of result.data) {
-            if (row.value) {
+            if (showValue && showId) {
                 let span = document.createElement("span");
                 await renderValue(row.primary, span, this.origin, this, this.settings, false, "list");
                 span.appendText(": ");
-                await renderValue(row.value, span, this.origin, this, this.settings, true, "list");
+                await renderValue(row.value || null, span, this.origin, this, this.settings, true, "list");
 
                 rendered.push(span);
-            } else {
+            } else if (showId) {
                 rendered.push(row.primary);
+            } else if (showValue) {
+                rendered.push(row.value || null);
             }
         }
 
