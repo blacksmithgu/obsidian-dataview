@@ -8,7 +8,7 @@ below for some quick examples, or the full [reference](https://blacksmithgu.gith
 
 Show all games in the game folder, sorted by rating, with some metadata:
 
-~~~
+~~~markdown
 ```dataview
 table time-played, length, rating
 from "games"
@@ -22,7 +22,7 @@ sort rating desc
 
 List games which are MOBAs or CRPGs.
 
-~~~
+~~~markdown
 ```dataview
 list from #game/moba or #game/crpg
 ```
@@ -34,7 +34,7 @@ list from #game/moba or #game/crpg
 
 List all tasks in un-completed projects:
 
-~~~
+~~~markdown
 ```dataview
 task from #projects/active
 ```
@@ -46,7 +46,7 @@ task from #projects/active
 
 Show all files in the `books` folder that you read in 2021, grouped by genre and sorted by rating:
 
-~~~
+~~~markdown
 ```dataviewjs
 for (let group of dv.pages("#book").where(p => p["time-read"].year == 2021).groupBy(p => p.genre)) {
 	dv.header(3, group.key);
@@ -72,25 +72,27 @@ aspects of Dataview: *data* and
 Dataview generates *data* from your vault by pulling
 information from **Markdown frontmatter** and **Inline fields**.
 
-- Markdown frontmatter is arbitrary YAML enclosed by `===` at the top of a markdown document which can store metadata
+- Markdown frontmatter is arbitrary YAML enclosed by `---` at the top of a markdown document which can store metadata
   about that document.
 - Inline fields are a Dataview feature which allow you to write metadata directly inline in your markdown document via
   `Key:: Value` syntax.
 
 Examples of both are shown below:
 
-```
-===
+```yaml
+---
 alias: "document"
 last-reviewed: 2021-08-17
 thoughts:
   rating: 8
   reviewable: false
-===
+---
+```
+```markdown
 # Markdown Page
 
 Basic Field:: Value
-**Highlighted Field**:: Nice!
+**Bold Field**:: Nice!
 ```
 
 #### **Querying**
@@ -101,7 +103,7 @@ modes:
 1. **Dataview Query Language (DQL)**: A pipeline-based, vaguely SQL-looking expression language which can support basic
    use cases. See the [documentation](https://blacksmithgu.github.io/obsidian-dataview/query/queries/) for details.
 
-   ~~~
+   ~~~markdown
    ```dataview
    TABLE file.name AS "File", rating AS "Rating" FROM #book
    ```
@@ -111,7 +113,7 @@ modes:
    preview mode. See the [documentation](https://blacksmithgu.github.io/obsidian-dataview/query/expressions/) for
    allowable queries.
 
-   ```
+   ```markdown
    We are on page `= this.file.name`.
    ```
 
@@ -119,7 +121,7 @@ modes:
    rendering utilities. Highly recommended if you know JavaScript, since this is far more powerful than the query
    language. Check the [documentation](https://blacksmithgu.github.io/obsidian-dataview/api/intro/) for more details.
 
-   ~~~
+   ~~~markdown
    ```dataviewjs
    dv.taskList(dv.pages().file.tasks.where(t => !t.completed));
    ```
@@ -128,7 +130,7 @@ modes:
 4. **Inline JS Expressions**: The JavaScript equivalent to inline expressions, which allow you to execute arbitary JS
    inline:
 
-   ~~~
+   ~~~markdown
    This page was last modified at `$= dv.current().file.mtime`.
    ~~~
 
@@ -143,12 +145,11 @@ implement it.
 The codebase is written in TypeScript and uses `rollup` / `node` for compilation; for a first time set up, all you
 should need to do is pull, install, and build:
 
-```bash
-git clone git@github.com:blacksmithgu/obsidian-dataview.git
-cd obsidian-dataview
-
-npm install
-npm run dev
+```console
+foo@bar:~$ git clone git@github.com:blacksmithgu/obsidian-dataview.git
+foo@bar:~$ cd obsidian-dataview
+foo@bar:~/obsidian-dataview$ npm install
+foo@bar:~/obsidian-dataview$ npm run dev
 ```
 
 This will install libraries, build dataview, and deploy it to `test-vault`, which you can then open in Obsidian. This
@@ -159,19 +160,19 @@ reload itself.
 
 If you want to dogfood dataview in your real vault, you can build and install manually:
 
-```bash
-npm run build
-./install-built.sh path/to/your/vault
+```console
+foo@bar:~/obsidian-dataview$ npm run build
+foo@bar:~/obsidian-dataview$ ./install-built.sh path/to/your/vault
 ```
 
 #### Building Documentation
 
 We use `MkDocs` for documentation (found in `docs/`). You'll need to have python and pip to run it locally:
 
-```
-pip3 install mkdocs mkdocs-material mkdocs-redirects
-cd docs
-mkdocs serve
+```console
+foo@bar:~/obsidian-dataview$ pip3 install mkdocs mkdocs-material mkdocs-redirects
+foo@bar:~/obsidian-dataview$ cd docs
+foo@bar:~/obsidian-dataview/docs$ mkdocs serve
 ```
 
 This will start a local web server rendering the documentation in `docs/docs`, which will live-reload on change.
