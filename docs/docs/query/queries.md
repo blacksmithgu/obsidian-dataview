@@ -1,6 +1,3 @@
----
-sidebar_position: 1
----
 # Queries
 
 The dataview query language is a simple, structured, custom query language for quickly creating views on your data. It
@@ -92,10 +89,10 @@ An example table query:
 
 === "Query"
     ``` sql
-    TABLE 
-      time-played AS "Time Played", 
-      length AS "Length", 
-      rating AS "Rating" 
+    TABLE
+      time-played AS "Time Played",
+      length AS "Length",
+      rating AS "Rating"
     FROM #game
     SORT rating DESC
     ```
@@ -202,7 +199,7 @@ You can then apply aggregation operators like `sum()` over the resulting array.
 
 Flatten an array in every row, yielding one result row per entry in the array.
 
-``` 
+```
 FLATTEN field
 FLATTEN (computed_field) AS name
 ```
@@ -224,4 +221,3 @@ For example, flatten the `authors` field in each literature note to give one row
     |Soap Dragons SN|Joe McCormick|
     |smithPainAssaultSelf2007 SN|Jonathan A. Smith|
     |smithPainAssaultSelf2007 SN|Mike Osborn|
-    

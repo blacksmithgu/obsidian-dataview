@@ -1,6 +1,3 @@
----
-sidebar_position: 3
----
 # Codeblock Reference
 
 Dataview JavaScript Codeblocks are created using the `dataviewjs` language specification for a codeblock:

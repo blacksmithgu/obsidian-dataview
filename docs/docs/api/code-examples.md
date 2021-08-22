@@ -1,6 +1,3 @@
----
-sidebar_position: 4
----
 # Codeblock Examples
 
 ## Grouped Books

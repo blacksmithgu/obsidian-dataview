@@ -1,8 +1,8 @@
 # Obsidian Dataview
 
-Treat your obsidian vault as a database which you can query from. Provides a fully-fledged query language for filtering, sorting, and extracting data from your pages. See the Examples section below for some quick examples, or the full [reference](https://blacksmithgu.github.io/obsidian-dataview/).
-
-For plugin developer who want to utilize dataview api, [check here](#type-definitions) to get type definitions and method to get api on load.
+Treat your [Obsidian](https://obsidian.md/) as a database which you can query from. Provides a JavaScript API and
+pipeline-based query language for filtering, sorting, and extracting data from Markdown pages. See the Examples section
+below for some quick examples, or the full [reference](https://blacksmithgu.github.io/obsidian-dataview/) for all the details.
 
 ## Examples
 
@@ -44,206 +44,149 @@ task from #projects/active
 
 ---
 
-List all of the files in the `books` folder, sorted by the last time you modifed the file:
+Show all files in the `books` folder that you read in 2021, grouped by genre and sorted by rating:
 
 ~~~
-```dataview
-table mtime from "books"
-sort mtime desc
+```dataviewjs
+for (let group of dv.pages("#book").where(p => p["time-read"].year == 2021).groupBy(p => p.genre)) {
+	dv.header(3, group.key);
+	dv.table(["Name", "Time Read", "Rating"],
+		group.rows
+			.sort(k => k.rating, 'desc')
+			.map(k => [k.file.link, k["time-read"], k.rating]))
+}
 ```
 ~~~
 
----
-
-List all files which have a date in their title (of the form `yyyy-mm-dd`), and list them by date order.
-
-~~~
-```dataview
-list where file.day
-sort file.day desc
-```
-~~~
+![Books By Genre](docs/docs/assets/books-by-genre.png)
 
 ## Usage
 
-**Note**: See the full documentation [here](https://blacksmithgu.github.io/obsidian-dataview/).
+For a full description of all features, instructions, and examples, see the
+[reference](https://blacksmithgu.github.io/obsidian-dataview/). For a more brief outline, let us examine the two major
+aspects of Dataview: *data* and
+*querying*.
 
-Dataview allows you to write queries over markdown files which can be filtered by folder, tag, and markdown YAML fields; it can then display the resulting data in various formats. All dataviews are embedded code blocks with the general form:
+#### **Data**
 
-~~~
-```dataview
-[list|table|task] field1, (field2 + field3) as myfield, ..., fieldN
-from #tag or "folder" or [[link]] or outgoing([[link]])
-where field [>|>=|<|<=|=|&|'|'] [field2|literal value] (and field2 ...) (or field3...)
-sort field [ascending|descending|asc|desc] (ascending is implied if not provided)
+Dataview generates *data* from your vault by pulling
+information from **Markdown frontmatter** and **Inline fields**.
+
+- Markdown frontmatter is arbitrary YAML enclosed by `===` at the top of a markdown document which can store metadata
+  about that document.
+- Inline fields are a Dataview feature which allow you to write metadata directly inline in your markdown document via
+  `Key:: Value` syntax.
+
+Examples of both are shown below:
+
 ```
-~~~
+===
+alias: "document"
+last-reviewed: 2021-08-17
+thoughts:
+  rating: 8
+  reviewable: false
+===
+# Markdown Page
 
-The first word in a query is always the view type - currently, either:
-- `list`, which just renders a list of files that pass the query filters.
-- `table`, which renders files and any selected fields that pass the query filters.
-- `task`, which renders all tasks from any files that pass the query filters.
+Basic Field:: Value
+**Highlighted Field**:: Nice!
+```
 
-You can query from either `#tags`, from `"folder"`, or from `[[link]]`. You can freely combine these filters into more complicated boolean expressions using `and` and `or`; if precedence is important, use parentheses.
+#### **Querying**
 
-Fields can be any YAML front-matter field (currently, strings, numbers, ISO dates and durations are supported, with support for ratings, links, and intervals forthcoming), any custom defined field (using the `field as field2` syntax). You can obtain fields inside of YAML objects using the `.` operator - i.e., `Dates.Birthday` for example. Fields can also be functions of other fields - for example, `rating + offset`, is a valid field.
+Once you've annotated documents and the like with metadata, you can then query it using any of Dataview's four query
+modes:
 
-#### Field Specifics
+1. **Dataview Query Language (DQL)**: A pipeline-based, vaguely SQL-looking expression language which can support basic
+   use cases. See the [documentation](https://blacksmithgu.github.io/obsidian-dataview/query/queries/) for details.
 
-All files have the following implicit attributes:
+   ~~~
+   ```dataview
+   TABLE file.name AS "File", rating AS "Rating" FROM #book
+   ```
+   ~~~
 
-- `file.name`: The file title.
-- `file.path`: The full file path.
-- `file.size`: The size (in bytes) of the file.
-- `file.ctime`: The date that the file was created.
-- `file.mtime`: The date that the file was last modified.
+2. **Inline Expressions**: DQL expressions which you can embed directly inside markdown and which will be evaluated in
+   preview mode. See the [documentation](https://blacksmithgu.github.io/obsidian-dataview/query/expressions/) for
+   allowable queries.
 
-If the file has a date inside its title (of form `yyyy-mm-dd`), it also obtains the following attributes:
+   ```
+   We are on page `= this.file.name`.
+   ```
 
-- `file.day`: The date contained in the file title.
+3. **DataviewJS**: A high-powered JavaScript API which gives full access to the Dataview index and some convienent
+   rendering utilities. Highly recommended if you know JavaScript, since this is far more powerful than the query
+   language. Check the [documentation](https://blacksmithgu.github.io/obsidian-dataview/api/intro/) for more details.
 
-Additionally, all of the fields defined in the YAML front-matter are available for querying. You can query inside nested objects using dot notation (so `dates.birthday` would get the `birthday` object inside the `dates` field). Fields can have the following types:
+   ~~~
+   ```dataviewjs
+   dv.taskList(dv.pages().file.tasks.where(t => !t.completed));
+   ```
+   ~~~
 
-- `number`: A number like `0` or `18` or `19.37`.
-- `date`: A date and time in ISO8601 format - `yyyy-mm-ddThh:mm:ss`. Everything after the year and month is optional, so
-  you can just write `yyyy-mm` or `yyyy-mm-dd` or `yyyy-mm-ddThh`. If you want to use a date in a query, use
-  `date(<date>)` where `<date>` is either a date, `today`, `tomorrow`, `eom` (end of month), or `eoy` (end of year).
-    - You can access date fields like 'years' and so on via dot-notation (i.e., `date(today).year`).
-- `duration`: A length of time - can be added/subtracted from dates. Has the format `<number> years/months/.../seconds`,
-  where the unit can be years, months, weeks, days, hours, minutes, or seconds. If you want to use a duration in a
-  query, use `dur(<duration>)`.
-    - You can access duration fields like 'years' and so on via dot-notation (i.e., `dur(<duration>).years`).
-- `link`: An obsidian link (in the same format); you can use dot-notation to get fields in the linked file. For example,
-  `[[2020-09-20]].file.ctime` would get the creation time of the `2020-09-20` note.
-- `array`: A list of elements. Automatically created by YAML lists in the frontmatter; can manually be created using
-  `list(elem1, elem2, ...)`.
-- `object`: A mapping of name -> value. Automatically created from YAML objects. You can access elements inside an
-  object using dot-notation or array notation (`object.field` or `object["field"]`).
-- `string`: Generic fallback; if a field is not a more specific type, it is a string, which is just text. To use a string in a query, use quotes - so `"string"`.
+4. **Inline JS Expressions**: The JavaScript equivalent to inline expressions, which allow you to execute arbitary JS
+   inline:
 
-## Type Definitions
-
-1. run `npm i -D obsidian-dataview` in your plugin dir
-2. create a new file named `types.d.ts` under the same dir as `main.ts`
-3. copy the following code into new file, then you can 
-   1. check if dataview enabled: `plugin.app.enabledPlugins.has("dataview")`
-   2. access dataview api: `plugin.app.plugins.dataview?.api` (may return undefined)
-   3. bind to dataview events: `plugin.registerEvent(plugin.app.metadataCache.on("dataview:...",(...)=>{...}))`
-
-~~~ts
-import "obsidian";
-import { DataviewApi } from "obsidian-dataview";
-
-declare module "obsidian" {
-  interface App {
-    plugins: {
-      enabledPlugins: Set<string>;
-      plugins: {
-        [id: string]: any;
-        dataview?: {
-          api?: DataviewApi;
-        };
-    };
-  }
-  interface MetadataCache {
-    on(
-      name: "dataview:api-ready",
-      callback: (api: DataviewPlugin["api"]) => any,
-      ctx?: any
-    ): EventRef;
-    on(
-      name: "dataview:metadata-change",
-      callback: (
-        ...args:
-          | [op: "rename", file: TAbstractFile, oldPath: string]
-          | [op: "delete", file: TFile]
-          | [op: "update", file: TFile]
-      ) => any,
-      ctx?: any
-    ): EventRef;
-  }
-}
-~~~
-
-PS: method to check if api is available when loading plugin:
-
-~~~ts
-async onload() {
-  const doSomethingWith = (api: DataviewPlugin["api"]) => {
-    // do something
-  };
-  if (this.app.enabledPlugins.has("dataview")) {
-    const api = this.app.plugins.dataview?.api;
-    if (api) doSomethingWith(api);
-    else
-      this.registerEvent(
-        this.app.metadataCache.on("dataview:api-ready", (api) =>
-          doSomethingWith(api)
-        )
-      );
-  }
-}
-~~~
-
-Value utils is exposed to check types of data:
-
-~~~ts
-import { Values } from "obsidian-dataview"
-
-const field = plugin.app.plugins.dataview?.api.page('sample.md').field;
-if (!field) return;
-
-if (Values.isHtml(field)) // do something
-else if (Values.isLink(field)) // do something
-// ...
-~~~
-
-## Roadmap
-
-There is a lot of potential for a generic query system; here is the upcoming features (roughly sorted in order in which I'll work on them):
-
-- [X] **Query/frontmatter date and duration support**
-    - [X] Expose folder creation time and last modified time as date fields `file.ctime` and `file.mtime`.
-    - [X] Expose daily note days as date field `file.day`.
-    - [X] Add shorthands for some date constants - `today`, `tommorow`, `eom` (end-of-month), `som` (start-of-month).
-- [ ] **Embedded Metadata, Embedded Queries**:
-    - [ ] Embed shorthand queries using something like `dv: page.value`.
-    - [ ] Embed metadata outside the YAML block using customizable notation.
-    - [X] Add additional metadata about the current page (call it 'this') to ease templating support.
-- [ ] **Improved query debuggability**:
-    - [ ] Show query parse + execute time on views.
-    - [ ] Show errors for every file that failed to be selected due to query syntax error.
-    - [X] Improve parsimmon error reporting (possibly rewrite into custom recursive descent parser?)
-    - [X] More parser tests.
-- [ ] **More complex task queries**:
-    - [ ] Filter on a per-task, rather than per-file basis.
-    - [ ] Filter tasks by completion.
-    - [ ] Include nearby context with tasks - the header they are under, the preceding paragraph, etc.
-- [ ] **More query fields**:
-    - [X] Select file title. See `file.name`.
-    - [X] Select file length (in words, in bytes, etc). See `file.size`.
-    - [ ] Select from CSV (data is selected from CSV).
-- [ ] **Responsive views**:
-    - [ ] Allow automatic sorting by clicking on headers.
-    - [ ] Allow automatic filtering with a right-click modal.
-    - [ ] Add properties to query automatically via a '+' button.
-    - [ ] A simple query builder modal? (Something like the vantage plugin for search)
-    - [ ] Live Updating View (when a new query match shows up)
-- [ ] **Usability**:
-    - [ ] Schema validation for objects (using a central `Schema.md` file probably)
-- [ ] **More dataviews**:
-    - [ ] Calendar view
-    - [ ] Timeline view
-    - [ ] Gallery view (primarily for images)
-    - [ ] Hierarchical view
-    - [ ] Object view (create custom objects anywhere in a file & collect them into a list)
+   ~~~
+   This page was last modified at `$= dv.current().file.mtime`.
+   ~~~
 
 ## Contributing
 
-Contributions via bug reports, bug fixes, documentation, and general improvements are always welcome. For more major feature work, make an issue about the feature idea / reach out to me so we can judge feasibility and how best to implement it.
+Contributions via bug reports, bug fixes, documentation, and general improvements are always welcome. For more major
+feature work, make an issue about the feature idea / reach out to me so we can judge feasibility and how best to
+implement it.
+
+#### Local Development
+
+The codebase is written in TypeScript and uses `rollup` / `node` for compilation; for a first time set up, all you
+should need to do is pull, install, and build:
+
+```bash
+git clone git@github.com:blacksmithgu/obsidian-dataview.git
+cd obsidian-dataview
+
+npm install
+npm run dev
+```
+
+This will install libraries, build dataview, and deploy it to `test-vault`, which you can then open in Obsidian. This
+will also put `rollup` in watch mode, so any changes to the code will be re-compiled and the test vault will automatically
+reload itself.
+
+#### Installing to Other Vaults
+
+If you want to dogfood dataview in your real vault, you can build and install manually:
+
+```bash
+npm run build
+./install-built.sh path/to/your/vault
+```
+
+#### Building Documentation
+
+We use `MkDocs` for documentation (found in `docs/`). You'll need to have python and pip to run it locally:
+
+```
+pip3 install mkdocs mkdocs-material mkdocs-redirects
+cd docs
+mkdocs serve
+```
+
+This will start a local web server rendering the documentation in `docs/docs`, which will live-reload on change.
+Documentation changes are automatically pushed to `blacksmithgu.github.io/obsidian-dataview` once they are merged
+to the main branch.
+
+#### Using Dataview Types In Your Own Plugin
+
+Dataview publishes TypeScript typings for all of its APIs onto NPM (as `blacksmithgu/obsidian-dataview`). For
+instructions on how to set up development using Dataview, see [https://blacksmithgu.github.io/obsidian-dataview/api/plugin/setup].
 
 ## Support
 
-Have you found the Dataview plugin helpful, and want to support it? I accept donations which go towards future development efforts.
+Have you found the Dataview plugin helpful, and want to support it? I accept donations which go towards future
+development efforts. I generally do not accept payment for bug bounties/feature requests, as financial incentives add
+stress/expectations which I want to avoid for a hobby project!
 
 [![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/donate?business=Y9SKV24R5A8BQ&item_name=Open+source+software+development&currency_code=USD)

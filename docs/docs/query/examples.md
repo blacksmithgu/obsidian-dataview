@@ -1,6 +1,3 @@
----
-sidebar_position: 5
----
 # Examples
 
 A small collection of simple usages of the dataview query language.
@@ -11,10 +8,10 @@ Show all games in the games folder, sorted by rating, with some metadata:
 
 === "Query"
     ```sql
-    TABLE 
-      time-played AS "Time Played", 
-      length AS "Length", 
-      rating AS "Rating" 
+    TABLE
+      time-played AS "Time Played",
+      length AS "Length",
+      rating AS "Rating"
     FROM "games"
     SORT rating DESC
     ```

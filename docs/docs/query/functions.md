@@ -1,6 +1,3 @@
----
-sidebar_position: 4
----
 # Functions
 
 Dataview functions provide more advanced ways to manipulate data.

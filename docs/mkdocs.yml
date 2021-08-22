@@ -29,6 +29,8 @@ nav:
     - Data Arrays: 'api/data-array.md'
     - Codeblock Reference: 'api/code-reference.md'
     - Codeblock Examples: 'api/code-examples.md'
+  - Plugin Developers:
+    - Developing Against Dataview: 'plugin/develop-against-dataview.md'
 plugins:
   - redirects:
       redirect_maps:

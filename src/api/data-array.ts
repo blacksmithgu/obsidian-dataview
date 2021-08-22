@@ -100,7 +100,7 @@ export interface DataArray<T> {
 
     /** Map indexes to values. */
     [index: number]: any;
-    /** Automatic flattening of fields. */
+    /** Automatic flattening of fields. Equivalent to implicitly calling `array.to("field")` */
     [field: string]: any;
 }
 

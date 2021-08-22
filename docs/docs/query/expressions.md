@@ -1,6 +1,3 @@
----
-sidebar_position: 2
----
 # Expressions
 
 Dataview query language *expressions* are anything that yields a value - all fields are expressions, as are literal

@@ -1,6 +1,3 @@
----
-sidebar_position: 2
----
 # Data Arrays
 
 The general abstraction for lists of results in Dataview is the `DataArray`, which is a proxied array with additional
@@ -27,11 +24,11 @@ For example, `dv.pages().file.name` will return a data array of all file names i
 
 The full interface for the data array implementation is provided below for reference:
 
-```js
+```ts
 /** A function which maps an array element to some value. */
 export type ArrayFunc<T, O> = (elem: T, index: number, arr: T[]) => O;
 
-/** A function which compares two types (plus their indices, if relevant). */
+/** A function which compares two types. */
 export type ArrayComparator<T> = (a: T, b: T) => number;
 
 /**
@@ -61,29 +58,35 @@ export interface DataArray<T> {
      * to be the end of the array.
      */
     slice(start?: number, end?: number): DataArray<T>;
-    /** Concatenate the values in this data array with those of another data array. */
-    concat(other: DataArray<T>): DataArray<T>;
+    /** Concatenate the values in this data array with those of another iterable / data array / array. */
+    concat(other: Iterable<T>): DataArray<T>;
 
     /** Return the first index of the given (optionally starting the search) */
     indexOf(element: T, fromIndex?: number): number;
     /** Return the first element that satisfies the given predicate. */
     find(pred: ArrayFunc<T, boolean>): T | undefined;
     /** Find the index of the first element that satisfies the given predicate. Returns -1 if nothing was found. */
-    findIndex(pred: ArrayFunc<T, boolean>): number;
+    findIndex(pred: ArrayFunc<T, boolean>, fromIndex?: number): number;
     /** Returns true if the array contains the given element, and false otherwise. */
     includes(element: T): boolean;
+
+    /**
+     * Return a string obtained by converting each element in the array to a string, and joining it with the
+     * given separator (which defaults to ', ').
+     */
+    join(sep?: string): string;
 
     /**
      * Return a sorted array sorted by the given key; an optional comparator can be provided, which will
      * be used to compare the keys in leiu of the default dataview comparator.
      */
-    sort<U>(key: ArrayFunc<T, U>, direction?: 'asc' | 'desc', comparator?: ArrayComparator<U>): DataArray<T>;
+    sort<U>(key: ArrayFunc<T, U>, direction?: "asc" | "desc", comparator?: ArrayComparator<U>): DataArray<T>;
 
     /**
      * Return an array where elements are grouped by the given key; the resulting array will have objects of the form
      * { key: <key value>, rows: DataArray }.
      */
-    groupBy<U>(key: ArrayFunc<T, U>, comparator?: ArrayComparator<U>): DataArray<{ key: U, rows: DataArray<T> }>;
+    groupBy<U>(key: ArrayFunc<T, U>, comparator?: ArrayComparator<U>): DataArray<{ key: U; rows: DataArray<T> }>;
 
     /**
      * Return distinct entries. If a key is provided, then rows with distinct keys are returned.
@@ -121,7 +124,7 @@ export interface DataArray<T> {
 
     /** Map indexes to values. */
     [index: number]: any;
-    /** Automatic flattening of fields. */
+    /** Automatic flattening of fields. Equivalent to implicitly calling `array.to("field")` */
     [field: string]: any;
 }
 ```
