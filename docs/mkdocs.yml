@@ -3,6 +3,7 @@ repo_url: https://github.com/blacksmithgu/obsidian-dataview
 edit_uri: edit/master/docs/docs/
 markdown_extensions:
   - abbr
+  - admonition
   - pymdownx.highlight
   - pymdownx.superfences
   - pymdownx.tabbed

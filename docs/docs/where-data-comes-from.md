@@ -38,6 +38,7 @@ Dataview understands several different field types:
 - **Duration**: Durations of the form `<time> <unit>`, like `6 hours` or `4 minutes`. Common english abbreviations like
   `6hrs` or `2m` are accepted.
 - **Link**: Plain Obsidian links like `[[Page]]` or `[[Page|Page Display]]`.
+  - If you reference a link in frontmatter, you need to quote it, as so: `key: "[[Link]]"`. This is default Obsidian-supported behavior.
 - **List**: Lists of other dataview fields. In YAML, these are defined as normal YAML lists; for inline fields, they are
   just comma-separated lists.
 - **Object**: A map of name to dataview field. These can only be defined in YAML frontmatter, using the normal YAML
@@ -52,7 +53,7 @@ Dataview understands several different field types:
 The different field types are important for ensuring Dataview understands how to properly compare and sort values, and
 enable different operations.
 
-### Implicit Fields 
+### Implicit Fields
 
 Dataview automatically adds a large amount of metadata to each page:
 

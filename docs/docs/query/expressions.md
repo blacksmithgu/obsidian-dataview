@@ -87,3 +87,8 @@ Durations can be added to each other or to dates. You can retrieve various compo
 
 You can "index through" a link to get values on the corresponding page. For example `[[Link]].value` would get the value
 `value` from page `Link`.
+
+!!! note "Link Indexing in Expressions"
+    If your link is a field that you defined in an inline field or in front-matter, like `Key:: [[Link]]`, then you
+    should index into it by just writing `Key.value`; Using `[[Key]].value` would look up the page literally called `Key`,
+    which is probably not what you want!
