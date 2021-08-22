@@ -181,7 +181,7 @@ to the main branch.
 #### Using Dataview Types In Your Own Plugin
 
 Dataview publishes TypeScript typings for all of its APIs onto NPM (as `blacksmithgu/obsidian-dataview`). For
-instructions on how to set up development using Dataview, see (setup instructions)[https://blacksmithgu.github.io/obsidian-dataview/plugin/develop-against-dataview].
+instructions on how to set up development using Dataview, see [setup instructions](https://blacksmithgu.github.io/obsidian-dataview/plugin/develop-against-dataview/).
 
 ## Support
 
