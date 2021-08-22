@@ -424,7 +424,7 @@ export function parseMarkdown(path: string, contents: string, inlineRegex: RegEx
         if (!match) continue;
 
         let name = match[1].trim();
-        let inlineField = parseInlineField(match[2]);
+        let inlineField = parseInlineField(match[2].trim());
 
         fields.set(name, (fields.get(name) ?? []).concat([inlineField]));
         let simpleName = canonicalizeVarName(match[1].trim());
