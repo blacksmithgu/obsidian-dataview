@@ -3,8 +3,8 @@ import nodeResolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import webWorker from 'rollup-plugin-web-worker-loader';
 import copy from 'rollup-plugin-copy';
-import ttypescript from 'ttypescript'
-import tsPlugin from 'rollup-plugin-typescript2'
+import ttypescript from 'ttypescript';
+import tsPlugin from 'rollup-plugin-typescript2';
 
 const libCfg = {
   input: 'src/index.ts',

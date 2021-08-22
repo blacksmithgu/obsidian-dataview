@@ -198,9 +198,15 @@ export default class DataviewPlugin extends Plugin {
 
             for (let index = 0; index < codeblocks.length; index++) {
                 let codeblock = codeblocks.item(index) as HTMLElement;
+
                 let clanguages = Array.from(codeblock.classList)
                     .filter(c => c.startsWith("language-"))
                     .map(c => c.substring("language-".length));
+                clanguages = clanguages.concat(
+                    Array.from(codeblock.classList)
+                        .filter(c => c.startsWith(":"))
+                        .map(c => c.substring(":".length))
+                );
 
                 if (!clanguages.contains(language)) continue;
                 if (!codeblock.parentElement) continue;
