@@ -56,13 +56,13 @@ export interface DataArray<T> {
      * Return a sorted array sorted by the given key; an optional comparator can be provided, which will
      * be used to compare the keys in leiu of the default dataview comparator.
      */
-    sort<U>(key: ArrayFunc<T, U>, direction?: 'asc' | 'desc', comparator?: ArrayComparator<U>): DataArray<T>;
+    sort<U>(key: ArrayFunc<T, U>, direction?: "asc" | "desc", comparator?: ArrayComparator<U>): DataArray<T>;
 
     /**
      * Return an array where elements are grouped by the given key; the resulting array will have objects of the form
      * { key: <key value>, rows: DataArray }.
      */
-    groupBy<U>(key: ArrayFunc<T, U>, comparator?: ArrayComparator<U>): DataArray<{ key: U, rows: DataArray<T> }>;
+    groupBy<U>(key: ArrayFunc<T, U>, comparator?: ArrayComparator<U>): DataArray<{ key: U; rows: DataArray<T> }>;
 
     /**
      * Return distinct entries. If a key is provided, then rows with distinct keys are returned.
@@ -107,9 +107,34 @@ export interface DataArray<T> {
 /** Implementation of DataArray, minus the dynamic variable access, which is implemented via proxy. */
 class DataArrayImpl<T> implements DataArray<T> {
     private static ARRAY_FUNCTIONS: Set<string> = new Set([
-        "where", "filter", "map", "flatMap", "slice", "concat", "indexOf", "find", "findIndex", "includes",
-        "join", "sort", "groupBy", "distinct", "every", "some", "none", "first", "last", "to",
-        "lwrap", "expand", "forEach", "length", "values", "array", "defaultComparator", "toString"
+        "where",
+        "filter",
+        "map",
+        "flatMap",
+        "slice",
+        "concat",
+        "indexOf",
+        "find",
+        "findIndex",
+        "includes",
+        "join",
+        "sort",
+        "groupBy",
+        "distinct",
+        "every",
+        "some",
+        "none",
+        "first",
+        "last",
+        "to",
+        "lwrap",
+        "expand",
+        "forEach",
+        "length",
+        "values",
+        "array",
+        "defaultComparator",
+        "toString",
     ]);
 
     private static ARRAY_PROXY: ProxyHandler<DataArrayImpl<any>> = {
@@ -120,17 +145,25 @@ class DataArrayImpl<T> implements DataArray<T> {
             else if (DataArrayImpl.ARRAY_FUNCTIONS.has(prop.toString())) return target[prop.toString()];
 
             return target.to(prop);
-        }
+        },
     };
 
-    public static wrap<T>(arr: T[], settings: QuerySettings, defaultComparator: ArrayComparator<any> = Values.compareValue): DataArray<T> {
+    public static wrap<T>(
+        arr: T[],
+        settings: QuerySettings,
+        defaultComparator: ArrayComparator<any> = Values.compareValue
+    ): DataArray<T> {
         return new Proxy(new DataArrayImpl(arr, settings, defaultComparator), DataArrayImpl.ARRAY_PROXY);
     }
 
     public length: number;
     [key: string]: any;
 
-    private constructor(public values: any[], public settings: QuerySettings, public defaultComparator: ArrayComparator<any> = Values.compareValue) {
+    private constructor(
+        public values: any[],
+        public settings: QuerySettings,
+        public defaultComparator: ArrayComparator<any> = Values.compareValue
+    ) {
         this.length = values.length;
     }
 
@@ -204,25 +237,32 @@ class DataArrayImpl<T> implements DataArray<T> {
     }
 
     public join(sep?: string): string {
-        return this.map(s => Values.toString(s, this.settings)).array().join(sep ?? ", ");
+        return this.map(s => Values.toString(s, this.settings))
+            .array()
+            .join(sep ?? ", ");
     }
 
-    public sort<U>(key: ArrayFunc<T, U>, direction?: 'asc' | 'desc', comparator?: ArrayComparator<U>): DataArray<T> {
+    public sort<U>(key: ArrayFunc<T, U>, direction?: "asc" | "desc", comparator?: ArrayComparator<U>): DataArray<T> {
         if (this.values.length == 0) return this;
         let realComparator = comparator ?? this.defaultComparator;
 
         // Associate each entry with it's index for the key function, and then do a normal sort.
-        let copy = ([] as any[]).concat(this.array()).map((elem, index) => { return { index: index, value: elem } });
+        let copy = ([] as any[]).concat(this.array()).map((elem, index) => {
+            return { index: index, value: elem };
+        });
         copy.sort((a, b) => {
             let aKey = key(a.value, a.index, this.values);
             let bKey = key(b.value, b.index, this.values);
-            return direction === 'desc' ? -realComparator(aKey, bKey) : realComparator(aKey, bKey);
+            return direction === "desc" ? -realComparator(aKey, bKey) : realComparator(aKey, bKey);
         });
 
         return this.lwrap(copy.map(e => e.value));
     }
 
-    public groupBy<U>(key: ArrayFunc<T, U>, comparator?: ArrayComparator<U>): DataArray<{ key: U, rows: DataArray<T> }> {
+    public groupBy<U>(
+        key: ArrayFunc<T, U>,
+        comparator?: ArrayComparator<U>
+    ): DataArray<{ key: U; rows: DataArray<T> }> {
         if (this.values.length == 0) return this.lwrap([]);
 
         // JavaScript sucks and we can't make hash maps over arbitrary types (only strings/ints), so
@@ -230,7 +270,7 @@ class DataArrayImpl<T> implements DataArray<T> {
         let intermediate = this.sort(key, "asc", comparator);
         comparator = comparator ?? this.defaultComparator;
 
-        let result: { key: U, rows: DataArray<T> }[] = [];
+        let result: { key: U; rows: DataArray<T> }[] = [];
         let currentRow = [intermediate[0]];
         let current = key(intermediate[0], 0, intermediate.values);
         for (let index = 1; index < intermediate.length; index++) {
@@ -253,9 +293,9 @@ class DataArrayImpl<T> implements DataArray<T> {
         let realKey = key ?? (x => x as any as U);
 
         // For similar reasons to groupBy, do a sort and take the first element of each block.
-        let intermediate = this
-            .map((x, index) => { return { key: realKey(x, index, this.values), value: x } })
-            .sort(x => x.key, "asc", comparator);
+        let intermediate = this.map((x, index) => {
+            return { key: realKey(x, index, this.values), value: x };
+        }).sort(x => x.key, "asc", comparator);
         comparator = comparator ?? this.defaultComparator;
 
         let result: T[] = [intermediate[0].value];
@@ -268,14 +308,24 @@ class DataArrayImpl<T> implements DataArray<T> {
         return this.lwrap(result);
     }
 
-    public every(f: ArrayFunc<T, boolean>): boolean { return this.values.every(f); }
+    public every(f: ArrayFunc<T, boolean>): boolean {
+        return this.values.every(f);
+    }
 
-    public some(f: ArrayFunc<T, boolean>): boolean { return this.values.some(f); }
+    public some(f: ArrayFunc<T, boolean>): boolean {
+        return this.values.some(f);
+    }
 
-    public none(f: ArrayFunc<T, boolean>): boolean { return this.values.every((v, i, a) => !f(v, i, a)); }
+    public none(f: ArrayFunc<T, boolean>): boolean {
+        return this.values.every((v, i, a) => !f(v, i, a));
+    }
 
-    public first(): T { return this.values.length > 0 ? this.values[0] : undefined; }
-    public last(): T { return this.values.length > 0 ? this.values[this.values.length - 1] : undefined; }
+    public first(): T {
+        return this.values.length > 0 ? this.values[0] : undefined;
+    }
+    public last(): T {
+        return this.values.length > 0 ? this.values[this.values.length - 1] : undefined;
+    }
 
     public to(key: string): DataArray<any> {
         let result: any[] = [];
@@ -315,7 +365,9 @@ class DataArrayImpl<T> implements DataArray<T> {
         }
     }
 
-    public array(): T[] { return ([] as any[]).concat(this.values); }
+    public array(): T[] {
+        return ([] as any[]).concat(this.values);
+    }
 
     public [Symbol.iterator](): Iterator<T> {
         return this.values[Symbol.iterator]();

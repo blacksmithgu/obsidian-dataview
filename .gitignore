@@ -2,6 +2,9 @@
 *.iml
 .idea
 
+# VSCode
+.vscode
+
 # npm
 node_modules
 

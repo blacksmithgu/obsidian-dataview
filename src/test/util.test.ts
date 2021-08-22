@@ -1,4 +1,4 @@
-import { getFileName, getParentFolder, canonicalizeVarName } from "util/normalize"
+import { getFileName, getParentFolder, canonicalizeVarName } from "util/normalize";
 
 test("empty getFileName()", () => {
     expect(getFileName("")).toEqual("");
@@ -27,7 +27,7 @@ test("folder getParentFolder()", () => {
     expect(getParentFolder("ok/yes")).toEqual("ok");
     expect(getParentFolder("no/maybe")).toEqual("no");
     expect(getParentFolder("/maybe")).toEqual("");
-})
+});
 
 test("nested folder getParentFolder()", () => {
     expect(getParentFolder("a/b/c.md")).toEqual("a/b");
@@ -41,4 +41,4 @@ test("simple canonicalizeVarName()", () => {
     expect(canonicalizeVarName("test thing 3")).toEqual("test-thing-3");
     expect(canonicalizeVarName("This is a Test.")).toEqual("this-is-a-test");
     expect(canonicalizeVarName("property")).toEqual("property");
-})
+});

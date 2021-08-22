@@ -11,6 +11,8 @@
     "dev": "rollup --config rollup.config.js -w",
     "lib": "rollup --config rollup.config.js --environment BUILD:lib",
     "build": "rollup --config rollup.config.js --environment BUILD:production",
+    "format": "npx prettier --write src",
+    "check-format": "npx prettier --check src",
     "test": "jest"
   },
   "keywords": [],
@@ -28,6 +30,7 @@
     "@zerollup/ts-transform-paths": "^1.7.18",
     "jest": "^26.6.3",
     "obsidian": "^0.12.0",
+    "prettier": "2.3.2",
     "rollup": "^2.32.1",
     "rollup-plugin-copy": "^3.4.0",
     "rollup-plugin-typescript2": "^0.30.0",

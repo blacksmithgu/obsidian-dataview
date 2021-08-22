@@ -5,12 +5,12 @@ import { DefaultFunctions } from "expression/functions";
 import { parseEval, simpleContext } from "test/common";
 
 test("Evaluate lower(list)", () => {
-    expect(parseEval("lower(list(\"A\", \"B\"))")).toEqual(["a", "b"]);
-})
+    expect(parseEval('lower(list("A", "B"))')).toEqual(["a", "b"]);
+});
 
 test("Evaluate replace(list, string, string)", () => {
-    expect(parseEval("replace(list(\"yes\", \"re\"), \"e\", \"a\")")).toEqual(["yas", "ra"]);
-})
+    expect(parseEval('replace(list("yes", "re"), "e", "a")')).toEqual(["yas", "ra"]);
+});
 
 // <-- Length -->
 
@@ -28,13 +28,13 @@ test("Evaluate length(string)", () => {
 // <-- contains() -->
 
 test("Evaluate contains(object)", () => {
-    expect(parseEval("contains(object(\"hello\", 1), \"hello\")")).toEqual(true);
-    expect(parseEval("contains(object(\"hello\", 1), \"no\")")).toEqual(false);
+    expect(parseEval('contains(object("hello", 1), "hello")')).toEqual(true);
+    expect(parseEval('contains(object("hello", 1), "no")')).toEqual(false);
 });
 
 test("Evaluate contains(array)", () => {
-    expect(parseEval("contains(list(\"hello\", 1), \"hello\")")).toEqual(true);
-    expect(parseEval("contains(list(\"hello\", 1), 6)")).toEqual(false);
+    expect(parseEval('contains(list("hello", 1), "hello")')).toEqual(true);
+    expect(parseEval('contains(list("hello", 1), 6)')).toEqual(false);
 });
 
 test("Evaluate fuzzy contains(array)", () => {
@@ -43,9 +43,9 @@ test("Evaluate fuzzy contains(array)", () => {
 });
 
 test("Evaluate contains(string)", () => {
-    expect(parseEval("contains(\"hello\", \"hello\")")).toEqual(true);
-    expect(parseEval("contains(\"meep\", \"me\")")).toEqual(true);
-    expect(parseEval("contains(\"hello\", \"xd\")")).toEqual(false);
+    expect(parseEval('contains("hello", "hello")')).toEqual(true);
+    expect(parseEval('contains("meep", "me")')).toEqual(true);
+    expect(parseEval('contains("hello", "xd")')).toEqual(false);
 });
 
 test("Evaluate non-fuzzy econtains(array)", () => {
@@ -89,20 +89,20 @@ test("Evaluate regexmatch()", () => {
 // <-- replace() -- >
 
 test("Evaluate replace()", () => {
-    expect(parseEval("replace(\"hello\", \"h\", \"me\")")).toEqual("meello");
-    expect(parseEval("replace(\"meep\", \"meep\", \"pleh\")")).toEqual("pleh");
-    expect(parseEval('replace(\"x.z\", \"x.\", \"z$\")')).toEqual("z$z");
-    expect(parseEval('replace(\"x.z\", \".\", \"z\")')).toEqual("xzz");
+    expect(parseEval('replace("hello", "h", "me")')).toEqual("meello");
+    expect(parseEval('replace("meep", "meep", "pleh")')).toEqual("pleh");
+    expect(parseEval('replace("x.z", "x.", "z$")')).toEqual("z$z");
+    expect(parseEval('replace("x.z", ".", "z")')).toEqual("xzz");
 });
 
 // <-- lower/upper() -->
 
 test("Evaluate lower()/upper()", () => {
-    expect(parseEval("lower(\"Hello\")")).toEqual("hello");
-    expect(parseEval("lower(\"hello\")")).toEqual("hello");
-    expect(parseEval("upper(\"Hello\")")).toEqual("HELLO");
-    expect(parseEval("upper(\"hello\")")).toEqual("HELLO");
-})
+    expect(parseEval('lower("Hello")')).toEqual("hello");
+    expect(parseEval('lower("hello")')).toEqual("hello");
+    expect(parseEval('upper("Hello")')).toEqual("HELLO");
+    expect(parseEval('upper("hello")')).toEqual("HELLO");
+});
 
 // <-- default() -->
 
@@ -122,20 +122,20 @@ test("Evaluate ldefault()", () => {
 test("Evaluate choose()", () => {
     expect(parseEval("choice(true, 1, 2)")).toEqual(1);
     expect(parseEval("choice(false, 1, 2)")).toEqual(2);
-})
+});
 
 // <-- extract() -->
 
 test("Evaluate 1 field extract()", () => {
-    let res = parseEval("extract(object(\"mtime\", 1), \"mtime\")");
-    expect(res).toEqual({ "mtime": 1 });
+    let res = parseEval('extract(object("mtime", 1), "mtime")');
+    expect(res).toEqual({ mtime: 1 });
 });
 
 test("Evaluate 2 field extract()", () => {
-    let res = parseEval("extract(object(\"mtime\", 1, \"yes\", \"hello\"), \"yes\", \"mtime\")");
+    let res = parseEval('extract(object("mtime", 1, "yes", "hello"), "yes", "mtime")');
     expect(res).toEqual({
-        "yes": "hello",
-        "mtime": 1
+        yes: "hello",
+        mtime: 1,
     });
 });
 
@@ -152,4 +152,4 @@ test("Evaluate regexreplace", () => {
 test("Evaluate nonnull()", () => {
     expect(DefaultFunctions.nonnull(simpleContext(), null, null, 1)).toEqual([1]);
     expect(DefaultFunctions.nonnull(simpleContext(), "yes")).toEqual(["yes"]);
-})
+});

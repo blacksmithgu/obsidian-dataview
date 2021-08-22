@@ -1,9 +1,9 @@
-import { canonicalizeVarName, getExtension, getFileName, getParentFolder } from 'util/normalize';
-import { getAllTags, MetadataCache, parseFrontMatterAliases, parseFrontMatterTags, TFile } from 'obsidian';
-import { EXPRESSION, parseInnerLink } from 'expression/parse';
-import { DateTime } from 'luxon';
-import { FullIndex } from 'data/index';
-import { DataObject, Link, LiteralValue, TransferableValue, TransferableValues, Values } from './value';
+import { canonicalizeVarName, getExtension, getFileName, getParentFolder } from "util/normalize";
+import { getAllTags, MetadataCache, parseFrontMatterAliases, parseFrontMatterTags, TFile } from "obsidian";
+import { EXPRESSION, parseInnerLink } from "expression/parse";
+import { DateTime } from "luxon";
+import { FullIndex } from "data/index";
+import { DataObject, Link, LiteralValue, TransferableValue, TransferableValues, Values } from "./value";
 
 interface BaseLinkMetadata {
     path: string;
@@ -14,17 +14,17 @@ interface BaseLinkMetadata {
 }
 
 export interface HeaderLinkMetadata extends BaseLinkMetadata {
-    type: 'header';
+    type: "header";
     header: string;
 }
 
 export interface BlockLinkMetadata extends BaseLinkMetadata {
-    type: 'block';
+    type: "block";
     blockId: string;
 }
 
 export interface FileLinkMetadata extends BaseLinkMetadata {
-    type: 'file';
+    type: "file";
 }
 
 /** A link inside a markdown file. */
@@ -32,20 +32,20 @@ export type LinkMetadata = HeaderLinkMetadata | BlockLinkMetadata | FileLinkMeta
 
 /** A specific task. */
 export interface Task {
-	/** The text of this task. */
-	text: string;
-	/** The line this task shows up on. */
-	line: number;
+    /** The text of this task. */
+    text: string;
+    /** The line this task shows up on. */
+    line: number;
     /** The full path of the file. */
     path: string;
-	/** Whether or not this task was completed. */
-	completed: boolean;
+    /** Whether or not this task was completed. */
+    completed: boolean;
     /** Whether or not this task and all of it's subtasks are completed. */
     fullyCompleted: boolean;
     /** If true, this is a real task; otherwise, it is a list element above/below a task. */
     real: boolean;
-	/** Any subtasks of this task. */
-	subtasks: Task[];
+    /** Any subtasks of this task. */
+    subtasks: Task[];
 }
 
 export namespace Task {
@@ -105,13 +105,19 @@ export class PageMetadata {
     }
 
     /** The name (based on path) of this file. */
-    public name(): string { return getFileName(this.path); }
+    public name(): string {
+        return getFileName(this.path);
+    }
 
     /** The containing folder (based on path) of this file. */
-    public folder(): string { return getParentFolder(this.path); }
+    public folder(): string {
+        return getParentFolder(this.path);
+    }
 
     /** The extension of this file (likely 'md'). */
-    public extension(): string { return getExtension(this.path); }
+    public extension(): string {
+        return getExtension(this.path);
+    }
 
     /** Return a set of tags AND all of their parent tags (so #hello/yes would become #hello, #hello/yes). */
     public fullTags(): Set<string> {
@@ -128,21 +134,24 @@ export class PageMetadata {
     public fileLinks(): FileLinkMetadata[] {
         return this.links.map(link => {
             switch (link.type) {
-                case "file": return link;
-                case "block": return {
-                    type: 'file',
-                    path: link.path,
-                    display: link.display,
-                    embed: link.embed
-                } as FileLinkMetadata;
-                case "header": return {
-                    type: 'file',
-                    path: link.path,
-                    display: link.display,
-                    embed: link.embed
-                } as FileLinkMetadata;
+                case "file":
+                    return link;
+                case "block":
+                    return {
+                        type: "file",
+                        path: link.path,
+                        display: link.display,
+                        embed: link.embed,
+                    } as FileLinkMetadata;
+                case "header":
+                    return {
+                        type: "file",
+                        path: link.path,
+                        display: link.display,
+                        embed: link.embed,
+                    } as FileLinkMetadata;
             }
-        })
+        });
     }
 
     /** Map this metadata to a full object; uses the index for additional data lookups.  */
@@ -150,24 +159,24 @@ export class PageMetadata {
         // Static fields first. Note this object should not have any pointers to the original object (so that the
         // index cannot accidentally be mutated).
         let result: Record<string, LiteralValue> = {
-            "file": {
-                "path": this.path,
-                "folder": this.folder(),
-                "name": this.name(),
-                "link": Link.file(this.path, false),
-                "outlinks": this.fileLinks().map(l => Link.file(l.path, false)),
-                "inlinks": Array.from(index.links.getInverse(this.path)).map(l => Link.file(l, false)),
-                "etags": Array.from(this.tags),
-                "tags": Array.from(this.fullTags()),
-                "aliases": Array.from(this.aliases),
-                "tasks": this.tasks.map(t => Task.copy(t)),
-                "ctime": this.ctime,
-                "cday": DateTime.fromObject({ year: this.ctime.year, month: this.ctime.month, day: this.ctime.day }),
-                "mtime": this.mtime,
-                "mday": DateTime.fromObject({ year: this.mtime.year, month: this.mtime.month, day: this.mtime.day }),
-                "size": this.size,
-                "ext": this.extension()
-            }
+            file: {
+                path: this.path,
+                folder: this.folder(),
+                name: this.name(),
+                link: Link.file(this.path, false),
+                outlinks: this.fileLinks().map(l => Link.file(l.path, false)),
+                inlinks: Array.from(index.links.getInverse(this.path)).map(l => Link.file(l, false)),
+                etags: Array.from(this.tags),
+                tags: Array.from(this.fullTags()),
+                aliases: Array.from(this.aliases),
+                tasks: this.tasks.map(t => Task.copy(t)),
+                ctime: this.ctime,
+                cday: DateTime.fromObject({ year: this.ctime.year, month: this.ctime.month, day: this.ctime.day }),
+                mtime: this.mtime,
+                mday: DateTime.fromObject({ year: this.mtime.year, month: this.mtime.month, day: this.mtime.day }),
+                size: this.size,
+                ext: this.extension(),
+            },
         };
 
         // Add the current day if present.
@@ -186,7 +195,7 @@ export class PageMetadata {
 /**
  * Partial metadata object which contains all the information extracted from raw markdown. This is combined with the
  * metadata cache to generate the final PageMetadata object.
-*/
+ */
 export interface ParsedMarkdown {
     tasks: Task[];
     fields: Map<string, LiteralValue[]>;
@@ -202,12 +211,15 @@ export interface TransferableMarkdown {
 export function markdownToTransferable(parsed: ParsedMarkdown): TransferableMarkdown {
     let newFields = new Map<string, TransferableValue[]>();
     for (let [key, values] of parsed.fields.entries()) {
-        newFields.set(key, values.map(t => TransferableValues.transferable(t)));
+        newFields.set(
+            key,
+            values.map(t => TransferableValues.transferable(t))
+        );
     }
 
     return {
         tasks: TransferableValues.transferable(parsed.tasks) as TransferableValue[],
-        fields: newFields
+        fields: newFields,
     };
 }
 
@@ -215,12 +227,15 @@ export function markdownToTransferable(parsed: ParsedMarkdown): TransferableMark
 export function markdownFromTransferable(parsed: TransferableMarkdown): ParsedMarkdown {
     let newFields = new Map<string, LiteralValue[]>();
     for (let [key, values] of parsed.fields.entries()) {
-        newFields.set(key, values.map(t => TransferableValues.value(t)));
+        newFields.set(
+            key,
+            values.map(t => TransferableValues.value(t))
+        );
     }
 
     return {
         tasks: TransferableValues.value(parsed.tasks) as Task[],
-        fields: newFields
+        fields: newFields,
     };
 }
 
@@ -232,7 +247,8 @@ export function toTransferable(value: ParsedMarkdown | DataObject[]): Transferab
 
 /** Convert any transferable metadata back to Dataview API friendly data. */
 export function fromTransferable(value: TransferableValue | TransferableMarkdown): ParsedMarkdown | DataObject[] {
-    if (value != null && typeof value == "object" && "tasks" in value) return markdownFromTransferable(value as TransferableMarkdown);
+    if (value != null && typeof value == "object" && "tasks" in value)
+        return markdownFromTransferable(value as TransferableMarkdown);
     else return TransferableValues.value(value) as DataObject[];
 }
 
@@ -276,12 +292,12 @@ function findDate(file: string, fields: Map<string, LiteralValue>): DateTime | u
 export function parseFrontmatter(value: any): LiteralValue {
     if (value == null) {
         return null;
-    } else if (typeof value === 'object') {
+    } else if (typeof value === "object") {
         if (Array.isArray(value)) {
-            let object = (value as Array<any>);
+            let object = value as Array<any>;
             // Special case for link syntax, which shows up as double-nested arrays.
             // TODO: Need to replace this with something else.
-            if (object.length == 1 && Array.isArray(object[0]) && object[0].every(v => typeof v === 'string')) {
+            if (object.length == 1 && Array.isArray(object[0]) && object[0].every(v => typeof v === "string")) {
                 return parseInnerLink(object[0].join(", "));
             }
 
@@ -292,7 +308,7 @@ export function parseFrontmatter(value: any): LiteralValue {
 
             return result;
         } else {
-            let object = (value as Record<string, any>);
+            let object = value as Record<string, any>;
             let result: Record<string, LiteralValue> = {};
             for (let key in object) {
                 result[key] = parseFrontmatter(object[key]);
@@ -300,11 +316,11 @@ export function parseFrontmatter(value: any): LiteralValue {
 
             return result;
         }
-    } else if (typeof value === 'number') {
+    } else if (typeof value === "number") {
         return value;
-    } else if (typeof value === 'boolean') {
+    } else if (typeof value === "boolean") {
         return value;
-    } else if (typeof value === 'string') {
+    } else if (typeof value === "string") {
         let dateParse = EXPRESSION.date.parse(value);
         if (dateParse.status) return dateParse.value;
 
@@ -361,15 +377,18 @@ export function alast<T>(arr: Array<T>): T | undefined {
 /**
  * A hacky approach to scanning for all tasks using regex. Does not support multiline
  * tasks yet (though can probably be retro-fitted to do so).
-*/
+ */
 export function findTasksInFile(path: string, file: string): Task[] {
-	// Dummy top of the stack that we'll just never get rid of.
-	let stack: [Task, number][] = [];
-	stack.push([{ text: "Root", line: -1, path, completed: false, fullyCompleted: false, real: false, subtasks: [] }, -4]);
+    // Dummy top of the stack that we'll just never get rid of.
+    let stack: [Task, number][] = [];
+    stack.push([
+        { text: "Root", line: -1, path, completed: false, fullyCompleted: false, real: false, subtasks: [] },
+        -4,
+    ]);
 
-	let lineno = 0;
-	for (let line of file.replace("\r", "").split("\n")) {
-		lineno += 1;
+    let lineno = 0;
+    for (let line of file.replace("\r", "").split("\n")) {
+        lineno += 1;
 
         // Check that we are actually a list element, to skip lines which obviously won't match.
         if (!line.includes("*") && !line.includes("-")) {
@@ -377,8 +396,8 @@ export function findTasksInFile(path: string, file: string): Task[] {
             continue;
         }
 
-		let match = TASK_REGEX.exec(line);
-		if (!match) {
+        let match = TASK_REGEX.exec(line);
+        if (!match) {
             if (line.trim().length == 0) continue;
 
             // Non-empty line that is not a task, reset.
@@ -386,29 +405,29 @@ export function findTasksInFile(path: string, file: string): Task[] {
             continue;
         }
 
-		let indent = match[1].replace("\t" , "    ").length;
+        let indent = match[1].replace("\t", "    ").length;
         let isReal = !!match[2] && match[2].trim().length > 0;
-        let isCompleted = !isReal || (match[2] == '[X]' || match[2] == '[x]');
-		let task: Task = {
-			text: match[3],
-			completed: isCompleted,
+        let isCompleted = !isReal || match[2] == "[X]" || match[2] == "[x]";
+        let task: Task = {
+            text: match[3],
+            completed: isCompleted,
             fullyCompleted: isCompleted,
             real: isReal,
             path,
-			line: lineno,
-			subtasks: []
-		};
+            line: lineno,
+            subtasks: [],
+        };
 
-		while (indent <= (alast(stack)?.[1] ?? -4)) stack.pop();
+        while (indent <= (alast(stack)?.[1] ?? -4)) stack.pop();
 
         for (let [elem, _] of stack) elem.fullyCompleted = elem.fullyCompleted && task.fullyCompleted;
         alast(stack)?.[0].subtasks.push(task);
-		stack.push([task, indent]);
-	}
+        stack.push([task, indent]);
+    }
 
-	// Return everything under the root, which should be all tasks.
+    // Return everything under the root, which should be all tasks.
     // Strip trees of tasks which are purely not real (lol?).
-	return stack[0][0].subtasks.filter(t => taskAny(t, st => st.real));
+    return stack[0][0].subtasks.filter(t => taskAny(t, st => st.real));
 }
 
 export function parseMarkdown(path: string, contents: string, inlineRegex: RegExp): ParsedMarkdown {
@@ -476,11 +495,11 @@ export function parsePage(file: TFile, cache: MetadataCache, markdownData: Parse
     if (file.path in cache.resolvedLinks) {
         for (let resolved in cache.resolvedLinks[file.path]) {
             links.push({
-                type: 'file',
+                type: "file",
                 path: resolved,
                 display: resolved,
-                embed: false
-            })
+                embed: false,
+            });
         }
     }
 
@@ -490,11 +509,14 @@ export function parsePage(file: TFile, cache: MetadataCache, markdownData: Parse
     }
 
     return new PageMetadata(file.path, {
-        fields, tags, aliases, links,
+        fields,
+        tags,
+        aliases,
+        links,
         tasks: markdownData.tasks,
         ctime: DateTime.fromMillis(file.stat.ctime),
         mtime: DateTime.fromMillis(file.stat.mtime),
         size: file.stat.size,
-        day: findDate(file.path, fields)
+        day: findDate(file.path, fields),
     });
 }

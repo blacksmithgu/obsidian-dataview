@@ -43,16 +43,18 @@ export class DataviewApi {
             throw new Error(`Failed to parse query in 'pagePaths': ${ex}`);
         }
 
-        return matchingSourcePaths(source, this.index, originFile).map(s => DataArray.from(s, this.settings)).orElseThrow();
+        return matchingSourcePaths(source, this.index, originFile)
+            .map(s => DataArray.from(s, this.settings))
+            .orElseThrow();
     }
 
     /** Map a page path to the actual data contained within that page. */
     public page(path: string | Link, originFile?: string): Record<string, LiteralValue> | undefined {
         if (!(typeof path === "string") && !Values.isLink(path)) {
-            throw Error("dv.page only handles string and link paths; was provided type '" + (typeof path) + "'")
+            throw Error("dv.page only handles string and link paths; was provided type '" + typeof path + "'");
         }
 
-        let rawPath = (path instanceof Link) ? path.path : path;
+        let rawPath = path instanceof Link ? path.path : path;
         let normPath = this.app.metadataCache.getFirstLinkpathDest(rawPath, originFile ?? "");
         if (!normPath) return undefined;
 
@@ -65,7 +67,7 @@ export class DataviewApi {
     /** Load the contents of a CSV file (with a header), returning it as a list of objects. */
     public csv(path: string, originFile?: string): DataArray<DataObject> | undefined {
         if (!(typeof path === "string")) {
-            throw Error("dv.csv only handles string paths; was provided type '" + (typeof path) + "'.");
+            throw Error("dv.csv only handles string paths; was provided type '" + typeof path + "'.");
         }
 
         let normPath = this.app.metadataCache.getFirstLinkpathDest(path, originFile ?? "");
@@ -131,7 +133,12 @@ export class DataviewApi {
     ///////////////
 
     /** Render a dataview list of the given values. */
-    public list(values: any[] | DataArray<any> | undefined, container: HTMLElement, component: Component, filePath: string) {
+    public list(
+        values: any[] | DataArray<any> | undefined,
+        container: HTMLElement,
+        component: Component,
+        filePath: string
+    ) {
         if (!values) return;
         if (DataArray.isDataArray(values)) values = values.array();
 
@@ -139,7 +146,13 @@ export class DataviewApi {
     }
 
     /** Render a dataview table with the given headers, and the 2D array of values. */
-    public table(headers: string[], values: any[][] | DataArray<any> | undefined, container: HTMLElement, component: Component, filePath: string) {
+    public table(
+        headers: string[],
+        values: any[][] | DataArray<any> | undefined,
+        container: HTMLElement,
+        component: Component,
+        filePath: string
+    ) {
         if (!values) values = [];
         if (DataArray.isDataArray(values)) values = values.array();
 
@@ -147,12 +160,18 @@ export class DataviewApi {
     }
 
     /** Render a dataview task view with the given tasks. */
-    public taskList(tasks: Task[] | DataArray<any>, groupByFile: boolean = true, container: HTMLElement, component: Component, filePath: string) {
+    public taskList(
+        tasks: Task[] | DataArray<any>,
+        groupByFile: boolean = true,
+        container: HTMLElement,
+        component: Component,
+        filePath: string
+    ) {
         if (DataArray.isDataArray(tasks)) tasks = tasks.array();
 
         if (groupByFile) {
             let byFile = new Map<string, Task[]>();
-            for (let task of (tasks as Task[])) {
+            for (let task of tasks as Task[]) {
                 if (!byFile.has(task.path)) byFile.set(task.path, []);
                 byFile.get(task.path)?.push(task);
             }
@@ -172,7 +191,13 @@ export class DataviewApi {
     }
 
     /** Render an arbitrary value into a container. */
-    public async renderValue(value: any, container: HTMLElement, component: Component, filePath: string, inline: boolean = false) {
+    public async renderValue(
+        value: any,
+        container: HTMLElement,
+        component: Component,
+        filePath: string,
+        inline: boolean = false
+    ) {
         await renderValue(value as LiteralValue, container, filePath, component, this.settings, inline);
     }
 }

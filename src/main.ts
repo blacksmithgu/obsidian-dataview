@@ -1,27 +1,39 @@
-import { MarkdownRenderChild, Plugin, Vault, MarkdownPostProcessorContext, PluginSettingTab, App, Setting, Component, MarkdownPostProcessor, TAbstractFile, TFile } from 'obsidian';
-import { renderErrorPre, renderList, renderTable, renderValue } from 'ui/render';
-import { FullIndex } from 'data/index';
-import * as Tasks from 'ui/tasks';
-import { Query, TableQuery, } from 'query/query';
-import { Field } from 'expression/field';
+import {
+    MarkdownRenderChild,
+    Plugin,
+    Vault,
+    MarkdownPostProcessorContext,
+    PluginSettingTab,
+    App,
+    Setting,
+    Component,
+    MarkdownPostProcessor,
+    TAbstractFile,
+    TFile,
+} from "obsidian";
+import { renderErrorPre, renderList, renderTable, renderValue } from "ui/render";
+import { FullIndex } from "data/index";
+import * as Tasks from "ui/tasks";
+import { Query, TableQuery } from "query/query";
+import { Field } from "expression/field";
 import { parseField } from "expression/parse";
 import { parseQuery } from "query/parse";
-import { executeInline, executeList, executeTable, executeTask } from 'query/engine';
-import { tryOrPropogate } from 'util/normalize';
-import { waitFor } from 'util/concurrency';
-import { evalInContext, makeApiContext } from 'api/inline-api';
-import { DataviewApi } from './api/plugin-api';
-import { DataviewSettings, DEFAULT_QUERY_SETTINGS, DEFAULT_SETTINGS } from './settings';
-import { LiteralValue } from './data/value';
-import { DateTime } from 'luxon';
-import { currentLocale } from './util/locale';
+import { executeInline, executeList, executeTable, executeTask } from "query/engine";
+import { tryOrPropogate } from "util/normalize";
+import { waitFor } from "util/concurrency";
+import { evalInContext, makeApiContext } from "api/inline-api";
+import { DataviewApi } from "./api/plugin-api";
+import { DataviewSettings, DEFAULT_QUERY_SETTINGS, DEFAULT_SETTINGS } from "./settings";
+import { LiteralValue } from "./data/value";
+import { DateTime } from "luxon";
+import { currentLocale } from "./util/locale";
 
 export default class DataviewPlugin extends Plugin {
     /** Plugin-wide default settigns. */
-	public settings: DataviewSettings;
+    public settings: DataviewSettings;
 
     /** The index that stores all dataview data. */
-	public index: FullIndex;
+    public index: FullIndex;
 
     /**
      * The API for other plugins to access dataview functionality. Initialized once the index has been initalized,
@@ -30,104 +42,156 @@ export default class DataviewPlugin extends Plugin {
      * TODO: JavaScript async a little annoying w/o multi-threading; how do you verify it exists?
      */
     public api: DataviewApi;
-	
-    public trigger(
-        name: "dataview:metadata-change",
-        op: "rename",
-        file: TAbstractFile,
-        oldPath: string
-    ): void;
-    public trigger(
-        name: "dataview:metadata-change",
-        op: "delete" | "update",
-        file: TFile
-    ): void;
+
+    public trigger(name: "dataview:metadata-change", op: "rename", file: TAbstractFile, oldPath: string): void;
+    public trigger(name: "dataview:metadata-change", op: "delete" | "update", file: TFile): void;
     public trigger(name: "dataview:api-ready", api: DataviewApi): void;
     public trigger(name: string, ...data: any[]): void {
         this.app.metadataCache.trigger(name, ...data);
     }
 
-	async onload() {
-		// Settings initialization; write defaults first time around.
-		this.settings = Object.assign(DEFAULT_SETTINGS, await this.loadData() ?? {});
+    async onload() {
+        // Settings initialization; write defaults first time around.
+        this.settings = Object.assign(DEFAULT_SETTINGS, (await this.loadData()) ?? {});
 
-		this.addSettingTab(new DataviewSettingsTab(this.app, this));
+        this.addSettingTab(new DataviewSettingsTab(this.app, this));
 
-		console.log("Dataview: Version 0.4.x Loaded");
+        console.log("Dataview: Version 0.4.x Loaded");
 
-		if (!this.app.workspace.layoutReady) {
-			this.app.workspace.onLayoutReady(async () => this.prepareIndexes());
-		} else {
-			this.prepareIndexes();
-		}
+        if (!this.app.workspace.layoutReady) {
+            this.app.workspace.onLayoutReady(async () => this.prepareIndexes());
+        } else {
+            this.prepareIndexes();
+        }
 
         // Dataview query language code blocks.
-		this.registerHighPriorityCodeblockProcessor("dataview", async (source: string, el, ctx) => {
-			let maybeQuery = tryOrPropogate(() => parseQuery(source));
+        this.registerHighPriorityCodeblockProcessor("dataview", async (source: string, el, ctx) => {
+            let maybeQuery = tryOrPropogate(() => parseQuery(source));
 
-			// In case of parse error, just render the error.
-			if (!maybeQuery.successful) {
-				renderErrorPre(el, "Dataview: " + maybeQuery.error);
-				return;
-			}
+            // In case of parse error, just render the error.
+            if (!maybeQuery.successful) {
+                renderErrorPre(el, "Dataview: " + maybeQuery.error);
+                return;
+            }
 
             let query = maybeQuery.value;
-			switch (query.header.type) {
-				case 'task':
-					ctx.addChild(this.wrapWithEnsureIndex(ctx, el,
-						() => new DataviewTaskRenderer(query as Query, el, this.index, ctx.sourcePath, this.app.vault, this.settings)));
-					break;
-				case 'list':
-					ctx.addChild(this.wrapWithEnsureIndex(ctx, el,
-						() => new DataviewListRenderer(query as Query, el, this.index, ctx.sourcePath, this.settings)));
-					break;
-				case 'table':
-					ctx.addChild(this.wrapWithEnsureIndex(ctx, el,
-						() => new DataviewTableRenderer(query as Query, el, this.index, ctx.sourcePath, this.settings)));
-					break;
-			}
-		});
+            switch (query.header.type) {
+                case "task":
+                    ctx.addChild(
+                        this.wrapWithEnsureIndex(
+                            ctx,
+                            el,
+                            () =>
+                                new DataviewTaskRenderer(
+                                    query as Query,
+                                    el,
+                                    this.index,
+                                    ctx.sourcePath,
+                                    this.app.vault,
+                                    this.settings
+                                )
+                        )
+                    );
+                    break;
+                case "list":
+                    ctx.addChild(
+                        this.wrapWithEnsureIndex(
+                            ctx,
+                            el,
+                            () =>
+                                new DataviewListRenderer(query as Query, el, this.index, ctx.sourcePath, this.settings)
+                        )
+                    );
+                    break;
+                case "table":
+                    ctx.addChild(
+                        this.wrapWithEnsureIndex(
+                            ctx,
+                            el,
+                            () =>
+                                new DataviewTableRenderer(query as Query, el, this.index, ctx.sourcePath, this.settings)
+                        )
+                    );
+                    break;
+            }
+        });
 
         // DataviewJS codeblocks.
-		this.registerHighPriorityCodeblockProcessor("dataviewjs", async (source: string, el, ctx) => {
-			ctx.addChild(this.wrapWithEnsureIndex(ctx, el,
-				() => new DataviewJSRenderer(source, el, this.app, this.index, ctx.sourcePath, this.settings)));
-		});
+        this.registerHighPriorityCodeblockProcessor("dataviewjs", async (source: string, el, ctx) => {
+            ctx.addChild(
+                this.wrapWithEnsureIndex(
+                    ctx,
+                    el,
+                    () => new DataviewJSRenderer(source, el, this.app, this.index, ctx.sourcePath, this.settings)
+                )
+            );
+        });
 
-		// Dataview inline queries.
-		this.registerMarkdownPostProcessor(async (el, ctx) => {
-			// Search for <code> blocks inside this element; for each one, look for things of the form `= ...`.
-			let codeblocks = el.querySelectorAll("code");
-			for (let index = 0; index < codeblocks.length; index++) {
+        // Dataview inline queries.
+        this.registerMarkdownPostProcessor(async (el, ctx) => {
+            // Search for <code> blocks inside this element; for each one, look for things of the form `= ...`.
+            let codeblocks = el.querySelectorAll("code");
+            for (let index = 0; index < codeblocks.length; index++) {
                 let codeblock = codeblocks.item(index);
 
-				let text = codeblock.innerText.trim();
+                let text = codeblock.innerText.trim();
                 if (text.startsWith(this.settings.inlineJsQueryPrefix)) {
                     let code = text.substring(this.settings.inlineJsQueryPrefix.length).trim();
-                    ctx.addChild(this.wrapInlineWithEnsureIndex(ctx, codeblock,
-                        () => new DataviewInlineJSRenderer(code, el, codeblock, this.app, this.index, ctx.sourcePath, this.settings)));
-				} else if (text.startsWith(this.settings.inlineQueryPrefix)) {
+                    ctx.addChild(
+                        this.wrapInlineWithEnsureIndex(
+                            ctx,
+                            codeblock,
+                            () =>
+                                new DataviewInlineJSRenderer(
+                                    code,
+                                    el,
+                                    codeblock,
+                                    this.app,
+                                    this.index,
+                                    ctx.sourcePath,
+                                    this.settings
+                                )
+                        )
+                    );
+                } else if (text.startsWith(this.settings.inlineQueryPrefix)) {
                     let potentialField = text.substring(this.settings.inlineQueryPrefix.length).trim();
 
                     let field = tryOrPropogate(() => parseField(potentialField));
                     if (!field.successful) {
-                        let errorBlock = el.createEl('div');
+                        let errorBlock = el.createEl("div");
                         renderErrorPre(errorBlock, `Dataview (inline field '${potentialField}'): ${field.error}`);
                     } else {
                         let fieldValue = field.value;
-                        ctx.addChild(this.wrapInlineWithEnsureIndex(ctx, codeblock,
-                            () => new DataviewInlineRenderer(fieldValue, text, el, codeblock, this.index, ctx.sourcePath, this.settings)));
+                        ctx.addChild(
+                            this.wrapInlineWithEnsureIndex(
+                                ctx,
+                                codeblock,
+                                () =>
+                                    new DataviewInlineRenderer(
+                                        fieldValue,
+                                        text,
+                                        el,
+                                        codeblock,
+                                        this.index,
+                                        ctx.sourcePath,
+                                        this.settings
+                                    )
+                            )
+                        );
                     }
                 }
-			}
-		});
-	}
+            }
+        });
+    }
 
     /**
      * Utility function for registering high priority codeblocks which run before any other post processing, such as
      * emoji-twitter.
      */
-    public registerHighPriorityCodeblockProcessor(language: string, processor: (source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext) => Promise<void>) {
+    public registerHighPriorityCodeblockProcessor(
+        language: string,
+        processor: (source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext) => Promise<void>
+    ) {
         let postProcess: MarkdownPostProcessor = async (el, ctx) => {
             let codeblocks = el.querySelectorAll("pre > code");
             if (!codeblocks) return;
@@ -154,30 +218,48 @@ export default class DataviewPlugin extends Plugin {
         this.registerMarkdownPostProcessor(postProcess);
     }
 
-	onunload() { }
+    onunload() {}
 
-	/** Prepare all dataview indices. */
-	async prepareIndexes() {
-		let index = await FullIndex.generate(this);
-		this.index = index;
+    /** Prepare all dataview indices. */
+    async prepareIndexes() {
+        let index = await FullIndex.generate(this);
+        this.index = index;
 
         this.api = new DataviewApi(this.app, this.index, this.settings);
         this.trigger("dataview:api-ready", this.api);
-	}
+    }
 
-	/** Update plugin settings. */
-	async updateSettings(settings: Partial<DataviewSettings>) {
-		Object.assign(this.settings, settings);
-		await this.saveData(this.settings);
-	}
+    /** Update plugin settings. */
+    async updateSettings(settings: Partial<DataviewSettings>) {
+        Object.assign(this.settings, settings);
+        await this.saveData(this.settings);
+    }
 
-	private wrapWithEnsureIndex(ctx: MarkdownPostProcessorContext, container: HTMLElement, success: () => MarkdownRenderChild): EnsurePredicateRenderer {
-		return new EnsurePredicateRenderer(ctx, container, () => this.index != undefined && this.index.pages && this.index.pages.size > 0, success);
-	}
+    private wrapWithEnsureIndex(
+        ctx: MarkdownPostProcessorContext,
+        container: HTMLElement,
+        success: () => MarkdownRenderChild
+    ): EnsurePredicateRenderer {
+        return new EnsurePredicateRenderer(
+            ctx,
+            container,
+            () => this.index != undefined && this.index.pages && this.index.pages.size > 0,
+            success
+        );
+    }
 
-	private wrapInlineWithEnsureIndex(ctx: MarkdownPostProcessorContext, container: HTMLElement, success: () => MarkdownRenderChild): EnsurePredicateRenderer {
-		return new EnsureInlinePredicateRenderer(ctx, container, () => this.index != undefined && this.index.pages && this.index.pages.size > 0, success);
-	}
+    private wrapInlineWithEnsureIndex(
+        ctx: MarkdownPostProcessorContext,
+        container: HTMLElement,
+        success: () => MarkdownRenderChild
+    ): EnsurePredicateRenderer {
+        return new EnsureInlinePredicateRenderer(
+            ctx,
+            container,
+            () => this.index != undefined && this.index.pages && this.index.pages.size > 0,
+            success
+        );
+    }
 
     // User-facing utility functions.
 
@@ -190,208 +272,252 @@ export default class DataviewPlugin extends Plugin {
 
 /** All of the dataview settings in a single, nice tab. */
 class DataviewSettingsTab extends PluginSettingTab {
-	constructor(app: App, private plugin: DataviewPlugin) {
-		super(app, plugin);
-	}
+    constructor(app: App, private plugin: DataviewPlugin) {
+        super(app, plugin);
+    }
 
-	display(): void {
-		this.containerEl.empty();
-		this.containerEl.createEl("h2", { text: "Dataview Codeblock Settings" });
+    display(): void {
+        this.containerEl.empty();
+        this.containerEl.createEl("h2", { text: "Dataview Codeblock Settings" });
 
-		new Setting(this.containerEl)
-			.setName("Inline Query Prefix")
-			.setDesc("The prefix to inline queries (to mark them as Dataview queries). Defaults to '='.")
-			.addText(text =>
-				text.setPlaceholder("=")
-				.setValue(this.plugin.settings.inlineQueryPrefix)
-				.onChange(async (value) => await this.plugin.updateSettings({ inlineQueryPrefix: value })))
+        new Setting(this.containerEl)
+            .setName("Inline Query Prefix")
+            .setDesc("The prefix to inline queries (to mark them as Dataview queries). Defaults to '='.")
+            .addText(text =>
+                text
+                    .setPlaceholder("=")
+                    .setValue(this.plugin.settings.inlineQueryPrefix)
+                    .onChange(async value => await this.plugin.updateSettings({ inlineQueryPrefix: value }))
+            );
 
-		new Setting(this.containerEl)
-			.setName("JavaScript Inline Query Prefix")
-			.setDesc("The prefix to JavaScript inline queries (to mark them as DataviewJS queries). Defaults to '$='.")
-			.addText(text =>
-				text.setPlaceholder("$=")
-				.setValue(this.plugin.settings.inlineJsQueryPrefix)
-				.onChange(async (value) => await this.plugin.updateSettings({ inlineJsQueryPrefix: value })))
+        new Setting(this.containerEl)
+            .setName("JavaScript Inline Query Prefix")
+            .setDesc("The prefix to JavaScript inline queries (to mark them as DataviewJS queries). Defaults to '$='.")
+            .addText(text =>
+                text
+                    .setPlaceholder("$=")
+                    .setValue(this.plugin.settings.inlineJsQueryPrefix)
+                    .onChange(async value => await this.plugin.updateSettings({ inlineJsQueryPrefix: value }))
+            );
 
-		new Setting(this.containerEl)
-			.setName("Enable JavaScript Queries")
-			.setDesc("Enable or disable executing DataviewJS queries.")
-			.addToggle(toggle =>
-				toggle.setValue(this.plugin.settings.enableDataviewJs)
-					.onChange(async (value) => await this.plugin.updateSettings({ enableDataviewJs: value })));
+        new Setting(this.containerEl)
+            .setName("Enable JavaScript Queries")
+            .setDesc("Enable or disable executing DataviewJS queries.")
+            .addToggle(toggle =>
+                toggle
+                    .setValue(this.plugin.settings.enableDataviewJs)
+                    .onChange(async value => await this.plugin.updateSettings({ enableDataviewJs: value }))
+            );
 
         this.containerEl.createEl("h2", { text: "Query Settings" });
 
-		new Setting(this.containerEl)
-			.setName("Render Null As")
-			.setDesc("What null/non-existent should show up as in tables, by default.")
-			.addText(text =>
-				text.setPlaceholder("-")
-					.setValue(this.plugin.settings.renderNullAs)
-					.onChange(async (value) => await this.plugin.updateSettings({ renderNullAs: value })));
+        new Setting(this.containerEl)
+            .setName("Render Null As")
+            .setDesc("What null/non-existent should show up as in tables, by default.")
+            .addText(text =>
+                text
+                    .setPlaceholder("-")
+                    .setValue(this.plugin.settings.renderNullAs)
+                    .onChange(async value => await this.plugin.updateSettings({ renderNullAs: value }))
+            );
 
-		new Setting(this.containerEl)
-			.setName("Warn on Empty Result")
-			.setDesc("If set, queries which return 0 results will render a warning message.")
-			.addToggle(toggle =>
-				toggle.setValue(this.plugin.settings.warnOnEmptyResult)
-					.onChange(async (value) => await this.plugin.updateSettings({ warnOnEmptyResult: value })));
+        new Setting(this.containerEl)
+            .setName("Warn on Empty Result")
+            .setDesc("If set, queries which return 0 results will render a warning message.")
+            .addToggle(toggle =>
+                toggle
+                    .setValue(this.plugin.settings.warnOnEmptyResult)
+                    .onChange(async value => await this.plugin.updateSettings({ warnOnEmptyResult: value }))
+            );
 
-		new Setting(this.containerEl)
-			.setName("Dataview Refresh Interval (milliseconds)")
-			.setDesc("How frequently dataviews are updated in preview mode when files are changing.")
-			.addText(text =>
-				text.setPlaceholder("5000")
-				.setValue("" + this.plugin.settings.refreshInterval)
-				.onChange(async (value) => {
-					let parsed = parseInt(value);
-					if (isNaN(parsed)) return;
-					parsed = (parsed < 100) ? 100 : parsed;
-					await this.plugin.updateSettings({ refreshInterval: parsed });
-				}));
+        new Setting(this.containerEl)
+            .setName("Dataview Refresh Interval (milliseconds)")
+            .setDesc("How frequently dataviews are updated in preview mode when files are changing.")
+            .addText(text =>
+                text
+                    .setPlaceholder("5000")
+                    .setValue("" + this.plugin.settings.refreshInterval)
+                    .onChange(async value => {
+                        let parsed = parseInt(value);
+                        if (isNaN(parsed)) return;
+                        parsed = parsed < 100 ? 100 : parsed;
+                        await this.plugin.updateSettings({ refreshInterval: parsed });
+                    })
+            );
 
         let dformat = new Setting(this.containerEl)
             .setName("Date Format")
-            .setDesc("The default date format (see Luxon date format options)."
-                +" Currently: " + DateTime.now().toFormat(this.plugin.settings.defaultDateFormat,
-                { locale: currentLocale() }))
-            .addText(text => text.setPlaceholder(DEFAULT_QUERY_SETTINGS.defaultDateFormat)
-                .setValue(this.plugin.settings.defaultDateFormat)
-                .onChange(async (value) => {
-                    dformat.setDesc("The default date format (see Luxon date format options)."
-                     + " Currently: " + DateTime.now().toFormat(value, { locale: currentLocale() }));
-                    await this.plugin.updateSettings({ defaultDateFormat: value });
-                }));
+            .setDesc(
+                "The default date format (see Luxon date format options)." +
+                    " Currently: " +
+                    DateTime.now().toFormat(this.plugin.settings.defaultDateFormat, { locale: currentLocale() })
+            )
+            .addText(text =>
+                text
+                    .setPlaceholder(DEFAULT_QUERY_SETTINGS.defaultDateFormat)
+                    .setValue(this.plugin.settings.defaultDateFormat)
+                    .onChange(async value => {
+                        dformat.setDesc(
+                            "The default date format (see Luxon date format options)." +
+                                " Currently: " +
+                                DateTime.now().toFormat(value, { locale: currentLocale() })
+                        );
+                        await this.plugin.updateSettings({ defaultDateFormat: value });
+                    })
+            );
 
         let dtformat = new Setting(this.containerEl)
             .setName("Datetime Format")
-            .setDesc("The default date and time format (see Luxon date format options)."
-                + " Currently: " + DateTime.now().toFormat(this.plugin.settings.defaultDateTimeFormat, { locale: currentLocale() }))
-            .addText(text => text.setPlaceholder(DEFAULT_QUERY_SETTINGS.defaultDateTimeFormat)
-                .setValue(this.plugin.settings.defaultDateTimeFormat)
-                .onChange(async (value) => {
-                    dtformat.setDesc("The default date and time format (see Luxon date format options)."
-                        + " Currently: " + DateTime.now().toFormat(value, { locale: currentLocale() }));
-                    await this.plugin.updateSettings({ defaultDateTimeFormat: value });
-                }));
-	}
+            .setDesc(
+                "The default date and time format (see Luxon date format options)." +
+                    " Currently: " +
+                    DateTime.now().toFormat(this.plugin.settings.defaultDateTimeFormat, { locale: currentLocale() })
+            )
+            .addText(text =>
+                text
+                    .setPlaceholder(DEFAULT_QUERY_SETTINGS.defaultDateTimeFormat)
+                    .setValue(this.plugin.settings.defaultDateTimeFormat)
+                    .onChange(async value => {
+                        dtformat.setDesc(
+                            "The default date and time format (see Luxon date format options)." +
+                                " Currently: " +
+                                DateTime.now().toFormat(value, { locale: currentLocale() })
+                        );
+                        await this.plugin.updateSettings({ defaultDateTimeFormat: value });
+                    })
+            );
+    }
 }
 
 /** A generic renderer which waits for a predicate, only continuing on success. */
 class EnsurePredicateRenderer extends MarkdownRenderChild {
-	static CHECK_INTERVAL_MS = 1_000;
+    static CHECK_INTERVAL_MS = 1_000;
 
-	dead: boolean;
+    dead: boolean;
 
-	constructor(public ctx: MarkdownPostProcessorContext,
-		public container: HTMLElement,
-		public update: () => boolean,
-		public success: () => MarkdownRenderChild) {
-		super(container);
+    constructor(
+        public ctx: MarkdownPostProcessorContext,
+        public container: HTMLElement,
+        public update: () => boolean,
+        public success: () => MarkdownRenderChild
+    ) {
+        super(container);
 
-		this.ctx = ctx;
-		this.container = container;
-		this.update = update;
-		this.success = success;
-		this.dead = false;
-	}
+        this.ctx = ctx;
+        this.container = container;
+        this.update = update;
+        this.success = success;
+        this.dead = false;
+    }
 
-	async onload() {
-		let loadContainer = renderErrorPre(this.container, "Dataview indices are loading");
+    async onload() {
+        let loadContainer = renderErrorPre(this.container, "Dataview indices are loading");
 
-		// Wait for the given predicate to finally pass...
-		await waitFor(EnsurePredicateRenderer.CHECK_INTERVAL_MS,
-			() => { loadContainer.innerText += "."; return this.update(); },
-			() => this.dead);
+        // Wait for the given predicate to finally pass...
+        await waitFor(
+            EnsurePredicateRenderer.CHECK_INTERVAL_MS,
+            () => {
+                loadContainer.innerText += ".";
+                return this.update();
+            },
+            () => this.dead
+        );
 
-		// Clear the container before passing it off to the child.
-		this.container.innerHTML = "";
+        // Clear the container before passing it off to the child.
+        this.container.innerHTML = "";
 
-		// And then pass off rendering to a child context.
-		this.ctx.addChild(this.success());
-	}
+        // And then pass off rendering to a child context.
+        this.ctx.addChild(this.success());
+    }
 
-	onunload() {
-		this.dead = true;
-	}
+    onunload() {
+        this.dead = true;
+    }
 }
 
 /** Inline version of EnsurePredicateRenderer; renders it's loading message differently. */
 class EnsureInlinePredicateRenderer extends MarkdownRenderChild {
-	static CHECK_INTERVAL_MS = 1_000;
+    static CHECK_INTERVAL_MS = 1_000;
 
-	dead: boolean;
+    dead: boolean;
 
-	constructor(public ctx: MarkdownPostProcessorContext,
-		public container: HTMLElement,
-		public update: () => boolean,
-		public success: () => MarkdownRenderChild) {
-		super(container);
+    constructor(
+        public ctx: MarkdownPostProcessorContext,
+        public container: HTMLElement,
+        public update: () => boolean,
+        public success: () => MarkdownRenderChild
+    ) {
+        super(container);
 
-		this.ctx = ctx;
-		this.container = container;
-		this.update = update;
-		this.success = success;
-		this.dead = false;
-	}
+        this.ctx = ctx;
+        this.container = container;
+        this.update = update;
+        this.success = success;
+        this.dead = false;
+    }
 
-	async onload() {
-		this.container.innerHTML = "<Indices loading>";
+    async onload() {
+        this.container.innerHTML = "<Indices loading>";
 
-		// Wait for the given predicate to finally pass...
-		await waitFor(EnsurePredicateRenderer.CHECK_INTERVAL_MS,
-			() => { return this.update(); },
-			() => this.dead);
+        // Wait for the given predicate to finally pass...
+        await waitFor(
+            EnsurePredicateRenderer.CHECK_INTERVAL_MS,
+            () => {
+                return this.update();
+            },
+            () => this.dead
+        );
 
-		// Clear the container before passing it off to the child.
-		this.container.innerHTML = "";
+        // Clear the container before passing it off to the child.
+        this.container.innerHTML = "";
 
-		// And then pass off rendering to a child context.
-		this.ctx.addChild(this.success());
-	}
+        // And then pass off rendering to a child context.
+        this.ctx.addChild(this.success());
+    }
 
-	onunload() {
-		this.dead = true;
-	}
+    onunload() {
+        this.dead = true;
+    }
 }
 
 /** Renders a list dataview for the given query. */
 class DataviewListRenderer extends MarkdownRenderChild {
-	constructor(public query: Query,
-		public container: HTMLElement,
-		public index: FullIndex,
-		public origin: string,
-		public settings: DataviewSettings) {
-		super(container);
-	}
+    constructor(
+        public query: Query,
+        public container: HTMLElement,
+        public index: FullIndex,
+        public origin: string,
+        public settings: DataviewSettings
+    ) {
+        super(container);
+    }
 
-	async onload() {
-		await this.render();
+    async onload() {
+        await this.render();
 
         onIndexChange(this.index, this.settings.refreshInterval, this, async () => {
-			this.container.innerHTML = "";
-			await this.render();
-		});
-	}
+            this.container.innerHTML = "";
+            await this.render();
+        });
+    }
 
-	async render() {
-		let maybeResult = tryOrPropogate(() => executeList(this.query, this.index, this.origin, this.settings));
-		if (!maybeResult.successful) {
-			renderErrorPre(this.container, "Dataview: " + maybeResult.error);
+    async render() {
+        let maybeResult = tryOrPropogate(() => executeList(this.query, this.index, this.origin, this.settings));
+        if (!maybeResult.successful) {
+            renderErrorPre(this.container, "Dataview: " + maybeResult.error);
             return;
-		} else if (maybeResult.value.data.length == 0 && this.settings.warnOnEmptyResult) {
-			renderErrorPre(this.container, "Dataview: Query returned 0 results.");
+        } else if (maybeResult.value.data.length == 0 && this.settings.warnOnEmptyResult) {
+            renderErrorPre(this.container, "Dataview: Query returned 0 results.");
             return;
-		}
+        }
         let result = maybeResult.value;
         let rendered: LiteralValue[] = [];
         for (let row of result.data) {
             if (row.value) {
-                let span = document.createElement('span');
-                await renderValue(row.primary, span, this.origin, this, this.settings, false, 'list');
+                let span = document.createElement("span");
+                await renderValue(row.primary, span, this.origin, this, this.settings, false, "list");
                 span.appendText(": ");
-                await renderValue(row.value, span, this.origin, this, this.settings, true, 'list');
+                await renderValue(row.value, span, this.origin, this, this.settings, true, "list");
 
                 rendered.push(span);
             } else {
@@ -400,34 +526,35 @@ class DataviewListRenderer extends MarkdownRenderChild {
         }
 
         await renderList(this.container, rendered, this, this.origin, this.settings);
-	}
+    }
 }
 
 class DataviewTableRenderer extends MarkdownRenderChild {
-	constructor(
-		public query: Query,
-		public container: HTMLElement,
-		public index: FullIndex,
-		public origin: string,
-		public settings: DataviewSettings) {
-		super(container);
-	}
+    constructor(
+        public query: Query,
+        public container: HTMLElement,
+        public index: FullIndex,
+        public origin: string,
+        public settings: DataviewSettings
+    ) {
+        super(container);
+    }
 
-	async onload() {
-		await this.render();
+    async onload() {
+        await this.render();
 
         onIndexChange(this.index, this.settings.refreshInterval, this, async () => {
-			this.container.innerHTML = "";
-			await this.render();
-		});
-	}
+            this.container.innerHTML = "";
+            await this.render();
+        });
+    }
 
-	async render() {
-		let maybeResult = tryOrPropogate(() => executeTable(this.query, this.index, this.origin, this.settings));
-		if (!maybeResult.successful) {
-			renderErrorPre(this.container, "Dataview: " + maybeResult.error);
-			return;
-		}
+    async render() {
+        let maybeResult = tryOrPropogate(() => executeTable(this.query, this.index, this.origin, this.settings));
+        if (!maybeResult.successful) {
+            renderErrorPre(this.container, "Dataview: " + maybeResult.error);
+            return;
+        }
 
         let result = maybeResult.value;
 
@@ -438,134 +565,152 @@ class DataviewTableRenderer extends MarkdownRenderChild {
             }
             let name = result.idMeaning.type === "group" ? "Group" : "File";
 
-            await renderTable(this.container, [name].concat(result.names), dataWithNames, this, this.origin, this.settings);
+            await renderTable(
+                this.container,
+                [name].concat(result.names),
+                dataWithNames,
+                this,
+                this.origin,
+                this.settings
+            );
         } else {
-            await renderTable(this.container, result.names, result.data.map(v => v.values), this, this.origin, this.settings);
+            await renderTable(
+                this.container,
+                result.names,
+                result.data.map(v => v.values),
+                this,
+                this.origin,
+                this.settings
+            );
         }
 
-		// Render after the empty table, so the table header still renders.
-		if (result.data.length == 0 && this.settings.warnOnEmptyResult) {
-			renderErrorPre(this.container, "Dataview: Query returned 0 results.");
-		}
-	}
+        // Render after the empty table, so the table header still renders.
+        if (result.data.length == 0 && this.settings.warnOnEmptyResult) {
+            renderErrorPre(this.container, "Dataview: Query returned 0 results.");
+        }
+    }
 }
 
 class DataviewTaskRenderer extends MarkdownRenderChild {
+    taskView?: MarkdownRenderChild;
 
-	taskView?: MarkdownRenderChild;
+    constructor(
+        public query: Query,
+        public container: HTMLElement,
+        public index: FullIndex,
+        public origin: string,
+        public vault: Vault,
+        public settings: DataviewSettings
+    ) {
+        super(container);
+    }
 
-	constructor(public query: Query,
-		public container: HTMLElement,
-		public index: FullIndex,
-		public origin: string,
-		public vault: Vault,
-		public settings: DataviewSettings) {
-		super(container);
-	}
-
-	async onload() {
-		await this.render();
+    async onload() {
+        await this.render();
 
         onIndexChange(this.index, this.settings.refreshInterval, this, async () => {
-			if (this.taskView) this.removeChild(this.taskView);
+            if (this.taskView) this.removeChild(this.taskView);
 
-			this.container.innerHTML = "";
-			await this.render();
-		});
-	}
+            this.container.innerHTML = "";
+            await this.render();
+        });
+    }
 
-	async render() {
-		let result = tryOrPropogate(() => executeTask(this.query, this.origin, this.index, this.settings));
-		if (!result.successful) {
-			renderErrorPre(this.container, "Dataview: " + result.error);
-		} else if (result.value.tasks.size == 0 && this.settings.warnOnEmptyResult) {
-			renderErrorPre(this.container, "Query returned 0 results.");
-		} else {
-			await Tasks.renderFileTasks(this.container, result.value.tasks);
+    async render() {
+        let result = tryOrPropogate(() => executeTask(this.query, this.origin, this.index, this.settings));
+        if (!result.successful) {
+            renderErrorPre(this.container, "Dataview: " + result.error);
+        } else if (result.value.tasks.size == 0 && this.settings.warnOnEmptyResult) {
+            renderErrorPre(this.container, "Query returned 0 results.");
+        } else {
+            await Tasks.renderFileTasks(this.container, result.value.tasks);
 
-			// TODO: Merge this into this renderer.
-			this.addChild(this.taskView = new Tasks.TaskViewLifecycle(this.vault, this.container));
-		}
-	}
+            // TODO: Merge this into this renderer.
+            this.addChild((this.taskView = new Tasks.TaskViewLifecycle(this.vault, this.container)));
+        }
+    }
 }
 
 /** Renders inline query results. */
 class DataviewInlineRenderer extends MarkdownRenderChild {
+    // The box that the error is rendered in, if relevant.
+    errorbox?: HTMLElement;
 
-	// The box that the error is rendered in, if relevant.
-	errorbox?: HTMLElement;
-
-	constructor(
-		public field: Field,
+    constructor(
+        public field: Field,
         public fieldText: string,
-		public container: HTMLElement,
-		public target: HTMLElement,
-		public index: FullIndex,
-		public origin: string,
-		public settings: DataviewSettings) {
-		super(container);
-	}
+        public container: HTMLElement,
+        public target: HTMLElement,
+        public index: FullIndex,
+        public origin: string,
+        public settings: DataviewSettings
+    ) {
+        super(container);
+    }
 
-	async onload() {
-		await this.render();
+    async onload() {
+        await this.render();
 
         onIndexChange(this.index, this.settings.refreshInterval, this, async () => {
-			this.errorbox?.remove();
-			await this.render();
-		});
-	}
+            this.errorbox?.remove();
+            await this.render();
+        });
+    }
 
-	async render() {
-		let result = tryOrPropogate(() => executeInline(this.field, this.origin, this.index, this.settings));
-		if (!result.successful) {
-			this.errorbox = this.container.createEl('div');
-			renderErrorPre(this.errorbox, "Dataview (for inline query '" + this.fieldText + "'): " + result.error);
-		} else {
+    async render() {
+        let result = tryOrPropogate(() => executeInline(this.field, this.origin, this.index, this.settings));
+        if (!result.successful) {
+            this.errorbox = this.container.createEl("div");
+            renderErrorPre(this.errorbox, "Dataview (for inline query '" + this.fieldText + "'): " + result.error);
+        } else {
             let temp = document.createElement("span");
-			await renderValue(result.value, temp, this.origin, this, this.settings, false);
+            await renderValue(result.value, temp, this.origin, this, this.settings, false);
 
             this.target.replaceWith(temp);
-		}
-	}
+        }
+    }
 }
 
 class DataviewJSRenderer extends MarkdownRenderChild {
-	static PREAMBLE: string = "const dataview = this;const dv = this;";
+    static PREAMBLE: string = "const dataview = this;const dv = this;";
 
-	constructor(
-		public script: string,
-		public container: HTMLElement,
-		public app: App,
-		public index: FullIndex,
-		public origin: string,
-		public settings: DataviewSettings) {
-		super(container);
-	}
+    constructor(
+        public script: string,
+        public container: HTMLElement,
+        public app: App,
+        public index: FullIndex,
+        public origin: string,
+        public settings: DataviewSettings
+    ) {
+        super(container);
+    }
 
-	async onload() {
+    async onload() {
         await this.render();
 
         onIndexChange(this.index, this.settings.refreshInterval, this, async () => {
             this.container.innerHTML = "";
-			await this.render();
-		});
-	}
+            await this.render();
+        });
+    }
 
     async render() {
-		if (!this.settings.enableDataviewJs) {
-			this.containerEl.innerHTML = "";
-			renderErrorPre(this.container, "Dataview JS queries are disabled.");
-			return;
-		}
+        if (!this.settings.enableDataviewJs) {
+            this.containerEl.innerHTML = "";
+            renderErrorPre(this.container, "Dataview JS queries are disabled.");
+            return;
+        }
 
-		// Assume that the code is javascript, and try to eval it.
-		try {
-		    evalInContext(DataviewJSRenderer.PREAMBLE + this.script,
-			    makeApiContext(this.index, this, this.app, this.settings, this.container, this.origin));
-		} catch (e) {
-			this.containerEl.innerHTML = "";
-			renderErrorPre(this.container, "Evaluation Error: " + e.stack);
-		}
+        // Assume that the code is javascript, and try to eval it.
+        try {
+            evalInContext(
+                DataviewJSRenderer.PREAMBLE + this.script,
+                makeApiContext(this.index, this, this.app, this.settings, this.container, this.origin)
+            );
+        } catch (e) {
+            this.containerEl.innerHTML = "";
+            renderErrorPre(this.container, "Evaluation Error: " + e.stack);
+        }
     }
 }
 
@@ -573,63 +718,68 @@ class DataviewJSRenderer extends MarkdownRenderChild {
 class DataviewInlineJSRenderer extends MarkdownRenderChild {
     static PREAMBLE: string = "const dataview = this;const dv=this;";
 
-	// The box that the error is rendered in, if relevant.
-	errorbox?: HTMLElement;
+    // The box that the error is rendered in, if relevant.
+    errorbox?: HTMLElement;
 
-	constructor(
-		public script: string,
-		public container: HTMLElement,
-		public target: HTMLElement,
-		public app: App,
-		public index: FullIndex,
-		public origin: string,
-		public settings: DataviewSettings) {
-		super(container);
-	}
+    constructor(
+        public script: string,
+        public container: HTMLElement,
+        public target: HTMLElement,
+        public app: App,
+        public index: FullIndex,
+        public origin: string,
+        public settings: DataviewSettings
+    ) {
+        super(container);
+    }
 
-	async onload() {
+    async onload() {
         await this.render();
 
         onIndexChange(this.index, this.settings.refreshInterval, this, async () => {
-			this.errorbox?.remove();
-			await this.render();
-		});
-	}
+            this.errorbox?.remove();
+            await this.render();
+        });
+    }
 
     async render() {
-		if (!this.settings.enableDataviewJs) {
+        if (!this.settings.enableDataviewJs) {
             let temp = document.createElement("span");
             temp.innerText = "<disabled>";
             this.target.replaceWith(temp);
             this.target = temp;
             return;
-		}
+        }
 
-		// Assume that the code is javascript, and try to eval it.
-		try {
+        // Assume that the code is javascript, and try to eval it.
+        try {
             let temp = document.createElement("span");
-		    let result = evalInContext(DataviewInlineJSRenderer.PREAMBLE + this.script,
-		    	makeApiContext(this.index, this, this.app, this.settings, temp, this.origin));
+            let result = evalInContext(
+                DataviewInlineJSRenderer.PREAMBLE + this.script,
+                makeApiContext(this.index, this, this.app, this.settings, temp, this.origin)
+            );
             this.target.replaceWith(temp);
             this.target = temp;
             if (result === undefined) return;
 
             renderValue(result, temp, this.origin, this, this.settings, false);
-		} catch (e) {
-			this.errorbox = this.container.createEl('div');
-			renderErrorPre(this.errorbox, "Dataview (for inline JS query '" + this.script + "'): " + e);
-		}
+        } catch (e) {
+            this.errorbox = this.container.createEl("div");
+            renderErrorPre(this.errorbox, "Dataview (for inline JS query '" + this.script + "'): " + e);
+        }
     }
 }
 
 function onIndexChange(index: FullIndex, interval: number, component: Component, action: () => any) {
     let lastReload = index.revision;
 
-    component.registerInterval(window.setInterval(() => {
-        // If the index revision has changed recently, then queue a reload.
-        if (lastReload != index.revision) {
-            action();
-            lastReload = index.revision;
-        }
-    }, interval));
+    component.registerInterval(
+        window.setInterval(() => {
+            // If the index revision has changed recently, then queue a reload.
+            if (lastReload != index.revision) {
+                action();
+                lastReload = index.revision;
+            }
+        }, interval)
+    );
 }

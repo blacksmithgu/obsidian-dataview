@@ -34,8 +34,8 @@ export class Context {
         public settings: QuerySettings,
         public globals: Record<string, LiteralValue> = {},
         public binaryOps: BinaryOpHandler = createBinaryOps(linkHandler.normalize),
-        public functions: Record<string, FunctionImpl> = DEFAULT_FUNCTIONS) {
-    }
+        public functions: Record<string, FunctionImpl> = DEFAULT_FUNCTIONS
+    ) {}
 
     /** Set a global value in this context. */
     public set(name: string, value: LiteralValue): Context {
@@ -56,7 +56,8 @@ export class Context {
     /** Evaluate an arbitrary field in this context. */
     public evaluate(field: Field, data: Record<string, LiteralValue> = {}): Result<LiteralValue, string> {
         switch (field.type) {
-            case "literal": return Result.success(field.value);
+            case "literal":
+                return Result.success(field.value);
             case "variable":
                 if (field.name in data) return Result.success(data[field.name]);
                 else if (field.name in this.globals) return Result.success(this.globals[field.name]);
@@ -64,8 +65,9 @@ export class Context {
             case "negated":
                 return this.evaluate(field.child, data).map(s => !Values.isTruthy(s));
             case "binaryop":
-                return Result.flatMap2(this.evaluate(field.left, data), this.evaluate(field.right, data),
-                    (a, b) => this.binaryOps.evaluate(field.op, a, b, this));
+                return Result.flatMap2(this.evaluate(field.left, data), this.evaluate(field.right, data), (a, b) =>
+                    this.binaryOps.evaluate(field.op, a, b, this)
+                );
             case "list":
                 let result = [];
                 for (let child of field.values) {
@@ -94,7 +96,10 @@ export class Context {
                     return ctx.evaluate(field.value, copy).orElseThrow();
                 });
             case "function":
-                let rawFunc = field.func.type == "variable" ? Result.success<string, string>(field.func.name) : this.evaluate(field.func, data);
+                let rawFunc =
+                    field.func.type == "variable"
+                        ? Result.success<string, string>(field.func.name)
+                        : this.evaluate(field.func, data);
                 if (!rawFunc.successful) return rawFunc;
                 let func = rawFunc.value;
 
@@ -118,16 +123,22 @@ export class Context {
                 }
             case "index":
                 // TODO: Will move this out to an 'primitives' module and add more content to it.
-                let literalIndex = field.index.type == "variable" ? Result.success<string, string>(field.index.name) : this.evaluate(field.index, data);
-                let checkedIndex: Result<string | number, string> = literalIndex.flatMap(s => Values.isString(s) || Values.isNumber(s)
-                    ? Result.success<string | number, string>(s)
-                    : Result.failure("Can only index with a string, variable, or number"));
+                let literalIndex =
+                    field.index.type == "variable"
+                        ? Result.success<string, string>(field.index.name)
+                        : this.evaluate(field.index, data);
+                let checkedIndex: Result<string | number, string> = literalIndex.flatMap(s =>
+                    Values.isString(s) || Values.isNumber(s)
+                        ? Result.success<string | number, string>(s)
+                        : Result.failure("Can only index with a string, variable, or number")
+                );
                 if (!checkedIndex.successful) return checkedIndex;
                 let index = checkedIndex.value;
 
-                let checkedObject = field.object.type == "variable" && field.object.name == "row"
-                    ? Result.success<LiteralValue, string>(Object.assign({}, this.globals, data))
-                    : this.evaluate(field.object, data);
+                let checkedObject =
+                    field.object.type == "variable" && field.object.name == "row"
+                        ? Result.success<LiteralValue, string>(Object.assign({}, this.globals, data))
+                        : this.evaluate(field.object, data);
                 if (!checkedObject.successful) return checkedObject;
 
                 let object = Values.wrapValue(checkedObject.value);
@@ -135,10 +146,12 @@ export class Context {
 
                 switch (object.type) {
                     case "object":
-                        if (!Values.isString(index)) return Result.failure("can only index into objects with strings (a.b or a[\"b\"])");
+                        if (!Values.isString(index))
+                            return Result.failure('can only index into objects with strings (a.b or a["b"])');
                         return Result.success(object.value[index] ?? null);
                     case "link":
-                        if (!Values.isString(index)) return Result.failure("can only index into links with strings (a.b or a[\"b\"])");
+                        if (!Values.isString(index))
+                            return Result.failure('can only index into links with strings (a.b or a["b"])');
                         let linkValue = this.linkHandler.resolve(object.value.path);
                         if (Values.isNull(linkValue)) return Result.success(null);
                         return Result.success(linkValue[index] ?? null);
@@ -156,39 +169,70 @@ export class Context {
                             return Result.success(result);
                         } else {
                             return Result.failure(
-                                "Array indexing requires either a number (to get a specific element), or a string (to map all elements inside the array)");
+                                "Array indexing requires either a number (to get a specific element), or a string (to map all elements inside the array)"
+                            );
                         }
                     case "string":
-                        if (!Values.isNumber(index)) return Result.failure("string indexing requires a numeric index (string[index])");
+                        if (!Values.isNumber(index))
+                            return Result.failure("string indexing requires a numeric index (string[index])");
                         if (index >= object.value.length || index < 0) return Result.success(null);
                         return Result.success(object.value[index]);
                     case "date":
-                        if (!Values.isString(index)) return Result.failure("date indexing requires a string representing the unit");
+                        if (!Values.isString(index))
+                            return Result.failure("date indexing requires a string representing the unit");
                         switch (index) {
-                            case "year": return Result.success(object.value.year);
-                            case "month": return Result.success(object.value.month);
-                            case "weekyear": return Result.success(object.value.weekNumber);
-                            case "week": return Result.success(Math.floor(object.value.day / 7) + 1);
-                            case "weekday": return Result.success(object.value.weekday);
-                            case "day": return Result.success(object.value.day);
-                            case "hour": return Result.success(object.value.hour);
-                            case "minute": return Result.success(object.value.minute);
-                            case "second": return Result.success(object.value.second);
-                            case "millisecond": return Result.success(object.value.millisecond);
-                            default: return Result.success(null);
+                            case "year":
+                                return Result.success(object.value.year);
+                            case "month":
+                                return Result.success(object.value.month);
+                            case "weekyear":
+                                return Result.success(object.value.weekNumber);
+                            case "week":
+                                return Result.success(Math.floor(object.value.day / 7) + 1);
+                            case "weekday":
+                                return Result.success(object.value.weekday);
+                            case "day":
+                                return Result.success(object.value.day);
+                            case "hour":
+                                return Result.success(object.value.hour);
+                            case "minute":
+                                return Result.success(object.value.minute);
+                            case "second":
+                                return Result.success(object.value.second);
+                            case "millisecond":
+                                return Result.success(object.value.millisecond);
+                            default:
+                                return Result.success(null);
                         }
                     case "duration":
-                        if (!Values.isString(index)) return Result.failure("duration indexing requires a string representing the unit");
+                        if (!Values.isString(index))
+                            return Result.failure("duration indexing requires a string representing the unit");
                         switch (index) {
-                            case "year": case "years": return Result.success(object.value.years);
-                            case "month": case "months": return Result.success(object.value.months);
-                            case "weeks": return Result.success(object.value.weeks);
-                            case "day": case "days": return Result.success(object.value.days);
-                            case "hour": case "hours": return Result.success(object.value.hours);
-                            case "minute": case "minutes": return Result.success(object.value.minutes);
-                            case "second": case "seconds": return Result.success(object.value.seconds);
-                            case "millisecond": case "milliseconds": return Result.success(object.value.milliseconds);
-                            default: return Result.success(null);
+                            case "year":
+                            case "years":
+                                return Result.success(object.value.years);
+                            case "month":
+                            case "months":
+                                return Result.success(object.value.months);
+                            case "weeks":
+                                return Result.success(object.value.weeks);
+                            case "day":
+                            case "days":
+                                return Result.success(object.value.days);
+                            case "hour":
+                            case "hours":
+                                return Result.success(object.value.hours);
+                            case "minute":
+                            case "minutes":
+                                return Result.success(object.value.minutes);
+                            case "second":
+                            case "seconds":
+                                return Result.success(object.value.seconds);
+                            case "millisecond":
+                            case "milliseconds":
+                                return Result.success(object.value.milliseconds);
+                            default:
+                                return Result.success(null);
                         }
                     default:
                         return Result.success(null);

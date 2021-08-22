@@ -1,12 +1,12 @@
 /** Stores various indices on all files in the vault to make dataview generation fast. */
-import { MetadataCache, Vault, TFile, TAbstractFile } from 'obsidian';
-import { fromTransferable, PageMetadata, ParsedMarkdown, parsePage } from './file';
-import { getParentFolder } from 'util/normalize';
+import { MetadataCache, Vault, TFile, TAbstractFile } from "obsidian";
+import { fromTransferable, PageMetadata, ParsedMarkdown, parsePage } from "./file";
+import { getParentFolder } from "util/normalize";
 import { DataObject } from "data/value";
 
-import DataviewImportWorker from 'web-worker:./importer.ts';
-import { Result } from 'api/result';
-import DataviewPlugin from 'main';
+import DataviewImportWorker from "web-worker:./importer.ts";
+import { Result } from "api/result";
+import DataviewPlugin from "main";
 
 /** A generic index which indexes variables of the form key -> value[], allowing both forward and reverse lookups. */
 export class IndexMap {
@@ -112,7 +112,7 @@ export class BackgroundFileParser {
 
         for (let index = 0; index < numWorkers; index++) {
             let worker = new DataviewImportWorker({ name: "Dataview Indexer" });
-            worker.onmessage = (evt) => {
+            worker.onmessage = evt => {
                 let callbacks = this.pastPromises.get(evt.data.path);
                 let parsed = fromTransferable(evt.data.result);
                 if (callbacks && callbacks.length > 0) {
@@ -130,15 +130,15 @@ export class BackgroundFileParser {
             this.reloadQueue.clear();
 
             for (let [key, value] of this.waitingCallbacks.entries()) {
-                if (this.pastPromises.has(key)) this.pastPromises.set(key, this.pastPromises.get(key)?.concat(value) ?? []);
+                if (this.pastPromises.has(key))
+                    this.pastPromises.set(key, this.pastPromises.get(key)?.concat(value) ?? []);
                 else this.pastPromises.set(key, value);
             }
             this.waitingCallbacks.clear();
 
             for (let file of queueCopy) {
                 let workerId = this.nextWorkerId;
-                this.vault.read(file)
-                    .then(c => this.workers[workerId].postMessage({ path: file.path, contents: c }));
+                this.vault.read(file).then(c => this.workers[workerId].postMessage({ path: file.path, contents: c }));
 
                 this.nextWorkerId = (this.nextWorkerId + 1) % this.numWorkers;
             }
@@ -225,7 +225,7 @@ export class FullIndex {
         });
 
         // File creation does cause a metadata change, but deletes do not. Clear the caches for this.
-        this.vault.on("delete", (af) => {
+        this.vault.on("delete", af => {
             if (!(af instanceof TFile)) return;
             let file = af as TFile;
 
@@ -245,9 +245,9 @@ export class FullIndex {
         this.backgroundParser = new BackgroundFileParser(4, this.vault);
 
         // Prefix listens to file creation/deletion/rename, and not modifies, so we let it set up it's own listeners.
-        this.prefix = await PrefixIndex.generate(this.vault, () => this.revision += 1);
+        this.prefix = await PrefixIndex.generate(this.vault, () => (this.revision += 1));
         // The CSV cache also needs to listen to filesystem events for cache invalidation.
-        this.csv = await CsvIndex.generate(this.vault, this.backgroundParser, () => this.revision += 1);
+        this.csv = await CsvIndex.generate(this.vault, this.backgroundParser, () => (this.revision += 1));
 
         // Traverse all markdown files & fill in initial data.
         let start = new Date().getTime();
@@ -324,7 +324,7 @@ export class PrefixIndexNode {
     }
 
     public static find(root: PrefixIndexNode, prefix: string): PrefixIndexNode | null {
-        if (prefix.length == 0 || prefix == '/') return root;
+        if (prefix.length == 0 || prefix == "/") return root;
         let parts = prefix.split("/");
         let node = root;
         for (let index = 0; index < parts.length; index++) {
@@ -350,7 +350,6 @@ export class PrefixIndexNode {
 
 /** Indexes files by their full prefix - essentially a simple prefix tree. */
 export class PrefixIndex {
-
     public static async generate(vault: Vault, updateRevision: () => void): Promise<PrefixIndex> {
         let root = new PrefixIndexNode("");
         let timeStart = new Date().getTime();
@@ -402,7 +401,6 @@ export class PrefixIndex {
  * randomly become asynchronous due to file I/O, causing script breaks.
  */
 export class CsvIndex {
-
     /**
      * Asynchronously generate a new CSV row cache.
      */
@@ -464,6 +462,6 @@ export class CsvIndex {
         this.reloader.reload<DataObject[]>(file).then(values => {
             this.cache.set(file.path, values);
             this.updateRevision();
-        })
+        });
     }
 }

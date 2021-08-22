@@ -1,9 +1,9 @@
 /** Provides an AST for complex queries. */
-import { Source } from 'data/source';
-import { Field } from 'expression/field';
+import { Source } from "data/source";
+import { Field } from "expression/field";
 
 /** The supported query types (corresponding to view types). */
-export type QueryType = 'list' | 'table' | 'task';
+export type QueryType = "list" | "table" | "task";
 
 /** Fields used in the query portion. */
 export interface NamedField {
@@ -18,7 +18,7 @@ export interface QuerySortBy {
     /** The field to sort on. */
     field: Field;
     /** The direction to sort in. */
-    direction: 'ascending' | 'descending';
+    direction: "ascending" | "descending";
 }
 
 /** Utility functions for quickly creating fields. */
@@ -27,7 +27,7 @@ export namespace QueryFields {
         return { name, field } as NamedField;
     }
 
-    export function sortBy(field: Field, dir: 'ascending' | 'descending'): QuerySortBy {
+    export function sortBy(field: Field, dir: "ascending" | "descending"): QuerySortBy {
         return { field, direction: dir };
     }
 }
@@ -38,14 +38,14 @@ export namespace QueryFields {
 
 /** A query which should render a list of elements. */
 export interface ListQuery {
-    type: 'list';
+    type: "list";
     /** What should be rendered in the list. */
     format?: Field;
 }
 
 /** A query which renders a table of elements. */
 export interface TableQuery {
-    type: 'table';
+    type: "table";
     /** The fields (computed or otherwise) to select. */
     fields: NamedField[];
     /** If true, show the default ID field; otherwise, don't. */
@@ -54,38 +54,38 @@ export interface TableQuery {
 
 /** A query which renders a collection of tasks. */
 export interface TaskQuery {
-    type: 'task';
+    type: "task";
 }
 
 export type QueryHeader = ListQuery | TableQuery | TaskQuery;
 
 export interface WhereStep {
-    type: 'where';
+    type: "where";
     clause: Field;
 }
 
 export interface SortByStep {
-    type: 'sort';
+    type: "sort";
     fields: QuerySortBy[];
 }
 
 export interface LimitStep {
-    type: 'limit';
+    type: "limit";
     amount: Field;
 }
 
 export interface FlattenStep {
-    type: 'flatten';
+    type: "flatten";
     field: NamedField;
 }
 
 export interface GroupStep {
-    type: 'group';
+    type: "group";
     field: NamedField;
 }
 
 export interface ExtractStep {
-    type: 'extract';
+    type: "extract";
     fields: Record<string, Field>;
 }
 

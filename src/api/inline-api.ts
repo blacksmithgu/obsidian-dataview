@@ -29,7 +29,7 @@ export class DataviewInlineApi {
     /**
      * The container which holds the output of this view. You can directly append fields to this, if you wish, though
      * the rendering API is likely to be easier for straight-forward purposes.
-    */
+     */
     public container: HTMLElement;
 
     /** Directly access the Obsidian app object, such as for reaching out to other plugins. */
@@ -47,7 +47,14 @@ export class DataviewInlineApi {
     /** Dataview functions which can be called from DataviewJS. */
     public func: Record<string, BoundFunctionImpl>;
 
-    constructor(index: FullIndex, component: Component, container: HTMLElement, app: App, settings: DataviewSettings, currentFilePath: string) {
+    constructor(
+        index: FullIndex,
+        component: Component,
+        container: HTMLElement,
+        app: App,
+        settings: DataviewSettings,
+        currentFilePath: string
+    ) {
         this.index = index;
         this.component = component;
         this.container = container;
@@ -69,16 +76,24 @@ export class DataviewInlineApi {
     /////////////////////////////
 
     /** Return an array of paths (as strings) corresponding to pages which match the query. */
-    public pagePaths(query?: string): DataArray<string> { return this.api.pagePaths(query, this.currentFilePath); }
+    public pagePaths(query?: string): DataArray<string> {
+        return this.api.pagePaths(query, this.currentFilePath);
+    }
 
     /** Map a page path to the actual data contained within that page. */
-    public page(path: string | Link): DataObject | undefined { return this.api.page(path, this.currentFilePath); }
+    public page(path: string | Link): DataObject | undefined {
+        return this.api.page(path, this.currentFilePath);
+    }
 
     /** Load the contents of a CSV from the given path. */
-    public csv(path: string): DataArray<DataObject> | undefined { return this.api.csv(path, this.currentFilePath); }
+    public csv(path: string): DataArray<DataObject> | undefined {
+        return this.api.csv(path, this.currentFilePath);
+    }
 
     /** Return an array of page objects corresponding to pages which match the query. */
-    public pages(query?: string): DataArray<any> { return this.api.pages(query, this.currentFilePath); }
+    public pages(query?: string): DataArray<any> {
+        return this.api.pages(query, this.currentFilePath);
+    }
 
     /** Return the information about the current page. */
     public current(): Record<string, any> | undefined {
@@ -93,10 +108,14 @@ export class DataviewInlineApi {
      * Convert an input element or array into a Dataview data-array. If the input is already a data array,
      * it is returned unchanged.
      */
-    public array(raw: any): DataArray<any> { return this.api.array(raw); }
+    public array(raw: any): DataArray<any> {
+        return this.api.array(raw);
+    }
 
     /** Return true if theg given value is a javascript array OR a dataview data array. */
-    public isArray(raw: any): raw is DataArray<any> | Array<any> { return this.api.isArray(raw); }
+    public isArray(raw: any): raw is DataArray<any> | Array<any> {
+        return this.api.isArray(raw);
+    }
 
     /** Create a dataview file link to the given path. */
     public fileLink(path: string, embed: boolean = false, display?: string) {
@@ -104,7 +123,9 @@ export class DataviewInlineApi {
     }
 
     /** Attempt to extract a date from a string, link or date. */
-    public date(pathlike: string | Link | DateTime): DateTime | null { return this.api.date(pathlike); }
+    public date(pathlike: string | Link | DateTime): DateTime | null {
+        return this.api.date(pathlike);
+    }
 
     /**
      * Compare two arbitrary JavaScript values using Dataview's default comparison rules. Returns a negative value if
@@ -125,15 +146,28 @@ export class DataviewInlineApi {
 
     /** Render an HTML header; the level can be anything from 1 - 6. */
     public header(level: number, text: any) {
-        let headerType: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
+        let headerType: "h1" | "h2" | "h3" | "h4" | "h5" | "h6";
         switch (level) {
-            case 1: headerType = 'h1'; break;
-            case 2: headerType = 'h2'; break;
-            case 3: headerType = 'h3'; break;
-            case 4: headerType = 'h4'; break;
-            case 5: headerType = 'h5'; break;
-            case 6: headerType = 'h6'; break;
-            default: throw new Error(`Invalid header level ${level}`);
+            case 1:
+                headerType = "h1";
+                break;
+            case 2:
+                headerType = "h2";
+                break;
+            case 3:
+                headerType = "h3";
+                break;
+            case 4:
+                headerType = "h4";
+                break;
+            case 5:
+                headerType = "h5";
+                break;
+            case 6:
+                headerType = "h6";
+                break;
+            default:
+                throw new Error(`Invalid header level ${level}`);
         }
 
         let wrapped = Values.wrapValue(text);
@@ -150,7 +184,7 @@ export class DataviewInlineApi {
     public paragraph(text: any) {
         let wrapped = Values.wrapValue(text);
         if (wrapped === null || wrapped === undefined) {
-            this.container.createEl('p', { text });
+            this.container.createEl("p", { text });
             return;
         }
 
@@ -161,7 +195,7 @@ export class DataviewInlineApi {
     public span(text: any) {
         let wrapped = Values.wrapValue(text);
         if (wrapped === null || wrapped === undefined) {
-            this.container.createEl('p', { text });
+            this.container.createEl("p", { text });
             return;
         }
 
@@ -177,12 +211,20 @@ export class DataviewInlineApi {
         let simpleViewFile = this.app.metadataCache.getFirstLinkpathDest(viewName + ".js", this.currentFilePath);
         if (simpleViewFile) {
             let contents = await this.app.vault.read(simpleViewFile);
-            let func = new Function('dv', 'input', contents);
+            let func = new Function("dv", "input", contents);
 
             try {
                 // This may directly render, in which case it will likely return undefined or null.
                 let result = func(this, input);
-                if (result) renderValue(result as any, this.container, this.currentFilePath, this.component, this.settings, true);
+                if (result)
+                    renderValue(
+                        result as any,
+                        this.container,
+                        this.currentFilePath,
+                        this.component,
+                        this.settings,
+                        true
+                    );
             } catch (ex) {
                 renderErrorPre(this.container, `Dataview: Failed to execute view '${simpleViewFile.path}'.\n\n${ex}`);
             }
@@ -200,10 +242,11 @@ export class DataviewInlineApi {
         }
 
         let viewContents = await this.app.vault.read(viewFile);
-        let viewFunction = new Function('dv', 'input', viewContents);
+        let viewFunction = new Function("dv", "input", viewContents);
         try {
             let result = viewFunction(this, input);
-            if (result) renderValue(result as any, this.container, this.currentFilePath, this.component, this.settings, true);
+            if (result)
+                renderValue(result as any, this.container, this.currentFilePath, this.component, this.settings, true);
         } catch (ex) {
             renderErrorPre(this.container, `Dataview: Error while executing view '${viewFile.path}'.\n\n${ex}`);
         }
@@ -213,7 +256,7 @@ export class DataviewInlineApi {
         if (!cssFile) return;
 
         let cssContents = await this.app.vault.read(cssFile);
-        this.container.createEl('style', { text: cssContents, attr: { scope: ' '}});
+        this.container.createEl("style", { text: cssContents, attr: { scope: " " } });
     }
 
     /** Render a dataview list of the given values. */
@@ -234,10 +277,19 @@ export class DataviewInlineApi {
 
 /** Evaluate a script where 'this' for the script is set to the given context. Allows you to define global variables. */
 export function evalInContext(script: string, context: any): any {
-    return function () { return eval(script); }.call(context);
+    return function () {
+        return eval(script);
+    }.call(context);
 }
 
 /** Make a full API context which a script can be evaluted in. */
-export function makeApiContext(index: FullIndex, component: Component, app: App, settings: DataviewSettings, container: HTMLElement, originFile: string): DataviewInlineApi {
+export function makeApiContext(
+    index: FullIndex,
+    component: Component,
+    app: App,
+    settings: DataviewSettings,
+    container: HTMLElement,
+    originFile: string
+): DataviewInlineApi {
     return new DataviewInlineApi(index, component, container, app, settings, originFile);
 }

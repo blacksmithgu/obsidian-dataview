@@ -59,7 +59,11 @@ export namespace Result {
         return new Failure(error);
     }
 
-    export function flatMap2<T1, T2, O, E>(first: Result<T1, E>, second: Result<T2, E>, f: (a: T1, b: T2) => Result<O, E>): Result<O, E> {
+    export function flatMap2<T1, T2, O, E>(
+        first: Result<T1, E>,
+        second: Result<T2, E>,
+        f: (a: T1, b: T2) => Result<O, E>
+    ): Result<O, E> {
         if (first.successful) {
             if (second.successful) return f(first.value, second.value);
             else return failure(second.error);
@@ -68,7 +72,11 @@ export namespace Result {
         }
     }
 
-    export function map2<T1, T2, O, E>(first: Result<T1, E>, second: Result<T2, E>, f: (a: T1, b: T2) => O): Result<O, E> {
+    export function map2<T1, T2, O, E>(
+        first: Result<T1, E>,
+        second: Result<T2, E>,
+        f: (a: T1, b: T2) => O
+    ): Result<O, E> {
         return flatMap2(first, second, (a, b) => success(f(a, b)));
     }
 }

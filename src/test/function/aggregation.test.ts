@@ -28,8 +28,8 @@ describe("all()", () => {
     test("[true, false]", () => expectEvals("all(list(true, false))", false));
 
     test("vectorized", () => {
-        expectEvals("all(regexmatch(\"a+\", list(\"a\", \"aaaa\")))", true);
-        expectEvals("all(regexmatch(\"a+\", list(\"a\", \"aaab\")))", false);
-        expectEvals("any(regexmatch(\"a+\", list(\"a\", \"aaab\")))", true);
+        expectEvals('all(regexmatch("a+", list("a", "aaaa")))', true);
+        expectEvals('all(regexmatch("a+", list("a", "aaab")))', false);
+        expectEvals('any(regexmatch("a+", list("a", "aaab")))', true);
     });
 });

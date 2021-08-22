@@ -1,6 +1,6 @@
 import { BinaryOpField, Fields, LiteralField } from "expression/field";
 import { EXPRESSION } from "expression/parse";
-import { DateTime, Duration } from 'luxon';
+import { DateTime, Duration } from "luxon";
 import { Success } from "parsimmon";
 import { Sources } from "data/source";
 import { Link, Values } from "data/value";
@@ -33,23 +33,23 @@ test("Parse String Literal", () => {
     expect(EXPRESSION.string.tryParse(`"\\\\\\""`)).toBe(`\\"`);
 
     // Testcase for escape in regex strings.
-    expect(EXPRESSION.string.tryParse('"\\w+"')).toBe('\\w+');
+    expect(EXPRESSION.string.tryParse('"\\w+"')).toBe("\\w+");
 });
 
 test("Parse Empty String Literal", () => {
-    expect(EXPRESSION.string.tryParse("\"\"")).toBe("");
+    expect(EXPRESSION.string.tryParse('""')).toBe("");
 });
 
 test("Parse String Escape", () => {
-    expect(EXPRESSION.string.tryParse("\"\\\"\"")).toBe("\"");
+    expect(EXPRESSION.string.tryParse('"\\""')).toBe('"');
 });
 
 test("Parse String Escape Escape", () => {
-    expect(EXPRESSION.string.tryParse("\"\\\\\"")).toBe("\\");
-})
+    expect(EXPRESSION.string.tryParse('"\\\\"')).toBe("\\");
+});
 
 test("Parse Multiple Strings", () => {
-    let result = EXPRESSION.field.tryParse("\"\" or \"yes\"") as BinaryOpField;
+    let result = EXPRESSION.field.tryParse('"" or "yes"') as BinaryOpField;
     expect(result.type).toBe("binaryop");
 
     let left = result.left as LiteralField;
@@ -62,7 +62,7 @@ test("Parse Multiple Strings", () => {
 });
 
 test("Parse string with emoji", () => {
-    expect(EXPRESSION.string.tryParse("\"📷\"")).toEqual("📷");
+    expect(EXPRESSION.string.tryParse('"📷"')).toEqual("📷");
 });
 
 // <-- Booleans -->
@@ -157,7 +157,7 @@ describe("Parse Year-Month-DayTHour:Minute:Second(.Millisecond?)Timezone", () =>
 
         let date3 = EXPRESSION.date.tryParse("1985-12-06T19:40:10+06:30");
         expect(date3.zoneName).toBe("UTC+6:30");
-    })
+    });
 
     test("Z", () => {
         let date1 = EXPRESSION.date.tryParse("1985-12-06T19:40:10Z");
@@ -169,14 +169,14 @@ describe("Parse Year-Month-DayTHour:Minute:Second(.Millisecond?)Timezone", () =>
         // built-in always returns UTC
         let date3 = EXPRESSION.date.tryParse(new Date().toISOString());
         expect(date3.zoneName).toBe("UTC");
-    })
-})
+    });
+});
 
 test("Parse Today", () => {
     let date = EXPRESSION.dateField.tryParse("date(today)") as LiteralField;
     expect(Values.isDate(date.value)).toEqual(true);
     expect(date.value).toEqual(DateTime.local().startOf("day"));
-})
+});
 
 // <-- Durations -->
 
@@ -205,87 +205,121 @@ test("Parse Link", () => {
     expect(EXPRESSION.field.tryParse("[[test/Main.md]]")).toEqual(Fields.literal(Link.file("test/Main.md", false)));
     expect(EXPRESSION.field.tryParse("[[simple0]]")).toEqual(Fields.literal(Link.file("simple0", false)));
     expect(EXPRESSION.field.tryParse("[[2020-08-15]]")).toEqual(Fields.literal(Link.file("2020-08-15", false)));
-    expect(EXPRESSION.field.tryParse("[[%Man & Machine + Mind%]]")).toEqual(Fields.literal(Link.file("%Man & Machine + Mind%", false)));
+    expect(EXPRESSION.field.tryParse("[[%Man & Machine + Mind%]]")).toEqual(
+        Fields.literal(Link.file("%Man & Machine + Mind%", false))
+    );
 });
 
 test("Parse link with display", () => {
-    expect(EXPRESSION.field.tryParse("[[test/Main|Yes]]")).toEqual(Fields.literal(Link.file("test/Main", false, "Yes")));
-    expect(EXPRESSION.field.tryParse("[[%Man + Machine%|0h no]]")).toEqual(Fields.literal(Link.file("%Man + Machine%", false, "0h no")));
+    expect(EXPRESSION.field.tryParse("[[test/Main|Yes]]")).toEqual(
+        Fields.literal(Link.file("test/Main", false, "Yes"))
+    );
+    expect(EXPRESSION.field.tryParse("[[%Man + Machine%|0h no]]")).toEqual(
+        Fields.literal(Link.file("%Man + Machine%", false, "0h no"))
+    );
 });
 
 test("Parse link with header/block", () => {
-    expect(EXPRESSION.field.tryParse("[[test/Main#Yes]]")).toEqual(Fields.literal(Link.header("test/Main", "Yes", false)));
+    expect(EXPRESSION.field.tryParse("[[test/Main#Yes]]")).toEqual(
+        Fields.literal(Link.header("test/Main", "Yes", false))
+    );
     expect(EXPRESSION.field.tryParse("[[2020^14df]]")).toEqual(Fields.literal(Link.block("2020", "14df", false)));
 });
 
 test("Parse link with header and display", () => {
-    expect(EXPRESSION.field.tryParse("[[test/Main#what|Yes]]")).toEqual(Fields.literal(Link.header("test/Main", "what", false, "Yes")));
-    expect(EXPRESSION.field.tryParse("[[%Man + Machine%^no|0h no]]")).toEqual(Fields.literal(Link.block("%Man + Machine%", "no", false, "0h no")));
+    expect(EXPRESSION.field.tryParse("[[test/Main#what|Yes]]")).toEqual(
+        Fields.literal(Link.header("test/Main", "what", false, "Yes"))
+    );
+    expect(EXPRESSION.field.tryParse("[[%Man + Machine%^no|0h no]]")).toEqual(
+        Fields.literal(Link.block("%Man + Machine%", "no", false, "0h no"))
+    );
 });
 
 // <-- Null ->
 
 test("Parse Null", () => {
     expect(EXPRESSION.field.tryParse("null")).toEqual(Fields.NULL);
-    expect(EXPRESSION.field.tryParse("\"null\"")).toEqual(Fields.literal("null"));
+    expect(EXPRESSION.field.tryParse('"null"')).toEqual(Fields.literal("null"));
 });
 
 // <-- Indexes -->
 
 test("Parse Dot Notation", () => {
-    expect(EXPRESSION.field.tryParse("Dates.Birthday")).toEqual(Fields.index(Fields.variable("Dates"), Fields.literal("Birthday")));
-    expect(EXPRESSION.field.tryParse("a.b.c3")).toEqual(Fields.index(Fields.index(Fields.variable("a"), Fields.literal("b")), Fields.literal("c3")));
+    expect(EXPRESSION.field.tryParse("Dates.Birthday")).toEqual(
+        Fields.index(Fields.variable("Dates"), Fields.literal("Birthday"))
+    );
+    expect(EXPRESSION.field.tryParse("a.b.c3")).toEqual(
+        Fields.index(Fields.index(Fields.variable("a"), Fields.literal("b")), Fields.literal("c3"))
+    );
 });
 
 test("Parse Index Notation", () => {
     expect(EXPRESSION.field.tryParse("a[0]")).toEqual(Fields.index(Fields.variable("a"), Fields.literal(0)));
-    expect(EXPRESSION.field.tryParse("\"hello\"[0]")).toEqual(Fields.index(Fields.literal("hello"), Fields.literal(0)));
-    expect(EXPRESSION.field.tryParse("hello[brain]")).toEqual(Fields.index(Fields.variable("hello"), Fields.variable("brain")));
+    expect(EXPRESSION.field.tryParse('"hello"[0]')).toEqual(Fields.index(Fields.literal("hello"), Fields.literal(0)));
+    expect(EXPRESSION.field.tryParse("hello[brain]")).toEqual(
+        Fields.index(Fields.variable("hello"), Fields.variable("brain"))
+    );
 });
 
 test("Parse Mixed Index/Dot Notation", () => {
-    expect(EXPRESSION.field.tryParse("a.b[0]")).toEqual(Fields.index(Fields.index(Fields.variable("a"), Fields.literal("b")), Fields.literal(0)));
-    expect(EXPRESSION.field.tryParse("\"hello\".what[yes]")).toEqual(Fields.index(Fields.index(
-        Fields.literal("hello"), Fields.literal("what")
-    ), Fields.variable("yes")));
+    expect(EXPRESSION.field.tryParse("a.b[0]")).toEqual(
+        Fields.index(Fields.index(Fields.variable("a"), Fields.literal("b")), Fields.literal(0))
+    );
+    expect(EXPRESSION.field.tryParse('"hello".what[yes]')).toEqual(
+        Fields.index(Fields.index(Fields.literal("hello"), Fields.literal("what")), Fields.variable("yes"))
+    );
 });
 
 test("Parse negated index", () => {
-    expect(EXPRESSION.field.tryParse("!a[b]")).toEqual(Fields.negate(Fields.index(Fields.variable("a"), Fields.variable("b"))));
-    expect(EXPRESSION.field.tryParse("!a.b")).toEqual(Fields.negate(Fields.index(Fields.variable("a"), Fields.literal("b"))));
+    expect(EXPRESSION.field.tryParse("!a[b]")).toEqual(
+        Fields.negate(Fields.index(Fields.variable("a"), Fields.variable("b")))
+    );
+    expect(EXPRESSION.field.tryParse("!a.b")).toEqual(
+        Fields.negate(Fields.index(Fields.variable("a"), Fields.literal("b")))
+    );
 });
-
 
 // <-- Functions -->
 
 test("Parse function with no arguments", () => {
-    expect(EXPRESSION.field.tryParse("hello()")).toEqual(Fields.func(Fields.variable('hello'), []));
-    expect(EXPRESSION.field.tryParse("lma0()")).toEqual(Fields.func(Fields.variable('lma0'), []));
+    expect(EXPRESSION.field.tryParse("hello()")).toEqual(Fields.func(Fields.variable("hello"), []));
+    expect(EXPRESSION.field.tryParse("lma0()")).toEqual(Fields.func(Fields.variable("lma0"), []));
 });
 
 test("Parse function with arguments", () => {
-    expect(EXPRESSION.field.tryParse("list(1, 2, 3)"))
-        .toEqual(Fields.func(Fields.variable('list'), [Fields.literal(1), Fields.literal(2), Fields.literal(3)]));
-    expect(EXPRESSION.field.tryParse("object(\"a\", 1, \"b\", 2)"))
-        .toEqual(Fields.func(Fields.variable('object'), [Fields.literal("a"), Fields.literal(1), Fields.literal("b"), Fields.literal(2)]));
+    expect(EXPRESSION.field.tryParse("list(1, 2, 3)")).toEqual(
+        Fields.func(Fields.variable("list"), [Fields.literal(1), Fields.literal(2), Fields.literal(3)])
+    );
+    expect(EXPRESSION.field.tryParse('object("a", 1, "b", 2)')).toEqual(
+        Fields.func(Fields.variable("object"), [
+            Fields.literal("a"),
+            Fields.literal(1),
+            Fields.literal("b"),
+            Fields.literal(2),
+        ])
+    );
 });
 
 test("Parse function with duration", () => {
-    expect(EXPRESSION.field.tryParse("today() + dur(4hr)"))
-        .toEqual(Fields.binaryOp(Fields.func(Fields.variable('today'), []), '+', Fields.literal(Duration.fromObject({ hours: 4 }))));
+    expect(EXPRESSION.field.tryParse("today() + dur(4hr)")).toEqual(
+        Fields.binaryOp(
+            Fields.func(Fields.variable("today"), []),
+            "+",
+            Fields.literal(Duration.fromObject({ hours: 4 }))
+        )
+    );
 });
 
 test("Parse function with mixed dot, index, and function call", () => {
-    expect(EXPRESSION.field.tryParse("list().parts[0]")).toEqual(Fields.index(Fields.index(
-        Fields.func(Fields.variable("list"), []), Fields.literal("parts")), Fields.literal(0)));
+    expect(EXPRESSION.field.tryParse("list().parts[0]")).toEqual(
+        Fields.index(Fields.index(Fields.func(Fields.variable("list"), []), Fields.literal("parts")), Fields.literal(0))
+    );
 });
 
 // <-- Lambdas -->
 describe("Lambda Expressions", () => {
     test("Parse 0-argument constant lambda", () => {
-        expect(EXPRESSION.field.tryParse("() => 16")).toEqual(
-            Fields.lambda([], Fields.literal(16))
-        );
+        expect(EXPRESSION.field.tryParse("() => 16")).toEqual(Fields.lambda([], Fields.literal(16)));
     });
 
     test("Parse 0-argument binary op lambda", () => {
@@ -295,78 +329,81 @@ describe("Lambda Expressions", () => {
     });
 
     test("Parse 1-argument lambda", () => {
-        expect(EXPRESSION.field.tryParse("(v) => v")).toEqual(
-            Fields.lambda(["v"], Fields.variable("v"))
-        )
+        expect(EXPRESSION.field.tryParse("(v) => v")).toEqual(Fields.lambda(["v"], Fields.variable("v")));
     });
 
     test("Parse 2-argument lambda", () => {
         expect(EXPRESSION.field.tryParse("(yes, no) => yes - no")).toEqual(
             Fields.lambda(["yes", "no"], Fields.binaryOp(Fields.variable("yes"), "-", Fields.variable("no")))
-        )
+        );
     });
 });
 
 // <-- Lists -->
 
 describe("Lists", () => {
-    test("[]", () => expect(EXPRESSION.field.tryParse("[]"))
-        .toEqual(Fields.list([])));
-    test("[1]", () => expect(EXPRESSION.field.tryParse("[1]"))
-        .toEqual(Fields.list([Fields.literal(1)])));
-    test("[1, 2]", () => expect(EXPRESSION.field.tryParse("[1,2]"))
-        .toEqual(Fields.list([Fields.literal(1), Fields.literal(2)])));
-    test("[1, 2, 3]", () => expect(EXPRESSION.field.tryParse("[ 1,  2, 3   ]"))
-        .toEqual(Fields.list([Fields.literal(1), Fields.literal(2), Fields.literal(3)])));
+    test("[]", () => expect(EXPRESSION.field.tryParse("[]")).toEqual(Fields.list([])));
+    test("[1]", () => expect(EXPRESSION.field.tryParse("[1]")).toEqual(Fields.list([Fields.literal(1)])));
+    test("[1, 2]", () =>
+        expect(EXPRESSION.field.tryParse("[1,2]")).toEqual(Fields.list([Fields.literal(1), Fields.literal(2)])));
+    test("[1, 2, 3]", () =>
+        expect(EXPRESSION.field.tryParse("[ 1,  2, 3   ]")).toEqual(
+            Fields.list([Fields.literal(1), Fields.literal(2), Fields.literal(3)])
+        ));
 
-    test('["a"]', () => expect(EXPRESSION.field.tryParse('["a" ]'))
-        .toEqual(Fields.list([Fields.literal("a")])));
+    test('["a"]', () => expect(EXPRESSION.field.tryParse('["a" ]')).toEqual(Fields.list([Fields.literal("a")])));
 
-    test("[[]]", () => expect(EXPRESSION.field.tryParse('[[]]'))
-        .toEqual(Fields.list([Fields.list([])])));
+    test("[[]]", () => expect(EXPRESSION.field.tryParse("[[]]")).toEqual(Fields.list([Fields.list([])])));
 });
 
 // <-- Objects -->
 
 describe("Objects", () => {
-    test("{}", () => expect(EXPRESSION.field.tryParse("{}"))
-        .toEqual(Fields.object({})));
-    test("{ a: 1 }", () => expect(EXPRESSION.field.tryParse("{ a: 1 }"))
-        .toEqual(Fields.object({ a: Fields.literal(1) })));
-    test('{ "a": 1 }', () => expect(EXPRESSION.field.tryParse('{ "a": 1 }'))
-        .toEqual(Fields.object({ a: Fields.literal(1) })));
-    test('{ "yes no": 1 }', () => expect(EXPRESSION.field.tryParse('{ "yes no": 1 }'))
-        .toEqual(Fields.object({ "yes no": Fields.literal(1) })));
+    test("{}", () => expect(EXPRESSION.field.tryParse("{}")).toEqual(Fields.object({})));
+    test("{ a: 1 }", () =>
+        expect(EXPRESSION.field.tryParse("{ a: 1 }")).toEqual(Fields.object({ a: Fields.literal(1) })));
+    test('{ "a": 1 }', () =>
+        expect(EXPRESSION.field.tryParse('{ "a": 1 }')).toEqual(Fields.object({ a: Fields.literal(1) })));
+    test('{ "yes no": 1 }', () =>
+        expect(EXPRESSION.field.tryParse('{ "yes no": 1 }')).toEqual(Fields.object({ "yes no": Fields.literal(1) })));
 
-    test("{a:1,b:[2]}", () => expect(EXPRESSION.field.tryParse("{ a: 1, b: [2] }"))
-        .toEqual(Fields.object({ a: Fields.literal(1), b: Fields.list([Fields.literal(2)]) })));
+    test("{a:1,b:[2]}", () =>
+        expect(EXPRESSION.field.tryParse("{ a: 1, b: [2] }")).toEqual(
+            Fields.object({ a: Fields.literal(1), b: Fields.list([Fields.literal(2)]) })
+        ));
 });
 
 // <-- Binary Ops -->
 
 test("Parse Simple Addition", () => {
-    let result = EXPRESSION.binaryOpField.parse("16 + \"what\"") as Success<BinaryOpField>;
+    let result = EXPRESSION.binaryOpField.parse('16 + "what"') as Success<BinaryOpField>;
     expect(result.status).toBe(true);
-    expect(result.value).toEqual(Fields.binaryOp(Fields.literal(16), '+', Fields.literal("what")));
+    expect(result.value).toEqual(Fields.binaryOp(Fields.literal(16), "+", Fields.literal("what")));
 });
 
 test("Parse Simple Division", () => {
-    expect(EXPRESSION.field.tryParse("14 / 2")).toEqual(Fields.binaryOp(Fields.literal(14), '/', Fields.literal(2)));
-    expect(EXPRESSION.field.tryParse("31 / 9.0")).toEqual(Fields.binaryOp(Fields.literal(31), '/', Fields.literal(9.0)));
-})
+    expect(EXPRESSION.field.tryParse("14 / 2")).toEqual(Fields.binaryOp(Fields.literal(14), "/", Fields.literal(2)));
+    expect(EXPRESSION.field.tryParse("31 / 9.0")).toEqual(
+        Fields.binaryOp(Fields.literal(31), "/", Fields.literal(9.0))
+    );
+});
 
 test("Parse Parenthesis", () => {
     let result = EXPRESSION.field.parse("(16 - 4) - 8") as Success<BinaryOpField>;
     expect(result.status).toBe(true);
-    expect(result.value).toEqual(Fields.binaryOp(Fields.binaryOp(Fields.literal(16), '-', Fields.literal(4)), '-', Fields.literal(8)));
+    expect(result.value).toEqual(
+        Fields.binaryOp(Fields.binaryOp(Fields.literal(16), "-", Fields.literal(4)), "-", Fields.literal(8))
+    );
 });
 
 test("Parse Order of Operations", () => {
-    expect(EXPRESSION.field.tryParse("14 + 6 >= 19 - 2")).toEqual(Fields.binaryOp(
-        Fields.binaryOp(Fields.literal(14), '+', Fields.literal(6)),
-        '>=',
-        Fields.binaryOp(Fields.literal(19), '-', Fields.literal(2)),
-    ));
+    expect(EXPRESSION.field.tryParse("14 + 6 >= 19 - 2")).toEqual(
+        Fields.binaryOp(
+            Fields.binaryOp(Fields.literal(14), "+", Fields.literal(6)),
+            ">=",
+            Fields.binaryOp(Fields.literal(19), "-", Fields.literal(2))
+        )
+    );
 });
 
 // <-- Negation -->
@@ -374,63 +411,77 @@ test("Parse Order of Operations", () => {
 test("Parse Negated field", () => {
     expect(EXPRESSION.field.tryParse("!true")).toEqual(Fields.negate(Fields.literal(true)));
     expect(EXPRESSION.field.tryParse("!14")).toEqual(Fields.negate(Fields.literal(14)));
-    expect(EXPRESSION.field.tryParse("!neat(0)")).toEqual(Fields.negate(Fields.func(Fields.variable("neat"), [Fields.literal(0)])));
+    expect(EXPRESSION.field.tryParse("!neat(0)")).toEqual(
+        Fields.negate(Fields.func(Fields.variable("neat"), [Fields.literal(0)]))
+    );
     expect(EXPRESSION.field.tryParse("!!what")).toEqual(Fields.negate(Fields.negate(Fields.variable("what"))));
 });
 
 test("Parse binaryop negated field", () => {
-    expect(EXPRESSION.field.tryParse("!(true & false)")).toEqual(Fields.negate(
-        Fields.binaryOp(Fields.literal(true), '&', Fields.literal(false))
-    ));
+    expect(EXPRESSION.field.tryParse("!(true & false)")).toEqual(
+        Fields.negate(Fields.binaryOp(Fields.literal(true), "&", Fields.literal(false)))
+    );
     expect(EXPRESSION.field.tryParse("true & !false")).toEqual(
-        Fields.binaryOp(Fields.literal(true), '&', Fields.negate(Fields.literal(false))));
+        Fields.binaryOp(Fields.literal(true), "&", Fields.negate(Fields.literal(false)))
+    );
 });
 
 // <-- Sources -->
 
 test("Parse simple sources", () => {
-    expect(EXPRESSION.source.tryParse("\"hello\"")).toEqual(Sources.folder("hello"));
+    expect(EXPRESSION.source.tryParse('"hello"')).toEqual(Sources.folder("hello"));
     expect(EXPRESSION.source.tryParse("#neat")).toEqual(Sources.tag("#neat"));
-    expect(EXPRESSION.source.tryParse("csv(\"data/a.csv\")")).toEqual(Sources.csv("data/a.csv"));
+    expect(EXPRESSION.source.tryParse('csv("data/a.csv")')).toEqual(Sources.csv("data/a.csv"));
 });
 
 test("Parse negated source", () => {
-    expect(EXPRESSION.source.tryParse("-\"hello\"")).toEqual(Sources.negate(Sources.folder("hello")));
-    expect(EXPRESSION.source.tryParse("!\"hello\"")).toEqual(Sources.negate(Sources.folder("hello")));
+    expect(EXPRESSION.source.tryParse('-"hello"')).toEqual(Sources.negate(Sources.folder("hello")));
+    expect(EXPRESSION.source.tryParse('!"hello"')).toEqual(Sources.negate(Sources.folder("hello")));
     expect(EXPRESSION.source.tryParse("-#neat")).toEqual(Sources.negate(Sources.tag("#neat")));
     expect(EXPRESSION.source.tryParse("!#neat")).toEqual(Sources.negate(Sources.tag("#neat")));
 });
 
 test("Parse parens source", () => {
-    expect(EXPRESSION.source.tryParse("(\"lma0\")")).toEqual(Sources.folder("lma0"));
+    expect(EXPRESSION.source.tryParse('("lma0")')).toEqual(Sources.folder("lma0"));
     expect(EXPRESSION.source.tryParse("(#neat0)")).toEqual(Sources.tag("#neat0"));
-})
+});
 
 test("Parse binary source", () => {
-    expect(EXPRESSION.source.tryParse("\"lma0\" or #neat")).toEqual(
-        Sources.binaryOp(Sources.folder("lma0"), '|', Sources.tag("#neat")));
+    expect(EXPRESSION.source.tryParse('"lma0" or #neat')).toEqual(
+        Sources.binaryOp(Sources.folder("lma0"), "|", Sources.tag("#neat"))
+    );
 
-    expect(EXPRESSION.source.tryParse("\"meme\" & #dirty")).toEqual(
-        Sources.binaryOp(Sources.folder("meme"), '&', Sources.tag("#dirty")));
+    expect(EXPRESSION.source.tryParse('"meme" & #dirty')).toEqual(
+        Sources.binaryOp(Sources.folder("meme"), "&", Sources.tag("#dirty"))
+    );
 });
 
 test("Parse negated parens source", () => {
     expect(EXPRESSION.source.tryParse("-(#neat)")).toEqual(Sources.negate(Sources.tag("#neat")));
     expect(EXPRESSION.source.tryParse("!(#neat)")).toEqual(Sources.negate(Sources.tag("#neat")));
-    expect(EXPRESSION.source.tryParse("-(\"meme\" & #dirty)")).toEqual(
-        Sources.negate(Sources.binaryOp(Sources.folder("meme"), '&', Sources.tag("#dirty"))));
-    expect(EXPRESSION.source.tryParse("!(\"meme\" & #dirty)")).toEqual(
-        Sources.negate(Sources.binaryOp(Sources.folder("meme"), '&', Sources.tag("#dirty"))));
-    expect(EXPRESSION.source.tryParse("-\"meme\" & #dirty")).toEqual(
-        Sources.binaryOp(Sources.negate(Sources.folder("meme")), '&', Sources.tag("#dirty")));
-    expect(EXPRESSION.source.tryParse("!\"meme\" & #dirty")).toEqual(
-        Sources.binaryOp(Sources.negate(Sources.folder("meme")), '&', Sources.tag("#dirty")));
+    expect(EXPRESSION.source.tryParse('-("meme" & #dirty)')).toEqual(
+        Sources.negate(Sources.binaryOp(Sources.folder("meme"), "&", Sources.tag("#dirty")))
+    );
+    expect(EXPRESSION.source.tryParse('!("meme" & #dirty)')).toEqual(
+        Sources.negate(Sources.binaryOp(Sources.folder("meme"), "&", Sources.tag("#dirty")))
+    );
+    expect(EXPRESSION.source.tryParse('-"meme" & #dirty')).toEqual(
+        Sources.binaryOp(Sources.negate(Sources.folder("meme")), "&", Sources.tag("#dirty"))
+    );
+    expect(EXPRESSION.source.tryParse('!"meme" & #dirty')).toEqual(
+        Sources.binaryOp(Sources.negate(Sources.folder("meme")), "&", Sources.tag("#dirty"))
+    );
 });
-
 
 // <-- Stress Tests -->
 
 test("Parse Various Fields", () => {
-    expect(EXPRESSION.field.tryParse("list(a, \"b\", 3, [[4]])")).toEqual(
-        Fields.func(Fields.variable('list'), [Fields.variable("a"), Fields.literal("b"), Fields.literal(3), Fields.literal(Link.file("4", false))]));
+    expect(EXPRESSION.field.tryParse('list(a, "b", 3, [[4]])')).toEqual(
+        Fields.func(Fields.variable("list"), [
+            Fields.variable("a"),
+            Fields.literal("b"),
+            Fields.literal(3),
+            Fields.literal(Link.file("4", false)),
+        ])
+    );
 });

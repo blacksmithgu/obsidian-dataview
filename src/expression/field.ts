@@ -2,42 +2,50 @@
 import { LiteralValue } from "data/value";
 
 /** Comparison operators which yield true/false. */
-export type CompareOp = '>' | '>=' | '<=' | '<' | '=' | '!=';
+export type CompareOp = ">" | ">=" | "<=" | "<" | "=" | "!=";
 /** Arithmetic operators which yield numbers and other values. */
-export type ArithmeticOp = '+' | '-' | '*' | '/' | '&' | '|';
+export type ArithmeticOp = "+" | "-" | "*" | "/" | "&" | "|";
 /** All valid binary operators. */
 export type BinaryOp = CompareOp | ArithmeticOp;
 /** A (potentially computed) field to select or compare against. */
-export type Field = BinaryOpField | VariableField | LiteralField | FunctionField | IndexField | NegatedField | LambdaField
-    | ObjectField | ListField;
+export type Field =
+    | BinaryOpField
+    | VariableField
+    | LiteralField
+    | FunctionField
+    | IndexField
+    | NegatedField
+    | LambdaField
+    | ObjectField
+    | ListField;
 
 /** Literal representation of some field type. */
 export interface LiteralField {
-    type: 'literal';
+    type: "literal";
     value: LiteralValue;
 }
 
 /** A variable field for a variable with a given name. */
 export interface VariableField {
-    type: 'variable';
+    type: "variable";
     name: string;
 }
 
 /** A list, which is an ordered collection of fields. */
 export interface ListField {
-    type: 'list';
+    type: "list";
     values: Field[];
 }
 
 /** An object, which is a mapping of name to field. */
 export interface ObjectField {
-    type: 'object';
+    type: "object";
     values: Record<string, Field>;
 }
 
 /** A binary operator field which combines two subnodes somehow. */
 export interface BinaryOpField {
-    type: 'binaryop';
+    type: "binaryop";
     left: Field;
     right: Field;
     op: BinaryOp;
@@ -45,7 +53,7 @@ export interface BinaryOpField {
 
 /** A function field which calls a function on 0 or more arguments. */
 export interface FunctionField {
-    type: 'function';
+    type: "function";
     /** Either the name of the function being called, or a Function object. */
     func: Field;
     /** The arguments being passed to the function. */
@@ -53,7 +61,7 @@ export interface FunctionField {
 }
 
 export interface LambdaField {
-    type: 'lambda';
+    type: "lambda";
     /** An ordered list of named arguments. */
     arguments: string[];
     /** The field which should be evaluated with the arguments in context. */
@@ -62,7 +70,7 @@ export interface LambdaField {
 
 /** A field which indexes a variable into another variable. */
 export interface IndexField {
-    type: 'index';
+    type: "index";
     /** The field to index into. */
     object: Field;
     /** The index. */
@@ -71,7 +79,7 @@ export interface IndexField {
 
 /** A field which negates the value of the original field. */
 export interface NegatedField {
-    type: 'negated';
+    type: "negated";
     /** The child field to negated. */
     child: Field;
 }
@@ -79,19 +87,19 @@ export interface NegatedField {
 /** Utility methods for creating & comparing fields. */
 export namespace Fields {
     export function variable(name: string): VariableField {
-        return { type: 'variable', name };
+        return { type: "variable", name };
     }
 
     export function literal(value: LiteralValue): LiteralField {
-        return { type: 'literal', value };
+        return { type: "literal", value };
     }
 
     export function binaryOp(left: Field, op: BinaryOp, right: Field): Field {
-        return { type: 'binaryop', left, op, right } as BinaryOpField;
+        return { type: "binaryop", left, op, right } as BinaryOpField;
     }
 
     export function index(obj: Field, index: Field): IndexField {
-        return { type: 'index', object: obj, index };
+        return { type: "index", object: obj, index };
     }
 
     /** Converts a string in dot-notation-format into a variable which indexes. */
@@ -106,23 +114,23 @@ export namespace Fields {
     }
 
     export function lambda(args: string[], value: Field): LambdaField {
-        return { type: 'lambda', arguments: args, value };
+        return { type: "lambda", arguments: args, value };
     }
 
     export function func(func: Field, args: Field[]): FunctionField {
-        return { type: 'function', func, arguments: args };
+        return { type: "function", func, arguments: args };
     }
 
     export function list(values: Field[]): ListField {
-        return { type: 'list', values };
+        return { type: "list", values };
     }
 
     export function object(values: Record<string, Field>): ObjectField {
-        return { type: 'object', values };
+        return { type: "object", values };
     }
 
     export function negate(child: Field): NegatedField {
-        return { type: 'negated', child };
+        return { type: "negated", child };
     }
 
     export function isCompareOp(op: BinaryOp): op is CompareOp {

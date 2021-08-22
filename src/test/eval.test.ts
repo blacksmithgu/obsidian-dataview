@@ -10,23 +10,16 @@ import { DEFAULT_QUERY_SETTINGS } from "settings";
 // <-- Numeric Operations -->
 
 test("Evaluate simple numeric operations", () => {
-    expect(simpleContext().tryEvaluate(Fields.binaryOp(Fields.literal(2), '+', Fields.literal(4))))
-        .toEqual(6);
-    expect(simpleContext().tryEvaluate(Fields.binaryOp(Fields.literal(2), '-', Fields.literal(4))))
-        .toEqual(-2);
-    expect(simpleContext().tryEvaluate(Fields.binaryOp(Fields.literal(2), '*', Fields.literal(4))))
-        .toEqual(8);
-    expect(simpleContext().tryEvaluate(Fields.binaryOp(Fields.literal(8), '/', Fields.literal(4))))
-        .toEqual(2);
+    expect(simpleContext().tryEvaluate(Fields.binaryOp(Fields.literal(2), "+", Fields.literal(4)))).toEqual(6);
+    expect(simpleContext().tryEvaluate(Fields.binaryOp(Fields.literal(2), "-", Fields.literal(4)))).toEqual(-2);
+    expect(simpleContext().tryEvaluate(Fields.binaryOp(Fields.literal(2), "*", Fields.literal(4)))).toEqual(8);
+    expect(simpleContext().tryEvaluate(Fields.binaryOp(Fields.literal(8), "/", Fields.literal(4)))).toEqual(2);
 });
 
 test("Evaluate numeric comparisons", () => {
-    expect(simpleContext().tryEvaluate(Fields.binaryOp(Fields.literal(8), '<', Fields.literal(4))))
-        .toEqual(false);
-    expect(simpleContext().tryEvaluate(Fields.binaryOp(Fields.literal(-2), '=', Fields.literal(-2))))
-        .toEqual(true);
-    expect(simpleContext().tryEvaluate(Fields.binaryOp(Fields.literal(-2), '>=', Fields.literal(-8))))
-        .toEqual(true);
+    expect(simpleContext().tryEvaluate(Fields.binaryOp(Fields.literal(8), "<", Fields.literal(4)))).toEqual(false);
+    expect(simpleContext().tryEvaluate(Fields.binaryOp(Fields.literal(-2), "=", Fields.literal(-2)))).toEqual(true);
+    expect(simpleContext().tryEvaluate(Fields.binaryOp(Fields.literal(-2), ">=", Fields.literal(-8)))).toEqual(true);
 });
 
 test("Evaluate complex numeric operations", () => {
@@ -38,19 +31,18 @@ test("Evaluate complex numeric operations", () => {
 // <-- String Operations -->
 
 test("Evaluate simple string operations", () => {
-    expect(simpleContext().tryEvaluate(Fields.binaryOp(Fields.literal("a"), '+', Fields.literal("b"))))
-        .toEqual("ab");
-    expect(simpleContext().tryEvaluate(Fields.binaryOp(Fields.literal("a"), '+', Fields.literal(12))))
-        .toEqual("a12");
-    expect(simpleContext().tryEvaluate(Fields.binaryOp(Fields.literal("a"), '*', Fields.literal(6))))
-        .toEqual("aaaaaa");
+    expect(simpleContext().tryEvaluate(Fields.binaryOp(Fields.literal("a"), "+", Fields.literal("b")))).toEqual("ab");
+    expect(simpleContext().tryEvaluate(Fields.binaryOp(Fields.literal("a"), "+", Fields.literal(12)))).toEqual("a12");
+    expect(simpleContext().tryEvaluate(Fields.binaryOp(Fields.literal("a"), "*", Fields.literal(6)))).toEqual("aaaaaa");
 });
 
 test("Evaluate string comparisons", () => {
-    expect(simpleContext().tryEvaluate(Fields.binaryOp(Fields.literal("abc"), '<', Fields.literal("abd"))))
-        .toEqual(true);
-    expect(simpleContext().tryEvaluate(Fields.binaryOp(Fields.literal("xyz"), '=', Fields.literal("xyz"))))
-        .toEqual(true);
+    expect(simpleContext().tryEvaluate(Fields.binaryOp(Fields.literal("abc"), "<", Fields.literal("abd")))).toEqual(
+        true
+    );
+    expect(simpleContext().tryEvaluate(Fields.binaryOp(Fields.literal("xyz"), "=", Fields.literal("xyz")))).toEqual(
+        true
+    );
 });
 
 // <-- Date Operations -->
@@ -75,7 +67,7 @@ test("Evaluate simple field resolution", () => {
 });
 
 test("Evaluate simple object resolution", () => {
-    let object = { "inner": { final: 6 } };
+    let object = { inner: { final: 6 } };
     let context = simpleContext().set("obj", object);
 
     expect(context.tryEvaluate(Fields.indexVariable("obj.inner"))).toEqual(object.inner);
@@ -83,9 +75,11 @@ test("Evaluate simple object resolution", () => {
 });
 
 test("Evaluate simple link resolution", () => {
-    let object = { "inner": { final: 6 }};
-    let context = new Context({ resolve: path => object, normalize: path => path, exists: path => false }, DEFAULT_QUERY_SETTINGS)
-        .set("link", Link.file("test", false));
+    let object = { inner: { final: 6 } };
+    let context = new Context(
+        { resolve: path => object, normalize: path => path, exists: path => false },
+        DEFAULT_QUERY_SETTINGS
+    ).set("link", Link.file("test", false));
     expect(context.tryEvaluate(Fields.indexVariable("link.inner"))).toEqual(object.inner);
     expect(context.tryEvaluate(Fields.indexVariable("link.inner.final"))).toEqual(object.inner.final);
 });
@@ -109,8 +103,8 @@ function simpleLinkHandler(): LinkHandler {
     return {
         resolve: path => null,
         normalize: path => path,
-        exists: path => true
-    }
+        exists: path => true,
+    };
 }
 
 /** Create a trivial context good for evaluations that do not depend on links. */

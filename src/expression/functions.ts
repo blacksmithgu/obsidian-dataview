@@ -44,29 +44,44 @@ export class FunctionBuilder {
     }
 
     /** Add a function variant which takes in a single argument. */
-    public add1<T extends LiteralTypeOrAll>(argType: T, impl: (a: LiteralReprAll<T>, context: Context) => LiteralValue): FunctionBuilder {
-        this.variants.push({ args: [argType], varargs: false, impl: (c, ...rest) => impl(rest[0] as LiteralReprAll<T>, c) })
+    public add1<T extends LiteralTypeOrAll>(
+        argType: T,
+        impl: (a: LiteralReprAll<T>, context: Context) => LiteralValue
+    ): FunctionBuilder {
+        this.variants.push({
+            args: [argType],
+            varargs: false,
+            impl: (c, ...rest) => impl(rest[0] as LiteralReprAll<T>, c),
+        });
         return this;
     }
 
     /** Add a function variant which takes in two typed arguments. */
-    public add2<T extends LiteralTypeOrAll, U extends LiteralTypeOrAll>(arg1: T, arg2: U,
-        impl: (a: LiteralReprAll<T>, b: LiteralReprAll<U>, context: Context) => LiteralValue): FunctionBuilder {
+    public add2<T extends LiteralTypeOrAll, U extends LiteralTypeOrAll>(
+        arg1: T,
+        arg2: U,
+        impl: (a: LiteralReprAll<T>, b: LiteralReprAll<U>, context: Context) => LiteralValue
+    ): FunctionBuilder {
         this.variants.push({
             args: [arg1, arg2],
             varargs: false,
-            impl: (c, ...rest) => impl(rest[0] as LiteralReprAll<T>, rest[1] as LiteralReprAll<U>, c)
+            impl: (c, ...rest) => impl(rest[0] as LiteralReprAll<T>, rest[1] as LiteralReprAll<U>, c),
         });
         return this;
     }
 
     /** Add a function variant which takes in three typed arguments. */
-    public add3<T extends LiteralTypeOrAll, U extends LiteralTypeOrAll, V extends LiteralTypeOrAll>(arg1: T, arg2: U, arg3: V,
-        impl: (a: LiteralReprAll<T>, b: LiteralReprAll<U>, c: LiteralReprAll<V>, context: Context) => LiteralValue): FunctionBuilder {
+    public add3<T extends LiteralTypeOrAll, U extends LiteralTypeOrAll, V extends LiteralTypeOrAll>(
+        arg1: T,
+        arg2: U,
+        arg3: V,
+        impl: (a: LiteralReprAll<T>, b: LiteralReprAll<U>, c: LiteralReprAll<V>, context: Context) => LiteralValue
+    ): FunctionBuilder {
         this.variants.push({
             args: [arg1, arg2, arg3],
             varargs: false,
-            impl: (c, ...rest) => impl(rest[0] as LiteralReprAll<T>, rest[1] as LiteralReprAll<U>, rest[2] as LiteralReprAll<V>, c)
+            impl: (c, ...rest) =>
+                impl(rest[0] as LiteralReprAll<T>, rest[1] as LiteralReprAll<U>, rest[2] as LiteralReprAll<V>, c),
         });
         return this;
     }
@@ -90,7 +105,7 @@ export class FunctionBuilder {
             // Handle vectorization.
             if (this.vectorized[types.length]) {
                 for (let vec of this.vectorized[types.length]) {
-                    if (types[vec] != 'array') continue;
+                    if (types[vec] != "array") continue;
 
                     return (args[vec] as LiteralValue[]).map(v => {
                         let newArgs = ([] as LiteralValue[]).concat(args);
@@ -105,7 +120,7 @@ export class FunctionBuilder {
                 if (variant.args.length != types.length) continue;
 
                 for (let index = 0; index < variant.args.length; index++) {
-                    if (variant.args[index] != '*' && variant.args[index] != types[index]) continue outer;
+                    if (variant.args[index] != "*" && variant.args[index] != types[index]) continue outer;
                 }
 
                 return variant.impl(context, ...args);
@@ -163,7 +178,7 @@ export namespace DefaultFunctions {
         }
 
         return result;
-    }
+    };
 
     /** Internal link constructor function. */
     export const link: FunctionImpl = new FunctionBuilder("link")
@@ -181,7 +196,7 @@ export namespace DefaultFunctions {
     /** External link constructor function. */
     export const elink: FunctionImpl = new FunctionBuilder("elink")
         .add2("string", "string", (a, d) => {
-            let elem = document.createElement('a');
+            let elem = document.createElement("a");
             elem.textContent = d;
             elem.rel = "noopener";
             elem.target = "_blank";
@@ -273,27 +288,34 @@ export namespace DefaultFunctions {
         .add2("string", "string", (haystack, needle) => haystack.includes(needle))
         .add2("object", "string", (obj, key) => key in obj)
         .add2("*", "*", (elem1, elem2, context) =>
-            context.evaluate(Fields.binaryOp(Fields.literal(elem1), '=', Fields.literal(elem2))).orElseThrow())
+            context.evaluate(Fields.binaryOp(Fields.literal(elem1), "=", Fields.literal(elem2))).orElseThrow()
+        )
         .vectorize(2, [1])
         .build();
 
     // Case insensitive version of contains.
     export const icontains: FunctionImpl = new FunctionBuilder("icontains")
         .add2("array", "*", (l, elem, context) => l.some(e => icontains(context, e, elem)))
-        .add2("string", "string", (haystack, needle) => haystack.toLocaleLowerCase().includes(needle.toLocaleLowerCase()))
+        .add2("string", "string", (haystack, needle) =>
+            haystack.toLocaleLowerCase().includes(needle.toLocaleLowerCase())
+        )
         .add2("object", "string", (obj, key) => key in obj)
         .add2("*", "*", (elem1, elem2, context) =>
-            context.evaluate(Fields.binaryOp(Fields.literal(elem1), '=', Fields.literal(elem2))).orElseThrow())
+            context.evaluate(Fields.binaryOp(Fields.literal(elem1), "=", Fields.literal(elem2))).orElseThrow()
+        )
         .vectorize(2, [1])
         .build();
 
     // "exact" contains, does not look recursively.
     export const econtains: FunctionImpl = new FunctionBuilder("econtains")
-        .add2("array", "*", (l, elem, context) => l.some(e => context.evaluate(Fields.binaryOp(Fields.literal(elem), '=', Fields.literal(e))).orElseThrow()))
+        .add2("array", "*", (l, elem, context) =>
+            l.some(e => context.evaluate(Fields.binaryOp(Fields.literal(elem), "=", Fields.literal(e))).orElseThrow())
+        )
         .add2("string", "string", (haystack, needle) => haystack.includes(needle))
         .add2("object", "string", (obj, key) => key in obj)
         .add2("*", "*", (elem1, elem2, context) =>
-            context.evaluate(Fields.binaryOp(Fields.literal(elem1), '=', Fields.literal(elem2))).orElseThrow())
+            context.evaluate(Fields.binaryOp(Fields.literal(elem1), "=", Fields.literal(elem2))).orElseThrow()
+        )
         .vectorize(2, [1])
         .build();
 
@@ -339,10 +361,14 @@ export namespace DefaultFunctions {
             result.sort((a, b) => {
                 let akey = key(context, a);
                 let bkey = key(context, b);
-                let le = context.evaluate(Fields.binaryOp(Fields.literal(akey), "<", Fields.literal(bkey))).orElseThrow();
+                let le = context
+                    .evaluate(Fields.binaryOp(Fields.literal(akey), "<", Fields.literal(bkey)))
+                    .orElseThrow();
                 if (Values.isTruthy(le)) return -1;
 
-                let eq = context.evaluate(Fields.binaryOp(Fields.literal(akey), "=", Fields.literal(bkey))).orElseThrow();
+                let eq = context
+                    .evaluate(Fields.binaryOp(Fields.literal(akey), "=", Fields.literal(bkey)))
+                    .orElseThrow();
                 if (Values.isTruthy(eq)) return 0;
 
                 return 1;
@@ -398,16 +424,16 @@ export namespace DefaultFunctions {
         .build();
 
     export const fdefault = new FunctionBuilder("default")
-        .add2("*", "*", (v, bk) => Values.isNull(v) ? bk : v)
+        .add2("*", "*", (v, bk) => (Values.isNull(v) ? bk : v))
         .vectorize(2, [0, 1])
         .build();
 
     export const ldefault = new FunctionBuilder("ldefault")
-        .add2("*", "*", (v, bk) => Values.isNull(v) ? bk : v)
+        .add2("*", "*", (v, bk) => (Values.isNull(v) ? bk : v))
         .build();
 
     export const choice = new FunctionBuilder("choice")
-        .add3("*", "*", "*", (b, left, right) => Values.isTruthy(b) ? left : right)
+        .add3("*", "*", "*", (b, left, right) => (Values.isTruthy(b) ? left : right))
         .vectorize(3, [0])
         .build();
 
@@ -415,13 +441,14 @@ export namespace DefaultFunctions {
         .add2("array", "string", (lis, op, context) => {
             if (lis.length == 0) return null;
 
-            if (op != '+' && op != '-' && op != '*' && op != '/' && op != '&' && op != '|')
+            if (op != "+" && op != "-" && op != "*" && op != "/" && op != "&" && op != "|")
                 throw Error("reduce(array, op) supports '+', '-', '/', '*', '&', and '|'");
 
             let value = lis[0];
             for (let index = 1; index < lis.length; index++) {
-
-                value = context.evaluate(Fields.binaryOp(Fields.literal(value), op, Fields.literal(lis[index]))).orElseThrow();
+                value = context
+                    .evaluate(Fields.binaryOp(Fields.literal(value), op, Fields.literal(lis[index])))
+                    .orElseThrow();
             }
 
             return value;
@@ -492,58 +519,58 @@ export namespace DefaultFunctions {
         .build();
 
     export const nonnull = new FunctionBuilder("nonnull")
-        .vararg((_ctx, ...args) => args.filter(v => Values.typeOf(v) != 'null'))
+        .vararg((_ctx, ...args) => args.filter(v => Values.typeOf(v) != "null"))
         .build();
 }
 
 /** Default function implementations for the expression evaluator. */
 export const DEFAULT_FUNCTIONS: Record<string, FunctionImpl> = {
     // Constructors.
-    "list": DefaultFunctions.list,
-    "array": DefaultFunctions.list,
-    "link": DefaultFunctions.link,
-    "elink": DefaultFunctions.elink,
-    "date": DefaultFunctions.date,
-    "dateformat": DefaultFunctions.dateformat,
-    "number": DefaultFunctions.number,
-    "object": DefaultFunctions.object,
+    list: DefaultFunctions.list,
+    array: DefaultFunctions.list,
+    link: DefaultFunctions.link,
+    elink: DefaultFunctions.elink,
+    date: DefaultFunctions.date,
+    dateformat: DefaultFunctions.dateformat,
+    number: DefaultFunctions.number,
+    object: DefaultFunctions.object,
 
     // Math Operations.
-    "round": DefaultFunctions.round,
+    round: DefaultFunctions.round,
 
     // String operations.
-    "regexreplace": DefaultFunctions.regexreplace,
-    "regexmatch": DefaultFunctions.regexmatch,
-    "replace": DefaultFunctions.replace,
-    "lower": DefaultFunctions.lower,
-    "upper": DefaultFunctions.upper,
+    regexreplace: DefaultFunctions.regexreplace,
+    regexmatch: DefaultFunctions.regexmatch,
+    replace: DefaultFunctions.replace,
+    lower: DefaultFunctions.lower,
+    upper: DefaultFunctions.upper,
 
     // Date Operations.
-    "striptime": DefaultFunctions.striptime,
+    striptime: DefaultFunctions.striptime,
 
     // List operations.
-    "length": DefaultFunctions.length,
-    "contains": DefaultFunctions.contains,
-    "icontains": DefaultFunctions.icontains,
-    "econtains": DefaultFunctions.econtains,
-    "reverse": DefaultFunctions.reverse,
-    "sort": DefaultFunctions.sort,
+    length: DefaultFunctions.length,
+    contains: DefaultFunctions.contains,
+    icontains: DefaultFunctions.icontains,
+    econtains: DefaultFunctions.econtains,
+    reverse: DefaultFunctions.reverse,
+    sort: DefaultFunctions.sort,
 
     // Aggregation operations like reduce.
-    "reduce": DefaultFunctions.reduce,
-    "join": DefaultFunctions.join,
-    "sum": DefaultFunctions.sum,
-    "product": DefaultFunctions.product,
-    "all": DefaultFunctions.all,
-    "any": DefaultFunctions.any,
-    "none": DefaultFunctions.none,
-    "filter": DefaultFunctions.filter,
-    "map": DefaultFunctions.map,
-    "nonnull": DefaultFunctions.nonnull,
+    reduce: DefaultFunctions.reduce,
+    join: DefaultFunctions.join,
+    sum: DefaultFunctions.sum,
+    product: DefaultFunctions.product,
+    all: DefaultFunctions.all,
+    any: DefaultFunctions.any,
+    none: DefaultFunctions.none,
+    filter: DefaultFunctions.filter,
+    map: DefaultFunctions.map,
+    nonnull: DefaultFunctions.nonnull,
 
     // Object/Utility operations.
-    "extract": DefaultFunctions.extract,
-    "default": DefaultFunctions.fdefault,
-    "ldefault": DefaultFunctions.ldefault,
-    "choice": DefaultFunctions.choice
+    extract: DefaultFunctions.extract,
+    default: DefaultFunctions.fdefault,
+    ldefault: DefaultFunctions.ldefault,
+    choice: DefaultFunctions.choice,
 };
