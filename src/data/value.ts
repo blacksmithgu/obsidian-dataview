@@ -453,15 +453,21 @@ export namespace TransferableValues {
     export function value(transferable: TransferableValue): LiteralValue {
         if (transferable === null || transferable === undefined) {
             return null;
-        } else if (typeof transferable === "object" && "___transfer-type" in transferable) {
-            switch (transferable["___transfer-type"]) {
-                case "date":
-                    return DateTime.fromObject(transferable.value);
-                case "duration":
-                    return Duration.fromObject(transferable.value);
-                case "link":
-                    return Link.fromObject(transferable.value);
+        } else if (typeof transferable === "object") {
+            if ("___transfer-type" in transferable) {
+                switch (transferable["___transfer-type"]) {
+                    case "date":
+                        return DateTime.fromObject(transferable.value);
+                    case "duration":
+                        return Duration.fromObject(transferable.value);
+                    case "link":
+                        return Link.fromObject(transferable.value);
+                }
             }
+
+            let result: Record<string, LiteralValue> = {};
+            for (let [key, value] of Object.entries(transferable)) result[key] = value(value);
+            return result;
         } else if (Array.isArray(transferable)) {
             return transferable.map(v => value(v));
         }
