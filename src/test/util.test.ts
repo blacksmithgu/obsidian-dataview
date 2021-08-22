@@ -41,4 +41,5 @@ test("simple canonicalizeVarName()", () => {
     expect(canonicalizeVarName("test thing 3")).toEqual("test-thing-3");
     expect(canonicalizeVarName("This is a Test.")).toEqual("this-is-a-test");
     expect(canonicalizeVarName("property")).toEqual("property");
+    expect(canonicalizeVarName("This     is test")).toEqual("this-is-test");
 });

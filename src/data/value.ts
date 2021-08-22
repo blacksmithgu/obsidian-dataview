@@ -453,6 +453,8 @@ export namespace TransferableValues {
     export function value(transferable: TransferableValue): LiteralValue {
         if (transferable === null || transferable === undefined) {
             return null;
+        } else if (Array.isArray(transferable)) {
+            return transferable.map(v => value(v));
         } else if (typeof transferable === "object") {
             if ("___transfer-type" in transferable) {
                 switch (transferable["___transfer-type"]) {
@@ -466,10 +468,8 @@ export namespace TransferableValues {
             }
 
             let result: Record<string, LiteralValue> = {};
-            for (let [key, value] of Object.entries(transferable)) result[key] = value(value);
+            for (let [key, value] of Object.entries(transferable)) result[key] = TransferableValues.value(value);
             return result;
-        } else if (Array.isArray(transferable)) {
-            return transferable.map(v => value(v));
         }
 
         return transferable as LiteralValue;

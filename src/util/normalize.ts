@@ -31,12 +31,15 @@ const WHITESPACE = /\s/;
 export function canonicalizeVarName(name: string): string {
     // Strip down to purely alphanumeric + spaces.
     let result = "";
+    let lastWasWhitespace = false;
     for (let index = 0; index < name.length; index++) {
         let ch = name[index];
         if (ch.match(WHITESPACE)) {
-            result += "-";
+            if (!lastWasWhitespace) result += "-";
+            lastWasWhitespace = true;
             continue;
         }
+        lastWasWhitespace = false;
 
         if (!ch.match(ALLOWABLE_VAR_CHARACTERS)) continue;
         result += ch.toLocaleLowerCase();
