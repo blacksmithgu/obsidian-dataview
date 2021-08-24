@@ -103,16 +103,33 @@ export class FunctionBuilder {
                 types.push(argType);
             }
 
-            // Handle vectorization.
+            // Handle vectorization, possibly in multiple fields.
             if (this.vectorized[types.length]) {
-                for (let vec of this.vectorized[types.length]) {
-                    if (types[vec] != "array") continue;
+                let vectorizedPositions = this.vectorized[types.length].filter(k => types[k] == "array");
+                if (vectorizedPositions.length > 0) {
+                    let minLength = vectorizedPositions
+                        .map(p => (args[p] as any[]).length)
+                        .reduce((p, c) => Math.min(p, c));
 
-                    return (args[vec] as LiteralValue[]).map(v => {
-                        let newArgs = ([] as LiteralValue[]).concat(args);
-                        newArgs[vec] = v;
-                        return self(context, ...newArgs);
-                    });
+                    // Call the subfunction for each element in the longest array.
+                    // If you call a vectorized function with different-length arrays,
+                    // the output is limited by the length of the shortest array.
+                    let result = [];
+                    for (let vpos = 0; vpos < minLength; vpos++) {
+                        let subargs = [];
+                        for (let index = 0; index < args.length; index++) {
+                            if (vectorizedPositions.includes(index)) {
+                                let arr = args[index] as any[];
+                                subargs.push(arr[vpos]);
+                            } else {
+                                subargs.push(args[index]);
+                            }
+                        }
+
+                        result.push(self(context, ...subargs));
+                    }
+
+                    return result;
                 }
             }
 
