@@ -1,12 +1,11 @@
 /** Stores various indices on all files in the vault to make dataview generation fast. */
-import { MetadataCache, Vault, TFile, TAbstractFile } from "obsidian";
-import { fromTransferable, PageMetadata, ParsedMarkdown, parsePage } from "./file";
-import { getParentFolder } from "util/normalize";
-import { DataObject } from "data/value";
-
-import DataviewImportWorker from "web-worker:./importer.ts";
 import { Result } from "api/result";
-import DataviewPlugin from "main";
+import { DataObject } from "data/value";
+import { MetadataCache, TAbstractFile, TFile, Vault } from "obsidian";
+import { getParentFolder } from "util/normalize";
+import DataviewImportWorker from "web-worker:./importer.ts";
+import { fromTransferable, PageMetadata, ParsedMarkdown, parsePage } from "./file";
+import DataviewPlugin from "../main";
 
 /** A generic index which indexes variables of the form key -> value[], allowing both forward and reverse lookups. */
 export class IndexMap {
@@ -262,7 +261,6 @@ export class FullIndex {
 
     private reloadInternal(file: TFile, parsed: ParsedMarkdown) {
         let meta = parsePage(file, this.metadataCache, parsed);
-
         this.pages.set(file.path, meta);
         this.tags.set(file.path, meta.fullTags());
         this.etags.set(file.path, meta.tags);

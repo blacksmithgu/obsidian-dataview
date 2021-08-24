@@ -2,11 +2,10 @@
 
 import { App, Component } from "obsidian";
 import { FullIndex } from "data/index";
-import { Task } from "data/file";
 import { renderValue, renderErrorPre } from "ui/render";
 import { DataviewApi } from "api/plugin-api";
 import { DataviewSettings } from "settings";
-import { DataObject, Link, Values } from "data/value";
+import { DataObject, Link, Values, Task } from "data/value";
 import { BoundFunctionImpl, DEFAULT_FUNCTIONS, Functions } from "expression/functions";
 import { Context } from "expression/context";
 import { defaultLinkHandler } from "query/engine";

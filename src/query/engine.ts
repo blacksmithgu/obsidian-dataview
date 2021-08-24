@@ -2,14 +2,14 @@
  * Takes a full query and a set of indices, and (hopefully quickly) returns all relevant files.
  */
 import { FullIndex } from "data/index";
-import { Task } from "data/file";
 import { Context, LinkHandler } from "expression/context";
 import { resolveSource, Datarow } from "data/resolver";
-import { DataObject, LiteralValue, Values } from "data/value";
+import { DataObject, LiteralValue, Values, Task } from "data/value";
 import { ListQuery, Query, QueryOperation, TableQuery } from "query/query";
 import { Result } from "api/result";
 import { Field } from "expression/field";
 import { QuerySettings } from "settings";
+import { DateTime } from "luxon";
 
 function iden<T>(x: T): T {
     return x;
@@ -367,7 +367,6 @@ export function executeTask(
 ): Result<TaskExecution, string> {
     // This is a somewhat silly way to do this for now; call into regular execute on the full query,
     // yielding a list of files. Then map the files to their tasks.
-    // TODO: Consider per-task or per-task-block filtering via a more nuanced algorithm.
     let fileset = resolveSource(query.source, index, origin);
     if (!fileset.successful) return Result.failure(fileset.error);
 
@@ -376,16 +375,63 @@ export function executeTask(
         this: index.pages.get(origin)?.toObject(index) ?? {},
     });
 
-    return executeCoreExtract(fileset.value, rootContext, query.operations, {}).map(core => {
-        let realResult = new Map<string, Task[]>();
-        for (let row of core.data) {
-            if (!Values.isLink(row.id)) continue;
+    let tasksAsPages: Pagerow[] = [];
 
-            let tasks = index.pages.get(row.id.path)?.tasks;
-            if (tasks == undefined || tasks.length == 0) continue;
+    for (let row of fileset.value) {
+        if (!Values.isLink(row.id)) continue;
 
-            realResult.set(row.id.path, tasks);
+        let page = index.pages.get(row.id.path);
+        if (page == undefined) {
+            continue;
         }
+        let defaultsFromPage = {
+            createdDate: DateTime.fromObject({
+                year: page.ctime.year,
+                month: page.ctime.month,
+                day: page.ctime.day,
+            }),
+            completedDate: DateTime.fromObject({
+                year: page.mtime.year,
+                month: page.mtime.month,
+                day: page.mtime.day,
+            }),
+        };
+
+        let tasks = page.tasks;
+        if (tasks == undefined) {
+            continue;
+        }
+
+        tasks.forEach(t => {
+            let data = t;
+            if (!data.createdDate) {
+                data.createdDate = defaultsFromPage.createdDate;
+            }
+            if (t.completed && !data.completedDate) {
+                data.completedDate = defaultsFromPage.completedDate;
+            }
+            tasksAsPages.push({
+                id: t.id(),
+                data,
+            } as Pagerow);
+        });
+    }
+
+    // Per-task filtering
+    // TODO: Consider per-task-block filtering via a more nuanced algorithm.
+    return executeCoreExtract(tasksAsPages, rootContext, query.operations, {}).map(core => {
+        let realResult = new Map<string, Task[]>();
+
+        let taskIds = new Set(core.data.map(t => t.id));
+        tasksAsPages.forEach(t => {
+            if (!taskIds.has(t.id)) {
+                return;
+            }
+            let task = t.data as Task;
+            let tasks = realResult.get(task.path) || [];
+            tasks.push(task);
+            realResult.set(task.path, tasks);
+        });
 
         return {
             core,
