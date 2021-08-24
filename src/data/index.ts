@@ -369,16 +369,19 @@ export class PrefixIndex {
         // TODO: I'm not sure if there is an event for all files in a folder, or just the folder.
         // I'm assuming the former naively for now until I inevitably fix it.
         this.vault.on("delete", file => {
+            if (!this.isMarkdown(file)) return;
             PrefixIndexNode.remove(this.root, file.path);
             updateRevision();
         });
 
         this.vault.on("create", file => {
+            if (!this.isMarkdown(file)) return;
             PrefixIndexNode.add(this.root, file.path);
             updateRevision();
         });
 
         this.vault.on("rename", (file, old) => {
+            if (!this.isMarkdown(file)) return;
             PrefixIndexNode.remove(this.root, old);
             PrefixIndexNode.add(this.root, file.path);
             updateRevision();
@@ -390,6 +393,10 @@ export class PrefixIndex {
         if (node == null || node == undefined) return new Set();
 
         return PrefixIndexNode.gather(node);
+    }
+
+    private isMarkdown(file: TAbstractFile): boolean {
+        return file.path.endsWith(".md");
     }
 }
 
