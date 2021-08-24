@@ -8,10 +8,6 @@ test("Evaluate lower(list)", () => {
     expect(parseEval('lower(list("A", "B"))')).toEqual(["a", "b"]);
 });
 
-test("Evaluate replace(list, string, string)", () => {
-    expect(parseEval('replace(list("yes", "re"), "e", "a")')).toEqual(["yas", "ra"]);
-});
-
 // <-- Length -->
 
 test("Evaluate length(array)", () => {
