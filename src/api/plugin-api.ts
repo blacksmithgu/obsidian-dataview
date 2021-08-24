@@ -3,9 +3,8 @@
 import { App, Component } from "obsidian";
 import { FullIndex } from "data";
 import { matchingSourcePaths } from "data/resolver";
-import { Task } from "data/file";
 import { Sources } from "data/source";
-import { DataObject, Link, LiteralValue, Values } from "data/value";
+import { DataObject, Link, LiteralValue, Values, Task } from "data/value";
 import { EXPRESSION } from "expression/parse";
 import { renderList, renderTable, renderValue } from "ui/render";
 import { DataviewSettings } from "settings";

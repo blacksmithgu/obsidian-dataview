@@ -1,5 +1,6 @@
 import { Vault, MarkdownRenderChild, MarkdownRenderer, Component } from "obsidian";
-import { Task, TASK_REGEX } from "data/file";
+import { TASK_REGEX } from "data/file";
+import { Task } from "data/value";
 import { createAnchor } from "./render";
 import { getFileName } from "util/normalize";
 

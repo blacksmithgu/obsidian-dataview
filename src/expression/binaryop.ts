@@ -21,7 +21,6 @@ export type BinaryOpImpl<A extends LiteralValue, B extends LiteralValue> = (
     second: B,
     ctx: Context
 ) => LiteralValue;
-
 /** An implementation of a comparator (returning a number) which then automatically defines all of the comparison operators. */
 export type CompareImpl<T extends LiteralValue> = (first: T, second: T, ctx: Context) => number;
 

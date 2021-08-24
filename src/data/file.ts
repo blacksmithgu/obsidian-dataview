@@ -3,7 +3,7 @@ import { getAllTags, MetadataCache, parseFrontMatterAliases, parseFrontMatterTag
 import { EXPRESSION } from "expression/parse";
 import { DateTime } from "luxon";
 import { FullIndex } from "data/index";
-import { DataObject, Link, LiteralValue, TransferableValue, TransferableValues, Values } from "./value";
+import { DataObject, Link, LiteralValue, TransferableValue, TransferableValues, Values, Task } from "./value";
 
 interface BaseLinkMetadata {
     path: string;
@@ -29,33 +29,6 @@ export interface FileLinkMetadata extends BaseLinkMetadata {
 
 /** A link inside a markdown file. */
 export type LinkMetadata = HeaderLinkMetadata | BlockLinkMetadata | FileLinkMetadata;
-
-/** A specific task. */
-export interface Task {
-    /** The text of this task. */
-    text: string;
-    /** The line this task shows up on. */
-    line: number;
-    /** The full path of the file. */
-    path: string;
-    /** Whether or not this task was completed. */
-    completed: boolean;
-    /** Whether or not this task and all of it's subtasks are completed. */
-    fullyCompleted: boolean;
-    /** If true, this is a real task; otherwise, it is a list element above/below a task. */
-    real: boolean;
-    /** Any subtasks of this task. */
-    subtasks: Task[];
-}
-
-export namespace Task {
-    /** Deep-copy a task. */
-    export function copy(input: Task): Task {
-        let partial = Object.assign({}, input) as Task;
-        partial.subtasks = partial.subtasks.map(t => copy(t));
-        return partial;
-    }
-}
 
 /** All extracted markdown file metadata obtained from a file. */
 export class PageMetadata {
@@ -88,9 +61,9 @@ export class PageMetadata {
         this.tags = new Set<string>();
         this.aliases = new Set<string>();
         this.links = [];
-        this.tasks = [];
-
         Object.assign(this, init);
+
+        this.tasks = (init?.tasks || []).map(t => new Task(t));
     }
 
     /** Parse all subtags out of the given tag. I.e., #hello/i/am would yield [#hello/i/am, #hello/i, #hello]. */
@@ -169,7 +142,7 @@ export class PageMetadata {
                 etags: Array.from(this.tags),
                 tags: Array.from(this.fullTags()),
                 aliases: Array.from(this.aliases),
-                tasks: this.tasks.map(t => Task.copy(t)),
+                tasks: this.tasks.map(t => t.toObject()),
                 ctime: this.ctime,
                 cday: DateTime.fromObject({ year: this.ctime.year, month: this.ctime.month, day: this.ctime.day }),
                 mtime: this.mtime,
@@ -367,6 +340,10 @@ export function alast<T>(arr: Array<T>): T | undefined {
     else return undefined;
 }
 
+export const CREATED_DATE_REGEX = /\u{2795}\s*(\d{4}-\d{2}-\d{2})/u;
+export const DUE_DATE_REGEX = /[\u{1F4C5}\u{1F4C6}\u{1F5D3}]\s*(\d{4}-\d{2}-\d{2})/u;
+export const DONE_DATE_REGEX = /\u{2705}\s*(\d{4}-\d{2}-\d{2})/u;
+
 /**
  * A hacky approach to scanning for all tasks using regex. Does not support multiline
  * tasks yet (though can probably be retro-fitted to do so).
@@ -375,7 +352,7 @@ export function findTasksInFile(path: string, file: string): Task[] {
     // Dummy top of the stack that we'll just never get rid of.
     let stack: [Task, number][] = [];
     stack.push([
-        { text: "Root", line: -1, path, completed: false, fullyCompleted: false, real: false, subtasks: [] },
+        new Task({ text: "Root", line: -1, path, completed: false, fullyCompleted: false, real: false, subtasks: [] }),
         -4,
     ]);
 
@@ -398,18 +375,39 @@ export function findTasksInFile(path: string, file: string): Task[] {
             continue;
         }
 
+        let createdMatch = CREATED_DATE_REGEX.exec(line);
+        let createdDate;
+        if (createdMatch) {
+            createdDate = DateTime.fromISO(createdMatch[1]);
+        }
+
+        let dueMatch = DUE_DATE_REGEX.exec(line);
+        let dueDate;
+        if (dueMatch) {
+            dueDate = DateTime.fromISO(dueMatch[1]);
+        }
+
+        let completedMatch = DONE_DATE_REGEX.exec(line);
+        let completedDate;
+        if (completedMatch) {
+            completedDate = DateTime.fromISO(completedMatch[1]);
+        }
+
         let indent = match[1].replace("\t", "    ").length;
         let isReal = !!match[2] && match[2].trim().length > 0;
         let isCompleted = !isReal || match[2] == "[X]" || match[2] == "[x]";
-        let task: Task = {
+        let task = new Task({
             text: match[3],
             completed: isCompleted,
+            completedDate: completedDate,
+            createdDate: createdDate,
+            dueDate: dueDate,
             fullyCompleted: isCompleted,
             real: isReal,
             path,
             line: lineno,
             subtasks: [],
-        };
+        });
 
         while (indent <= (alast(stack)?.[1] ?? -4)) stack.pop();
 

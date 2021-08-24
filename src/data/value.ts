@@ -1,6 +1,88 @@
 import { DateTime, Duration } from "luxon";
 import { DEFAULT_QUERY_SETTINGS, QuerySettings } from "settings";
 import { getFileName } from "util/normalize";
+// import { Field, BinaryOpField } from "expression/field";
+
+/** A specific task. */
+export class Task {
+    /** The text of this task. */
+    text: string;
+    /** The line this task shows up on. */
+    line: number;
+    /** The full path of the file. */
+    path: string;
+    /** Whether or not this task was completed. */
+    completed: boolean;
+    /** Whether or not this task and all of it's subtasks are completed. */
+    fullyCompleted: boolean;
+    /** If true, this is a real task; otherwise, it is a list element above/below a task. */
+    real: boolean;
+    /** Any subtasks of this task. */
+    subtasks: Task[];
+    /** An explicitly defined date of completion */
+    completedDate?: DateTime;
+    /** An explicitly defined date of creation */
+    createdDate?: DateTime;
+    /** An explicitly defined due date */
+    dueDate?: DateTime;
+    /** The block this task shows up on */
+    blockId: string;
+
+    constructor(init?: Partial<Task>) {
+        Object.assign(this, init);
+        this.subtasks = (this.subtasks || []).map(t => new Task(t));
+        this.completedDate = init?.completedDate;
+        this.createdDate = init?.createdDate;
+        this.dueDate = init?.dueDate;
+    }
+
+    public link(): string {
+        return `${this.path}#${this.blockId}`;
+    }
+
+    public id(): string {
+        return `${this.path}-${this.line}`;
+    }
+
+    public markdown(): string {
+        let bulletChar = `-`;
+        let stateChar = this.completed ? "x" : " ";
+        let result = `${bulletChar} [${stateChar}] ${this.text}`;
+        return result;
+    }
+
+    public toObject(): Record<string, LiteralValue> {
+        let result: Record<string, LiteralValue> = {
+            text: this.text,
+            line: this.line,
+            path: this.path,
+            completed: this.completed,
+            fullyCompleted: this.fullyCompleted,
+            real: this.real,
+            blockId: this.blockId,
+            subtasks: this.subtasks.map(t => t.toObject()),
+        };
+
+        if (this.createdDate) {
+            result.createdDate = this.createdDate;
+        }
+        if (this.dueDate) {
+            result.dueDate = this.dueDate;
+        }
+        if (this.completedDate) {
+            result.completedDate = this.completedDate;
+        }
+
+        return result;
+    }
+}
+
+export namespace Task {
+    export function fromObject(obj: Record<string, any>): Task {
+        let input = TransferableValues.value(obj) as Task;
+        return new Task(input);
+    }
+}
 
 /** An Obsidian link with all associated metadata. */
 export class Link {
@@ -100,6 +182,7 @@ export type LiteralType =
     | "date"
     | "duration"
     | "link"
+    | "task"
     | "array"
     | "object"
     | "html"
@@ -113,6 +196,7 @@ export type LiteralValue =
     | DateTime
     | Duration
     | Link
+    | Task
     | Array<LiteralValue>
     | DataObject
     | HTMLElement
@@ -134,6 +218,8 @@ export type LiteralRepr<T extends LiteralType> = T extends "boolean"
     ? null
     : T extends "link"
     ? Link
+    : T extends "task"
+    ? Task
     : T extends "array"
     ? Array<LiteralValue>
     : T extends "object"
@@ -152,6 +238,7 @@ export type WrappedLiteralValue =
     | LiteralValueWrapper<"date">
     | LiteralValueWrapper<"duration">
     | LiteralValueWrapper<"link">
+    | LiteralValueWrapper<"task">
     | LiteralValueWrapper<"array">
     | LiteralValueWrapper<"object">
     | LiteralValueWrapper<"html">
@@ -182,6 +269,8 @@ export namespace Values {
             case "null":
                 return "" + wrapped.value;
             case "link":
+                return wrapped.value.markdown();
+            case "task":
                 return wrapped.value.markdown();
             case "function":
                 return "<function>";
@@ -221,6 +310,7 @@ export namespace Values {
         else if (isHtml(val)) return { type: "html", value: val };
         else if (isArray(val)) return { type: "array", value: val };
         else if (isLink(val)) return { type: "link", value: val };
+        else if (isTask(val)) return { type: "task", value: val };
         else if (isFunction(val)) return { type: "function", value: val };
         else if (isObject(val)) return { type: "object", value: val };
         else return undefined;
@@ -273,6 +363,8 @@ export namespace Values {
                 let compareResult = compare1.localeCompare(compare2);
                 if (compareResult != 0) return compareResult;
                 else return normalize(link1.path).localeCompare(normalize(link2.path));
+            case "task":
+                return wrap1.value.text.localeCompare((wrap2.value as Task).text as string);
             case "date":
                 return wrap1.value < (wrap2.value as DateTime)
                     ? -1
@@ -335,6 +427,8 @@ export namespace Values {
                 return wrapped.value;
             case "link":
                 return !!wrapped.value.path;
+            case "task":
+                return wrapped.value.text.length > 0;
             case "date":
                 return wrapped.value.toMillis() != 0;
             case "duration":
@@ -399,6 +493,10 @@ export namespace Values {
         return val instanceof Link;
     }
 
+    export function isTask(val: any): val is Task {
+        return val instanceof Task;
+    }
+
     export function isHtml(val: any): val is HTMLElement {
         if (typeof HTMLElement !== "undefined") {
             return val instanceof HTMLElement;
@@ -409,7 +507,13 @@ export namespace Values {
 
     export function isObject(val: any): val is Record<string, any> {
         return (
-            typeof val == "object" && !isHtml(val) && !isArray(val) && !isDuration(val) && !isDate(val) && !isLink(val)
+            typeof val == "object" &&
+            !isHtml(val) &&
+            !isArray(val) &&
+            !isDuration(val) &&
+            !isDate(val) &&
+            !isLink(val) &&
+            !isTask(val)
         );
     }
 
@@ -427,7 +531,7 @@ export type TransferableValue =
     | boolean
     | Array<any>
     | Record<string, any>
-    | { "___transfer-type": "date" | "duration" | "link"; value: Record<string, any> };
+    | { "___transfer-type": "date" | "duration" | "link" | "task"; value: Record<string, any> };
 
 export namespace TransferableValues {
     /** Convert a literal value to a serializer-friendly transferable value. Does not work for all types. */
@@ -453,6 +557,8 @@ export namespace TransferableValues {
                 return result;
             case "link":
                 return { "___transfer-type": "link", value: wrapped.value.toObject() };
+            case "task":
+                return { "___transfer-type": "task", value: transferable(wrapped.value.toObject()) };
             default:
                 return undefined;
         }
@@ -473,6 +579,8 @@ export namespace TransferableValues {
                         return Duration.fromObject(transferable.value);
                     case "link":
                         return Link.fromObject(transferable.value);
+                    case "task":
+                        return Task.fromObject(transferable.value);
                 }
             }
 
