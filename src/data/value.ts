@@ -355,15 +355,17 @@ export namespace Values {
                 let link2 = wrap2.value as Link;
                 let normalize = linkNormalizer ?? ((x: string) => x);
 
-                // Compare on display if present; then basename; then full path.
-                let compare1 = link1.display ?? link1.fileName();
-                let compare2 = link2.display ?? link2.fileName();
-
-                let compareResult = compare1.localeCompare(compare2);
-                if (compareResult != 0) return compareResult;
-                else return normalize(link1.path).localeCompare(normalize(link2.path));
+                // We can't compare by file name or display, since that would break link equality.
+                return normalize(link1.path).localeCompare(normalize(link2.path));
             case "task":
-                return wrap1.value.text.localeCompare((wrap2.value as Task).text as string);
+                let task1 = wrap1.value;
+                let task2 = wrap2.value as Task;
+
+                // Use object comparison & compare the unique identifiers (path, line, and text as backup).
+                return compareValue(
+                    { path: task1.path, line: task1.line, text: task1.text },
+                    { path: task2.path, line: task2.line, text: task2.text }
+                );
             case "date":
                 return wrap1.value < (wrap2.value as DateTime)
                     ? -1
