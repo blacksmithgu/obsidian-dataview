@@ -29,7 +29,7 @@ export function getExtension(path: string): string {
     return path.substring(path.lastIndexOf(".") + 1);
 }
 
-const ALLOWABLE_VAR_CHARACTERS = /[0-9\w\p{Letter}\p{Emoji_Presentation}\-]/u;
+const ALLOWABLE_VAR_CHARACTERS = /[0-9\w\p{Letter}\p{Extended_Pictographic}\-]/u;
 const WHITESPACE = /\s/;
 
 /** Convert an arbitrary variable name into something JS/query friendly. */

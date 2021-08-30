@@ -208,17 +208,17 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
             .desc("boolean ('true' or 'false')"),
 
     // A tag of the form '#stuff/hello-there'.
-    tag: q => P.regexp(/#[\p{Letter}\p{Emoji_Presentation}\w/-]+/u).desc("tag ('#hello/stuff')"),
+    tag: q => P.regexp(/#[\p{Letter}\p{Extended_Pictographic}\w/-]+/u).desc("tag ('#hello/stuff')"),
 
     // A variable identifier, which is alphanumeric and must start with a letter.
     identifier: q =>
-        P.regexp(/[\p{Letter}\p{Emoji_Presentation}][\p{Letter}\p{Emoji_Presentation}\w_-]*/u).desc(
+        P.regexp(/[\p{Letter}\p{Extended_Pictographic}][\p{Letter}\p{Extended_Pictographic}\w_-]*/u).desc(
             "variable identifier"
         ),
 
     // A variable identifier, which is alphanumeric and must start with a letter. Can include dots.
     identifierDot: q =>
-        P.regexp(/[\p{Letter}\p{Emoji_Presentation}][\p{Letter}\p{Emoji_Presentation}\.\w_-]*/u).desc(
+        P.regexp(/[\p{Letter}\p{Extended_Pictographic}][\p{Letter}\p{Extended_Pictographic}\.\w_-]*/u).desc(
             "variable identifier"
         ),
 
