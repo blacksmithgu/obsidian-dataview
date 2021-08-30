@@ -25,7 +25,7 @@ values.
 
 ```js
 dv.pages("#books") => all pages with tag 'books'
-dv.pages('"folder"') => all pages from folder "folder"
+dv.pages("folder") => all pages from folder "folder"
 dv.pages("#yes or -#no") => all pages with tag #yes, or which DON'T have tag #no
 ```
 
