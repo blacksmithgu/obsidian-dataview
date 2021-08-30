@@ -1,17 +1,17 @@
-import { getFileName, getParentFolder, canonicalizeVarName } from "util/normalize";
+import { getFileTitle, getParentFolder, canonicalizeVarName } from "util/normalize";
 
-test("empty getFileName()", () => {
-    expect(getFileName("")).toEqual("");
-});
+describe("getFileTitle()", () => {
+    test("empty", () => expect(getFileTitle("")).toEqual(""));
 
-test("root getFileName()", () => {
-    expect(getFileName("yes.md")).toEqual("yes");
-    expect(getFileName("yes")).toEqual("yes");
-});
+    test("root getFileTitle()", () => {
+        expect(getFileTitle("yes.md")).toEqual("yes");
+        expect(getFileTitle("yes")).toEqual("yes");
+    });
 
-test("folder getFileName()", () => {
-    expect(getFileName("ok/yes.md")).toEqual("yes");
-    expect(getFileName("/yes")).toEqual("yes");
+    test("folder getFielTitle()", () => {
+        expect(getFileTitle("ok/yes.md")).toEqual("yes");
+        expect(getFileTitle("/yes")).toEqual("yes");
+    });
 });
 
 test("empty getParentFolder()", () => {

@@ -1,7 +1,6 @@
 import { DateTime, Duration } from "luxon";
 import { DEFAULT_QUERY_SETTINGS, QuerySettings } from "settings";
-import { getFileName } from "util/normalize";
-// import { Field, BinaryOpField } from "expression/field";
+import { getFileTitle } from "util/normalize";
 
 /** A specific task. */
 export class Task {
@@ -160,7 +159,7 @@ export class Link {
         else if (this.type == "block") result += "^" + this.subpath;
 
         if (this.display && !this.embed) result += "|" + this.display;
-        else if (!this.embed) result += "|" + getFileName(this.path).replace(".md", "");
+        else if (!this.embed) result += "|" + getFileTitle(this.path);
 
         result += "]]";
         return result;
@@ -168,7 +167,7 @@ export class Link {
 
     /** The stripped name of the file this link points into. */
     public fileName(): string {
-        return getFileName(this.path).replace(".md", "");
+        return getFileTitle(this.path).replace(".md", "");
     }
 }
 

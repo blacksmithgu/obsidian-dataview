@@ -2,7 +2,7 @@ import { Vault, MarkdownRenderChild, MarkdownRenderer, Component } from "obsidia
 import { TASK_REGEX } from "data/file";
 import { Task } from "data/value";
 import { createAnchor } from "./render";
-import { getFileName } from "util/normalize";
+import { getFileTitle } from "util/normalize";
 
 /** Holds DOM events for a rendered task view, including check functionality. */
 export class TaskViewLifecycle extends MarkdownRenderChild {
@@ -56,7 +56,7 @@ export async function renderFileTasks(container: HTMLElement, tasks: Map<string,
         let basepath = path.replace(".md", "");
 
         let header = container.createEl("h4");
-        header.appendChild(createAnchor(getFileName(basepath), basepath, true));
+        header.appendChild(createAnchor(getFileTitle(basepath), basepath, true));
         let div = container.createDiv();
 
         await renderTasks(div, list);

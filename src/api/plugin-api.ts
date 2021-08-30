@@ -15,17 +15,35 @@ import { Context } from "expression/context";
 import { defaultLinkHandler } from "query/engine";
 import { DateTime } from "luxon";
 
+/** Asynchronous API calls related to file / system IO. */
+export class DataviewIOApi {
+    public constructor(public api: DataviewApi) {}
+
+    /** Load the contents of a CSV asynchronously, returning a data array of rows (or undefined if it does not exist). */
+    public async csv(path: string, originFile?: string): Promise<DataArray<DataObject> | undefined> {
+        if (!(typeof path === "string")) {
+            throw Error(`dv.csv only handles string paths; was provided type '${typeof path}'.`);
+        }
+
+        let data = await this.api.index.csv.get(this.api.index.prefix.resolveRelative(path, originFile));
+        if (data.successful) return DataArray.from(data.value, this.api.settings);
+        else throw Error(`Could not find CSV for path '${path}' (relative to origin '${originFile ?? "/"}')`);
+    }
+}
+
 export class DataviewApi {
     /** Evaluation context which expressions can be evaluated in. */
     public evaluationContext: Context;
+    public io: DataviewIOApi;
     /** Dataview functions which can be called from DataviewJS. */
     public func: Record<string, BoundFunctionImpl>;
-
-    public valueUtil = Values;
+    /** Value utility functions for comparisons and type-checking. */
+    public value = Values;
 
     public constructor(public app: App, public index: FullIndex, public settings: DataviewSettings) {
         this.evaluationContext = new Context(defaultLinkHandler(index, ""), settings);
         this.func = Functions.bindAll(DEFAULT_FUNCTIONS, this.evaluationContext);
+        this.io = new DataviewIOApi(this);
     }
 
     /////////////////////////////
@@ -61,20 +79,6 @@ export class DataviewApi {
         if (!pageObject) return undefined;
 
         return pageObject.toObject(this.index);
-    }
-
-    /** Load the contents of a CSV file (with a header), returning it as a list of objects. */
-    public csv(path: string, originFile?: string): DataArray<DataObject> | undefined {
-        if (!(typeof path === "string")) {
-            throw Error("dv.csv only handles string paths; was provided type '" + typeof path + "'.");
-        }
-
-        let normPath = this.app.metadataCache.getFirstLinkpathDest(path, originFile ?? "");
-        if (!normPath) return undefined;
-
-        let data = this.index.csv.get(path);
-        if (data.successful) return DataArray.from(data.value, this.settings);
-        else return undefined;
     }
 
     /** Return an array of page objects corresponding to pages which match the query. */

@@ -208,7 +208,7 @@ export namespace DefaultFunctions {
         .add2("link", "string", (t, d) => t.withDisplay(d))
         .add2("null", "*", () => null)
         .add2("*", "null", (t, _n, c) => link(c, t))
-        .vectorize(2, [0])
+        .vectorize(2, [0, 1])
         .build();
 
     /** External link constructor function. */

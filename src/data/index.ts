@@ -1,11 +1,13 @@
 /** Stores various indices on all files in the vault to make dataview generation fast. */
 import { Result } from "api/result";
 import { DataObject } from "data/value";
-import { MetadataCache, TAbstractFile, TFile, Vault } from "obsidian";
+import { MetadataCache, TFile, Vault } from "obsidian";
 import { getParentFolder } from "util/normalize";
 import DataviewImportWorker from "web-worker:./importer.ts";
 import { fromTransferable, PageMetadata, ParsedMarkdown, parsePage } from "./file";
 import DataviewPlugin from "../main";
+import { DateTime } from "luxon";
+import { parseCsv } from "data/csv";
 
 /** A generic index which indexes variables of the form key -> value[], allowing both forward and reverse lookups. */
 export class IndexMap {
@@ -183,7 +185,7 @@ export class FullIndex {
     /** Search files by path prefix. */
     public prefix: PrefixIndex;
     /** Caches rows of CSV files. */
-    public csv: CsvIndex;
+    public csv: CsvCache;
 
     /**
      * The current "revision" of the index, which monotonically increases for every index change. Use this to determine
@@ -246,7 +248,7 @@ export class FullIndex {
         // Prefix listens to file creation/deletion/rename, and not modifies, so we let it set up it's own listeners.
         this.prefix = await PrefixIndex.generate(this.vault, () => (this.revision += 1));
         // The CSV cache also needs to listen to filesystem events for cache invalidation.
-        this.csv = await CsvIndex.generate(this.vault, this.backgroundParser, () => (this.revision += 1));
+        this.csv = new CsvCache(this.vault);
 
         // Traverse all markdown files & fill in initial data.
         let start = new Date().getTime();
@@ -274,12 +276,13 @@ export class FullIndex {
 
 /** A node in the prefix tree. */
 export class PrefixIndexNode {
-    // TODO: Instead of only storing file paths at the leaf, consider storing them at every level,
-    // since this will make for faster deletes and gathers in exchange for slightly slower adds and more memory usage.
-    // since we are optimizing for gather, and file paths tend to be shallow, this should be ok.
+    // The set of file / folder names at this level; these are *full paths*.
     files: Set<string>;
+    // The segment name corresponding to the current node.
     element: string;
+    // The *total* number of child files in and under this node.
     totalCount: number;
+    // A map of name segment -> node for that segment.
     children: Map<string, PrefixIndexNode>;
 
     constructor(element: string) {
@@ -334,10 +337,16 @@ export class PrefixIndexNode {
         return node;
     }
 
-    public static gather(root: PrefixIndexNode): Set<string> {
+    /** Gather all files at and under the given node, optionally filtering the result by the given filter. */
+    public static gather(root: PrefixIndexNode, filter?: (path: string) => boolean): Set<string> {
         let result = new Set<string>();
         PrefixIndexNode.gatherRec(root, result);
-        return result;
+
+        if (filter) {
+            return new Set(Array.from(result).filter(filter));
+        } else {
+            return result;
+        }
     }
 
     static gatherRec(root: PrefixIndexNode, output: Set<string>) {
@@ -352,121 +361,142 @@ export class PrefixIndex {
         let root = new PrefixIndexNode("");
         let timeStart = new Date().getTime();
 
-        // First time load...
-        for (let file of vault.getMarkdownFiles()) {
+        for (let file of vault.getFiles()) {
             PrefixIndexNode.add(root, file.path);
         }
 
-        let totalTimeMs = new Date().getTime() - timeStart;
-        console.log(`Dataview: Parsed all file prefixes (${totalTimeMs / 1000.0}s)`);
-
-        return Promise.resolve(new PrefixIndex(vault, root, updateRevision));
+        console.log("Dataview: File prefix tree built in %.3fs.", (new Date().getTime() - timeStart) / 1000.0);
+        return new PrefixIndex(vault, root, updateRevision);
     }
 
     constructor(public vault: Vault, public root: PrefixIndexNode, public updateRevision: () => void) {
         // TODO: I'm not sure if there is an event for all files in a folder, or just the folder.
         // I'm assuming the former naively for now until I inevitably fix it.
         this.vault.on("delete", file => {
-            if (!this.isMarkdown(file)) return;
             PrefixIndexNode.remove(this.root, file.path);
             updateRevision();
         });
 
         this.vault.on("create", file => {
-            if (!this.isMarkdown(file)) return;
             PrefixIndexNode.add(this.root, file.path);
             updateRevision();
         });
 
         this.vault.on("rename", (file, old) => {
-            if (!this.isMarkdown(file)) return;
             PrefixIndexNode.remove(this.root, old);
             PrefixIndexNode.add(this.root, file.path);
             updateRevision();
         });
     }
 
-    public get(prefix: string): Set<string> {
+    /** Get the list of all files under the given path. */
+    public get(prefix: string, filter?: (path: string) => boolean): Set<string> {
         let node = PrefixIndexNode.find(this.root, prefix);
         if (node == null || node == undefined) return new Set();
 
-        return PrefixIndexNode.gather(node);
+        return PrefixIndexNode.gather(node, filter);
     }
 
-    private isMarkdown(file: TAbstractFile): boolean {
-        return file.path.endsWith(".md");
+    /** Determines if the given path exists in the prefix index. */
+    public exists(path: string): boolean {
+        let node = PrefixIndexNode.find(this.root, getParentFolder(path));
+        return node != null && node.files.has(path);
+    }
+
+    /**
+     * Use the in-memory prefix index to convert a relative path to an absolute one.
+     */
+    public resolveRelative(path: string, origin?: string): string {
+        if (!origin) return path;
+        else if (path.startsWith("/")) return path.substring(1);
+
+        let relativePath = getParentFolder(origin) + "/" + path;
+        if (this.exists(relativePath)) return relativePath;
+        else return path;
+    }
+}
+
+/** Simple path filters which filter file types. */
+export namespace PathFilters {
+    export function csv(path: string): boolean {
+        return path.toLowerCase().endsWith(".csv");
+    }
+
+    export function markdown(path: string): boolean {
+        let lcPath = path.toLowerCase();
+        return lcPath.endsWith(".md") || lcPath.endsWith(".markdown");
     }
 }
 
 /**
- * Indexes 1the contents of CSV files in memory. You may be thinking that this
- * seems ridiculous and a waste of memory, and you would be right. However,
- * we need to do this in order for the query engine and DataviewJS APIs to
- * remain fully synchronous. Otherwise, things like `dv.page()` would
- * randomly become asynchronous due to file I/O, causing script breaks.
+ * Caches in-use CSVs to make high-frequency reloads (such as actively looking at a document
+ * that uses CSV) fast.
+ *
+ * Encapsulates logic for fetching CSV
  */
-export class CsvIndex {
-    /**
-     * Asynchronously generate a new CSV row cache.
-     */
-    public static async generate(vault: Vault, reloader: BackgroundFileParser, updateRevision: () => void) {
-        let cache = new CsvIndex(vault, reloader, updateRevision);
-        let csvCount = 0;
-        for (let csv of vault.getFiles().filter(cache.isCsv)) {
-            cache.reloadInternal(csv);
-            csvCount += 1;
-        }
+export class CsvCache {
+    /** How long until a CSV cache entry is timed out, in seconds. */
+    public static CACHE_EXPIRY_SECONDS: number = 5 * 60;
 
-        console.log(`Dataview: Initialized CSV row cache (loading ${csvCount} CSV files).`);
-        return cache;
-    }
+    // Cache of loaded CSVs; old entries will periodically be removed
+    cache: Map<string, { data: DataObject[]; loadTime: DateTime }>;
+    // Periodic job which clears out the cache based on time.
+    cacheClearInterval: number;
 
-    /** Maps CSV file paths to the collection of data contained within the csv. */
-    private cache: Map<string, DataObject[]>;
-
-    public constructor(public vault: Vault, public reloader: BackgroundFileParser, public updateRevision: () => void) {
+    public constructor(public vault: Vault) {
         this.cache = new Map();
 
-        this.vault.on("delete", file => {
-            if (this.isCsv(file)) this.cache.delete(file.path);
-        });
-
-        this.vault.on("modify", file => {
-            if (this.isCsv(file)) this.reloadInternal(file);
-        });
-
-        this.vault.on("rename", (file, oldPath) => {
-            if (this.isCsv(file)) {
-                this.cache.delete(oldPath);
-                this.reloadInternal(file);
-            }
-        });
+        this.cacheClearInterval = window.setInterval(() => {
+            this.clearOldEntries();
+        }, 60 * 1000);
     }
 
-    /** Determines if the given file is a CSV file which should be indexed. */
-    public isCsv(file: TAbstractFile): file is TFile {
-        if (!(file instanceof TFile)) return false;
-
-        if (file.name.endsWith("ignored.csv")) return false;
-        else if (file.name.endsWith("csv")) return true;
-
-        return false;
-    }
-
-    /** Try to fetch the contents of the CSV at the given path. */
-    public get(path: string): Result<DataObject[], string> {
-        let result = this.cache.get(path);
-        if (!result) {
-            return Result.failure(`Could not find a CSV with path '${path}'`);
-        } else {
-            return Result.success(result);
+    /** Load a CSV file from the cache, doing a fresh load if it has not been loaded. */
+    public async get(path: string): Promise<Result<DataObject[], string>> {
+        let existing = this.cache.get(path);
+        if (existing) return Result.success(existing.data);
+        else {
+            let value = await this.load(path);
+            if (value.successful) this.cache.set(path, { data: value.value, loadTime: DateTime.now() });
+            return value;
         }
     }
 
-    private reloadInternal(file: TFile) {
-        this.reloader.reload<DataObject[]>(file).then(values => {
-            this.cache.set(file.path, values);
-            this.updateRevision();
-        });
+    /** Do the actual raw loading of a CSV path (which is either local or an HTTP request). */
+    private async load(path: string): Promise<Result<DataObject[], string>> {
+        // Allow http://, https://, and file:// prefixes which use AJAX.
+        if (path.startsWith("http://") || path.startsWith("https://") || path.startsWith("file://")) {
+            try {
+                let result = await fetch(path, {
+                    method: "GET",
+                    mode: "no-cors",
+                    redirect: "follow",
+                });
+
+                return Result.success(parseCsv(await result.text()));
+            } catch (ex) {
+                return Result.failure("" + ex + "\n\n" + ex.stack);
+            }
+        }
+
+        // Otherwise, assume it is a fully-qualified file path.
+        try {
+            let fileData = await this.vault.adapter.read(path);
+            return Result.success(parseCsv(fileData));
+        } catch (ex) {
+            return Result.failure(`Failed to load data from path '${path}'.`);
+        }
+    }
+
+    /** Clear old entries in the cache (as measured by insertion time). */
+    private clearOldEntries() {
+        let currentTime = DateTime.now();
+        let keysToRemove = new Set<string>();
+        for (let [key, value] of this.cache.entries()) {
+            let entryAge = Math.abs(currentTime.diff(value.loadTime, "seconds").seconds);
+            if (entryAge > CsvCache.CACHE_EXPIRY_SECONDS) keysToRemove.add(key);
+        }
+
+        keysToRemove.forEach(key => this.cache.delete(key));
     }
 }

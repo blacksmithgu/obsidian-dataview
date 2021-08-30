@@ -11,8 +11,13 @@ export function getParentFolder(path: string): string {
     return path.split("/").slice(0, -1).join("/");
 }
 
-/** Get the file name for the file, without any parent directories. */
+/** Get the file name for the file referenced in the given path, by stripping the parent folders. */
 export function getFileName(path: string): string {
+    return path.includes("/") ? path.substring(path.lastIndexOf("/") + 1) : path;
+}
+
+/** Get the "title" for a file, by stripping other parts of the path as well as the extension. */
+export function getFileTitle(path: string): string {
     if (path.includes("/")) path = path.substring(path.lastIndexOf("/") + 1);
     if (path.endsWith(".md")) path = path.substring(0, path.length - 3);
     return path;
@@ -52,6 +57,15 @@ export function canonicalizeVarName(name: string): string {
 export function tryOrPropogate<T>(func: () => Result<T, string>): Result<T, string> {
     try {
         return func();
+    } catch (error) {
+        return Result.failure("" + error + "\n\n" + error.stack);
+    }
+}
+
+/** Try asynchronously calling the given function; on failure, return the error message. */
+export async function asyncTryOrPropogate<T>(func: () => Promise<Result<T, string>>): Promise<Result<T, string>> {
+    try {
+        return await func();
     } catch (error) {
         return Result.failure("" + error + "\n\n" + error.stack);
     }

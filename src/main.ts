@@ -19,9 +19,9 @@ import { Field } from "expression/field";
 import { parseField } from "expression/parse";
 import { parseQuery } from "query/parse";
 import { executeInline, executeList, executeTable, executeTask } from "query/engine";
-import { tryOrPropogate } from "util/normalize";
+import { asyncTryOrPropogate, tryOrPropogate } from "util/normalize";
 import { waitFor } from "util/concurrency";
-import { evalInContext, makeApiContext } from "api/inline-api";
+import { asyncEvalInContext, makeApiContext } from "api/inline-api";
 import { DataviewApi } from "./api/plugin-api";
 import { DataviewSettings, DEFAULT_QUERY_SETTINGS, DEFAULT_SETTINGS } from "./settings";
 import { LiteralValue } from "./data/value";
@@ -508,7 +508,9 @@ class DataviewListRenderer extends MarkdownRenderChild {
     }
 
     async render() {
-        let maybeResult = tryOrPropogate(() => executeList(this.query, this.index, this.origin, this.settings));
+        let maybeResult = await asyncTryOrPropogate(() =>
+            executeList(this.query, this.index, this.origin, this.settings)
+        );
         if (!maybeResult.successful) {
             renderErrorPre(this.container, "Dataview: " + maybeResult.error);
             return;
@@ -562,7 +564,9 @@ class DataviewTableRenderer extends MarkdownRenderChild {
     }
 
     async render() {
-        let maybeResult = tryOrPropogate(() => executeTable(this.query, this.index, this.origin, this.settings));
+        let maybeResult = await asyncTryOrPropogate(() =>
+            executeTable(this.query, this.index, this.origin, this.settings)
+        );
         if (!maybeResult.successful) {
             renderErrorPre(this.container, "Dataview: " + maybeResult.error);
             return;
@@ -629,7 +633,7 @@ class DataviewTaskRenderer extends MarkdownRenderChild {
     }
 
     async render() {
-        let result = tryOrPropogate(() => executeTask(this.query, this.origin, this.index, this.settings));
+        let result = await asyncTryOrPropogate(() => executeTask(this.query, this.origin, this.index, this.settings));
         if (!result.successful) {
             renderErrorPre(this.container, "Dataview: " + result.error);
         } else if (result.value.tasks.size == 0 && this.settings.warnOnEmptyResult) {
@@ -715,7 +719,7 @@ class DataviewJSRenderer extends MarkdownRenderChild {
 
         // Assume that the code is javascript, and try to eval it.
         try {
-            evalInContext(
+            await asyncEvalInContext(
                 DataviewJSRenderer.PREAMBLE + this.script,
                 makeApiContext(this.index, this, this.app, this.settings, this.container, this.origin)
             );
@@ -766,7 +770,7 @@ class DataviewInlineJSRenderer extends MarkdownRenderChild {
         // Assume that the code is javascript, and try to eval it.
         try {
             let temp = document.createElement("span");
-            let result = evalInContext(
+            let result = await asyncEvalInContext(
                 DataviewInlineJSRenderer.PREAMBLE + this.script,
                 makeApiContext(this.index, this, this.app, this.settings, temp, this.origin)
             );

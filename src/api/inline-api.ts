@@ -3,7 +3,7 @@
 import { App, Component } from "obsidian";
 import { FullIndex } from "data/index";
 import { renderValue, renderErrorPre } from "ui/render";
-import { DataviewApi } from "api/plugin-api";
+import { DataviewApi, DataviewIOApi } from "api/plugin-api";
 import { DataviewSettings } from "settings";
 import { DataObject, Link, Values, Task } from "data/value";
 import { BoundFunctionImpl, DEFAULT_FUNCTIONS, Functions } from "expression/functions";
@@ -11,6 +11,16 @@ import { Context } from "expression/context";
 import { defaultLinkHandler } from "query/engine";
 import { DateTime } from "luxon";
 import { DataArray } from "./data-array";
+
+/** Asynchronous API calls related to file / system IO. */
+export class DataviewInlineIOApi {
+    public constructor(public api: DataviewIOApi) {}
+
+    /** Load the contents of a CSV asynchronously, returning a data array of rows (or undefined if it does not exist). */
+    public async csv(path: string, originFile?: string): Promise<DataArray<DataObject> | undefined> {
+        return this.api.csv(path, originFile);
+    }
+}
 
 export class DataviewInlineApi {
     /**
@@ -43,6 +53,12 @@ export class DataviewInlineApi {
     /** Evaluation context which expressions can be evaluated in. */
     public evaluationContext: Context;
 
+    /** Value utilities which allow for type-checking and comparisons. */
+    public value = Values;
+
+    /** IO utilities which are largely asynchronous. */
+    public io: DataviewInlineIOApi;
+
     /** Dataview functions which can be called from DataviewJS. */
     public func: Record<string, BoundFunctionImpl>;
 
@@ -62,6 +78,7 @@ export class DataviewInlineApi {
         this.settings = settings;
 
         this.api = new DataviewApi(this.app, this.index, this.settings);
+        this.io = new DataviewInlineIOApi(this.api.io);
 
         // Set up the evaluation context with variables from the current file.
         let fileMeta = this.index.pages.get(this.currentFilePath)?.toObject(this.index) ?? {};
@@ -82,11 +99,6 @@ export class DataviewInlineApi {
     /** Map a page path to the actual data contained within that page. */
     public page(path: string | Link): DataObject | undefined {
         return this.api.page(path, this.currentFilePath);
-    }
-
-    /** Load the contents of a CSV from the given path. */
-    public csv(path: string): DataArray<DataObject> | undefined {
-        return this.api.csv(path, this.currentFilePath);
     }
 
     /** Return an array of page objects corresponding to pages which match the query. */
@@ -274,11 +286,24 @@ export class DataviewInlineApi {
     }
 }
 
-/** Evaluate a script where 'this' for the script is set to the given context. Allows you to define global variables. */
+/**
+ * Evaluate a script where 'this' for the script is set to the given context. Allows you to define global variables.
+ */
 export function evalInContext(script: string, context: any): any {
     return function () {
         return eval(script);
     }.call(context);
+}
+
+/**
+ * Evaluate a script possibly asynchronously, if the script contains `async/await` blocks.
+ */
+export async function asyncEvalInContext(script: string, context: any): Promise<any> {
+    if (script.includes("await")) {
+        return evalInContext("(async () => { " + script + " })()", context) as Promise<any>;
+    } else {
+        return Promise.resolve(evalInContext(script, context));
+    }
 }
 
 /** Make a full API context which a script can be evaluted in. */

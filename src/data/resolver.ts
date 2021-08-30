@@ -1,10 +1,9 @@
 /** Collect data matching a source query. */
 
-import { FullIndex } from "data/index";
+import { FullIndex, PathFilters } from "data/index";
 import { Result } from "api/result";
 import { Source } from "./source";
 import { DataObject, Link, LiteralValue } from "./value";
-import { getFileName } from "util/normalize";
 
 /** A data row which has an ID and associated data (like page link / page data). */
 export type Datarow<T> = { id: LiteralValue; data: T };
@@ -21,9 +20,9 @@ export function matchingSourcePaths(
         case "tag":
             return Result.success(index.tags.getInverse(source.tag));
         case "csv":
-            return Result.success(new Set<string>([source.path]));
+            return Result.success(new Set<string>([index.prefix.resolveRelative(source.path, originFile)]));
         case "folder":
-            return Result.success(index.prefix.get(source.folder));
+            return Result.success(index.prefix.get(source.folder, PathFilters.markdown));
         case "link":
             let fullPath = index.metadataCache.getFirstLinkpathDest(source.file, originFile)?.path;
             if (!fullPath)
@@ -70,7 +69,8 @@ export function matchingSourcePaths(
             );
         case "negate":
             return matchingSourcePaths(source.child, index, originFile).map(child => {
-                // TODO: This is obviously very inefficient.
+                // TODO: This is obviously very inefficient. Can be improved by complicating the
+                // return type of this function & optimizing 'and' / 'or'.
                 let allFiles = new Set<string>(index.vault.getMarkdownFiles().map(f => f.path));
                 child.forEach(f => allFiles.delete(f));
                 return allFiles;
@@ -79,50 +79,50 @@ export function matchingSourcePaths(
 }
 
 /** Convert a path to the data for that path; usually markdown pages, but could also be other file types (like CSV).  */
-export function resolvePathData(path: string, index: FullIndex): Result<Datarow<DataObject>[], string> {
-    if (path.endsWith("csv")) {
-        // CSV file case: look up data rows in the CSV.
-        let records = index.csv.get(path);
-        return records.map(rows =>
-            rows.map((row, index) => {
-                let fileData = {
-                    link: null,
-                    name: getFileName(path),
-                    path: path,
-                };
+export async function resolvePathData(path: string, index: FullIndex): Promise<Result<Datarow<DataObject>[], string>> {
+    if (PathFilters.csv(path)) return resolveCsvData(path, index);
+    else return resolveMarkdownData(path, index);
+}
 
-                return {
-                    id: `${path}#${index}`,
-                    data: Object.assign(fileData, row),
-                };
-            })
-        );
-    } else {
-        // Default case: Assume it is a markdown page (or has markdown metadata).
-        let page = index.pages.get(path);
-        if (!page) return Result.success([]);
+// TODO: We shouldn't be doing path normalization here relative to an origin file,
+/** Convert a CSV path to the data in the CSV (in dataview format). */
+export async function resolveCsvData(path: string, index: FullIndex): Promise<Result<Datarow<DataObject>[], string>> {
+    let rawData = await index.csv.get(path);
+    return rawData.map(rows => {
+        return rows.map((row, index) => {
+            return {
+                id: `${path}#${index}`,
+                data: row,
+            };
+        });
+    });
+}
 
-        return Result.success([
-            {
-                id: Link.file(path),
-                data: page.toObject(index),
-            },
-        ]);
-    }
+/** Convert a path pointing to a markdown page, into the associated metadata. */
+export function resolveMarkdownData(path: string, index: FullIndex): Result<Datarow<DataObject>[], string> {
+    let page = index.pages.get(path);
+    if (!page) return Result.success([]);
+
+    return Result.success([
+        {
+            id: Link.file(path),
+            data: page.toObject(index),
+        },
+    ]);
 }
 
 /** Resolve a source to the collection of data rows that it matches. */
-export function resolveSource(
+export async function resolveSource(
     source: Source,
     index: FullIndex,
     originFile: string = ""
-): Result<Datarow<DataObject>[], string> {
+): Promise<Result<Datarow<DataObject>[], string>> {
     let paths = matchingSourcePaths(source, index, originFile);
     if (!paths.successful) return Result.failure(paths.error);
 
     let result = [];
     for (let path of paths.value) {
-        let resolved = resolvePathData(path, index);
+        let resolved = await resolvePathData(path, index);
         if (!resolved.successful) return resolved;
 
         for (let val of resolved.value) result.push(val);

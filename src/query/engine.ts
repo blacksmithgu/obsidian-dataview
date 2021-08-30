@@ -282,14 +282,14 @@ export interface ListExecution {
 }
 
 /** Execute a list-based query, returning the final results. */
-export function executeList(
+export async function executeList(
     query: Query,
     index: FullIndex,
     origin: string,
     settings: QuerySettings
-): Result<ListExecution, string> {
+): Promise<Result<ListExecution, string>> {
     // Start by collecting all of the files that match the 'from' queries.
-    let fileset = resolveSource(query.source, index, origin);
+    let fileset = await resolveSource(query.source, index, origin);
     if (!fileset.successful) return Result.failure(fileset.error);
 
     // Extract information about the origin page to add to the root context.
@@ -321,14 +321,14 @@ export interface TableExecution {
 }
 
 /** Execute a table query. */
-export function executeTable(
+export async function executeTable(
     query: Query,
     index: FullIndex,
     origin: string,
     settings: QuerySettings
-): Result<TableExecution, string> {
+): Promise<Result<TableExecution, string>> {
     // Start by collecting all of the files that match the 'from' queries.
-    let fileset = resolveSource(query.source, index, origin);
+    let fileset = await resolveSource(query.source, index, origin);
     if (!fileset.successful) return Result.failure(fileset.error);
 
     // Extract information about the origin page to add to the root context.
@@ -359,15 +359,13 @@ export interface TaskExecution {
 }
 
 /** Execute a task query, returning all matching tasks. */
-export function executeTask(
+export async function executeTask(
     query: Query,
     origin: string,
     index: FullIndex,
     settings: QuerySettings
-): Result<TaskExecution, string> {
-    // This is a somewhat silly way to do this for now; call into regular execute on the full query,
-    // yielding a list of files. Then map the files to their tasks.
-    let fileset = resolveSource(query.source, index, origin);
+): Promise<Result<TaskExecution, string>> {
+    let fileset = await resolveSource(query.source, index, origin);
     if (!fileset.successful) return Result.failure(fileset.error);
 
     // Extract information about the origin page to add to the root context.
@@ -377,6 +375,7 @@ export function executeTask(
 
     let tasksAsPages: Pagerow[] = [];
 
+    // TODO: Add default page annotation to PageMetadata.
     for (let row of fileset.value) {
         if (!Values.isLink(row.id)) continue;
 

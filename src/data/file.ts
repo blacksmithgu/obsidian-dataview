@@ -1,4 +1,4 @@
-import { canonicalizeVarName, getExtension, getFileName, getParentFolder } from "util/normalize";
+import { canonicalizeVarName, getExtension, getFileTitle, getParentFolder } from "util/normalize";
 import { getAllTags, MetadataCache, parseFrontMatterAliases, parseFrontMatterTags, TFile } from "obsidian";
 import { EXPRESSION } from "expression/parse";
 import { DateTime } from "luxon";
@@ -79,7 +79,7 @@ export class PageMetadata {
 
     /** The name (based on path) of this file. */
     public name(): string {
-        return getFileName(this.path);
+        return getFileTitle(this.path);
     }
 
     /** The containing folder (based on path) of this file. */
@@ -258,7 +258,7 @@ function findDate(file: string, fields: Map<string, LiteralValue>): DateTime | u
         }
     }
 
-    return extractDate(getFileName(file));
+    return extractDate(getFileTitle(file));
 }
 
 /** Recursively convert frontmatter into fields. We have to dance around YAML structure. */

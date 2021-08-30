@@ -22,47 +22,49 @@ test("Parse Float Literal", () => {
 
 // <-- String Literals -->
 
-test("Parse String Literal", () => {
-    expect(EXPRESSION.string.parse(`this won't work, no quotes`).status).toBe(false);
-    expect(EXPRESSION.string.tryParse(`"hello"`)).toBe("hello");
+describe("String Literals", () => {
+    test("Parse String Literal", () => {
+        expect(EXPRESSION.string.parse(`this won't work, no quotes`).status).toBe(false);
+        expect(EXPRESSION.string.tryParse(`"hello"`)).toBe("hello");
 
-    expect(EXPRESSION.string.tryParse(`"\\""`)).toBe('"');
-    expect(EXPRESSION.string.parse(`"\\\\""`).status).toBe(false);
+        expect(EXPRESSION.string.tryParse(`"\\""`)).toBe('"');
+        expect(EXPRESSION.string.parse(`"\\\\""`).status).toBe(false);
 
-    // Test case which failed on old regex
-    expect(EXPRESSION.string.tryParse(`"\\\\\\""`)).toBe(`\\"`);
+        // Test case which failed on old regex
+        expect(EXPRESSION.string.tryParse(`"\\\\\\""`)).toBe(`\\"`);
 
-    // Testcase for escape in regex strings.
-    expect(EXPRESSION.string.tryParse('"\\w+"')).toBe("\\w+");
-});
+        // Testcase for escape in regex strings.
+        expect(EXPRESSION.string.tryParse('"\\w+"')).toBe("\\w+");
+    });
 
-test("Parse Empty String Literal", () => {
-    expect(EXPRESSION.string.tryParse('""')).toBe("");
-});
+    test("Parse Empty String Literal", () => {
+        expect(EXPRESSION.string.tryParse('""')).toBe("");
+    });
 
-test("Parse String Escape", () => {
-    expect(EXPRESSION.string.tryParse('"\\""')).toBe('"');
-});
+    test("Parse String Escape", () => {
+        expect(EXPRESSION.string.tryParse('"\\""')).toBe('"');
+    });
 
-test("Parse String Escape Escape", () => {
-    expect(EXPRESSION.string.tryParse('"\\\\"')).toBe("\\");
-});
+    test("Parse String Escape Escape", () => {
+        expect(EXPRESSION.string.tryParse('"\\\\"')).toBe("\\");
+    });
 
-test("Parse Multiple Strings", () => {
-    let result = EXPRESSION.field.tryParse('"" or "yes"') as BinaryOpField;
-    expect(result.type).toBe("binaryop");
+    test("Parse Multiple Strings", () => {
+        let result = EXPRESSION.field.tryParse('"" or "yes"') as BinaryOpField;
+        expect(result.type).toBe("binaryop");
 
-    let left = result.left as LiteralField;
-    expect(left.type).toBe("literal");
-    expect(left.value).toBe("");
+        let left = result.left as LiteralField;
+        expect(left.type).toBe("literal");
+        expect(left.value).toBe("");
 
-    let right = result.right as LiteralField;
-    expect(right.type).toBe("literal");
-    expect(right.value).toBe("yes");
-});
+        let right = result.right as LiteralField;
+        expect(right.type).toBe("literal");
+        expect(right.value).toBe("yes");
+    });
 
-test("Parse string with emoji", () => {
-    expect(EXPRESSION.string.tryParse('"📷"')).toEqual("📷");
+    test("Parse string with emoji", () => {
+        expect(EXPRESSION.string.tryParse('"📷"')).toEqual("📷");
+    });
 });
 
 // <-- Booleans -->
@@ -75,17 +77,14 @@ test("Parse boolean literal", () => {
 
 // <-- Tags -->
 
-test("Parse tag literal", () => {
-    expect(EXPRESSION.tag.tryParse("#hello-from-marketing/yes")).toEqual("#hello-from-marketing/yes");
-    expect(EXPRESSION.tag.tryParse("#daily/2021/20/08")).toEqual("#daily/2021/20/08");
-});
+describe("Tag Literals", () => {
+    test("Daily", () => expect(EXPRESSION.tag.tryParse("#daily/2021/20/08")).toEqual("#daily/2021/20/08"));
+    test("Dashes", () =>
+        expect(EXPRESSION.tag.tryParse("#hello-from-marketing/yes")).toEqual("#hello-from-marketing/yes"));
 
-test("Parse unicode tag", () => {
-    expect(EXPRESSION.tag.tryParse("#début")).toEqual("#début");
-});
-
-test("Parse tag with emoji", () => {
-    expect(EXPRESSION.tag.tryParse("#📷")).toEqual("#📷");
+    test("#📷", () => expect(EXPRESSION.tag.tryParse("#📷")).toEqual("#📷"));
+    test("#🌱/🌿", () => expect(EXPRESSION.tag.tryParse("#🌱/🌿")).toEqual("#🌱/🌿"));
+    test("#début", () => expect(EXPRESSION.tag.tryParse("#début")).toEqual("#début"));
 });
 
 // <-- Identifiers -->
