@@ -22,11 +22,11 @@ import { executeInline, executeList, executeTable, executeTask } from "query/eng
 import { asyncTryOrPropogate, tryOrPropogate } from "util/normalize";
 import { waitFor } from "util/concurrency";
 import { asyncEvalInContext, makeApiContext } from "api/inline-api";
-import { DataviewApi } from "./api/plugin-api";
-import { DataviewSettings, DEFAULT_QUERY_SETTINGS, DEFAULT_SETTINGS } from "./settings";
-import { LiteralValue } from "./data/value";
+import { DataviewApi } from "api/plugin-api";
+import { DataviewSettings, DEFAULT_QUERY_SETTINGS, DEFAULT_SETTINGS } from "settings";
+import { LiteralValue } from "data/value";
 import { DateTime } from "luxon";
-import { currentLocale } from "./util/locale";
+import { currentLocale } from "util/locale";
 
 export default class DataviewPlugin extends Plugin {
     /** Plugin-wide default settigns. */

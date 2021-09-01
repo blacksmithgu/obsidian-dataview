@@ -1,4 +1,4 @@
-export type { DataviewApi } from "./api/plugin-api";
+export type { DataviewApi } from "api/plugin-api";
 
 // Data Types
 export type { DateTime, Duration } from "luxon";
@@ -10,4 +10,4 @@ export type {
     LiteralRepr,
     WrappedLiteralValue,
     LiteralValueWrapper,
-} from "./data/value";
+} from "data/value";
