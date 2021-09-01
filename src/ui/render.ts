@@ -19,7 +19,7 @@ export function createAnchor(text: string, target: string, internal: boolean): H
     return a;
 }
 
-/** Render simple fields compactly, removing wrapping content like '<p>'. */
+/** Render simple fields compactly, removing wrapping content like paragraph and span. */
 export async function renderCompactMarkdown(
     markdown: string,
     container: HTMLElement,
