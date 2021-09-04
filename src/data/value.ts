@@ -27,6 +27,11 @@ export class Task {
     /** The block this task shows up on */
     blockId: string;
 
+    /** Create a task from a record. */
+    public static fromObject(obj: Record<string, LiteralValue>): Task {
+        return new Task(obj);
+    }
+
     constructor(init?: Partial<Task>) {
         Object.assign(this, init);
         this.subtasks = (this.subtasks || []).map(t => new Task(t));
@@ -62,24 +67,11 @@ export class Task {
             subtasks: this.subtasks.map(t => t.toObject()),
         };
 
-        if (this.createdDate) {
-            result.createdDate = this.createdDate;
-        }
-        if (this.dueDate) {
-            result.dueDate = this.dueDate;
-        }
-        if (this.completedDate) {
-            result.completedDate = this.completedDate;
-        }
+        if (this.createdDate) result.createdDate = this.createdDate;
+        if (this.dueDate) result.dueDate = this.dueDate;
+        if (this.completedDate) result.completedDate = this.completedDate;
 
         return result;
-    }
-}
-
-export namespace Task {
-    export function fromObject(obj: Record<string, any>): Task {
-        let input = TransferableValues.value(obj) as Task;
-        return new Task(input);
     }
 }
 
@@ -201,6 +193,11 @@ export type LiteralValue =
     | HTMLElement
     | Function
     | null;
+
+/** A grouping on a type which supports recursively-nested groups. */
+export type Grouping<T> =
+    | { type: "base"; value: T }
+    | { type: "grouped"; groups: { key: LiteralValue; value: Grouping<T> }[] };
 
 /** Maps the string type to it's external, API-facing representation. */
 export type LiteralRepr<T extends LiteralType> = T extends "boolean"
@@ -575,13 +572,15 @@ export namespace TransferableValues {
             if ("___transfer-type" in transferable) {
                 switch (transferable["___transfer-type"]) {
                     case "date":
-                        return DateTime.fromObject(transferable.value);
+                        return DateTime.fromObject(value(transferable.value) as DataObject);
                     case "duration":
-                        return Duration.fromObject(transferable.value);
+                        return Duration.fromObject(value(transferable.value) as DataObject);
                     case "link":
-                        return Link.fromObject(transferable.value);
+                        return Link.fromObject(value(transferable.value) as DataObject);
                     case "task":
-                        return Task.fromObject(transferable.value);
+                        return Task.fromObject(value(transferable.value) as DataObject);
+                    default:
+                        throw Error(`Unrecognized transfer type '${transferable["___transfer-type"]}`);
                 }
             }
 
@@ -591,5 +590,15 @@ export namespace TransferableValues {
         }
 
         return transferable as LiteralValue;
+    }
+}
+
+export namespace Groupings {
+    export function base<T>(value: T): Grouping<T> {
+        return { type: "base", value };
+    }
+
+    export function grouped<T>(values: { key: LiteralValue; value: Grouping<T> }[]): Grouping<T> {
+        return { type: "grouped", groups: values };
     }
 }

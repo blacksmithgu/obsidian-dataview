@@ -33,3 +33,8 @@
     padding: 0em !important;
     margin: 0em !important;
 }
+
+/** Generic grouping styling. */
+.dataview.result-group {
+    padding-left: 8px;
+}

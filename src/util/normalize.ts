@@ -1,9 +1,18 @@
-import { Duration } from "luxon";
+import { DateTime, Duration } from "luxon";
 import { Result } from "api/result";
 
 /** Normalize a duration to all of the proper units. */
 export function normalizeDuration(dur: Duration) {
     return dur.shiftTo("years", "months", "weeks", "days", "hours", "minutes", "seconds", "milliseconds").normalize();
+}
+
+/** Strip the time components of a date time object. */
+export function stripTime(dt: DateTime): DateTime {
+    return DateTime.fromObject({
+        year: dt.year,
+        month: dt.month,
+        day: dt.day,
+    });
 }
 
 /** Get the folder containing the given path (i.e., like computing 'path/..') */

@@ -4,11 +4,11 @@ import { App, Component } from "obsidian";
 import { FullIndex } from "data";
 import { matchingSourcePaths } from "data/resolver";
 import { Sources } from "data/source";
-import { DataObject, Link, LiteralValue, Values, Task } from "data/value";
+import { DataObject, Link, LiteralValue, Values, Task, Groupings } from "data/value";
 import { EXPRESSION } from "expression/parse";
 import { renderList, renderTable, renderValue } from "ui/render";
 import { DataviewSettings } from "settings";
-import { renderFileTasks, renderTasks, TaskViewLifecycle } from "ui/tasks";
+import { renderTasks, TaskViewLifecycle } from "ui/tasks";
 import { DataArray } from "./data-array";
 import { BoundFunctionImpl, DEFAULT_FUNCTIONS, Functions } from "expression/functions";
 import { Context } from "expression/context";
@@ -168,7 +168,7 @@ export class DataviewApi {
         groupByFile: boolean = true,
         container: HTMLElement,
         component: Component,
-        filePath: string
+        filePath: string = ""
     ) {
         if (DataArray.isDataArray(tasks)) tasks = tasks.array();
 
@@ -179,15 +179,21 @@ export class DataviewApi {
                 byFile.get(task.path)?.push(task);
             }
 
+            let groupings = Groupings.grouped(
+                Array.from(byFile.entries()).map(([path, tasks]) => {
+                    return { key: path, value: Groupings.base(tasks) };
+                })
+            );
+
             let subcontainer = container.createDiv();
             (async () => {
-                await renderFileTasks(subcontainer, byFile);
+                await renderTasks(subcontainer, groupings, filePath, component, this.settings);
                 component.addChild(new TaskViewLifecycle(this.app.vault, subcontainer));
             })();
         } else {
             let subcontainer = container.createDiv();
             (async () => {
-                await renderTasks(subcontainer, tasks as Task[]);
+                await renderTasks(subcontainer, Groupings.base(tasks), filePath, component, this.settings);
                 component.addChild(new TaskViewLifecycle(this.app.vault, subcontainer));
             })();
         }

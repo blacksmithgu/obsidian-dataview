@@ -3,13 +3,13 @@
  */
 import { FullIndex } from "data/index";
 import { Context, LinkHandler } from "expression/context";
-import { resolveSource, Datarow } from "data/resolver";
-import { DataObject, LiteralValue, Values, Task } from "data/value";
+import { resolveSource, Datarow, matchingSourcePaths } from "data/resolver";
+import { DataObject, LiteralValue, Values, Task, Grouping } from "data/value";
 import { ListQuery, Query, QueryOperation, TableQuery } from "query/query";
 import { Result } from "api/result";
 import { Field } from "expression/field";
 import { QuerySettings } from "settings";
-import { DateTime } from "luxon";
+import { stripTime } from "util/normalize";
 
 function iden<T>(x: T): T {
     return x;
@@ -23,6 +23,7 @@ export interface OperationDiagnostics {
     errors: { index: number; message: string }[];
 }
 
+/** The meaning of the 'id' field for a data row - i.e., where it came from. */
 export type IdentifierMeaning = { type: "group"; name: string; on: IdentifierMeaning } | { type: "path" };
 
 /** A data row over an object. */
@@ -353,9 +354,29 @@ export async function executeTable(
     });
 }
 
+/** The result of executing a task query. */
 export interface TaskExecution {
     core: CoreExecution;
-    tasks: Map<string, Task[]>;
+    tasks: Grouping<Task[]>;
+}
+
+/** Maps a raw core execution result to a task grouping which is much easier to  */
+function extractTaskGroupings(id: IdentifierMeaning, rows: DataObject[]): Grouping<Task[]> {
+    switch (id.type) {
+        case "path":
+            return { type: "base", value: rows.map(r => Task.fromObject(r)) };
+        case "group":
+            let key = id.name;
+            return {
+                type: "grouped",
+                groups: rows.map(r =>
+                    iden({
+                        key: r[key],
+                        value: extractTaskGroupings(id.on, r.rows as DataObject[]),
+                    })
+                ),
+            };
+    }
 }
 
 /** Execute a task query, returning all matching tasks. */
@@ -365,76 +386,40 @@ export async function executeTask(
     index: FullIndex,
     settings: QuerySettings
 ): Promise<Result<TaskExecution, string>> {
-    let fileset = await resolveSource(query.source, index, origin);
+    let fileset = matchingSourcePaths(query.source, index, origin);
     if (!fileset.successful) return Result.failure(fileset.error);
+
+    // Collect tasks from pages which match.
+    let incomingTasks: Pagerow[] = [];
+    for (let path of fileset.value) {
+        let page = index.pages.get(path);
+        if (!page) continue;
+        let rpage = page;
+
+        let pageTasks = page.tasks.map(t => {
+            let copy = t.toObject();
+
+            if (!copy.createdDate) copy.createdDate = stripTime(rpage.ctime);
+            if (copy.completed && !copy.completedDate) copy.completedDate = stripTime(rpage.mtime);
+
+            return { id: `${rpage.path}#${t.line}`, data: copy };
+        });
+
+        for (let task of pageTasks) incomingTasks.push(task);
+    }
 
     // Extract information about the origin page to add to the root context.
     let rootContext = new Context(defaultLinkHandler(index, origin), settings, {
         this: index.pages.get(origin)?.toObject(index) ?? {},
     });
 
-    let tasksAsPages: Pagerow[] = [];
-
-    // TODO: Add default page annotation to PageMetadata.
-    for (let row of fileset.value) {
-        if (!Values.isLink(row.id)) continue;
-
-        let page = index.pages.get(row.id.path);
-        if (page == undefined) {
-            continue;
-        }
-        let defaultsFromPage = {
-            createdDate: DateTime.fromObject({
-                year: page.ctime.year,
-                month: page.ctime.month,
-                day: page.ctime.day,
-            }),
-            completedDate: DateTime.fromObject({
-                year: page.mtime.year,
-                month: page.mtime.month,
-                day: page.mtime.day,
-            }),
-        };
-
-        let tasks = page.tasks;
-        if (tasks == undefined) {
-            continue;
-        }
-
-        tasks.forEach(t => {
-            let data = t;
-            if (!data.createdDate) {
-                data.createdDate = defaultsFromPage.createdDate;
-            }
-            if (t.completed && !data.completedDate) {
-                data.completedDate = defaultsFromPage.completedDate;
-            }
-            tasksAsPages.push({
-                id: t.id(),
-                data,
-            } as Pagerow);
-        });
-    }
-
-    // Per-task filtering
-    // TODO: Consider per-task-block filtering via a more nuanced algorithm.
-    return executeCoreExtract(tasksAsPages, rootContext, query.operations, {}).map(core => {
-        let realResult = new Map<string, Task[]>();
-
-        let taskIds = new Set(core.data.map(t => t.id));
-        tasksAsPages.forEach(t => {
-            if (!taskIds.has(t.id)) {
-                return;
-            }
-            let task = t.data as Task;
-            let tasks = realResult.get(task.path) || [];
-            tasks.push(task);
-            realResult.set(task.path, tasks);
-        });
-
+    return executeCore(incomingTasks, rootContext, query.operations).map(core => {
         return {
             core,
-            tasks: realResult,
+            tasks: extractTaskGroupings(
+                core.idMeaning,
+                core.data.map(r => r.data)
+            ),
         };
     });
 }

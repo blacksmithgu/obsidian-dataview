@@ -636,10 +636,8 @@ class DataviewTaskRenderer extends MarkdownRenderChild {
         let result = await asyncTryOrPropogate(() => executeTask(this.query, this.origin, this.index, this.settings));
         if (!result.successful) {
             renderErrorPre(this.container, "Dataview: " + result.error);
-        } else if (result.value.tasks.size == 0 && this.settings.warnOnEmptyResult) {
-            renderErrorPre(this.container, "Query returned 0 results.");
         } else {
-            await Tasks.renderFileTasks(this.container, result.value.tasks);
+            await Tasks.renderTasks(this.container, result.value.tasks, this.origin, this, this.settings);
 
             // TODO: Merge this into this renderer.
             this.addChild((this.taskView = new Tasks.TaskViewLifecycle(this.vault, this.container)));

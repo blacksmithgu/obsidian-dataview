@@ -1,8 +1,8 @@
 import { Vault, MarkdownRenderChild, MarkdownRenderer, Component } from "obsidian";
 import { TASK_REGEX } from "data/file";
-import { Task } from "data/value";
-import { createAnchor } from "ui/render";
-import { getFileTitle } from "util/normalize";
+import { Grouping, Task } from "data/value";
+import { renderValue } from "ui/render";
+import { QuerySettings } from "settings";
 
 /** Holds DOM events for a rendered task view, including check functionality. */
 export class TaskViewLifecycle extends MarkdownRenderChild {
@@ -50,21 +50,31 @@ export class TaskViewLifecycle extends MarkdownRenderChild {
     }
 }
 
-/** Render tasks from multiple files. */
-export async function renderFileTasks(container: HTMLElement, tasks: Map<string, Task[]>) {
-    for (let [path, list] of tasks.entries()) {
-        let basepath = path.replace(".md", "");
-
-        let header = container.createEl("h4");
-        header.appendChild(createAnchor(getFileTitle(basepath), basepath, true));
-        let div = container.createDiv();
-
-        await renderTasks(div, list);
+/** Render a task grouping (indenting nested groupings for clarity). */
+export async function renderTasks(
+    container: HTMLElement,
+    tasks: Grouping<Task[]>,
+    originFile: string,
+    component: Component,
+    settings: QuerySettings
+) {
+    switch (tasks.type) {
+        case "base":
+            await renderTaskList(container, tasks.value);
+            break;
+        case "grouped":
+            for (let { key, value } of tasks.groups) {
+                let header = container.createEl("h4");
+                await renderValue(key, header, originFile, component, settings);
+                let div = container.createDiv({ cls: ["dataview", "result-group"] });
+                await renderTasks(div, value, originFile, component, settings);
+            }
+            break;
     }
 }
 
 /** Render a list of tasks as a single list. */
-export async function renderTasks(container: HTMLElement, tasks: Task[]) {
+export async function renderTaskList(container: HTMLElement, tasks: Task[]) {
     let ul = container.createEl("ul", { cls: "contains-task-list" });
     for (let task of tasks) {
         let li = ul.createEl("li");
@@ -90,7 +100,7 @@ export async function renderTasks(container: HTMLElement, tasks: Task[]) {
         }
 
         if (task.subtasks.length > 0) {
-            renderTasks(li, task.subtasks);
+            renderTaskList(li, task.subtasks);
         }
     }
 }
