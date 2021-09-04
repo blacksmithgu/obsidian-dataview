@@ -24,7 +24,7 @@ import { waitFor } from "util/concurrency";
 import { asyncEvalInContext, makeApiContext } from "api/inline-api";
 import { DataviewApi } from "api/plugin-api";
 import { DataviewSettings, DEFAULT_QUERY_SETTINGS, DEFAULT_SETTINGS } from "settings";
-import { LiteralValue } from "data/value";
+import { Groupings, Link, LiteralValue, Task } from "data/value";
 import { DateTime } from "luxon";
 import { currentLocale } from "util/locale";
 
@@ -637,7 +637,23 @@ class DataviewTaskRenderer extends MarkdownRenderChild {
         if (!result.successful) {
             renderErrorPre(this.container, "Dataview: " + result.error);
         } else {
-            await Tasks.renderTasks(this.container, result.value.tasks, this.origin, this, this.settings);
+            // If there is no grouping going on, group by the file path by default.
+            let tasks = result.value.tasks;
+            if (tasks.type == "base") {
+                let byFile = new Map<string, Task[]>();
+                for (let task of tasks.value as Task[]) {
+                    if (!byFile.has(task.path)) byFile.set(task.path, []);
+                    byFile.get(task.path)?.push(task);
+                }
+
+                tasks = Groupings.grouped(
+                    Array.from(byFile.entries()).map(([path, tasks]) => {
+                        return { key: Link.file(path), value: Groupings.base(tasks) };
+                    })
+                );
+            }
+
+            await Tasks.renderTasks(this.container, tasks, this.origin, this, this.settings);
 
             // TODO: Merge this into this renderer.
             this.addChild((this.taskView = new Tasks.TaskViewLifecycle(this.vault, this.container)));
