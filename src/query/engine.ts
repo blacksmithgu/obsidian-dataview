@@ -9,7 +9,6 @@ import { ListQuery, Query, QueryOperation, TableQuery } from "query/query";
 import { Result } from "api/result";
 import { Field } from "expression/field";
 import { QuerySettings } from "settings";
-import { stripTime } from "util/normalize";
 
 function iden<T>(x: T): T {
     return x;
@@ -395,17 +394,8 @@ export async function executeTask(
         let page = index.pages.get(path);
         if (!page) continue;
         let rpage = page;
-
-        let pageData = rpage.toObject(index);
-
         let pageTasks = page.tasks.map(t => {
-            let copy = t.toObject();
-
-            if (!copy.createdDate) copy.createdDate = stripTime(rpage.ctime);
-            if (copy.completed && !copy.completedDate) copy.completedDate = stripTime(rpage.mtime);
-
-            // Copy 'file' metadata so you can also access page data from each task.
-            copy.file = pageData;
+            let copy = t.searchableData(rpage, index);
 
             return { id: `${rpage.path}#${t.line}`, data: copy };
         });

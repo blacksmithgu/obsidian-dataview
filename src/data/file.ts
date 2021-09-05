@@ -313,6 +313,40 @@ export function parseInlineField(value: string): LiteralValue {
     else return value;
 }
 
+export function parseTaskForAnnotations(line: string): Record<string, LiteralValue> {
+    let annotations = {} as Record<string, LiteralValue>;
+
+    let createdMatch = CREATED_DATE_REGEX.exec(line);
+    if (createdMatch) {
+        annotations["createdDate"] = DateTime.fromISO(createdMatch[1]);
+    }
+
+    let dueMatch = DUE_DATE_REGEX.exec(line);
+    if (dueMatch) {
+        annotations["dueDate"] = DateTime.fromISO(dueMatch[1]);
+    }
+
+    let completedMatch = DONE_DATE_REGEX.exec(line);
+    if (completedMatch) {
+        annotations["completedDate"] = DateTime.fromISO(completedMatch[1]);
+    }
+
+    if (line.includes("::")) {
+        let groups = line.split(" ");
+        for (let group of groups) {
+            if (group.includes("::")) {
+                let kv = group.split("::");
+                if (kv.length == 2) {
+                    annotations["hasInlineAnnotations"] = true;
+                    annotations[kv[0]] = parseInlineField(kv[1]);
+                }
+            }
+        }
+    }
+
+    return annotations;
+}
+
 /** Add an inline field to a nexisting field array, converting a single value into an array if it is present multiple times. */
 export function addInlineField(fields: Map<string, LiteralValue>, name: string, value: LiteralValue) {
     if (fields.has(name)) {
@@ -375,38 +409,19 @@ export function findTasksInFile(path: string, file: string): Task[] {
             continue;
         }
 
-        let createdMatch = CREATED_DATE_REGEX.exec(line);
-        let createdDate;
-        if (createdMatch) {
-            createdDate = DateTime.fromISO(createdMatch[1]);
-        }
-
-        let dueMatch = DUE_DATE_REGEX.exec(line);
-        let dueDate;
-        if (dueMatch) {
-            dueDate = DateTime.fromISO(dueMatch[1]);
-        }
-
-        let completedMatch = DONE_DATE_REGEX.exec(line);
-        let completedDate;
-        if (completedMatch) {
-            completedDate = DateTime.fromISO(completedMatch[1]);
-        }
-
+        let annotations = parseTaskForAnnotations(line);
         let indent = match[1].replace("\t", "    ").length;
         let isReal = !!match[2] && match[2].trim().length > 0;
         let isCompleted = !isReal || match[2] == "[X]" || match[2] == "[x]";
         let task = new Task({
             text: match[3],
             completed: isCompleted,
-            completedDate: completedDate,
-            createdDate: createdDate,
-            dueDate: dueDate,
             fullyCompleted: isCompleted,
             real: isReal,
             path,
             line: lineno,
             subtasks: [],
+            annotations,
         });
 
         while (indent <= (alast(stack)?.[1] ?? -4)) stack.pop();
@@ -429,6 +444,9 @@ export function parseMarkdown(path: string, contents: string, inlineRegex: RegEx
         // Fast bail-out for lines that are too long.
         if (!line.includes("::")) continue;
         line = line.trim();
+
+        // skip task lines
+        if (TASK_REGEX.exec(line)) continue;
 
         let match = inlineRegex.exec(line);
         if (!match) continue;

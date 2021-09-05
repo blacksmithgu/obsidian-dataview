@@ -474,6 +474,15 @@ test("Parse negated parens source", () => {
     );
 });
 
+// TODO: refactor this; currently cannot test file.ts because it imports obsidian
+// import { parseTaskForAnnotations } from "data/file";
+// test("Parse Task for inline annotations", () => {
+//     expect(parseTaskForAnnotations("key::value")).toEqual({ key: "value" });
+//     expect(parseTaskForAnnotations("key key::value value")).toEqual({ key: "value" });
+//     expect(parseTaskForAnnotations("key::value key2::value2")).toEqual({ key: "value", key2: "value2" });
+//     expect(parseTaskForAnnotations("some dueDate::2021-09-21")).toEqual({ dueDate: DateTime.fromISO("2021-09-21") });
+// });
+
 // <-- Stress Tests -->
 
 test("Parse Various Fields", () => {
