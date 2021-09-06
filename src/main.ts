@@ -420,6 +420,17 @@ class DataviewSettingsTab extends PluginSettingTab {
                     .setValue(this.plugin.settings.tableGroupColumnName)
                     .onChange(async value => await this.plugin.updateSettings({ tableGroupColumnName: value }))
             );
+
+        this.containerEl.createEl("h3", { text: "Task Settings" });
+
+        new Setting(this.containerEl)
+            .setName("Render task links as")
+            .setDesc("Text used when linking from a task to its source note. Leave empty to remove links.")
+            .addText(text =>
+                text
+                    .setValue(this.plugin.settings.taskLinkText)
+                    .onChange(async value => await this.plugin.updateSettings({ taskLinkText: value.trim() }))
+            );
     }
 }
 

@@ -2,7 +2,7 @@ import { Vault, MarkdownRenderChild, MarkdownRenderer, Component } from "obsidia
 import { TASK_REGEX } from "data/parse/markdown";
 import { Grouping, Task } from "data/value";
 import { renderValue } from "ui/render";
-import { QuerySettings } from "settings";
+import { DataviewSettings } from "settings";
 
 /** Holds DOM events for a rendered task view, including check functionality. */
 export class TaskViewLifecycle extends MarkdownRenderChild {
@@ -56,11 +56,11 @@ export async function renderTasks(
     tasks: Grouping<Task[]>,
     originFile: string,
     component: Component,
-    settings: QuerySettings
+    settings: DataviewSettings
 ) {
     switch (tasks.type) {
         case "base":
-            await renderTaskList(container, tasks.value);
+            await renderTaskList(container, tasks.value, settings);
             break;
         case "grouped":
             for (let { key, value } of tasks.groups) {
@@ -74,7 +74,7 @@ export async function renderTasks(
 }
 
 /** Render a list of tasks as a single list. */
-export async function renderTaskList(container: HTMLElement, tasks: Task[]) {
+export async function renderTaskList(container: HTMLElement, tasks: Task[], settings: DataviewSettings) {
     let ul = container.createEl("ul", { cls: "contains-task-list" });
     for (let task of tasks) {
         let li = ul.createEl("li");
@@ -85,7 +85,12 @@ export async function renderTaskList(container: HTMLElement, tasks: Task[]) {
         }
 
         // Render the text as markdown so that bolds, links, and other things work properly.
-        await MarkdownRenderer.renderMarkdown(task.text, li, task.path, new Component());
+        let text = task.text;
+        if (settings.taskLinkText != "" && task.link != "") {
+            text = `${task.text} [${settings.taskLinkText}](${task.link})`;
+        }
+
+        await MarkdownRenderer.renderMarkdown(text, li, task.path, new Component());
 
         // Unwrap the paragraph element that is created.
         let paragraph = li.querySelector("p");
@@ -100,7 +105,7 @@ export async function renderTaskList(container: HTMLElement, tasks: Task[]) {
         }
 
         if (task.subtasks.length > 0) {
-            renderTaskList(li, task.subtasks);
+            renderTaskList(li, task.subtasks, settings);
         }
     }
 }

@@ -45,6 +45,8 @@ export interface DataviewSettings extends QuerySettings {
     inlineJsQueryPrefix: string;
     /** Enable or disable executing DataviewJS queries. */
     enableDataviewJs: boolean;
+    /** Text used for task links */
+    taskLinkText: string;
 
     // Internal properties //
 
@@ -59,6 +61,7 @@ export const DEFAULT_SETTINGS: DataviewSettings = {
         inlineQueryPrefix: "=",
         inlineJsQueryPrefix: "$=",
         enableDataviewJs: true,
+        taskLinkText: "🔗",
         schemaVersion: 1,
     },
 };

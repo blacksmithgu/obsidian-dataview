@@ -29,6 +29,8 @@ export class Task {
     due?: DateTime;
     /** Special annotation for when this task was completed. */
     completion?: DateTime;
+    /** The link to this task */
+    link: string;
 
     /** Create a task from a record. */
     public static fromObject(obj: Record<string, LiteralValue>): Task {
@@ -38,10 +40,6 @@ export class Task {
     constructor(init?: Partial<Task>) {
         Object.assign(this, init);
         this.subtasks = (this.subtasks || []).map(t => new Task(t));
-    }
-
-    public link(): string {
-        return `${this.path}#${this.blockId}`;
     }
 
     public id(): string {
@@ -72,6 +70,7 @@ export class Task {
             fullyCompleted: this.fullyCompleted,
             real: this.real,
             blockId: this.blockId,
+            link: this.link,
             subtasks: this.subtasks.map(t => t.toObject()),
             annotated:
                 !!this.due || !!this.completion || (!!this.annotations && Object.keys(this.annotations).length > 0),
