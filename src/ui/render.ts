@@ -173,6 +173,12 @@ export async function renderValue(
     } else if (Values.isFunction(field)) {
         container.appendText("<function>");
     } else if (Values.isObject(field)) {
+        // Don't render classes in case they have recursive references; spoopy.
+        if (!Values.isTask(field) && field?.constructor?.name && field?.constructor?.name != "Object") {
+            container.appendText(`<${field.constructor.name}>`);
+            return;
+        }
+
         if (expandList) {
             let list = container.createEl("ul", { cls: ["dataview", "dataview-ul", "dataview-result-object-ul"] });
             for (let [key, value] of Object.entries(field)) {

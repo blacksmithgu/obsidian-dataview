@@ -11,6 +11,34 @@ describe("filter()", () => {
     test("number list", () => expectEvals("filter(list(1, 2, 3), (k) => k >= 2)", [2, 3]));
 });
 
+describe("min()", () => {
+    test("empty", () => expectEvals("min()", null));
+    test("single", () => expectEvals("min(6)", 6));
+    test("multiple", () => expectEvals("min(6, 9, 12)", 6));
+    test("list empty", () => expectEvals("min([])", null));
+    test("list multiple", () => expectEvals("min([1, 2, 3])", 1));
+});
+
+describe("minby()", () => {
+    test("empty", () => expectEvals("minby([], (k) => k)", null));
+    test("single", () => expectEvals("minby([1], (k) => k)", 1));
+    test("multiple", () => expectEvals("minby([1, 2, 3], (k) => 0 - k)", 3));
+});
+
+describe("max()", () => {
+    test("empty", () => expectEvals("max()", null));
+    test("single", () => expectEvals("max(6)", 6));
+    test("multiple", () => expectEvals("max(6, 9, 12)", 12));
+    test("list empty", () => expectEvals("max([])", null));
+    test("list multiple", () => expectEvals("max([1, 2, 3])", 3));
+});
+
+describe("maxby()", () => {
+    test("empty", () => expectEvals("maxby([], (k) => k)", null));
+    test("single", () => expectEvals("maxby([1], (k) => k)", 1));
+    test("multiple", () => expectEvals("maxby([1, 2, 3], (k) => 0 - k)", 1));
+});
+
 describe("sum()", () => {
     test("number list", () => expectEvals("sum(list(2, 3, 1))", 6));
     test("string list", () => expectEvals('sum(list("a", "b", "c"))', "abc"));

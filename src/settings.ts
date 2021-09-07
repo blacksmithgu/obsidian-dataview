@@ -13,6 +13,8 @@ export interface QuerySettings {
     defaultDateFormat: string;
     /** The default format that date-times are rendered in (using luxons moment-like formatting). */
     defaultDateTimeFormat: string;
+    /** Maximum depth that objects will be expanded when being rendered recursively. */
+    maxRecursiveRenderDepth: number;
 }
 
 export const DEFAULT_QUERY_SETTINGS: QuerySettings = {
@@ -21,6 +23,7 @@ export const DEFAULT_QUERY_SETTINGS: QuerySettings = {
     refreshInterval: 1000,
     defaultDateFormat: "MMMM dd, yyyy",
     defaultDateTimeFormat: "h:mm a - MMMM dd, yyyy",
+    maxRecursiveRenderDepth: 8
 };
 
 ///////////////////////////////

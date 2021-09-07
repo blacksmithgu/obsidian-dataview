@@ -395,6 +395,7 @@ export async function executeTask(
         let page = index.pages.get(path);
         if (!page) continue;
         let rpage = page;
+
         let pageData = rpage.toObject(index);
 
         let pageTasks = page.tasks.map(t => {

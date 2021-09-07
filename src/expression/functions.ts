@@ -294,6 +294,52 @@ export namespace DefaultFunctions {
         .vectorize(2, [0])
         .build();
 
+    export const min: FunctionImpl = new FunctionBuilder("min")
+        .add2("*", "null", (a, _n) => a)
+        .add2("null", "*", (_n, a) => a)
+        .add2("*", "*", (a, b, ctx) => Values.compareValue(a, b, ctx.linkHandler.normalize) <= 0 ? a : b)
+        .add1("array", (a, ctx) => min(ctx, ...a))
+        .vararg((ctx, ...args) => args.length == 0 ? null : args.reduce((p, c) => min(ctx, p, c)))
+        .build();
+
+    export const max: FunctionImpl = new FunctionBuilder("max")
+        .add2("*", "null", (a, _n) => a)
+        .add2("null", "*", (_n, a) => a)
+        .add2("*", "*", (a, b, ctx) => Values.compareValue(a, b, ctx.linkHandler.normalize) > 0 ? a : b)
+        .add1("array", (a, ctx) => max(ctx, ...a))
+        .vararg((ctx, ...args) => args.length == 0 ? null : args.reduce((p, c) => max(ctx, p, c)))
+        .build();
+
+    export const minby: FunctionImpl = new FunctionBuilder("minby")
+        .add2("array", "function", (arr, func, ctx) => {
+            if (arr.length == 0) return null;
+
+            let values = arr.map(v => { return { value: v, mapped: func(ctx, v) }});
+            let filtered = values.filter(v => !Values.isNull(v.mapped));
+            if (filtered.length == 0) return arr[0];
+
+            return filtered.reduce((p, c) => {
+                if (Values.compareValue(p.mapped, c.mapped, ctx.linkHandler.normalize) <= 0) return p;
+                else return c;
+            }).value;
+        })
+        .build();
+
+    export const maxby: FunctionImpl = new FunctionBuilder("maxby")
+        .add2("array", "function", (arr, func, ctx) => {
+            if (arr.length == 0) return null;
+
+            let values = arr.map(v => { return { value: v, mapped: func(ctx, v) }});
+            let filtered = values.filter(v => !Values.isNull(v.mapped));
+            if (filtered.length == 0) return arr[0];
+
+            return filtered.reduce((p, c) => {
+                if (Values.compareValue(p.mapped, c.mapped, ctx.linkHandler.normalize) > 0) return p;
+                else return c;
+            }).value;
+        })
+        .build();
+
     export const striptime = new FunctionBuilder("striptime")
         .add1("date", d => DateTime.fromObject({ year: d.year, month: d.month, day: d.day }))
         .add1("null", _n => null)
@@ -567,6 +613,10 @@ export const DEFAULT_FUNCTIONS: Record<string, FunctionImpl> = {
 
     // Math Operations.
     round: DefaultFunctions.round,
+    min: DefaultFunctions.min,
+    max: DefaultFunctions.max,
+    minby: DefaultFunctions.minby,
+    maxby: DefaultFunctions.maxby,
 
     // String operations.
     regexreplace: DefaultFunctions.regexreplace,
