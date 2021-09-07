@@ -23,7 +23,7 @@ export const DEFAULT_QUERY_SETTINGS: QuerySettings = {
     refreshInterval: 1000,
     defaultDateFormat: "MMMM dd, yyyy",
     defaultDateTimeFormat: "h:mm a - MMMM dd, yyyy",
-    maxRecursiveRenderDepth: 8
+    maxRecursiveRenderDepth: 8,
 };
 
 ///////////////////////////////
