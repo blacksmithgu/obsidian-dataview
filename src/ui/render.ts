@@ -128,8 +128,15 @@ export async function renderValue(
     component: Component,
     settings: QuerySettings,
     expandList: boolean = false,
-    context: ValueRenderContext = "root"
+    context: ValueRenderContext = "root",
+    depth: number = 0
 ) {
+    // Prevent infinite recursion.
+    if (depth > settings.maxRecursiveRenderDepth) {
+        container.appendText("...");
+        return;
+    }
+
     if (Values.isNull(field)) {
         await renderCompactMarkdown(settings.renderNullAs, container, originFile, component);
     } else if (Values.isDate(field)) {
@@ -149,7 +156,7 @@ export async function renderValue(
             });
             for (let child of field) {
                 let li = list.createEl("li", { cls: "dataview-result-list-li" });
-                await renderValue(child, li, originFile, component, settings, expandList, "list");
+                await renderValue(child, li, originFile, component, settings, expandList, "list", depth + 1);
             }
         } else {
             if (field.length == 0) {
@@ -163,7 +170,7 @@ export async function renderValue(
                 if (first) first = false;
                 else span.appendText(", ");
 
-                await renderValue(val, span, originFile, component, settings, expandList, "list");
+                await renderValue(val, span, originFile, component, settings, expandList, "list", depth + 1);
             }
         }
     } else if (Values.isLink(field)) {
@@ -184,7 +191,7 @@ export async function renderValue(
             for (let [key, value] of Object.entries(field)) {
                 let li = list.createEl("li", { cls: ["dataview", "dataview-li", "dataview-result-object-li"] });
                 li.appendText(key + ": ");
-                await renderValue(value, li, originFile, component, settings, expandList);
+                await renderValue(value, li, originFile, component, settings, expandList, context, depth + 1);
             }
         } else {
             if (Object.keys(field).length == 0) {
@@ -199,7 +206,7 @@ export async function renderValue(
                 else span.appendText(", ");
 
                 span.appendText(key + ": ");
-                await renderValue(value, span, originFile, component, settings, expandList);
+                await renderValue(value, span, originFile, component, settings, expandList, context, depth + 1);
             }
         }
     } else {
