@@ -546,7 +546,7 @@ export namespace TransferableValues {
             case "date":
                 return { "___transfer-type": "date", value: wrapped.value.toObject({ includeConfig: true }) };
             case "duration":
-                return { "___transfer-type": "duration", value: wrapped.value.toObject({ includeConfig: true }) };
+                return { "___transfer-type": "duration", value: wrapped.value.toObject() };
             case "array":
                 return wrapped.value.map(v => transferable(v));
             case "object":

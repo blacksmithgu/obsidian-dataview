@@ -181,7 +181,7 @@ export class DataviewApi {
 
             let groupings = Groupings.grouped(
                 Array.from(byFile.entries()).map(([path, tasks]) => {
-                    return { key: path, value: Groupings.base(tasks) };
+                    return { key: Link.file(path), value: Groupings.base(tasks) };
                 })
             );
 

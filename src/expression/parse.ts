@@ -20,9 +20,9 @@ export const DURATION_TYPES = {
     hour: Duration.fromObject({ hours: 1 }),
     hr: Duration.fromObject({ hours: 1 }),
     h: Duration.fromObject({ hours: 1 }),
-    minute: Duration.fromObject({ minute: 1 }),
-    min: Duration.fromObject({ minute: 1 }),
-    m: Duration.fromObject({ minute: 1 }),
+    minute: Duration.fromObject({ minutes: 1 }),
+    min: Duration.fromObject({ minutes: 1 }),
+    m: Duration.fromObject({ minutes: 1 }),
     second: Duration.fromObject({ seconds: 1 }),
     sec: Duration.fromObject({ seconds: 1 }),
     s: Duration.fromObject({ seconds: 1 }),
@@ -305,7 +305,7 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
             P.string("tomorrow").map(_ =>
                 DateTime.local()
                     .startOf("day")
-                    .plus(Duration.fromObject({ day: 1 }))
+                    .plus(Duration.fromObject({ days: 1 }))
             ),
             P.string("som").map(_ => DateTime.local().startOf("month")),
             P.string("soy").map(_ => DateTime.local().startOf("year")),

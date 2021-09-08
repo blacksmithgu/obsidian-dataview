@@ -4,9 +4,9 @@ import commonjs from '@rollup/plugin-commonjs';
 import webWorker from 'rollup-plugin-web-worker-loader';
 import copy from 'rollup-plugin-copy';
 import ttypescript from 'ttypescript';
-import tsPlugin from 'rollup-plugin-typescript2';
+import typescript2 from 'rollup-plugin-typescript2';
 
-const libCfg = {
+const LIBRARY_CONFIG = {
   input: 'src/index.ts',
   output: {
     dir: 'lib',
@@ -15,7 +15,7 @@ const libCfg = {
   },
   external: ['obsidian'],
   plugins: [
-    tsPlugin({
+    typescript2({
       tsconfig: 'tsconfig-lib.json',
       typescript: ttypescript
     }),
@@ -28,38 +28,24 @@ const libCfg = {
     if (/Use of eval is strongly discouraged/.test(warning.message)) return;
     warn(warning);
   }
-}
+};
 
-const isProd = process.env.BUILD === "production";
-
-let plugins = [
-  nodeResolve({ browser: true }),
-  commonjs(),
-  webWorker({ inline: true, forceInline: true, targetPlatform: 'browser' }),
-  typescript(),
-]
-
-if (!isProd) {
-  plugins.push(copy({
-    targets: [
-      {src: 'manifest.json', dest: 'test-vault/.obsidian/plugins/dataview/'},
-      {src: 'styles.css', dest: 'test-vault/.obsidian/plugins/dataview/'},
-    ]
-  }))
-}
-
-const pluginCfg = {
+const PROD_PLUGIN_CONFIG = {
   input: 'src/main.ts',
   output: {
-    dir: isProd ? 'build' : 'test-vault/.obsidian/plugins/dataview',
+    dir: 'build',
     sourcemap: 'inline',
-    sourcemapExcludeSources: isProd,
+    sourcemapExcludeSources: true,
     format: 'cjs',
     exports: 'default'
   },
   external: ['obsidian'],
-  treeshake: "smallest",
-  plugins,
+  plugins: [
+    nodeResolve({ browser: true }),
+    commonjs(),
+    webWorker({ inline: true, forceInline: true, targetPlatform: 'browser' }),
+    typescript()
+  ],
   onwarn: (warning, warn) => {
     // Sorry rollup, but we're using eval...
     if (/Use of eval is strongly discouraged/.test(warning.message)) return;
@@ -67,16 +53,47 @@ const pluginCfg = {
   }
 };
 
+const DEV_PLUGIN_CONFIG = {
+  input: 'src/main.ts',
+  output: {
+    dir: 'test-vault/.obsidian/plugins/dataview',
+    format: 'cjs',
+    sourcemap: 'inline',
+    exports: 'default'
+  },
+  external: ['obsidian'],
+  plugins: [
+    nodeResolve({ browser: true }),
+    commonjs(),
+    webWorker({ inline: true, forceInline: true, targetPlatform: 'browser' }),
+    typescript(),
+    copy({
+        targets: [
+            {src: 'manifest.json', dest: 'test-vault/.obsidian/plugins/dataview/'},
+            {src: 'styles.css', dest: 'test-vault/.obsidian/plugins/dataview/'}
+        ]
+    })
+  ],
+  onwarn: (warning, warn) => {
+    // Sorry rollup, but we're using eval...
+    if (/Use of eval is strongly discouraged/.test(warning.message)) return;
+    warn(warning);
+  }
+};
 
 let configs = [];
 if (process.env.BUILD === "lib") {
-  // lib
-  configs.push(libCfg);
-} else if (isProd) {
-  // build
-  configs.push(pluginCfg, libCfg);
+    // Library build, only library code.
+    configs.push(LIBRARY_CONFIG);
+} else if (process.env.BUILD === "production") {
+    // Production build, build library and main plugin.
+    configs.push(LIBRARY_CONFIG, PROD_PLUGIN_CONFIG);
+} else if (process.env.BUILD === "dev") {
+    // Dev build, only build the plugin.
+    configs.push(DEV_PLUGIN_CONFIG);
 } else {
-  // dev
-  configs.push(pluginCfg);
+    // Default to the dev build.
+    configs.push(DEV_PLUGIN_CONFIG);
 }
+
 export default configs;
