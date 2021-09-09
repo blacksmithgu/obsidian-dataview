@@ -529,7 +529,11 @@ export type TransferableValue =
     | boolean
     | Array<any>
     | Record<string, any>
-    | { "___transfer-type": "date" | "duration" | "link" | "task"; value: Record<string, any>, options?: Record<string, any> }
+    | {
+          "___transfer-type": "date" | "duration" | "link" | "task";
+          value: Record<string, any>;
+          options?: Record<string, any>;
+      };
 
 export namespace TransferableValues {
     /** Convert a literal value to a serializer-friendly transferable value. Does not work for all types. */
@@ -544,7 +548,11 @@ export namespace TransferableValues {
             case "boolean":
                 return wrapped.value;
             case "date":
-                return { "___transfer-type": "date", value: wrapped.value.toObject(), options: { zone: wrapped.value.zoneName } };
+                return {
+                    "___transfer-type": "date",
+                    value: wrapped.value.toObject(),
+                    options: { zone: wrapped.value.zoneName },
+                };
             case "duration":
                 return { "___transfer-type": "duration", value: wrapped.value.toObject() };
             case "array":
@@ -572,7 +580,10 @@ export namespace TransferableValues {
             if ("___transfer-type" in transferable) {
                 switch (transferable["___transfer-type"]) {
                     case "date":
-                        return DateTime.fromObject(value(transferable.value) as DataObject, value(transferable.options || {}) as DateTimeJSOptions);
+                        return DateTime.fromObject(
+                            value(transferable.value) as DataObject,
+                            value(transferable.options || {}) as DateTimeJSOptions
+                        );
                     case "duration":
                         return Duration.fromObject(value(transferable.value) as DataObject);
                     case "link":
