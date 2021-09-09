@@ -64,6 +64,7 @@ describe("String Literals", () => {
 
     test("Parse string with emoji", () => {
         expect(EXPRESSION.string.tryParse('"📷"')).toEqual("📷");
+        expect(EXPRESSION.string.tryParse('"⚙️"')).toEqual("⚙️");
     });
 });
 
@@ -84,6 +85,7 @@ describe("Tag Literals", () => {
 
     test("#📷", () => expect(EXPRESSION.tag.tryParse("#📷")).toEqual("#📷"));
     test("#🌱/🌿", () => expect(EXPRESSION.tag.tryParse("#🌱/🌿")).toEqual("#🌱/🌿"));
+    test("#⚙️", () => expect(EXPRESSION.tag.tryParse("#⚙️")).toEqual("#⚙️"));
     test("#début", () => expect(EXPRESSION.tag.tryParse("#début")).toEqual("#début"));
 });
 
