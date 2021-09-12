@@ -199,18 +199,20 @@ export class DataviewInlineApi {
             return;
         }
 
-        renderValue(wrapped.value, this.container, this.currentFilePath, this.component, this.settings, true);
+        let p = this.container.createEl("p");
+        renderValue(wrapped.value, p, this.currentFilePath, this.component, this.settings, true);
     }
 
     /** Render an inline span, containing arbitrary text. */
     public span(text: any) {
         let wrapped = Values.wrapValue(text);
         if (wrapped === null || wrapped === undefined) {
-            this.container.createEl("p", { text });
+            this.container.createEl("span", { text });
             return;
         }
 
-        renderValue(wrapped.value, this.container, this.currentFilePath, this.component, this.settings, true);
+        let span = this.container.createEl("span");
+        renderValue(wrapped.value, span, this.currentFilePath, this.component, this.settings, true);
     }
 
     /**
