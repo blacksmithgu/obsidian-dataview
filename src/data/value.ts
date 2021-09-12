@@ -143,6 +143,16 @@ export class Link {
         return new Link(Object.assign({}, this, { display }));
     }
 
+    /** Convert this link into an embedded link. */
+    public toEmbed(): Link {
+        if (this.embed) return this;
+        else {
+            let link = new Link(this);
+            link.embed = true;
+            return link;
+        }
+    }
+
     /** Convert this link to markdown so it can be rendered. */
     public markdown(): string {
         let result = (this.embed ? "!" : "") + "[[" + this.path;

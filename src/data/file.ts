@@ -1,34 +1,9 @@
-import { canonicalizeVarName, getExtension, getFileTitle, getParentFolder } from "util/normalize";
+import { canonicalizeVarName, getExtension, getFileTitle, getParentFolder, stripTime } from "util/normalize";
 import { getAllTags, MetadataCache, parseFrontMatterAliases, parseFrontMatterTags, TFile } from "obsidian";
 import { EXPRESSION } from "expression/parse";
 import { DateTime } from "luxon";
 import { FullIndex } from "data/index";
 import { Link, LiteralValue, Values, Task } from "./value";
-
-interface BaseLinkMetadata {
-    path: string;
-    /** The display string for this link. */
-    display?: string;
-    /** If true, this is an *embed* link. */
-    embed: boolean;
-}
-
-export interface HeaderLinkMetadata extends BaseLinkMetadata {
-    type: "header";
-    header: string;
-}
-
-export interface BlockLinkMetadata extends BaseLinkMetadata {
-    type: "block";
-    blockId: string;
-}
-
-export interface FileLinkMetadata extends BaseLinkMetadata {
-    type: "file";
-}
-
-/** A link inside a markdown file. */
-export type LinkMetadata = HeaderLinkMetadata | BlockLinkMetadata | FileLinkMetadata;
 
 /** All extracted markdown file metadata obtained from a file. */
 export class PageMetadata {
@@ -51,7 +26,7 @@ export class PageMetadata {
     /** All of the aliases defined for this file. */
     public aliases: Set<string>;
     /** All OUTGOING links (including embeds, header + block links) in this file. */
-    public links: LinkMetadata[];
+    public links: Link[];
     /** All tasks contained within this file. */
     public tasks: Task[];
 
@@ -61,9 +36,9 @@ export class PageMetadata {
         this.tags = new Set<string>();
         this.aliases = new Set<string>();
         this.links = [];
-        Object.assign(this, init);
+        this.tasks = [];
 
-        this.tasks = (init?.tasks || []).map(t => new Task(t));
+        Object.assign(this, init);
     }
 
     /** Parse all subtags out of the given tag. I.e., #hello/i/am would yield [#hello/i/am, #hello/i, #hello]. */
@@ -104,56 +79,37 @@ export class PageMetadata {
     }
 
     /** Convert all links in this file to file links. */
-    public fileLinks(): FileLinkMetadata[] {
-        return this.links.map(link => {
-            switch (link.type) {
-                case "file":
-                    return link;
-                case "block":
-                    return {
-                        type: "file",
-                        path: link.path,
-                        display: link.display,
-                        embed: link.embed,
-                    } as FileLinkMetadata;
-                case "header":
-                    return {
-                        type: "file",
-                        path: link.path,
-                        display: link.display,
-                        embed: link.embed,
-                    } as FileLinkMetadata;
-            }
-        });
+    public fileLinks(): Link[] {
+        return this.links.map(link => Link.file(link.path));
     }
 
     /** Map this metadata to a full object; uses the index for additional data lookups.  */
     public toObject(index: FullIndex): Record<string, LiteralValue> {
         // Static fields first. Note this object should not have any pointers to the original object (so that the
         // index cannot accidentally be mutated).
-        let result: Record<string, LiteralValue> = {
+        let result: any = {
             file: {
                 path: this.path,
                 folder: this.folder(),
                 name: this.name(),
                 link: Link.file(this.path, false),
-                outlinks: this.fileLinks().map(l => Link.file(l.path, false)),
+                outlinks: this.fileLinks(),
                 inlinks: Array.from(index.links.getInverse(this.path)).map(l => Link.file(l, false)),
                 etags: Array.from(this.tags),
                 tags: Array.from(this.fullTags()),
                 aliases: Array.from(this.aliases),
                 tasks: this.tasks.map(t => t.toObject()),
                 ctime: this.ctime,
-                cday: DateTime.fromObject({ year: this.ctime.year, month: this.ctime.month, day: this.ctime.day }),
+                cday: stripTime(this.ctime),
                 mtime: this.mtime,
-                mday: DateTime.fromObject({ year: this.mtime.year, month: this.mtime.month, day: this.mtime.day }),
+                mday: stripTime(this.mtime),
                 size: this.size,
                 ext: this.extension(),
             },
         };
 
         // Add the current day if present.
-        if (this.day) (result["file"] as Record<string, LiteralValue>)["day"] = this.day;
+        if (this.day) result.file.day = this.day;
 
         // Then append the computed fields.
         for (let [key, value] of this.fields) {
@@ -431,16 +387,9 @@ export function parsePage(file: TFile, cache: MetadataCache, markdownData: Parse
     }
 
     // Grab links from the frontmatter cache.
-    let links: LinkMetadata[] = [];
+    let links: Link[] = [];
     if (file.path in cache.resolvedLinks) {
-        for (let resolved in cache.resolvedLinks[file.path]) {
-            links.push({
-                type: "file",
-                path: resolved,
-                display: resolved,
-                embed: false,
-            });
-        }
+        for (let resolved in cache.resolvedLinks[file.path]) links.push(Link.file(resolved));
     }
 
     // Merge frontmatter fields with parsed fields.
