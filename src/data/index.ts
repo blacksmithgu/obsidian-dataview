@@ -4,10 +4,11 @@ import { DataObject } from "data/value";
 import { MetadataCache, TFile, Vault } from "obsidian";
 import { getParentFolder } from "util/normalize";
 import DataviewImportWorker from "web-worker:./importer.ts";
-import { fromTransferable, PageMetadata, ParsedMarkdown, parsePage } from "./file";
+import { PageMetadata, ParsedMarkdown, parsePage } from "./file";
 import DataviewPlugin from "../main";
 import { DateTime } from "luxon";
 import { parseCsv } from "data/csv";
+import { Transferable } from "data/transferable";
 
 /** A generic index which indexes variables of the form key -> value[], allowing both forward and reverse lookups. */
 export class IndexMap {
@@ -115,7 +116,7 @@ export class BackgroundFileParser {
             let worker = new DataviewImportWorker({ name: "Dataview Indexer" });
             worker.onmessage = evt => {
                 let callbacks = this.pastPromises.get(evt.data.path);
-                let parsed = fromTransferable(evt.data.result);
+                let parsed = Transferable.value(evt.data.result);
                 if (callbacks && callbacks.length > 0) {
                     for (let callback of callbacks) callback(parsed);
                 }

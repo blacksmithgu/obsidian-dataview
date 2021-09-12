@@ -1,6 +1,7 @@
 /** Entry-point script used by the index as a web worker. */
 
-import { parseMarkdown, markdownToTransferable } from "./file";
+import { Transferable } from "data/transferable";
+import { parseMarkdown } from "./file";
 
 onmessage = async evt => {
     let parsed = parseMarkdown(
@@ -9,5 +10,5 @@ onmessage = async evt => {
         /[_\*~`]*([0-9\w\p{Letter}][-0-9\w\p{Letter}\p{Extended_Pictographic}\s/]*)[_\*~`]*\s*::\s*(.+)/u
     );
 
-    (postMessage as any)({ path: evt.data.path, result: markdownToTransferable(parsed) });
+    (postMessage as any)({ path: evt.data.path, result: Transferable.transferable(parsed) });
 };

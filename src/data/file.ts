@@ -3,7 +3,7 @@ import { getAllTags, MetadataCache, parseFrontMatterAliases, parseFrontMatterTag
 import { EXPRESSION } from "expression/parse";
 import { DateTime } from "luxon";
 import { FullIndex } from "data/index";
-import { DataObject, Link, LiteralValue, TransferableValue, TransferableValues, Values, Task } from "./value";
+import { Link, LiteralValue, Values, Task } from "./value";
 
 interface BaseLinkMetadata {
     path: string;
@@ -172,57 +172,6 @@ export class PageMetadata {
 export interface ParsedMarkdown {
     tasks: Task[];
     fields: Map<string, LiteralValue[]>;
-}
-
-/** Encoded parsed markdown which can be transfered over the JavaScript web worker. */
-export interface TransferableMarkdown {
-    tasks: TransferableValue[];
-    fields: Map<string, TransferableValue[]>;
-}
-
-/** Convert parsed markdown to a transfer-friendly result. */
-export function markdownToTransferable(parsed: ParsedMarkdown): TransferableMarkdown {
-    let newFields = new Map<string, TransferableValue[]>();
-    for (let [key, values] of parsed.fields.entries()) {
-        newFields.set(
-            key,
-            values.map(t => TransferableValues.transferable(t))
-        );
-    }
-
-    return {
-        tasks: TransferableValues.transferable(parsed.tasks) as TransferableValue[],
-        fields: newFields,
-    };
-}
-
-/** Convert transfer-friendly markdown to a result we can actually index and use. */
-export function markdownFromTransferable(parsed: TransferableMarkdown): ParsedMarkdown {
-    let newFields = new Map<string, LiteralValue[]>();
-    for (let [key, values] of parsed.fields.entries()) {
-        newFields.set(
-            key,
-            values.map(t => TransferableValues.value(t))
-        );
-    }
-
-    return {
-        tasks: TransferableValues.value(parsed.tasks) as Task[],
-        fields: newFields,
-    };
-}
-
-/** Convert any importable metadata to something that can be transferred. */
-export function toTransferable(value: ParsedMarkdown | DataObject[]): TransferableMarkdown | TransferableValue {
-    if ("tasks" in value) return markdownToTransferable(value);
-    else return TransferableValues.transferable(value);
-}
-
-/** Convert any transferable metadata back to Dataview API friendly data. */
-export function fromTransferable(value: TransferableValue | TransferableMarkdown): ParsedMarkdown | DataObject[] {
-    if (value != null && typeof value == "object" && "tasks" in value)
-        return markdownFromTransferable(value as TransferableMarkdown);
-    else return TransferableValues.value(value) as DataObject[];
 }
 
 /** Try to extract a YYYYMMDD date from a string. */
