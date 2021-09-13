@@ -503,6 +503,16 @@ export namespace DefaultFunctions {
         .vectorize(3, [0, 1, 2])
         .build();
 
+    // Ensure undefined matches turn into empty strings for split/2 and split/3.
+    const splitImpl = (str: string, delim: string, limit?: number): string[] =>
+        str.split(new RegExp(delim), limit).map(str => str || "");
+
+    /** Split a string on a given string. */
+    export const split: FunctionImpl = new FunctionBuilder("split")
+        .add2("string", "string", (string, splitter) => splitImpl(string, splitter))
+        .add3("string", "string", "number", (string, splitter, limit) => splitImpl(string, splitter, limit))
+        .build();
+
     export const fdefault = new FunctionBuilder("default")
         .add2("*", "*", (v, bk) => (Values.isNull(v) ? bk : v))
         .vectorize(2, [0, 1])
@@ -628,6 +638,7 @@ export const DEFAULT_FUNCTIONS: Record<string, FunctionImpl> = {
     replace: DefaultFunctions.replace,
     lower: DefaultFunctions.lower,
     upper: DefaultFunctions.upper,
+    split: DefaultFunctions.split,
 
     // Date Operations.
     striptime: DefaultFunctions.striptime,

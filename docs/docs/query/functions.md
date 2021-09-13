@@ -261,6 +261,19 @@ upper("Test") = "TEST"
 upper("test") = "TEST"
 ```
 
+### `split(string, delimiter, [limit])`
+
+Split a string on the given delimiter string. If a third argument is provided, it limits the number of splits that occur. The delimiter string is interpreted as a regular expression. If there are capture groups in the delimiter, matches are spliced into the result array, and non-matching captures are empty strings.
+
+
+```
+split("hello world", " ") = list("hello", "world")
+split("hello  world", "\s") = list("hello", "world")
+split("hello there world", " ", 2) = list("hello", "there")
+split("hello there world", "(t?here)") = list("hello ", "there", " world")
+split("hello there world", "( )(x)?") = list("hello", " ", "", "there", " ", "", "world")
+```
+
 ## Utility Functions
 
 ### `default(field, value)`
