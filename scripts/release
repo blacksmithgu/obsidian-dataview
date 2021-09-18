@@ -3,10 +3,28 @@
 # Requires the github CLI.
 NEW_VERSION=$1
 
+if [ -z "$NEW_VERSION" ]; then
+    echo "Provide the version number for this release."
+    exit 1
+fi
+
+# Let users edit release-notes.txt for release notes.
+rm -f release-notes.md
+touch release-notes.md
+echo -e "## ${NEW_VERSION}\n\n" >> release-notes.md
+$EDITOR release-notes.md
+
+# Append release notes to CHANGELOG.md.
+mv CHANGELOG.md CHANGELOG-TEMP.md
+cp release-notes.md CHANGELOG.md
+echo -e "\n---\n" >> CHANGELOG.md
+cat CHANGELOG-TEMP.md >> CHANGELOG.md
+rm -f CHANGELOG-TEMP.md
+
 # Delete old files if they exist
-rm package.tmp.json
-rm manifest.tmp.json
-rm versions.tmp.json
+rm -f package.tmp.json
+rm -f manifest.tmp.json
+rm -f versions.tmp.json
 
 # Rewrite versions in relevant files.
 jq ".version=\"${NEW_VERSION}\"" package.json > package.tmp.json && mv package.tmp.json package.json
@@ -14,7 +32,7 @@ jq ".version=\"${NEW_VERSION}\"" manifest.json > manifest.tmp.json && mv manifes
 jq ". + {\"${NEW_VERSION}\": \"0.12.0\"}" versions.json > versions.tmp.json && mv versions.tmp.json versions.json
 
 # Create commit & commit.
-git commit -a -m "${NEW_VERSION}"
+git commit -a -m "Auto-release ${NEW_VERSION}"
 git push
 
 # Rebuild the project to prepare for a release.
@@ -24,4 +42,5 @@ npm run build
 npm publish --access public
 
 # And do a github release.
-gh release create "${NEW_VERSION}" build/main.js styles.css manifest.json
+gh release create "${NEW_VERSION}" build/main.js styles.css manifest.json --title "${NEW_VERSION}" --notes-file release-notes.md
+rm -f release-notes.md

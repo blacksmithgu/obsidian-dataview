@@ -1,5 +1,5 @@
 import { FullIndex } from "data";
-import { DateTime, DateTimeJSOptions, Duration } from "luxon";
+import { DateTime, Duration } from "luxon";
 import { DEFAULT_QUERY_SETTINGS, QuerySettings } from "settings";
 import { getFileTitle, stripTime } from "util/normalize";
 import { PageMetadata } from "./file";
@@ -161,6 +161,16 @@ export class Link {
     /** Return a new link which points to the same location but with a new display value. */
     public withDisplay(display?: string) {
         return new Link(Object.assign({}, this, { display }));
+    }
+
+    /** Convert this link into an embedded link. */
+    public toEmbed(): Link {
+        if (this.embed) return this;
+        else {
+            let link = new Link(this);
+            link.embed = true;
+            return link;
+        }
     }
 
     /** Convert this link to markdown so it can be rendered. */
@@ -537,90 +547,6 @@ export namespace Values {
 
     export function isFunction(val: any): val is Function {
         return typeof val == "function";
-    }
-}
-
-/** An encoded type which can be transfered across threads. */
-export type TransferableValue =
-    | null
-    | undefined
-    | number
-    | string
-    | boolean
-    | Array<any>
-    | Record<string, any>
-    | {
-          "___transfer-type": "date" | "duration" | "link" | "task";
-          value: Record<string, any>;
-          options?: Record<string, any>;
-      };
-
-export namespace TransferableValues {
-    /** Convert a literal value to a serializer-friendly transferable value. Does not work for all types. */
-    export function transferable(value: LiteralValue): TransferableValue {
-        let wrapped = Values.wrapValue(value);
-        if (wrapped === undefined) return undefined;
-
-        switch (wrapped.type) {
-            case "null":
-            case "number":
-            case "string":
-            case "boolean":
-                return wrapped.value;
-            case "date":
-                return {
-                    "___transfer-type": "date",
-                    value: wrapped.value.toObject(),
-                    options: { zone: wrapped.value.zoneName },
-                };
-            case "duration":
-                return { "___transfer-type": "duration", value: wrapped.value.toObject() };
-            case "array":
-                return wrapped.value.map(v => transferable(v));
-            case "object":
-                let result: Record<string, any> = {};
-                for (let [key, value] of Object.entries(wrapped.value)) result[key] = transferable(value);
-                return result;
-            case "link":
-                return { "___transfer-type": "link", value: wrapped.value.toObject() };
-            case "task":
-                return { "___transfer-type": "task", value: transferable(wrapped.value.toObject()) };
-            default:
-                return undefined;
-        }
-    }
-
-    /** Convert a transferable value back to a literal value we can work with. */
-    export function value(transferable: TransferableValue): LiteralValue {
-        if (transferable === null || transferable === undefined) {
-            return null;
-        } else if (Array.isArray(transferable)) {
-            return transferable.map(v => value(v));
-        } else if (typeof transferable === "object") {
-            if ("___transfer-type" in transferable) {
-                switch (transferable["___transfer-type"]) {
-                    case "date":
-                        return DateTime.fromObject(
-                            value(transferable.value) as DataObject,
-                            value(transferable.options || {}) as DateTimeJSOptions
-                        );
-                    case "duration":
-                        return Duration.fromObject(value(transferable.value) as DataObject);
-                    case "link":
-                        return Link.fromObject(value(transferable.value) as DataObject);
-                    case "task":
-                        return Task.fromObject(value(transferable.value) as DataObject);
-                    default:
-                        throw Error(`Unrecognized transfer type '${transferable["___transfer-type"]}`);
-                }
-            }
-
-            let result: Record<string, LiteralValue> = {};
-            for (let [key, value] of Object.entries(transferable)) result[key] = TransferableValues.value(value);
-            return result;
-        }
-
-        return transferable as LiteralValue;
     }
 }
 

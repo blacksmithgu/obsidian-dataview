@@ -100,6 +100,27 @@ test("Evaluate lower()/upper()", () => {
     expect(parseEval('upper("hello")')).toEqual("HELLO");
 });
 
+// <-- split() -->
+
+test("Evaluate split(string, string)", () => {
+    expect(parseEval(`split("hello world", " ")`)).toEqual(parseEval(`list("hello", "world")`));
+    expect(parseEval(`split("hello world", "( )")`)).toEqual(parseEval(`list("hello", " ", "world")`));
+    expect(parseEval(`split("hello  world", "\\s+")`)).toEqual(parseEval(`list("hello", "world")`));
+    expect(parseEval(`split("hello world", "x")`)).toEqual(parseEval(`list("hello world")`));
+    expect(parseEval(`split("hello world", "( )(x)?")`)).toEqual(parseEval(`list("hello", " ", "", "world")`));
+    expect(parseEval(`split("hello there world", "(t?here)")`)).toEqual(parseEval(`list("hello ", "there", " world")`));
+    expect(parseEval(`split("hello there world", "( )(x)?")`)).toEqual(
+        parseEval(`list("hello", " ", "", "there", " ", "", "world")`)
+    );
+});
+
+test("Evaluate split(string, string, limit)", () => {
+    expect(parseEval(`split("hello world", " ", 0)`)).toEqual(parseEval(`list()`));
+    expect(parseEval(`split("hello world", " ", 1)`)).toEqual(parseEval(`list("hello")`));
+    expect(parseEval(`split("hello world", " ", 3)`)).toEqual(parseEval(`list("hello", "world")`));
+    expect(parseEval(`split("hello world", "( )", 2)`)).toEqual(parseEval(`list("hello", " ")`));
+});
+
 // <-- default() -->
 
 test("Evaluate default()", () => {
