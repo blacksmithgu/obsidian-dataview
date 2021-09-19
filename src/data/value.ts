@@ -1,6 +1,8 @@
+import { FullIndex } from "data";
 import { DateTime, Duration } from "luxon";
 import { DEFAULT_QUERY_SETTINGS, QuerySettings } from "settings";
-import { getFileTitle } from "util/normalize";
+import { getFileTitle, stripTime } from "util/normalize";
+import { PageMetadata } from "./file";
 
 /** A specific task. */
 export class Task {
@@ -18,14 +20,10 @@ export class Task {
     real: boolean;
     /** Any subtasks of this task. */
     subtasks: Task[];
-    /** An explicitly defined date of completion */
-    completedDate?: DateTime;
-    /** An explicitly defined date of creation */
-    createdDate?: DateTime;
-    /** An explicitly defined due date */
-    dueDate?: DateTime;
     /** The block this task shows up on */
     blockId: string;
+    /** Additional metadata like inline annotations */
+    annotations?: Record<string, LiteralValue>;
 
     /** Create a task from a record. */
     public static fromObject(obj: Record<string, LiteralValue>): Task {
@@ -35,9 +33,6 @@ export class Task {
     constructor(init?: Partial<Task>) {
         Object.assign(this, init);
         this.subtasks = (this.subtasks || []).map(t => new Task(t));
-        this.completedDate = init?.completedDate;
-        this.createdDate = init?.createdDate;
-        this.dueDate = init?.dueDate;
     }
 
     public link(): string {
@@ -67,11 +62,36 @@ export class Task {
             subtasks: this.subtasks.map(t => t.toObject()),
         };
 
-        if (this.createdDate) result.createdDate = this.createdDate;
-        if (this.dueDate) result.dueDate = this.dueDate;
-        if (this.completedDate) result.completedDate = this.completedDate;
+        if (this.annotations) {
+            result.annotations = this.annotations;
+        }
 
         return result;
+    }
+
+    // searchableData aggregates metadata from the task and page it resides on,
+    // providing a DataObject that can be used for filtering, grouping, ordering, etc.
+    public searchableData(page: PageMetadata, index: FullIndex): DataObject {
+        let data = this.toObject() as DataObject;
+        delete data.annotations;
+
+        let pageObject = page.toObject(index) as DataObject;
+        for (let key in pageObject) {
+            if (pageObject[key] && !data[key]) {
+                data[key] = pageObject[key];
+            }
+        }
+
+        if (!data.createdDate) data.createdDate = stripTime(page.ctime);
+        if (data.completed && data.completedDate != undefined) data.completedDate = stripTime(page.mtime);
+
+        for (let key in this.annotations) {
+            if (this.annotations[key] && !data[key]) {
+                data[key] = this.annotations[key];
+            }
+        }
+
+        return data;
     }
 }
 

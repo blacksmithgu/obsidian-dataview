@@ -149,7 +149,7 @@ If you don't want the default "File" or "Group" field in your output (either to 
 
 ### Task Queries
 
-Task views render all tasks whose pages match the given predicate.
+Task views render all tasks whose pages match the given predicate. [Read this for a deeper dive](queries-task.md)
 
 === "Syntax"
     ```
