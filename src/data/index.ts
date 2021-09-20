@@ -262,6 +262,11 @@ export class FullIndex {
         this.backgroundParser.reload<ParsedMarkdown>(file).then(r => this.reloadInternal(file, r));
     }
 
+    /** "Touch" the index, incrementing the revision number and causing downstream views to reload. */
+    public touch() {
+        this.revision += 1;
+    }
+
     private reloadInternal(file: TFile, parsed: ParsedMarkdown) {
         let meta = parsePage(file, this.metadataCache, parsed);
         this.pages.set(file.path, meta);

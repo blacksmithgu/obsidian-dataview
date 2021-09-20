@@ -15,7 +15,7 @@ export function stripTime(dt: DateTime): DateTime {
     });
 }
 
-/** Get the folder containing the given path (i.e., like computing 'path/..') */
+/** Get the folder containing the given path (i.e., like computing 'path/..'). */
 export function getParentFolder(path: string): string {
     return path.split("/").slice(0, -1).join("/");
 }
