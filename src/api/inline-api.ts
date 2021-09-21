@@ -14,11 +14,21 @@ import { DataArray } from "./data-array";
 
 /** Asynchronous API calls related to file / system IO. */
 export class DataviewInlineIOApi {
-    public constructor(public api: DataviewIOApi) {}
+    public constructor(public api: DataviewIOApi, public currentFile: string) {}
 
     /** Load the contents of a CSV asynchronously, returning a data array of rows (or undefined if it does not exist). */
     public async csv(path: string, originFile?: string): Promise<DataArray<DataObject> | undefined> {
-        return this.api.csv(path, originFile);
+        return this.api.csv(path, originFile || this.currentFile);
+    }
+
+    /** Asynchronously load the contents of any link or path in an Obsidian vault. */
+    public async load(path: Link | string, originFile?: string): Promise<string | undefined> {
+        return this.api.load(path, originFile || this.currentFile);
+    }
+
+    /** Normalize a link or path relative to an optional origin file. Returns a textual fully-qualified-path. */
+    public normalize(path: Link | string, originFile?: string): string {
+        return this.api.normalize(path, originFile || this.currentFile);
     }
 }
 
@@ -78,7 +88,7 @@ export class DataviewInlineApi {
         this.settings = settings;
 
         this.api = new DataviewApi(this.app, this.index, this.settings);
-        this.io = new DataviewInlineIOApi(this.api.io);
+        this.io = new DataviewInlineIOApi(this.api.io, this.currentFilePath);
 
         // Set up the evaluation context with variables from the current file.
         let fileMeta = this.index.pages.get(this.currentFilePath)?.toObject(this.index) ?? {};
@@ -228,7 +238,7 @@ export class DataviewInlineApi {
 
             try {
                 // This may directly render, in which case it will likely return undefined or null.
-                let result = func(this, input);
+                let result = await Promise.resolve(func(this, input));
                 if (result)
                     renderValue(
                         result as any,
@@ -257,7 +267,7 @@ export class DataviewInlineApi {
         let viewContents = await this.app.vault.read(viewFile);
         let viewFunction = new Function("dv", "input", viewContents);
         try {
-            let result = viewFunction(this, input);
+            let result = await Promise.resolve(viewFunction(this, input));
             if (result)
                 renderValue(result as any, this.container, this.currentFilePath, this.component, this.settings, true);
         } catch (ex) {

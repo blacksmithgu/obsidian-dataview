@@ -11,6 +11,8 @@ dv.table([], ...)
 The API is available through the implicitly provided `dv` (or `dataview`) variable, through which you can query for
 information, render HTML, and configure the view.
 
+Asynchronous API calls are marked with `⌛`.
+
 ## Query
 
 ### `dv.current()`
@@ -24,6 +26,7 @@ Returns a [data array](/api/data-array) of page objects, which are plain objects
 values.
 
 ```js
+dv.pages() => all pages in your vault
 dv.pages("#books") => all pages with tag 'books'
 dv.pages('"folder"') => all pages from folder "folder"
 dv.pages("#yes or -#no") => all pages with tag #yes, or which DON'T have tag #no
@@ -64,6 +67,26 @@ Renders arbitrary text in a paragraph.
 
 ```js
 dv.paragraph("This is some text");
+```
+
+### `dv.span(text)`
+
+Renders arbitrary text in a span (no padding above/below, unlike a paragraph).
+
+```js
+dv.span("This is some text");
+```
+
+### `dv.view(path, input)`
+
+Complex function which allows for custom views. Will attempt to load a JavaScript file at the given path, passing it
+`dv` and `input` and allowing it to execute. This allows for you to re-use custom view code across multiple pages.
+
+If you want to also include custom CSS in your view, you can instead pass a path to a folder containing `view.js` and
+`view.css`; the CSS will be added to the view automatically.
+
+```js
+dv.view("views/custom", { arg1: ..., arg2: ... });
 ```
 
 ## Dataviews
@@ -119,6 +142,34 @@ it unchanged.
 dv.array([1, 2, 3]) => dataview data array [1, 2, 3]
 ```
 
+### `dv.isArray(value)`
+
+Returns true if the given value is an array or dataview array.
+
+```js
+dv.isArray(dv.array([1, 2, 3])) => true
+dv.isArray([1, 2, 3]) => true
+dv.isArray({ x: 1 }) => false
+```
+
+### `dv.fileLink(path, [embed?], [display-name])`
+
+Converts a textual path into a Dataview `Link` object; you can optionally also specify if the link is embedded as well
+as it's display name.
+
+```
+dv.fileLink()
+```
+
+### `dv.date(text)`
+
+Coerces text and links to luxon `DateTime`; if provided with a `DateTime`, returns it unchanged.
+
+```js
+dv.date("2021-08-08") => DateTime for August 8th, 2021
+dv.date(dv.fileLink("2021-08-07")) => dateTime for August 8th, 2021
+```
+
 ### `dv.compare(a, b)`
 
 Compare two arbitrary JavaScript values according to dataview's default comparison rules; useful if you are writing a
@@ -139,4 +190,38 @@ rules.
 ```
 dv.equal(1, 2) = false
 dv.equal(1, 1) = true
+```
+
+## File I/O
+
+These utility methods are all contained in the `dv.io` sub-API, and are all *asynchronous* (marked by ⌛).
+
+### ⌛ `dv.io.csv(path, [origin-file])`
+
+Load a CSV from the given path (a link or string). Relative paths will be resolved relative to the optional origin file (defaulting
+to the current file if not provided). Returns a dataview array, each element containing an object of the CSV values; if
+the file does not exist, returns `undefined`.
+
+```js
+await dv.io.csv("hello.csv") => [{ column1: ..., column2: ...}, ...]
+```
+
+### ⌛ `dv.io.load(path, [origin-file])`
+
+Load the contents of the given path (a link or string) asynchronously. Relative paths will bre resolved relative to the
+optional origi nfile (defaulting to the current file if not provided). Returns the string contents of the file, or
+`undefined` if the file does not exist.
+
+```js
+await dv.io.load("File") => "# File\nThis is an example file..."
+```
+
+### `dv.io.normalize(path, [origin-file])`
+
+Converts a relative link or path into an absolute path. If `origin-file` is provided, then the resolution is doing as if
+you were resolving the link from that file; if not, the path is resolved relative to the current file.
+
+```js
+dv.io.normalize("Test") => "dataview/test/Test.md", if inside "dataview/test"
+dv.io.normalize("Test", "dataview/test2/Index.md") => "dataview/test2/Test.md", irrespective of the current file
 ```

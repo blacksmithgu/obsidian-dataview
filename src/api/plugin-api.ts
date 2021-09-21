@@ -20,14 +20,32 @@ export class DataviewIOApi {
     public constructor(public api: DataviewApi) {}
 
     /** Load the contents of a CSV asynchronously, returning a data array of rows (or undefined if it does not exist). */
-    public async csv(path: string, originFile?: string): Promise<DataArray<DataObject> | undefined> {
-        if (!(typeof path === "string")) {
-            throw Error(`dv.csv only handles string paths; was provided type '${typeof path}'.`);
+    public async csv(path: Link | string, originFile?: string): Promise<DataArray<DataObject> | undefined> {
+        if (!Values.isLink(path) && !Values.isString(path)) {
+            throw Error(`dv.io.csv only handles string or link paths; was provided type '${typeof path}'.`);
         }
 
-        let data = await this.api.index.csv.get(this.api.index.prefix.resolveRelative(path, originFile));
+        let data = await this.api.index.csv.get(this.normalize(path, originFile));
         if (data.successful) return DataArray.from(data.value, this.api.settings);
         else throw Error(`Could not find CSV for path '${path}' (relative to origin '${originFile ?? "/"}')`);
+    }
+
+    /** Asynchronously load the contents of any link or path in an Obsidian vault. */
+    public async load(path: Link | string, originFile?: string): Promise<string | undefined> {
+        if (!Values.isLink(path) && !Values.isString(path)) {
+            throw Error(`dv.io.load only handles string or link paths; was provided type '${typeof path}'.`);
+        }
+
+        return this.api.index.vault.adapter.read(this.normalize(path, originFile));
+    }
+
+    /** Normalize a link or path relative to an optional origin file. Returns a textual fully-qualified-path. */
+    public normalize(path: Link | string, originFile?: string): string {
+        let realPath;
+        if (Values.isLink(path)) realPath = path.path;
+        else realPath = path;
+
+        return this.api.index.prefix.resolveRelative(realPath, originFile);
     }
 }
 
