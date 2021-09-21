@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# Builds dataview and allows you to provide a path to the vault that it should be installed in.
+# Useful for when you want to dry-run the plugin in a vault other than the test vault.
+
 VAULT="$1"
 TARGET="$VAULT/.obsidian/plugins/dataview/"
 mkdir -p "$TARGET"
