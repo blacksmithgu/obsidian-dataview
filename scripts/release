@@ -21,6 +21,9 @@ echo -e "\n---\n" >> CHANGELOG.md
 cat CHANGELOG-TEMP.md >> CHANGELOG.md
 rm -f CHANGELOG-TEMP.md
 
+# Overwrite the documentation changelog.
+cp -f CHANGELOG.md docs/docs/changelog.md
+
 # Delete old files if they exist
 rm -f package.tmp.json
 rm -f manifest.tmp.json

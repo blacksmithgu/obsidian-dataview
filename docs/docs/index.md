@@ -22,10 +22,10 @@ Dataview has two major components: *annotation* and *querying*. Each operates la
 #### Annotation
 
 The dataview **index** is responsible for constantly parsing markdown files and other metadata in your vault, creating
-an in-memory index which allows for fast queries over your data. Most annotation is done at the *markdown page* level, where
-you can either use:
+an in-memory index which allows for fast queries over your data. Annotation is done at the *markdown page*, *section*,
+and *task* level, where you can either use:
 
-1. **Frontmatter**, a common Markdown extension which allows for adding arbitrary YAML at the top of a document:
+1. **Frontmatter**, a common Markdown extension which allows for adding arbitrary YAML at the top of a document):
     ```yaml
     ---
     alias: "document"
@@ -41,10 +41,14 @@ you can either use:
 
     Basic Field:: Value
     **Bold Field**:: Nice!
+
+    - [ ] I am a task with [metadata::value]!
+      - [X] I am another task with completed::2020-09-15
     ```
 
-You can combine both methods if desired. Dataview also adds a significant number of "implicit" fields to every markdown
-page, like `file.name` for the file name, `file.size` for the size, and so on; you can find more details [here](where-data-comes-from/).
+You can combine both methods if desired. Dataview also adds a significant number
+of "implicit" fields, like `file.name` for the file name, `file.size` for the
+size, and so on; you can find more details in the [data annotation documentation](data-annotation).
 
 #### Querying
 

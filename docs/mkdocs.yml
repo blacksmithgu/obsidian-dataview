@@ -32,11 +32,12 @@ nav:
     - Codeblock Examples: 'api/code-examples.md'
   - Plugin Developers:
     - Developing Against Dataview: 'plugin/develop-against-dataview.md'
+  - Changelog: 'changelog.md'
 plugins:
   - redirects:
       redirect_maps:
-        docs/where-data-comes-from.md: where-data-comes-from.md
-        docs/creating-queries.md: creating-queries.md
+        docs/where-data-comes-from.md: data-annotation.md
+        docs/creating-queries.md: data-queries.md
         docs/query/queries.md: query/queries.md
         docs/query/expressions.md: query/expressions.md
         docs/query/sources.md: query/sources.md

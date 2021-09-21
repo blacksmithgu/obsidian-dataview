@@ -149,7 +149,7 @@ If you don't want the default "File" or "Group" field in your output (either to 
 
 ### Task Queries
 
-Task views render all tasks whose pages match the given predicate. [Read this for a deeper dive](queries-task.md)
+Task views render all tasks whose pages match the given predicate.
 
 === "Syntax"
     ```
@@ -170,6 +170,36 @@ Task views render all tasks whose pages match the given predicate. [Read this fo
     - [ ] I could be a task, though who knows.
         - [X] Determine if this is a task.
     - [X] I'm a finished task.
+
+You can filter (`WHERE`), group (`GROUP BY`), sort (`SORT`) tasks in these queries as desired using typical dataview
+statements:
+
+=== "Syntax"
+    ```
+    TASK FROM <source>
+    WHERE <predicate>
+    ...
+    ```
+=== "Query"
+    ```
+    TASK FROM "dataview"
+    WHERE !completed
+    GROUP BY file.folder
+    ```
+=== "Output"
+    Folder 1
+
+    - [ ] I am a task.
+    - [ ] I am another task.
+    - [ ] I am yet another task in another file in the same folder.
+
+    Folder 2
+
+    - [ ] I could be a task, though who knows.
+
+    Folder 3
+
+    - [ ] What even is a task, anyway?
 
 ## Data Commands
 
