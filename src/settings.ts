@@ -15,6 +15,11 @@ export interface QuerySettings {
     defaultDateTimeFormat: string;
     /** Maximum depth that objects will be expanded when being rendered recursively. */
     maxRecursiveRenderDepth: number;
+
+    /** The name of the default ID field ('File'). */
+    tableIdColumnName: string;
+    /** The name of default ID fields on grouped data ('Group'). */
+    tableGroupColumnName: string;
 }
 
 export const DEFAULT_QUERY_SETTINGS: QuerySettings = {
@@ -24,6 +29,9 @@ export const DEFAULT_QUERY_SETTINGS: QuerySettings = {
     defaultDateFormat: "MMMM dd, yyyy",
     defaultDateTimeFormat: "h:mm a - MMMM dd, yyyy",
     maxRecursiveRenderDepth: 6,
+
+    tableIdColumnName: "File",
+    tableGroupColumnName: "Group",
 };
 
 ///////////////////////////////

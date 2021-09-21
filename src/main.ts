@@ -284,7 +284,7 @@ class DataviewSettingsTab extends PluginSettingTab {
 
     display(): void {
         this.containerEl.empty();
-        this.containerEl.createEl("h2", { text: "Dataview Codeblock Settings" });
+        this.containerEl.createEl("h2", { text: "Codeblock Settings" });
 
         new Setting(this.containerEl)
             .setName("Inline Query Prefix")
@@ -315,11 +315,12 @@ class DataviewSettingsTab extends PluginSettingTab {
                     .onChange(async value => await this.plugin.updateSettings({ enableDataviewJs: value }))
             );
 
-        this.containerEl.createEl("h2", { text: "Query Settings" });
+        this.containerEl.createEl("h2", { text: "View Settings" });
+        this.containerEl.createEl("h3", { text: "General" });
 
         new Setting(this.containerEl)
             .setName("Render Null As")
-            .setDesc("What null/non-existent should show up as in tables, by default.")
+            .setDesc("What null/non-existent should show up as in tables, by default. This supports Markdown notation.")
             .addText(text =>
                 text
                     .setPlaceholder("-")
@@ -337,11 +338,11 @@ class DataviewSettingsTab extends PluginSettingTab {
             );
 
         new Setting(this.containerEl)
-            .setName("Dataview Refresh Interval (milliseconds)")
-            .setDesc("How frequently dataviews are updated in preview mode when files are changing.")
+            .setName("Refresh Interval")
+            .setDesc("How frequently views are updated (in milliseconds) in preview mode when files are changing.")
             .addText(text =>
                 text
-                    .setPlaceholder("5000")
+                    .setPlaceholder("500")
                     .setValue("" + this.plugin.settings.refreshInterval)
                     .onChange(async value => {
                         let parsed = parseInt(value);
@@ -373,7 +374,7 @@ class DataviewSettingsTab extends PluginSettingTab {
             );
 
         let dtformat = new Setting(this.containerEl)
-            .setName("Datetime Format")
+            .setName("Date + Time Format")
             .setDesc(
                 "The default date and time format (see Luxon date format options)." +
                     " Currently: " +
@@ -391,6 +392,33 @@ class DataviewSettingsTab extends PluginSettingTab {
                         );
                         await this.plugin.updateSettings({ defaultDateTimeFormat: value });
                     })
+            );
+
+        this.containerEl.createEl("h3", { text: "Table Settings" });
+
+        new Setting(this.containerEl)
+            .setName("Primary Column Name")
+            .setDesc(
+                "The name of the default ID column in tables; this is the auto-generated first column that links to the source file."
+            )
+            .addText(text =>
+                text
+                    .setPlaceholder("File")
+                    .setValue(this.plugin.settings.tableIdColumnName)
+                    .onChange(async value => await this.plugin.updateSettings({ tableIdColumnName: value }))
+            );
+
+        new Setting(this.containerEl)
+            .setName("Grouped Column Name")
+            .setDesc(
+                "The name of the default ID column in tables, when the table is on grouped data; this is the auto-generated first column" +
+                    "that links to the source file/group."
+            )
+            .addText(text =>
+                text
+                    .setPlaceholder("Group")
+                    .setValue(this.plugin.settings.tableGroupColumnName)
+                    .onChange(async value => await this.plugin.updateSettings({ tableGroupColumnName: value }))
             );
     }
 }
@@ -579,7 +607,10 @@ class DataviewTableRenderer extends MarkdownRenderChild {
             for (let entry of result.data) {
                 dataWithNames.push([entry.id].concat(entry.values));
             }
-            let name = result.idMeaning.type === "group" ? "Group" : "File";
+            let name =
+                result.idMeaning.type === "group"
+                    ? this.settings.tableGroupColumnName
+                    : this.settings.tableIdColumnName;
 
             await renderTable(
                 this.container,
