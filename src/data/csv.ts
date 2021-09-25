@@ -18,6 +18,7 @@ export function parseCsv(content: string): DataObject[] {
         let result: DataObject = {};
 
         for (let [key, value] of Object.entries(fields)) {
+            result[key] = value;
             result[canonicalizeVarName(key)] = value;
         }
 
