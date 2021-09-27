@@ -11,7 +11,7 @@ fi
 # Let users edit release-notes.txt for release notes.
 rm -f release-notes.md
 touch release-notes.md
-echo -e "## ${NEW_VERSION}\n\n" >> release-notes.md
+echo -e "# ${NEW_VERSION}\n\n" >> release-notes.md
 $EDITOR release-notes.md
 
 # Append release notes to CHANGELOG.md.

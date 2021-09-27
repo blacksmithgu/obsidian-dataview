@@ -1,4 +1,4 @@
-## 0.4.11
+# 0.4.11
 
 Fixes task behavior and adds "truly inline" fields!
 
@@ -36,7 +36,7 @@ Improved rendering for all inline fields is coming in an unpcoming update to imp
 fields.
 
 
-### Issues
+## Issues
 
 - Fix #496: Fix task `SORT` functionality to do something.
 - Fix #492: Tasks now properly annotated with parent file information.
