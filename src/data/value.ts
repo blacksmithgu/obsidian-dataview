@@ -1,8 +1,6 @@
-import { FullIndex } from "data";
 import { DateTime, Duration } from "luxon";
 import { DEFAULT_QUERY_SETTINGS, QuerySettings } from "settings";
-import { getFileTitle, stripTime } from "util/normalize";
-import { PageMetadata } from "./file";
+import { getFileTitle } from "util/normalize";
 
 /** A specific task. */
 export class Task {
@@ -20,10 +18,17 @@ export class Task {
     real: boolean;
     /** Any subtasks of this task. */
     subtasks: Task[];
-    /** The block this task shows up on */
+    /** The block this task shows up in. */
     blockId: string;
+
     /** Additional metadata like inline annotations */
     annotations?: Record<string, LiteralValue>;
+    /** Special annotation for when this task was created. */
+    created?: DateTime;
+    /** Special annotation for when this task was due. */
+    due?: DateTime;
+    /** Special annotation for when this task was completed. */
+    completion?: DateTime;
 
     /** Create a task from a record. */
     public static fromObject(obj: Record<string, LiteralValue>): Task {
@@ -50,7 +55,17 @@ export class Task {
         return result;
     }
 
-    public toObject(): Record<string, LiteralValue> {
+    /** Return a new task where the created and completed fields are assigned to the given defaults if not present. */
+    public withDefaultDates(defaultCreated: DateTime, defaultCompleted: DateTime) {
+        let newTask = new Task(this);
+        newTask.created = newTask.created ?? defaultCreated;
+        if (newTask.completed) newTask.completion = newTask.completion ?? defaultCompleted;
+
+        newTask.subtasks = newTask.subtasks.map(t => t.withDefaultDates(defaultCreated, defaultCompleted));
+        return newTask;
+    }
+
+    public toObject(inlineAnnotations: boolean = true): Record<string, LiteralValue> {
         let result: Record<string, LiteralValue> = {
             text: this.text,
             line: this.line,
@@ -60,38 +75,26 @@ export class Task {
             real: this.real,
             blockId: this.blockId,
             subtasks: this.subtasks.map(t => t.toObject()),
+            annotated: !!this.annotations && Object.keys(this.annotations).length > 0,
         };
 
+        if (this.created) result.created = this.created;
+        if (this.due) result.due = this.due;
+        if (this.completion) result.completion = this.completion;
+
         if (this.annotations) {
-            result.annotations = this.annotations;
+            if (inlineAnnotations) {
+                for (let [key, value] of Object.entries(this.annotations)) {
+                    if (key in result) continue;
+
+                    result[key] = value;
+                }
+            } else {
+                result.annotations = this.annotations;
+            }
         }
 
         return result;
-    }
-
-    // searchableData aggregates metadata from the task and page it resides on,
-    // providing a DataObject that can be used for filtering, grouping, ordering, etc.
-    public searchableData(page: PageMetadata, index: FullIndex): DataObject {
-        let data = this.toObject() as DataObject;
-        delete data.annotations;
-
-        let pageObject = page.toObject(index) as DataObject;
-        for (let key in pageObject) {
-            if (pageObject[key] && !data[key]) {
-                data[key] = pageObject[key];
-            }
-        }
-
-        if (!data.createdDate) data.createdDate = stripTime(page.ctime);
-        if (data.completed && data.completedDate != undefined) data.completedDate = stripTime(page.mtime);
-
-        for (let key in this.annotations) {
-            if (this.annotations[key] && !data[key]) {
-                data[key] = this.annotations[key];
-            }
-        }
-
-        return data;
     }
 }
 

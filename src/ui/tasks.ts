@@ -1,5 +1,5 @@
 import { Vault, MarkdownRenderChild, MarkdownRenderer, Component } from "obsidian";
-import { TASK_REGEX } from "data/file";
+import { TASK_REGEX } from "data/import/markdown";
 import { Grouping, Task } from "data/value";
 import { renderValue } from "ui/render";
 import { QuerySettings } from "settings";
@@ -143,7 +143,11 @@ export async function setTaskCheckedInFile(
     if (!match) return;
 
     let foundText = match[3];
-    let foundCompleted = match[2] == "X" || match[2] == "x";
+    let checkMarking = match[2]
+        .trim()
+        .substring(1, match[2].trim().length - 1)
+        .trim();
+    let foundCompleted = checkMarking == "X" || checkMarking == "x";
 
     if (taskText.trim() != foundText.trim()) return;
     if (wasChecked != foundCompleted) return;
@@ -152,7 +156,8 @@ export async function setTaskCheckedInFile(
         splitText[taskLine - 1] = splitText[taskLine - 1]
             .replace("- [ ]", "- [x]")
             .replace("- []", "- [x]")
-            .replace("-[]", "- [x]");
+            .replace("-[]", "- [x]")
+            .replace("-[ ]", "- [x]");
     } else {
         splitText[taskLine - 1] = splitText[taskLine - 1]
             .replace("- [X]", "- [ ]")

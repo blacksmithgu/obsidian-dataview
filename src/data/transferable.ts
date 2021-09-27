@@ -58,7 +58,7 @@ export namespace Transferable {
             case "link":
                 return { "___transfer-type": "link", value: transferable(wrapped.value.toObject()) };
             case "task":
-                return { "___transfer-type": "task", value: transferable(wrapped.value.toObject()) };
+                return { "___transfer-type": "task", value: transferable(wrapped.value.toObject(false)) };
             default:
                 throw Error("Unrecognized transferable literal value: " + value);
         }

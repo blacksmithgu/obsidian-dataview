@@ -15,6 +15,20 @@ export function stripTime(dt: DateTime): DateTime {
     });
 }
 
+/** Try to extract a YYYYMMDD date from a string. */
+export function extractDate(str: string): DateTime | undefined {
+    let dateMatch = /(\d{4})-(\d{2})-(\d{2})/.exec(str);
+    if (!dateMatch) dateMatch = /(\d{4})(\d{2})(\d{2})/.exec(str);
+    if (dateMatch) {
+        let year = Number.parseInt(dateMatch[1]);
+        let month = Number.parseInt(dateMatch[2]);
+        let day = Number.parseInt(dateMatch[3]);
+        return DateTime.fromObject({ year, month, day });
+    }
+
+    return undefined;
+}
+
 /** Get the folder containing the given path (i.e., like computing 'path/..'). */
 export function getParentFolder(path: string): string {
     return path.split("/").slice(0, -1).join("/");

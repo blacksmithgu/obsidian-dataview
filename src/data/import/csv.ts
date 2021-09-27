@@ -1,7 +1,7 @@
 import { canonicalizeVarName } from "util/normalize";
-import { parseFrontmatter } from "./file";
-import { DataObject } from "./value";
+import { DataObject } from "../value";
 import * as Papa from "papaparse";
+import { parseFrontmatter } from "data/import/markdown";
 
 /** Parse a CSV file into a collection of data rows. */
 export function parseCsv(content: string): DataObject[] {

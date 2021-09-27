@@ -3,11 +3,12 @@ import { Result } from "api/result";
 import { DataObject } from "data/value";
 import { MetadataCache, TFile, Vault } from "obsidian";
 import { getParentFolder } from "util/normalize";
-import DataviewImportWorker from "web-worker:./importer.ts";
-import { PageMetadata, ParsedMarkdown, parsePage } from "./file";
+import DataviewImportWorker from "web-worker:./import/importer.ts";
+import { PageMetadata } from "data/metadata";
+import { ParsedMarkdown, parsePage } from "data/import/markdown";
 import DataviewPlugin from "../main";
 import { DateTime } from "luxon";
-import { parseCsv } from "data/csv";
+import { parseCsv } from "data/import/csv";
 import { Transferable } from "data/transferable";
 
 /** A generic index which indexes variables of the form key -> value[], allowing both forward and reverse lookups. */

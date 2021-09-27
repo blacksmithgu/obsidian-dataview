@@ -30,6 +30,10 @@ You can add fields to a markdown page in three different ways:
     Basic Field:: Value
     **Bold Field**:: Nice!
     ```
+    If you want to embed metadata inside sentences, or multiple fields on the same line, you can use the bracket syntax:
+    ```markdown
+    I would rate this a [rating:: 9]! It was [mood:: acceptable].
+    ```
 
 3. **Implicit**: Dataview annotates pages with a large amount of metadata automatically, like the day the file was
    created (`file.cday`), any associated dates (`file.day`), links in the file (`file.outlinks`), tags (`file.tags`),
@@ -82,7 +86,7 @@ syntax:
 
 ```markdown
 - [ ] Hello, this is some [metadata:: value]!
-- [X] I finished this on completed::2021-08-15.
+- [X] I finished this on [completion::2021-08-15].
 ```
 
 #### Field Shorthands
@@ -99,7 +103,8 @@ with:
     - [x] Completed last saturday ✅2021-08-22.
     - [ ] I made this on ➕1990-06-14.
 
-Note that, if you do not like emojis, you can still annotate these fields textually (`due::`, `created::`, `completed::`).
+Note that, if you do not like emojis, you can still annotate these fields textually (`[due:: ]`, `[created:: ]`,
+`[completion:: ]`).
 
 #### Implicit Fields
 
@@ -114,10 +119,10 @@ As with pages, Dataview adds a number of implicit fields to each task:
 - `path`: The full path of the file.
 - `subtasks`: Any subtasks of this task.
 - `real`: If true, this is a real task; otherwise, it is a list element above/below a task.
-- `completedDate` or `completed-date`: The date a task was completed. If not annotated, will default to file modified time.
-- `dueDate` or `due-date` or `due`: The date a task is due, if it has one.
-- `createdDate` or `created-date` or `created`: The date a task was created. If not annotated, defaults to file creation time.
-- `hasInlineAnnotations` or `has-inline-annotations`: If the task includes inline annotations using `::`.
+- `completion`: The date a task was completed. If not annotated, will default to file modified time.
+- `due`: The date a task is due, if it has one.
+- `created`: The date a task was created. If not annotated, defaults to file creation time.
+- `annotated`: True if the task has any custom annotations, and false otherwise.
 
 ---
 

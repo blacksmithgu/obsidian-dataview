@@ -1,147 +1,16 @@
-import { canonicalizeVarName, getExtension, getFileTitle, getParentFolder, stripTime } from "util/normalize";
-import { getAllTags, MetadataCache, parseFrontMatterAliases, parseFrontMatterTags, TFile } from "obsidian";
+/** Importer for markdown documents. */
+
+import { extractInlineFields, extractSpecialTaskFields, parseInlineValue } from "data/import/inline-field";
+import { PageMetadata } from "data/metadata";
+import { LiteralValue, Values, Task, Link } from "data/value";
 import { EXPRESSION } from "expression/parse";
 import { DateTime } from "luxon";
-import { FullIndex } from "data/index";
-import { Link, LiteralValue, Values, Task } from "./value";
+import { getAllTags, MetadataCache, parseFrontMatterAliases, parseFrontMatterTags, TFile } from "obsidian";
+import { canonicalizeVarName, extractDate, getFileTitle } from "util/normalize";
 
-/** All extracted markdown file metadata obtained from a file. */
-export class PageMetadata {
-    /** The path this file exists at. */
-    public path: string;
-    /** Obsidian-provided date this page was created. */
-    public ctime: DateTime;
-    /** Obsidian-provided date this page was modified. */
-    public mtime: DateTime;
-    /** Obsidian-provided size of this page in bytes. */
-    public size: number;
-    /** The day associated with this page, if relevant. */
-    public day?: DateTime;
-    /** The first H1/H2 header in the file. May not exist. */
-    public title?: string;
-    /** All of the fields contained in this markdown file - both frontmatter AND in-file links. */
-    public fields: Map<string, LiteralValue>;
-    /** All of the exact tags (prefixed with '#') in this file overall. */
-    public tags: Set<string>;
-    /** All of the aliases defined for this file. */
-    public aliases: Set<string>;
-    /** All OUTGOING links (including embeds, header + block links) in this file. */
-    public links: Link[];
-    /** All tasks contained within this file. */
-    public tasks: Task[];
-
-    public constructor(path: string, init?: Partial<PageMetadata>) {
-        this.path = path;
-        this.fields = new Map<string, LiteralValue>();
-        this.tags = new Set<string>();
-        this.aliases = new Set<string>();
-        this.links = [];
-        this.tasks = [];
-
-        Object.assign(this, init);
-    }
-
-    /** Parse all subtags out of the given tag. I.e., #hello/i/am would yield [#hello/i/am, #hello/i, #hello]. */
-    public static parseSubtags(tag: string): string[] {
-        let result = [tag];
-        while (tag.includes("/")) {
-            tag = tag.substring(0, tag.lastIndexOf("/"));
-            result.push(tag);
-        }
-
-        return result;
-    }
-
-    /** The name (based on path) of this file. */
-    public name(): string {
-        return getFileTitle(this.path);
-    }
-
-    /** The containing folder (based on path) of this file. */
-    public folder(): string {
-        return getParentFolder(this.path);
-    }
-
-    /** The extension of this file (likely 'md'). */
-    public extension(): string {
-        return getExtension(this.path);
-    }
-
-    /** Return a set of tags AND all of their parent tags (so #hello/yes would become #hello, #hello/yes). */
-    public fullTags(): Set<string> {
-        // TODO: Memoize this, probably.
-        let result = new Set<string>();
-        for (let tag of this.tags) {
-            for (let subtag of PageMetadata.parseSubtags(tag)) result.add(subtag);
-        }
-
-        return result;
-    }
-
-    /** Convert all links in this file to file links. */
-    public fileLinks(): Link[] {
-        return this.links.map(link => Link.file(link.path));
-    }
-
-    /** Map this metadata to a full object; uses the index for additional data lookups.  */
-    public toObject(index: FullIndex): Record<string, LiteralValue> {
-        // Static fields first. Note this object should not have any pointers to the original object (so that the
-        // index cannot accidentally be mutated).
-        let result: any = {
-            file: {
-                path: this.path,
-                folder: this.folder(),
-                name: this.name(),
-                link: Link.file(this.path, false),
-                outlinks: this.fileLinks(),
-                inlinks: Array.from(index.links.getInverse(this.path)).map(l => Link.file(l, false)),
-                etags: Array.from(this.tags),
-                tags: Array.from(this.fullTags()),
-                aliases: Array.from(this.aliases),
-                tasks: this.tasks.map(t => t.toObject()),
-                ctime: this.ctime,
-                cday: stripTime(this.ctime),
-                mtime: this.mtime,
-                mday: stripTime(this.mtime),
-                size: this.size,
-                ext: this.extension(),
-            },
-        };
-
-        // Add the current day if present.
-        if (this.day) result.file.day = this.day;
-
-        // Then append the computed fields.
-        for (let [key, value] of this.fields) {
-            if (key === "file") continue; // Don't allow fields to override 'file'.
-            result[key] = value;
-        }
-
-        return result;
-    }
-}
-
-/**
- * Partial metadata object which contains all the information extracted from raw markdown. This is combined with the
- * metadata cache to generate the final PageMetadata object.
- */
 export interface ParsedMarkdown {
-    tasks: Task[];
     fields: Map<string, LiteralValue[]>;
-}
-
-/** Try to extract a YYYYMMDD date from a string. */
-function extractDate(str: string): DateTime | undefined {
-    let dateMatch = /(\d{4})-(\d{2})-(\d{2})/.exec(str);
-    if (!dateMatch) dateMatch = /(\d{4})(\d{2})(\d{2})/.exec(str);
-    if (dateMatch) {
-        let year = Number.parseInt(dateMatch[1]);
-        let month = Number.parseInt(dateMatch[2]);
-        let day = Number.parseInt(dateMatch[3]);
-        return DateTime.fromObject({ year, month, day });
-    }
-
-    return undefined;
+    tasks: Task[];
 }
 
 /** Attempt to find a date associated with the given page from metadata or filenames. */
@@ -208,50 +77,6 @@ export function parseFrontmatter(value: any): LiteralValue {
     return null;
 }
 
-/** Parse a textual inline field value into something we can work with. */
-export function parseInlineField(value: string): LiteralValue {
-    // The stripped literal field parser understands all of the non-array/non-object fields and can parse them for us.
-    // Inline field objects are not currently supported; inline array objects have to be handled by the parser
-    // separately.
-    let inline = EXPRESSION.inlineField.parse(value);
-    if (inline.status) return inline.value;
-    else return value;
-}
-
-export function parseTaskForAnnotations(line: string): Record<string, LiteralValue> {
-    let annotations = {} as Record<string, LiteralValue>;
-
-    let createdMatch = CREATED_DATE_REGEX.exec(line);
-    if (createdMatch) {
-        annotations["createdDate"] = DateTime.fromISO(createdMatch[1]);
-    }
-
-    let dueMatch = DUE_DATE_REGEX.exec(line);
-    if (dueMatch) {
-        annotations["dueDate"] = DateTime.fromISO(dueMatch[1]);
-    }
-
-    let completedMatch = DONE_DATE_REGEX.exec(line);
-    if (completedMatch) {
-        annotations["completedDate"] = DateTime.fromISO(completedMatch[1]);
-    }
-
-    if (line.includes("::")) {
-        let groups = line.split(" ");
-        for (let group of groups) {
-            if (group.includes("::")) {
-                let kv = group.split("::");
-                if (kv.length == 2) {
-                    annotations["hasInlineAnnotations"] = true;
-                    annotations[kv[0]] = parseInlineField(kv[1]);
-                }
-            }
-        }
-    }
-
-    return annotations;
-}
-
 /** Add an inline field to a nexisting field array, converting a single value into an array if it is present multiple times. */
 export function addInlineField(fields: Map<string, LiteralValue>, name: string, value: LiteralValue) {
     if (fields.has(name)) {
@@ -278,10 +103,6 @@ export function alast<T>(arr: Array<T>): T | undefined {
     if (arr.length > 0) return arr[arr.length - 1];
     else return undefined;
 }
-
-export const CREATED_DATE_REGEX = /\u{2795}\s*(\d{4}-\d{2}-\d{2})/u;
-export const DUE_DATE_REGEX = /[\u{1F4C5}\u{1F4C6}\u{1F5D3}]\s*(\d{4}-\d{2}-\d{2})/u;
-export const DONE_DATE_REGEX = /\u{2705}\s*(\d{4}-\d{2}-\d{2})/u;
 
 /**
  * A hacky approach to scanning for all tasks using regex. Does not support multiline
@@ -314,7 +135,17 @@ export function findTasksInFile(path: string, file: string): Task[] {
             continue;
         }
 
-        let annotations = parseTaskForAnnotations(line);
+        // Add all inline field definitions.
+        let annotations: Record<string, LiteralValue> = {};
+        for (let field of extractInlineFields(line)) {
+            let value = parseInlineValue(field.value);
+
+            annotations[field.key] = value;
+            annotations[canonicalizeVarName(field.key)] = value;
+        }
+
+        let special = extractSpecialTaskFields(line, annotations);
+
         let indent = match[1].replace("\t", "    ").length;
         let isReal = !!match[2] && match[2].trim().length > 0;
         let isCompleted = !isReal || match[2] == "[X]" || match[2] == "[x]";
@@ -327,6 +158,9 @@ export function findTasksInFile(path: string, file: string): Task[] {
             line: lineno,
             subtasks: [],
             annotations,
+            created: special.created,
+            due: special.due,
+            completion: special.completed,
         });
 
         while (indent <= (alast(stack)?.[1] ?? -4)) stack.pop();
@@ -350,19 +184,38 @@ export function parseMarkdown(path: string, contents: string, inlineRegex: RegEx
         if (!line.includes("::")) continue;
         line = line.trim();
 
-        // skip task lines
-        if (TASK_REGEX.exec(line)) continue;
+        // Skip real task lines, since they can have their own custom metadata.
+        // TODO: Abstract this check (i.e., improve task parsing to be more encapsulated).
+        let taskParse = TASK_REGEX.exec(line);
+        if (taskParse && (taskParse[2]?.trim()?.length ?? 0) > 0) continue;
 
-        let match = inlineRegex.exec(line);
-        if (!match) continue;
+        // Handle inline-inline fields (haha...)
+        let hasInlineInline = false;
+        for (let field of extractInlineFields(line)) {
+            let value = parseInlineValue(field.value);
 
-        let name = match[1].trim();
-        let inlineField = parseInlineField(match[2]);
+            fields.set(field.key, (fields.get(field.key) ?? []).concat([value]));
+            let simpleName = canonicalizeVarName(field.key);
+            if (simpleName.length > 0 && simpleName != field.key.trim()) {
+                fields.set(simpleName, (fields.get(simpleName) ?? []).concat([value]));
+            }
 
-        fields.set(name, (fields.get(name) ?? []).concat([inlineField]));
-        let simpleName = canonicalizeVarName(match[1].trim());
-        if (simpleName.length > 0 && simpleName != match[1].trim()) {
-            fields.set(simpleName, (fields.get(simpleName) ?? []).concat([inlineField]));
+            hasInlineInline = true;
+        }
+
+        // Handle full-line inline fields if there are no inline-inline fields.
+        if (!hasInlineInline) {
+            let match = inlineRegex.exec(line);
+            if (match) {
+                let name = match[1].trim();
+                let inlineField = parseInlineValue(match[2]);
+
+                fields.set(name, (fields.get(name) ?? []).concat([inlineField]));
+                let simpleName = canonicalizeVarName(match[1].trim());
+                if (simpleName.length > 0 && simpleName != match[1].trim()) {
+                    fields.set(simpleName, (fields.get(simpleName) ?? []).concat([inlineField]));
+                }
+            }
         }
     }
 
@@ -415,14 +268,20 @@ export function parsePage(file: TFile, cache: MetadataCache, markdownData: Parse
         for (let value of values) addInlineField(fields, name, value);
     }
 
+    // Add task defaults; this should probably be done in the task parsing directly
+    // once the parser has access to the common file metadata.
+    let pageCtime = DateTime.fromMillis(file.stat.ctime);
+    let pageMtime = DateTime.fromMillis(file.stat.mtime);
+    let fixedTasks = markdownData.tasks.map(t => t.withDefaultDates(pageCtime, pageMtime));
+
     return new PageMetadata(file.path, {
         fields,
         tags,
         aliases,
         links,
-        tasks: markdownData.tasks,
-        ctime: DateTime.fromMillis(file.stat.ctime),
-        mtime: DateTime.fromMillis(file.stat.mtime),
+        tasks: fixedTasks,
+        ctime: pageCtime,
+        mtime: pageMtime,
         size: file.stat.size,
         day: findDate(file.path, fields),
     });

@@ -1,7 +1,7 @@
 /** Entry-point script used by the index as a web worker. */
 
 import { Transferable } from "data/transferable";
-import { parseMarkdown } from "./file";
+import { parseMarkdown } from "data/import/markdown";
 
 onmessage = async evt => {
     let parsed = parseMarkdown(

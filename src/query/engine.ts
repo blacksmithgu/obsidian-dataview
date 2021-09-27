@@ -393,9 +393,18 @@ export async function executeTask(
     for (let path of fileset.value) {
         let page = index.pages.get(path);
         if (!page) continue;
+
+        let pageData = page.toObject(index);
         let rpage = page;
+
         let pageTasks = page.tasks.map(t => {
-            let copy = t.searchableData(rpage, index);
+            let copy = t.toObject();
+
+            // Add page data to this copy.
+            for (let [key, value] of Object.entries(pageData)) {
+                if (key in copy) continue;
+                copy[key] = value;
+            }
 
             return { id: `${rpage.path}#${t.line}`, data: copy };
         });
