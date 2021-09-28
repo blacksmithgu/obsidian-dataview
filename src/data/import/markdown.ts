@@ -271,8 +271,7 @@ export function parsePage(file: TFile, cache: MetadataCache, markdownData: Parse
     // Add task defaults; this should probably be done in the task parsing directly
     // once the parser has access to the common file metadata.
     let pageCtime = DateTime.fromMillis(file.stat.ctime);
-    let pageMtime = DateTime.fromMillis(file.stat.mtime);
-    let fixedTasks = markdownData.tasks.map(t => t.withDefaultDates(pageCtime, pageMtime));
+    let fixedTasks = markdownData.tasks.map(t => t.withDefaultDates(pageCtime, undefined));
 
     return new PageMetadata(file.path, {
         fields,
@@ -281,7 +280,7 @@ export function parsePage(file: TFile, cache: MetadataCache, markdownData: Parse
         links,
         tasks: fixedTasks,
         ctime: pageCtime,
-        mtime: pageMtime,
+        mtime: DateTime.fromMillis(file.stat.mtime),
         size: file.stat.size,
         day: findDate(file.path, fields),
     });

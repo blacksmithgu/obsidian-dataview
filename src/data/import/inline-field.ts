@@ -161,7 +161,7 @@ export function extractSpecialTaskFields(
         let anCreated = annotations.created ?? annotations.ctime ?? annotations.cday;
         if (anCreated && Values.isDate(anCreated)) result.created = result.created ?? anCreated;
 
-        let anCompleted = annotations.completed ?? annotations.comptime ?? annotations.compday;
+        let anCompleted = annotations.completion ?? annotations.comptime ?? annotations.compday;
         if (anCompleted && Values.isDate(anCompleted)) result.completed = result.completed ?? anCompleted;
 
         let anDue = annotations.due ?? annotations.duetime ?? annotations.dueday;

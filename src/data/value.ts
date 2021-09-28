@@ -56,7 +56,7 @@ export class Task {
     }
 
     /** Return a new task where the created and completed fields are assigned to the given defaults if not present. */
-    public withDefaultDates(defaultCreated: DateTime, defaultCompleted: DateTime) {
+    public withDefaultDates(defaultCreated?: DateTime, defaultCompleted?: DateTime) {
         let newTask = new Task(this);
         newTask.created = newTask.created ?? defaultCreated;
         if (newTask.completed) newTask.completion = newTask.completion ?? defaultCompleted;
