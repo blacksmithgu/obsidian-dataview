@@ -75,7 +75,8 @@ export class Task {
             real: this.real,
             blockId: this.blockId,
             subtasks: this.subtasks.map(t => t.toObject()),
-            annotated: !!this.annotations && Object.keys(this.annotations).length > 0,
+            annotated:
+                !!this.due || !!this.completion || (!!this.annotations && Object.keys(this.annotations).length > 0),
         };
 
         if (this.created) result.created = this.created;

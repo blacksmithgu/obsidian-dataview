@@ -1,11 +1,10 @@
 ```dataview
-task
-where hasInlineAnnotations
+task where annotated
 ```
 
 grouped
 ```dataview
 task
-where p 
+where p
 group by p
 ```
