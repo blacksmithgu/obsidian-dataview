@@ -71,56 +71,6 @@ describe("sort()", () => {
     });
 });
 
-// <-- regexmatch() -->
-
-test("Evaluate regexmatch()", () => {
-    expect(parseEval('regexmatch(".+", "stuff")')).toEqual(true);
-    expect(parseEval('regexmatch(".+", "")')).toEqual(false);
-    expect(parseEval('regexmatch(".*", "")')).toEqual(true);
-    expect(parseEval('regexmatch("\\w+", "m3me")')).toEqual(true);
-    expect(parseEval('regexmatch("\\s+", "  ")')).toEqual(true);
-    expect(parseEval('regexmatch("what", "what")')).toEqual(true);
-});
-
-// <-- replace() -- >
-
-test("Evaluate replace()", () => {
-    expect(parseEval('replace("hello", "h", "me")')).toEqual("meello");
-    expect(parseEval('replace("meep", "meep", "pleh")')).toEqual("pleh");
-    expect(parseEval('replace("x.z", "x.", "z$")')).toEqual("z$z");
-    expect(parseEval('replace("x.z", ".", "z")')).toEqual("xzz");
-});
-
-// <-- lower/upper() -->
-
-test("Evaluate lower()/upper()", () => {
-    expect(parseEval('lower("Hello")')).toEqual("hello");
-    expect(parseEval('lower("hello")')).toEqual("hello");
-    expect(parseEval('upper("Hello")')).toEqual("HELLO");
-    expect(parseEval('upper("hello")')).toEqual("HELLO");
-});
-
-// <-- split() -->
-
-test("Evaluate split(string, string)", () => {
-    expect(parseEval(`split("hello world", " ")`)).toEqual(parseEval(`list("hello", "world")`));
-    expect(parseEval(`split("hello world", "( )")`)).toEqual(parseEval(`list("hello", " ", "world")`));
-    expect(parseEval(`split("hello  world", "\\s+")`)).toEqual(parseEval(`list("hello", "world")`));
-    expect(parseEval(`split("hello world", "x")`)).toEqual(parseEval(`list("hello world")`));
-    expect(parseEval(`split("hello world", "( )(x)?")`)).toEqual(parseEval(`list("hello", " ", "", "world")`));
-    expect(parseEval(`split("hello there world", "(t?here)")`)).toEqual(parseEval(`list("hello ", "there", " world")`));
-    expect(parseEval(`split("hello there world", "( )(x)?")`)).toEqual(
-        parseEval(`list("hello", " ", "", "there", " ", "", "world")`)
-    );
-});
-
-test("Evaluate split(string, string, limit)", () => {
-    expect(parseEval(`split("hello world", " ", 0)`)).toEqual(parseEval(`list()`));
-    expect(parseEval(`split("hello world", " ", 1)`)).toEqual(parseEval(`list("hello")`));
-    expect(parseEval(`split("hello world", " ", 3)`)).toEqual(parseEval(`list("hello", "world")`));
-    expect(parseEval(`split("hello world", "( )", 2)`)).toEqual(parseEval(`list("hello", " ")`));
-});
-
 // <-- default() -->
 
 test("Evaluate default()", () => {
@@ -154,26 +104,6 @@ test("Evaluate 2 field extract()", () => {
         yes: "hello",
         mtime: 1,
     });
-});
-
-// <-- regexreplace() -->
-
-test("Evaluate regexreplace", () => {
-    expect(parseEval('regexreplace("yes", ".+", "no")')).toEqual("no");
-    expect(parseEval('regexreplace("yes", "y", "no")')).toEqual("noes");
-    expect(parseEval('regexreplace("yes", "yes", "no")')).toEqual("no");
-});
-
-// <-- containsword() -->
-
-describe("containsword()", () => {
-    test("single word", () => expect(parseEval('containsword("yes", "yes")')).toEqual(true));
-    test("two word", () => expect(parseEval('containsword("yes no", "no")')).toEqual(true));
-    test("negative two word", () => expect(parseEval('containsword("yes no", "maybe")')).toEqual(false));
-    test("subword", () => expect(parseEval('containsword("Hello there, chap!", "the")')).toEqual(false));
-    test("punctuation", () => expect(parseEval('containsword("Hello there, chap!", "there")')).toEqual(true));
-    test("case insensitive", () => expect(parseEval('containsword("Hello there, chap!", "hello")')).toEqual(true));
-    test("case insensitive 2", () => expect(parseEval('containsword("Hello there, chap!", "HELLO")')).toEqual(true));
 });
 
 // <-- nonnull() -->
