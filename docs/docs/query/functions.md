@@ -274,6 +274,26 @@ split("hello there world", "(t?here)") = list("hello ", "there", " world")
 split("hello there world", "( )(x)?") = list("hello", " ", "", "there", " ", "", "world")
 ```
 
+### `startswith(string, prefix)`
+
+Checks if a string starts with the given prefix.
+
+```
+startswith("yes", "ye") = true
+startswith("path/to/something", "path/") = true
+startswith("yes", "no") = false
+```
+
+### `endswith(string, suffix)`
+
+Checks if a string ends with the given suffix.
+
+```
+endswith("yes", "es") = true
+endswith("path/to/something", "something") = true
+endswith("yes", "ye") = false
+```
+
 ## Utility Functions
 
 ### `default(field, value)`

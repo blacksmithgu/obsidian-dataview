@@ -513,6 +513,16 @@ export namespace DefaultFunctions {
         .add3("string", "string", "number", (string, splitter, limit) => splitImpl(string, splitter, limit))
         .build();
 
+    export const startswith: FunctionImpl = new FunctionBuilder("startswith")
+        .add2("string", "string", (str, starting) => str.startsWith(starting))
+        .vectorize(2, [0, 1])
+        .build();
+
+    export const endswith: FunctionImpl = new FunctionBuilder("endswith")
+        .add2("string", "string", (str, ending) => str.endsWith(ending))
+        .vectorize(2, [0, 1])
+        .build();
+
     export const fdefault = new FunctionBuilder("default")
         .add2("*", "*", (v, bk) => (Values.isNull(v) ? bk : v))
         .vectorize(2, [0, 1])
@@ -639,6 +649,8 @@ export const DEFAULT_FUNCTIONS: Record<string, FunctionImpl> = {
     lower: DefaultFunctions.lower,
     upper: DefaultFunctions.upper,
     split: DefaultFunctions.split,
+    startswith: DefaultFunctions.startswith,
+    endswith: DefaultFunctions.endswith,
 
     // Date Operations.
     striptime: DefaultFunctions.striptime,
