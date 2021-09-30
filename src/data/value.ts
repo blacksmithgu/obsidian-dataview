@@ -49,9 +49,7 @@ export class Task {
     }
 
     public markdown(): string {
-        let bulletChar = `-`;
-        let stateChar = this.completed ? "x" : " ";
-        let result = `${bulletChar} [${stateChar}] ${this.text}`;
+        let result = `- [${this.completed ? "x" : " "}] ${this.text}`;
         return result;
     }
 
