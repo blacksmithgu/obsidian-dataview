@@ -59,15 +59,13 @@ export class FileImporter {
 
             for (let file of queueCopy) {
                 let workerId = this.nextWorkerId;
-                this.vault
-                    .read(file)
-                    .then(c =>
-                        this.workers[workerId].postMessage({
-                            path: file.path,
-                            contents: c,
-                            metadata: this.metadataCache.getFileCache(file),
-                        })
-                    );
+                this.vault.read(file).then(c =>
+                    this.workers[workerId].postMessage({
+                        path: file.path,
+                        contents: c,
+                        metadata: this.metadataCache.getFileCache(file),
+                    })
+                );
 
                 this.nextWorkerId = (this.nextWorkerId + 1) % this.numWorkers;
             }

@@ -285,9 +285,7 @@ export namespace DefaultFunctions {
      * Convert any value to a reasonable internal string representation. Most useful for dates, strings, numbers, and
      * so on.
      */
-    export const string = new FunctionBuilder("string")
-        .add1("*", (a, ctx) => Values.toString(a, ctx.settings))
-        .build();
+    export const string = new FunctionBuilder("string").add1("*", (a, ctx) => Values.toString(a, ctx.settings)).build();
 
     export const round = new FunctionBuilder("round")
         .add1("number", n => Math.round(n))
