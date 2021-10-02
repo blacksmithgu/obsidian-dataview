@@ -281,6 +281,14 @@ export namespace DefaultFunctions {
         .vectorize(1, [0])
         .build();
 
+    /**
+     * Convert any value to a reasonable internal string representation. Most useful for dates, strings, numbers, and
+     * so on.
+     */
+    export const string = new FunctionBuilder("string")
+        .add1("*", (a, ctx) => Values.toString(a, ctx.settings))
+        .build();
+
     export const round = new FunctionBuilder("round")
         .add1("number", n => Math.round(n))
         .add1("null", () => null)
@@ -647,6 +655,7 @@ export const DEFAULT_FUNCTIONS: Record<string, FunctionImpl> = {
     date: DefaultFunctions.date,
     dateformat: DefaultFunctions.dateformat,
     number: DefaultFunctions.number,
+    string: DefaultFunctions.string,
     object: DefaultFunctions.object,
 
     // Math Operations.

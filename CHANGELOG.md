@@ -1,3 +1,14 @@
+# 0.4.12-hotfix1
+
+Re-release of 0.4.12 that fixes an important indexing issue.
+
+- Fix #505: Use `completion` instead of `completed` when setting task completion time.
+- Fix #509: Add `startswith` / `endswith` string functions.
+- Fix #488: Add `padleft` and `padright`, and `string`.
+- Fix #506, #512: Fix date comparisons due to a bizarre date zone issue.
+
+---
+
 # 0.4.12
 
 Bugfix release following up 0.4.11 which includes a few minor function additions.

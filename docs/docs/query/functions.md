@@ -61,6 +61,18 @@ number(34) = 34
 number("hmm") = null
 ```
 
+### `string(any)`
+
+Converts any value into a "reasonable" string representation. This sometimes produces less pretty results than just directly using
+the value in a query - it is mostly useful for coercing dates, durations, numbers, and so on into strings for
+manipulation.
+
+```
+string(18) = "18"
+string(dur(8 hours)) = "8 hours"
+string(date(2021-08-15)) = "August 15th, 2021"
+```
+
 ### `link(path, [display])`
 
 Construct a link object from the given file path or name. If provided with two arguments, the second argument is the

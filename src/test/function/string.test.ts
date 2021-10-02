@@ -94,7 +94,6 @@ describe("padleft()", () => {
     test("(hello, 10)", () => expect(parseEval(`padleft("hello", 10)`)).toEqual("     hello"));
     test("(hello, 7)", () => expect(parseEval(`padleft("hello", 7)`)).toEqual("  hello"));
     test("(hello, 7, x)", () => expect(parseEval(`padleft("hello", 7, "x")`)).toEqual("xxhello"));
-    test("(, 1)", () => expect(parseEval(`padleft("", 1)`)).toEqual(" "));
 });
 
 describe("padright()", () => {
