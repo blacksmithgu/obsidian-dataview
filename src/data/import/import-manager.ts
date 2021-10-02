@@ -1,8 +1,8 @@
 /** Controls and creates Dataview file importers, allowing for asynchronous loading and parsing of files. */
 
 import { Transferable } from "data/transferable";
-import DataviewImportWorker from "web-worker:./import-impl.ts";
-import { TFile, Vault } from "obsidian";
+import DataviewImportWorker from "web-worker:./import-entry.ts";
+import { MetadataCache, TFile, Vault } from "obsidian";
 
 /** Multi-threaded file parser which debounces queues automatically. */
 export class FileImporter {
@@ -23,7 +23,7 @@ export class FileImporter {
     /** Paths -> promises waiting on the successful reload of this file. */
     pastPromises: Map<string, ((p: any) => void)[]>;
 
-    public constructor(public numWorkers: number, public vault: Vault) {
+    public constructor(public numWorkers: number, public vault: Vault, public metadataCache: MetadataCache) {
         this.workers = [];
         this.nextWorkerId = 0;
 
@@ -46,7 +46,7 @@ export class FileImporter {
             this.workers.push(worker);
         }
 
-        this.reloadHandler = window.setInterval(() => {
+        this.reloadHandler = window.setInterval(async () => {
             let queueCopy = Array.from(this.reloadQueue.values());
             this.reloadQueue.clear();
 
@@ -59,7 +59,15 @@ export class FileImporter {
 
             for (let file of queueCopy) {
                 let workerId = this.nextWorkerId;
-                this.vault.read(file).then(c => this.workers[workerId].postMessage({ path: file.path, contents: c }));
+                this.vault
+                    .read(file)
+                    .then(c =>
+                        this.workers[workerId].postMessage({
+                            path: file.path,
+                            contents: c,
+                            metadata: this.metadataCache.getFileCache(file),
+                        })
+                    );
 
                 this.nextWorkerId = (this.nextWorkerId + 1) % this.numWorkers;
             }

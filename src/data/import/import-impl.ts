@@ -1,6 +1,7 @@
 import { ParsedMarkdown, parseMarkdown } from "data/parse/markdown";
+import { CachedMetadata } from "obsidian";
 
-export function runImport(path: string, contents: string): ParsedMarkdown {
+export function runImport(path: string, contents: string, metadata: CachedMetadata): ParsedMarkdown {
     return parseMarkdown(
         path,
         contents,

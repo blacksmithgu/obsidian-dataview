@@ -173,7 +173,7 @@ export class FullIndex {
 
     /** I am not a fan of a separate "construct/initialize" step, but constructors cannot be async. */
     private async initialize() {
-        this.importer = new FileImporter(4, this.vault);
+        this.importer = new FileImporter(4, this.vault, this.metadataCache);
 
         // Prefix listens to file creation/deletion/rename, and not modifies, so we let it set up it's own listeners.
         this.prefix = await PrefixIndex.generate(this.vault, () => (this.revision += 1));
