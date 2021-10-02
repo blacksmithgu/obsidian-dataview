@@ -1,3 +1,17 @@
+# 0.4.12
+
+Bugfix release following up 0.4.11 which includes a few minor function additions.
+
+- Fix #512: Strange zone issue causing dates to not be equal.
+- Fix #506: Same as #512.
+- Fix #488: Add `padleft` / `padright` functions.
+- Fix #509: Add `startswith` and `endswith` functions.
+- Fix #505: Correctly read completion dates for tasks from `completion`.
+
+This release also includes improved testing thanks to mocking Obsidian plugin APIs!
+
+---
+
 # 0.4.11
 
 Fixes task behavior and adds "truly inline" fields!
