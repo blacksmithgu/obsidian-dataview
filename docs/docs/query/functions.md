@@ -294,6 +294,25 @@ endswith("path/to/something", "something") = true
 endswith("yes", "ye") = false
 ```
 
+### `padleft(string, length, [padding])`
+
+Pads a string up to the desired length by adding padding on the left side. If you omit the padding character, spaces
+will be used by default.
+
+```
+padleft("hello", 7) = "  hello"
+padleft("yes", 5, "!") = "!!yes"
+```
+
+### `padright(string, length, [padding])`
+
+Equivalent to `padleft`, but pads to the right instead.
+
+```
+padright("hello", 7) = "hello  "
+padright("yes", 5, "!") = "yes!!"
+```
+
 ## Utility Functions
 
 ### `default(field, value)`

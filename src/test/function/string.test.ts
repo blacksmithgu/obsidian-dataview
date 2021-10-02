@@ -87,3 +87,19 @@ describe("endswith()", () => {
     test("(yes, es)", () => expect(parseEval(`endswith("yes", "es")`)).toEqual(true));
     test("(yes, no)", () => expect(parseEval(`endswith("yes", "no")`)).toEqual(false));
 });
+
+// <-- padleft()/padright() -->
+
+describe("padleft()", () => {
+    test("(hello, 10)", () => expect(parseEval(`padleft("hello", 10)`)).toEqual("     hello"));
+    test("(hello, 7)", () => expect(parseEval(`padleft("hello", 7)`)).toEqual("  hello"));
+    test("(hello, 7, x)", () => expect(parseEval(`padleft("hello", 7, "x")`)).toEqual("xxhello"));
+    test("(, 1)", () => expect(parseEval(`padleft("", 1)`)).toEqual(" "));
+});
+
+describe("padright()", () => {
+    test("(hello, 10)", () => expect(parseEval(`padright("hello", 10)`)).toEqual("hello     "));
+    test("(hello, 7)", () => expect(parseEval(`padright("hello", 7)`)).toEqual("hello  "));
+    test("(hello, 7, x)", () => expect(parseEval(`padright("hello", 7, "x")`)).toEqual("helloxx"));
+    test("(, 1)", () => expect(parseEval(`padright("", 1)`)).toEqual(" "));
+});
