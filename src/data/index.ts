@@ -3,13 +3,12 @@ import { Result } from "api/result";
 import { DataObject } from "data/value";
 import { MetadataCache, TFile, Vault } from "obsidian";
 import { getParentFolder } from "util/normalize";
-import DataviewImportWorker from "web-worker:./import/importer.ts";
 import { PageMetadata } from "data/metadata";
-import { ParsedMarkdown, parsePage } from "data/import/markdown";
+import { ParsedMarkdown, parsePage } from "data/parse/markdown";
 import DataviewPlugin from "../main";
 import { DateTime } from "luxon";
-import { parseCsv } from "data/import/csv";
-import { Transferable } from "data/transferable";
+import { parseCsv } from "data/parse/csv";
+import { FileImporter } from "data/import/import-manager";
 
 /** A generic index which indexes variables of the form key -> value[], allowing both forward and reverse lookups. */
 export class IndexMap {
@@ -86,77 +85,6 @@ export class IndexMap {
     }
 }
 
-/** Multi-threaded file parser which debounces queues automatically. */
-export class BackgroundFileParser {
-    /** Time in milliseconds before a file is allowed to be requeued after being queued. */
-    static QUEUE_TIMEOUT = 500;
-
-    /* Background workers which do the actual file parsing. */
-    workers: Worker[];
-    /** Index of the next worker which should recieve a job. */
-    nextWorkerId: number;
-
-    /* ID for the interval which regularly checks the reload queue and reloads files. */
-    reloadHandler: number;
-    /** Paths -> files which have been queued for a reload. */
-    reloadQueue: Map<string, TFile>;
-    /** Paths -> promises for file reloads which have not yet been queued. */
-    waitingCallbacks: Map<string, ((p: any) => void)[]>;
-    /** Paths -> promises waiting on the successful reload of this file. */
-    pastPromises: Map<string, ((p: any) => void)[]>;
-
-    public constructor(public numWorkers: number, public vault: Vault) {
-        this.workers = [];
-        this.nextWorkerId = 0;
-
-        this.reloadQueue = new Map();
-        this.waitingCallbacks = new Map();
-        this.pastPromises = new Map();
-
-        for (let index = 0; index < numWorkers; index++) {
-            let worker = new DataviewImportWorker({ name: "Dataview Indexer" });
-            worker.onmessage = evt => {
-                let callbacks = this.pastPromises.get(evt.data.path);
-                let parsed = Transferable.value(evt.data.result);
-                if (callbacks && callbacks.length > 0) {
-                    for (let callback of callbacks) callback(parsed);
-                }
-
-                this.pastPromises.delete(evt.data.path);
-            };
-
-            this.workers.push(worker);
-        }
-
-        this.reloadHandler = window.setInterval(() => {
-            let queueCopy = Array.from(this.reloadQueue.values());
-            this.reloadQueue.clear();
-
-            for (let [key, value] of this.waitingCallbacks.entries()) {
-                if (this.pastPromises.has(key))
-                    this.pastPromises.set(key, this.pastPromises.get(key)?.concat(value) ?? []);
-                else this.pastPromises.set(key, value);
-            }
-            this.waitingCallbacks.clear();
-
-            for (let file of queueCopy) {
-                let workerId = this.nextWorkerId;
-                this.vault.read(file).then(c => this.workers[workerId].postMessage({ path: file.path, contents: c }));
-
-                this.nextWorkerId = (this.nextWorkerId + 1) % this.numWorkers;
-            }
-        }, BackgroundFileParser.QUEUE_TIMEOUT);
-    }
-
-    public reload<T>(file: TFile): Promise<T> {
-        this.reloadQueue.set(file.path, file);
-        return new Promise((resolve, _reject) => {
-            if (this.waitingCallbacks.has(file.path)) this.waitingCallbacks.get(file.path)?.push(resolve);
-            else this.waitingCallbacks.set(file.path, [resolve]);
-        });
-    }
-}
-
 /** Aggregate index which has several sub-indices and will initialize all of them. */
 export class FullIndex {
     /** Generate a full index from the given vault. */
@@ -196,7 +124,7 @@ export class FullIndex {
     public revision: number;
 
     /** Asynchronously parses files in the background using web workers. */
-    public backgroundParser: BackgroundFileParser;
+    public importer: FileImporter;
 
     /** Construct a new index over the given vault and metadata cache. */
     private constructor(private plugin: DataviewPlugin) {
@@ -245,7 +173,7 @@ export class FullIndex {
 
     /** I am not a fan of a separate "construct/initialize" step, but constructors cannot be async. */
     private async initialize() {
-        this.backgroundParser = new BackgroundFileParser(4, this.vault);
+        this.importer = new FileImporter(4, this.vault);
 
         // Prefix listens to file creation/deletion/rename, and not modifies, so we let it set up it's own listeners.
         this.prefix = await PrefixIndex.generate(this.vault, () => (this.revision += 1));
@@ -260,7 +188,7 @@ export class FullIndex {
 
     /** Queue a file for reloading; this is done asynchronously in the background and may take a few seconds. */
     public reload(file: TFile) {
-        this.backgroundParser.reload<ParsedMarkdown>(file).then(r => this.reloadInternal(file, r));
+        this.importer.reload<ParsedMarkdown>(file).then(r => this.reloadInternal(file, r));
     }
 
     /** "Touch" the index, incrementing the revision number and causing downstream views to reload. */

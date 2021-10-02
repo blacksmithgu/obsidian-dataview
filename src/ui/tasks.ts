@@ -1,5 +1,5 @@
 import { Vault, MarkdownRenderChild, MarkdownRenderer, Component } from "obsidian";
-import { TASK_REGEX } from "data/import/markdown";
+import { TASK_REGEX } from "data/parse/markdown";
 import { Grouping, Task } from "data/value";
 import { renderValue } from "ui/render";
 import { QuerySettings } from "settings";

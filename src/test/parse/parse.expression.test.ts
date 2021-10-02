@@ -62,9 +62,13 @@ describe("String Literals", () => {
         expect(right.value).toBe("yes");
     });
 
-    test("Parse string with emoji", () => {
+    test("Parse emoji", () => {
         expect(EXPRESSION.string.tryParse('"📷"')).toEqual("📷");
         expect(EXPRESSION.string.tryParse('"⚙️"')).toEqual("⚙️");
+    });
+
+    test("Parse string which includes emoji", () => {
+        expect(EXPRESSION.string.tryParse('"⚗️ KNOWLEDGE"')).toEqual("⚗️ KNOWLEDGE");
     });
 });
 
