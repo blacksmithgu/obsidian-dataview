@@ -14,4 +14,4 @@ for (let group of dv.pages("#book").groupBy(p => p.genre)) {
 }
 ```
 
-![Grouped Books Example](/assets/grouped-book-example.png)
+![Grouped Books Example](../../assets/grouped-book-example.png)
