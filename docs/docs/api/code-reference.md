@@ -21,8 +21,8 @@ Get page information (via `dv.page()`) for the page the script is currently exec
 
 ### `dv.pages(source)`
 
-Takes a single string argument, `source`, which is the same form as a [query language source](/query/sources).
-Returns a [data array](/api/data-array) of page objects, which are plain objects with all of the page fields as
+Takes a single string argument, `source`, which is the same form as a [query language source](../../query/sources).
+Returns a [data array](../data-array) of page objects, which are plain objects with all of the page fields as
 values.
 
 ```js
@@ -34,7 +34,7 @@ dv.pages("#yes or -#no") => all pages with tag #yes, or which DON'T have tag #no
 
 ### `dv.pagePaths(source)`
 
-As with `dv.pages`, but just returns a [data array](/api/data-array) of paths of pages that match the given source.
+As with `dv.pages`, but just returns a [data array](../data-array) of paths of pages that match the given source.
 
 ```js
 dv.pagePaths("#books") => the paths of pages with tag 'books'
