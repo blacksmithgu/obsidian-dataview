@@ -81,7 +81,7 @@ to retrieve. For example `object("yes", 1).yes = 1`.
 ### Function Calls
 
 Dataview supports various functions for manipulating data, which are described in full in the [functions
-documentation](functions). They have the general syntax `function(arg1, arg2, ...)` - i.e., `lower("yes")` or
+documentation](../functions). They have the general syntax `function(arg1, arg2, ...)` - i.e., `lower("yes")` or
 `regexmatch("text", ".+")`.
 
 ### Lambdas
