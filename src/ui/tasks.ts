@@ -2,7 +2,7 @@ import { Vault, MarkdownRenderChild, MarkdownRenderer, Component } from "obsidia
 import { TASK_REGEX } from "data/parse/markdown";
 import { Grouping, Task } from "data/value";
 import { renderValue } from "ui/render";
-import { DataviewSettings } from "settings";
+import { QuerySettings } from "settings";
 
 /** Holds DOM events for a rendered task view, including check functionality. */
 export class TaskViewLifecycle extends MarkdownRenderChild {
@@ -56,7 +56,7 @@ export async function renderTasks(
     tasks: Grouping<Task[]>,
     originFile: string,
     component: Component,
-    settings: DataviewSettings
+    settings: QuerySettings
 ) {
     switch (tasks.type) {
         case "base":
@@ -74,7 +74,7 @@ export async function renderTasks(
 }
 
 /** Render a list of tasks as a single list. */
-export async function renderTaskList(container: HTMLElement, tasks: Task[], settings: DataviewSettings) {
+export async function renderTaskList(container: HTMLElement, tasks: Task[], settings: QuerySettings) {
     let ul = container.createEl("ul", { cls: "contains-task-list" });
     for (let task of tasks) {
         let li = ul.createEl("li");
@@ -85,10 +85,10 @@ export async function renderTaskList(container: HTMLElement, tasks: Task[], sett
         }
 
         // Render the text as markdown so that bolds, links, and other things work properly.
+        // Append the task link if it is present.
         let text = task.text;
-        if (settings.taskLinkText != "" && task.link != "") {
-            text = `${task.text} [${settings.taskLinkText}](${task.link})`;
-        }
+        if (!!settings.taskLinkText && !!task.link)
+            text += " " + task.link.withDisplay(settings.taskLinkText).markdown();
 
         await MarkdownRenderer.renderMarkdown(text, li, task.path, new Component());
 

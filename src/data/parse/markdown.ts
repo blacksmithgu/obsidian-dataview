@@ -8,6 +8,7 @@ import { DateTime } from "luxon";
 import {
     CachedMetadata,
     getAllTags,
+    HeadingCache,
     MetadataCache,
     parseFrontMatterAliases,
     parseFrontMatterTags,
@@ -97,6 +98,8 @@ export function addInlineField(fields: Map<string, LiteralValue>, name: string, 
 
 /** Matches lines of the form "- [ ] <task thing>". */
 export const TASK_REGEX = /^(\s*)[-*]\s*(\[[ Xx\.]?\])?\s*([^-*].*)$/iu;
+/** Matches Obsidian block IDs, which are at the end of the line of the form ^blockid. */
+export const TASK_BLOCK_REGEX = /\^(\S+)$/;
 
 /** Return true if the given predicate is true for the task or any subtasks. */
 export function taskAny(t: Task, f: (t: Task) => boolean): boolean {
@@ -111,10 +114,16 @@ export function alast<T>(arr: Array<T>): T | undefined {
     else return undefined;
 }
 
-export const CREATED_DATE_REGEX = /\u{2795}\s*(\d{4}-\d{2}-\d{2})/u;
-export const DUE_DATE_REGEX = /[\u{1F4C5}\u{1F4C6}\u{1F5D3}]\s*(\d{4}-\d{2}-\d{2})/u;
-export const DONE_DATE_REGEX = /\u{2705}\s*(\d{4}-\d{2}-\d{2})/u;
-export const TASK_BLOCK_REGEX = /\^\S+$/;
+/** Find the header that is most immediately above the given line number. */
+export function findPreviousHeader(line: number, headers: HeadingCache[]): string | undefined {
+    if (headers.length == 0) return undefined;
+    if (headers[0].position.start.line > line) return undefined;
+
+    let index = headers.length - 1;
+    while (index >= 0 && headers[index].position.start.line > line) index--;
+
+    return headers[index].heading;
+}
 
 /**
  * A hacky approach to scanning for all tasks using regex. Does not support multiline
@@ -128,15 +137,9 @@ export function findTasksInFile(path: string, file: string, metadata: CachedMeta
         -4,
     ]);
 
-    let lineno = 0;
-    let lastHeader = "";
-
+    let lineno = -1;
     for (let line of file.replace("\r", "").split("\n")) {
         lineno += 1;
-
-        if (line.startsWith("#")) {
-            lastHeader = `#${line.replace(/^#+\s+/, "#")}`;
-        }
 
         // Check that we are actually a list element, to skip lines which obviously won't match.
         if (!line.includes("*") && !line.includes("-")) {
@@ -153,6 +156,17 @@ export function findTasksInFile(path: string, file: string, metadata: CachedMeta
             continue;
         }
 
+        // Look for block IDs on this line; if present, link to that. Otherwise, link to the nearest header
+        // and then to just the page.
+        let link = Link.file(path, false);
+        let blockMatch = TASK_BLOCK_REGEX.exec(line);
+        let lastHeader = findPreviousHeader(lineno, metadata.headings || []);
+        if (blockMatch) {
+            link = Link.block(path, blockMatch[1], false);
+        } else if (lastHeader) {
+            link = Link.header(path, lastHeader, false);
+        }
+
         // Add all inline field definitions.
         let annotations: Record<string, LiteralValue> = {};
         for (let field of extractInlineFields(line)) {
@@ -160,14 +174,6 @@ export function findTasksInFile(path: string, file: string, metadata: CachedMeta
 
             annotations[field.key] = value;
             annotations[canonicalizeVarName(field.key)] = value;
-        }
-
-        let link = path;
-        let blockMatch = TASK_BLOCK_REGEX.exec(line);
-        if (blockMatch) {
-            link += blockMatch[0];
-        } else if (lastHeader) {
-            link += lastHeader;
         }
 
         let special = extractSpecialTaskFields(line, annotations);

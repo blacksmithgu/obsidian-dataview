@@ -20,6 +20,8 @@ export class Task {
     subtasks: Task[];
     /** The block this task shows up in. */
     blockId: string;
+    /** A link which points to this task, or to the closest block that this task is contained in. */
+    link: Link;
 
     /** Additional metadata like inline annotations */
     annotations?: Record<string, LiteralValue>;
@@ -29,8 +31,6 @@ export class Task {
     due?: DateTime;
     /** Special annotation for when this task was completed. */
     completion?: DateTime;
-    /** The link to this task */
-    link: string;
 
     /** Create a task from a record. */
     public static fromObject(obj: Record<string, LiteralValue>): Task {
@@ -72,8 +72,7 @@ export class Task {
             blockId: this.blockId,
             link: this.link,
             subtasks: this.subtasks.map(t => t.toObject()),
-            annotated:
-                !!this.due || !!this.completion || (!!this.annotations && Object.keys(this.annotations).length > 0),
+            annotated: !!this.annotations && Object.keys(this.annotations).length > 0,
         };
 
         if (this.created) result.created = this.created;
@@ -179,7 +178,7 @@ export class Link {
         let result = (this.embed ? "!" : "") + "[[" + this.path;
 
         if (this.type == "header") result += "#" + this.subpath;
-        else if (this.type == "block") result += "^" + this.subpath;
+        else if (this.type == "block") result += "#^" + this.subpath;
 
         if (this.display && !this.embed) result += "|" + this.display;
         else if (!this.embed) result += "|" + getFileTitle(this.path);

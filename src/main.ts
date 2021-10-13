@@ -460,7 +460,7 @@ class DataviewSettingsTab extends PluginSettingTab {
         this.containerEl.createEl("h3", { text: "Task Settings" });
 
         new Setting(this.containerEl)
-            .setName("Render task links as")
+            .setName("Render Task Links As")
             .setDesc("Text used when linking from a task to its source note. Leave empty to remove links.")
             .addText(text =>
                 text

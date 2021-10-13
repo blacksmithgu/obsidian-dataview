@@ -5,6 +5,8 @@
 export interface QuerySettings {
     /** What to render 'null' as in tables. Defaults to '-'. */
     renderNullAs: string;
+    /** How to render task links. If empty, will not render task links. */
+    taskLinkText: string;
     /** If true, render a modal which shows no results were returned. */
     warnOnEmptyResult: boolean;
     /** The interval that views are refreshed, by default. */
@@ -24,6 +26,7 @@ export interface QuerySettings {
 
 export const DEFAULT_QUERY_SETTINGS: QuerySettings = {
     renderNullAs: "\\-",
+    taskLinkText: "🔗",
     warnOnEmptyResult: true,
     refreshInterval: 1000,
     defaultDateFormat: "MMMM dd, yyyy",
@@ -49,8 +52,6 @@ export interface DataviewSettings extends QuerySettings {
     enableInlineDataviewJs: boolean;
     /** Enable or disable rendering inline fields prettily. */
     prettyRenderInlineFields: boolean;
-    /** Text used for task links */
-    taskLinkText: string;
 
     // Internal properties //
 
@@ -67,7 +68,6 @@ export const DEFAULT_SETTINGS: DataviewSettings = {
         enableDataviewJs: false,
         enableInlineDataviewJs: false,
         prettyRenderInlineFields: true,
-        taskLinkText: "🔗",
         schemaVersion: 1,
     },
 };
