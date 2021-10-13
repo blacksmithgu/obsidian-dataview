@@ -5,6 +5,8 @@
 export interface QuerySettings {
     /** What to render 'null' as in tables. Defaults to '-'. */
     renderNullAs: string;
+    /** Where to render task links - the start of the task or the end. **/
+    taskLinkLocation: "start" | "end" | "none";
     /** How to render task links. If empty, will not render task links. */
     taskLinkText: string;
     /** If true, render a modal which shows no results were returned. */
@@ -26,6 +28,7 @@ export interface QuerySettings {
 
 export const DEFAULT_QUERY_SETTINGS: QuerySettings = {
     renderNullAs: "\\-",
+    taskLinkLocation: "end",
     taskLinkText: "🔗",
     warnOnEmptyResult: true,
     refreshInterval: 1000,

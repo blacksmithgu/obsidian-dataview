@@ -358,9 +358,10 @@ class DataviewSettingsTab extends PluginSettingTab {
             .setName("Warn on Empty Result")
             .setDesc("If set, queries which return 0 results will render a warning message.")
             .addToggle(toggle =>
-                toggle
-                    .setValue(this.plugin.settings.warnOnEmptyResult)
-                    .onChange(async value => await this.plugin.updateSettings({ warnOnEmptyResult: value }))
+                toggle.setValue(this.plugin.settings.warnOnEmptyResult).onChange(async value => {
+                    await this.plugin.updateSettings({ warnOnEmptyResult: value });
+                    this.plugin.index.touch();
+                })
             );
 
         new Setting(this.containerEl)
@@ -370,7 +371,10 @@ class DataviewSettingsTab extends PluginSettingTab {
                 text
                     .setPlaceholder("-")
                     .setValue(this.plugin.settings.renderNullAs)
-                    .onChange(async value => await this.plugin.updateSettings({ renderNullAs: value }))
+                    .onChange(async value => {
+                        await this.plugin.updateSettings({ renderNullAs: value });
+                        this.plugin.index.touch();
+                    })
             );
 
         new Setting(this.containerEl)
@@ -406,6 +410,8 @@ class DataviewSettingsTab extends PluginSettingTab {
                                 DateTime.now().toFormat(value, { locale: currentLocale() })
                         );
                         await this.plugin.updateSettings({ defaultDateFormat: value });
+
+                        this.plugin.index.touch();
                     })
             );
 
@@ -427,6 +433,8 @@ class DataviewSettingsTab extends PluginSettingTab {
                                 DateTime.now().toFormat(value, { locale: currentLocale() })
                         );
                         await this.plugin.updateSettings({ defaultDateTimeFormat: value });
+
+                        this.plugin.index.touch();
                     })
             );
 
@@ -441,7 +449,10 @@ class DataviewSettingsTab extends PluginSettingTab {
                 text
                     .setPlaceholder("File")
                     .setValue(this.plugin.settings.tableIdColumnName)
-                    .onChange(async value => await this.plugin.updateSettings({ tableIdColumnName: value }))
+                    .onChange(async value => {
+                        await this.plugin.updateSettings({ tableIdColumnName: value });
+                        this.plugin.index.touch();
+                    })
             );
 
         new Setting(this.containerEl)
@@ -454,18 +465,37 @@ class DataviewSettingsTab extends PluginSettingTab {
                 text
                     .setPlaceholder("Group")
                     .setValue(this.plugin.settings.tableGroupColumnName)
-                    .onChange(async value => await this.plugin.updateSettings({ tableGroupColumnName: value }))
+                    .onChange(async value => {
+                        await this.plugin.updateSettings({ tableGroupColumnName: value });
+                        this.plugin.index.touch();
+                    })
             );
 
         this.containerEl.createEl("h3", { text: "Task Settings" });
 
         new Setting(this.containerEl)
+            .setName("Task Link Type")
+            .setDesc("'Start' and 'End' place a symbol link in their respective location; 'None' disables linking.")
+            .addDropdown(dropdown =>
+                dropdown
+                    .addOption("start", "Start")
+                    .addOption("end", "End")
+                    .addOption("none", "None")
+                    .setValue(this.plugin.settings.taskLinkLocation)
+                    .onChange(async value => {
+                        await this.plugin.updateSettings({ taskLinkLocation: value as any });
+                        this.plugin.index.touch();
+                    })
+            );
+
+        new Setting(this.containerEl)
             .setName("Render Task Links As")
-            .setDesc("Text used when linking from a task to its source note. Leave empty to remove links.")
+            .setDesc("Text used when linking from a task to its source note in the 'Start' and 'End' link types.")
             .addText(text =>
-                text
-                    .setValue(this.plugin.settings.taskLinkText)
-                    .onChange(async value => await this.plugin.updateSettings({ taskLinkText: value.trim() }))
+                text.setValue(this.plugin.settings.taskLinkText).onChange(async value => {
+                    await this.plugin.updateSettings({ taskLinkText: value.trim() });
+                    this.plugin.index.touch();
+                })
             );
     }
 }
@@ -538,7 +568,7 @@ class EnsureInlinePredicateRenderer extends MarkdownRenderChild {
     }
 
     async onload() {
-        this.container.innerHTML = "<Indices loading>";
+        this.container.innerHTML = "(index loading)";
 
         // Wait for the given predicate to finally pass...
         await waitFor(
@@ -856,7 +886,7 @@ class DataviewInlineJSRenderer extends MarkdownRenderChild {
     async render() {
         if (!this.settings.enableDataviewJs || !this.settings.enableInlineDataviewJs) {
             let temp = document.createElement("span");
-            temp.innerText = "<disabled; enable in settings>";
+            temp.innerText = "(disabled; enable in settings)";
             this.target.replaceWith(temp);
             this.target = temp;
             return;
@@ -904,7 +934,7 @@ async function replaceInlineFields(
     settings: QuerySettings
 ): Promise<Component | undefined> {
     let inlineFields = extractInlineFields(container.innerHTML);
-    if (!inlineFields) return undefined;
+    if (inlineFields.length == 0) return undefined;
 
     let component = new MarkdownRenderChild(container);
     ctx.addChild(component);

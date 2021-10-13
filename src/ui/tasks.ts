@@ -84,12 +84,22 @@ export async function renderTaskList(container: HTMLElement, tasks: Task[], sett
             if (task.completed) li.addClass("is-checked");
         }
 
-        // Render the text as markdown so that bolds, links, and other things work properly.
         // Append the task link if it is present.
         let text = task.text;
-        if (!!settings.taskLinkText && !!task.link)
-            text += " " + task.link.withDisplay(settings.taskLinkText).markdown();
+        switch (settings.taskLinkLocation) {
+            case "start":
+                if (!settings.taskLinkText) break;
+                text = task.link.withDisplay(settings.taskLinkText).markdown() + " " + text;
+                break;
+            case "end":
+                if (!settings.taskLinkText) break;
+                text += " " + task.link.withDisplay(settings.taskLinkText).markdown();
+                break;
+            default:
+                break;
+        }
 
+        // Render the text as markdown so that bolds, links, and other things work properly.
         await MarkdownRenderer.renderMarkdown(text, li, task.path, new Component());
 
         // Unwrap the paragraph element that is created.
