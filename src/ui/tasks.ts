@@ -144,7 +144,7 @@ export async function setTaskCheckedInFile(
 
     if (splitText.length < taskLine) return;
 
-    let match = TASK_REGEX.exec(splitText[taskLine - 1]);
+    let match = TASK_REGEX.exec(splitText[taskLine]);
     if (!match) return;
 
     let foundText = match[3];
@@ -158,13 +158,13 @@ export async function setTaskCheckedInFile(
     if (wasChecked != foundCompleted) return;
 
     if (check) {
-        splitText[taskLine - 1] = splitText[taskLine - 1]
+        splitText[taskLine] = splitText[taskLine]
             .replace("- [ ]", "- [x]")
             .replace("- []", "- [x]")
             .replace("-[]", "- [x]")
             .replace("-[ ]", "- [x]");
     } else {
-        splitText[taskLine - 1] = splitText[taskLine - 1]
+        splitText[taskLine] = splitText[taskLine]
             .replace("- [X]", "- [ ]")
             .replace("-[X]", "- [ ]")
             .replace("- [x]", "- [ ]")
