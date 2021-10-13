@@ -12,3 +12,7 @@
 * [ ] another important thing [p::1]
 
 #page-tag
+
+## Section
+- [ ] additional task with a block id ^block-id
+- [ ] additional task, should link to header

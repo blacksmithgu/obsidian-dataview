@@ -49,6 +49,8 @@ export interface DataviewSettings extends QuerySettings {
     enableInlineDataviewJs: boolean;
     /** Enable or disable rendering inline fields prettily. */
     prettyRenderInlineFields: boolean;
+    /** Text used for task links */
+    taskLinkText: string;
 
     // Internal properties //
 
@@ -65,6 +67,7 @@ export const DEFAULT_SETTINGS: DataviewSettings = {
         enableDataviewJs: false,
         enableInlineDataviewJs: false,
         prettyRenderInlineFields: true,
+        taskLinkText: "🔗",
         schemaVersion: 1,
     },
 };

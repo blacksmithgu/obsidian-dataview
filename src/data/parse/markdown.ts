@@ -5,7 +5,14 @@ import { PageMetadata } from "data/metadata";
 import { LiteralValue, Values, Task, Link } from "data/value";
 import { EXPRESSION } from "expression/parse";
 import { DateTime } from "luxon";
-import { getAllTags, MetadataCache, parseFrontMatterAliases, parseFrontMatterTags, TFile } from "obsidian";
+import {
+    CachedMetadata,
+    getAllTags,
+    MetadataCache,
+    parseFrontMatterAliases,
+    parseFrontMatterTags,
+    TFile,
+} from "obsidian";
 import { canonicalizeVarName, extractDate, getFileTitle } from "util/normalize";
 
 export interface ParsedMarkdown {
@@ -104,11 +111,16 @@ export function alast<T>(arr: Array<T>): T | undefined {
     else return undefined;
 }
 
+export const CREATED_DATE_REGEX = /\u{2795}\s*(\d{4}-\d{2}-\d{2})/u;
+export const DUE_DATE_REGEX = /[\u{1F4C5}\u{1F4C6}\u{1F5D3}]\s*(\d{4}-\d{2}-\d{2})/u;
+export const DONE_DATE_REGEX = /\u{2705}\s*(\d{4}-\d{2}-\d{2})/u;
+export const TASK_BLOCK_REGEX = /\^\S+$/;
+
 /**
  * A hacky approach to scanning for all tasks using regex. Does not support multiline
  * tasks yet (though can probably be retro-fitted to do so).
  */
-export function findTasksInFile(path: string, file: string): Task[] {
+export function findTasksInFile(path: string, file: string, metadata: CachedMetadata): Task[] {
     // Dummy top of the stack that we'll just never get rid of.
     let stack: [Task, number][] = [];
     stack.push([
@@ -117,8 +129,14 @@ export function findTasksInFile(path: string, file: string): Task[] {
     ]);
 
     let lineno = 0;
+    let lastHeader = "";
+
     for (let line of file.replace("\r", "").split("\n")) {
         lineno += 1;
+
+        if (line.startsWith("#")) {
+            lastHeader = `#${line.replace(/^#+\s+/, "#")}`;
+        }
 
         // Check that we are actually a list element, to skip lines which obviously won't match.
         if (!line.includes("*") && !line.includes("-")) {
@@ -144,6 +162,14 @@ export function findTasksInFile(path: string, file: string): Task[] {
             annotations[canonicalizeVarName(field.key)] = value;
         }
 
+        let link = path;
+        let blockMatch = TASK_BLOCK_REGEX.exec(line);
+        if (blockMatch) {
+            link += blockMatch[0];
+        } else if (lastHeader) {
+            link += lastHeader;
+        }
+
         let special = extractSpecialTaskFields(line, annotations);
 
         let indent = match[1].replace("\t", "    ").length;
@@ -156,6 +182,7 @@ export function findTasksInFile(path: string, file: string): Task[] {
             real: isReal,
             path,
             line: lineno,
+            link,
             subtasks: [],
             annotations,
             created: special.created,
@@ -175,7 +202,12 @@ export function findTasksInFile(path: string, file: string): Task[] {
     return stack[0][0].subtasks.filter(t => taskAny(t, st => st.real));
 }
 
-export function parseMarkdown(path: string, contents: string, inlineRegex: RegExp): ParsedMarkdown {
+export function parseMarkdown(
+    path: string,
+    metadata: CachedMetadata,
+    contents: string,
+    inlineRegex: RegExp
+): ParsedMarkdown {
     let fields: Map<string, LiteralValue[]> = new Map();
 
     // Trawl through file contents to locate custom inline file content...
@@ -220,7 +252,7 @@ export function parseMarkdown(path: string, contents: string, inlineRegex: RegEx
     }
 
     // And extract tasks...
-    let tasks = findTasksInFile(path, contents);
+    let tasks = findTasksInFile(path, contents, metadata);
 
     return { fields, tasks };
 }
