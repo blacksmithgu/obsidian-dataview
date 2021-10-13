@@ -23,10 +23,11 @@ import { asyncTryOrPropogate, tryOrPropogate } from "util/normalize";
 import { waitFor } from "util/concurrency";
 import { asyncEvalInContext, makeApiContext } from "api/inline-api";
 import { DataviewApi } from "api/plugin-api";
-import { DataviewSettings, DEFAULT_QUERY_SETTINGS, DEFAULT_SETTINGS } from "settings";
+import { DataviewSettings, DEFAULT_QUERY_SETTINGS, DEFAULT_SETTINGS, QuerySettings } from "settings";
 import { Groupings, Link, LiteralValue, Task } from "data/value";
 import { DateTime } from "luxon";
 import { currentLocale } from "util/locale";
+import { extractInlineFields, parseInlineValue } from "data/parse/inline-field";
 
 export default class DataviewPlugin extends Plugin {
     /** Plugin-wide default settigns. */
@@ -182,6 +183,19 @@ export default class DataviewPlugin extends Plugin {
                 }
             }
         });
+
+        // Dataview inline-inline query fancy rendering. Runs at a low priority; should apply to Dataview views.
+        let inlineInlineRenderer: MarkdownPostProcessor = async (el, ctx) => {
+            // Allow for lame people to disable the pretty rendering.
+            if (!this.settings.prettyRenderInlineFields) return;
+
+            // Handle p, header elements explicitly (opt-in rather than opt-out for now).
+            for (let p of el.findAllSelf("p,h1,h2,h3,h4,h5,h6,li,span"))
+                await replaceInlineFields(ctx, p, ctx.sourcePath, this.settings);
+        };
+        inlineInlineRenderer.sortOrder = -100;
+
+        this.registerMarkdownPostProcessor(inlineInlineRenderer);
     }
 
     /**
@@ -241,6 +255,7 @@ export default class DataviewPlugin extends Plugin {
         await this.saveData(this.settings);
     }
 
+    /** Utility function which wraps a post processor with something that waits for the dataview index to be available. */
     private wrapWithEnsureIndex(
         ctx: MarkdownPostProcessorContext,
         container: HTMLElement,
@@ -254,6 +269,7 @@ export default class DataviewPlugin extends Plugin {
         );
     }
 
+    /** Utility function which wraps a post processor with something that waits for the dataview index to be available. */
     private wrapInlineWithEnsureIndex(
         ctx: MarkdownPostProcessorContext,
         container: HTMLElement,
@@ -266,8 +282,6 @@ export default class DataviewPlugin extends Plugin {
             success
         );
     }
-
-    // User-facing utility functions.
 
     /** Call the given callback when the dataview API has initialized. */
     public withApi(callback: (api: DataviewApi) => void) {
@@ -282,8 +296,39 @@ class DataviewSettingsTab extends PluginSettingTab {
         super(app, plugin);
     }
 
-    display(): void {
+    public display(): void {
         this.containerEl.empty();
+        this.containerEl.createEl("h2", { text: "General Settings" });
+
+        new Setting(this.containerEl)
+            .setName("Enable JavaScript Queries")
+            .setDesc("Enable or disable executing DataviewJS queries.")
+            .addToggle(toggle =>
+                toggle
+                    .setValue(this.plugin.settings.enableDataviewJs)
+                    .onChange(async value => await this.plugin.updateSettings({ enableDataviewJs: value }))
+            );
+
+        new Setting(this.containerEl)
+            .setName("Enable Inline JavaScript Queries")
+            .setDesc(
+                "Enable or disable executing inline DataviewJS queries. Requires that DataviewJS queries are enabled."
+            )
+            .addToggle(toggle =>
+                toggle
+                    .setValue(this.plugin.settings.enableInlineDataviewJs)
+                    .onChange(async value => await this.plugin.updateSettings({ enableInlineDataviewJs: value }))
+            );
+
+        new Setting(this.containerEl)
+            .setName("Enable Inline Field Highlighting")
+            .setDesc("Enables or disables visual highlighting / pretty rendering for inline fields.")
+            .addToggle(toggle =>
+                toggle
+                    .setValue(this.plugin.settings.prettyRenderInlineFields)
+                    .onChange(async value => await this.plugin.updateSettings({ prettyRenderInlineFields: value }))
+            );
+
         this.containerEl.createEl("h2", { text: "Codeblock Settings" });
 
         new Setting(this.containerEl)
@@ -306,17 +351,17 @@ class DataviewSettingsTab extends PluginSettingTab {
                     .onChange(async value => await this.plugin.updateSettings({ inlineJsQueryPrefix: value }))
             );
 
-        new Setting(this.containerEl)
-            .setName("Enable JavaScript Queries")
-            .setDesc("Enable or disable executing DataviewJS queries.")
-            .addToggle(toggle =>
-                toggle
-                    .setValue(this.plugin.settings.enableDataviewJs)
-                    .onChange(async value => await this.plugin.updateSettings({ enableDataviewJs: value }))
-            );
-
         this.containerEl.createEl("h2", { text: "View Settings" });
         this.containerEl.createEl("h3", { text: "General" });
+
+        new Setting(this.containerEl)
+            .setName("Warn on Empty Result")
+            .setDesc("If set, queries which return 0 results will render a warning message.")
+            .addToggle(toggle =>
+                toggle
+                    .setValue(this.plugin.settings.warnOnEmptyResult)
+                    .onChange(async value => await this.plugin.updateSettings({ warnOnEmptyResult: value }))
+            );
 
         new Setting(this.containerEl)
             .setName("Render Null As")
@@ -326,15 +371,6 @@ class DataviewSettingsTab extends PluginSettingTab {
                     .setPlaceholder("-")
                     .setValue(this.plugin.settings.renderNullAs)
                     .onChange(async value => await this.plugin.updateSettings({ renderNullAs: value }))
-            );
-
-        new Setting(this.containerEl)
-            .setName("Warn on Empty Result")
-            .setDesc("If set, queries which return 0 results will render a warning message.")
-            .addToggle(toggle =>
-                toggle
-                    .setValue(this.plugin.settings.warnOnEmptyResult)
-                    .onChange(async value => await this.plugin.updateSettings({ warnOnEmptyResult: value }))
             );
 
         new Setting(this.containerEl)
@@ -758,7 +794,10 @@ class DataviewJSRenderer extends MarkdownRenderChild {
     async render() {
         if (!this.settings.enableDataviewJs) {
             this.containerEl.innerHTML = "";
-            renderErrorPre(this.container, "Dataview JS queries are disabled.");
+            renderErrorPre(
+                this.container,
+                "Dataview JS queries are disabled. You can enable them in the Dataview settings."
+            );
             return;
         }
 
@@ -804,9 +843,9 @@ class DataviewInlineJSRenderer extends MarkdownRenderChild {
     }
 
     async render() {
-        if (!this.settings.enableDataviewJs) {
+        if (!this.settings.enableDataviewJs || !this.settings.enableInlineDataviewJs) {
             let temp = document.createElement("span");
-            temp.innerText = "<disabled>";
+            temp.innerText = "<disabled; enable in settings>";
             this.target.replaceWith(temp);
             this.target = temp;
             return;
@@ -831,6 +870,7 @@ class DataviewInlineJSRenderer extends MarkdownRenderChild {
     }
 }
 
+/** Adds a simple handler which runs the given action on any index update. */
 function onIndexChange(index: FullIndex, interval: number, component: Component, action: () => any) {
     let lastReload = index.revision;
 
@@ -843,4 +883,40 @@ function onIndexChange(index: FullIndex, interval: number, component: Component,
             }
         }, interval)
     );
+}
+
+/** Replaces raw textual inline fields in text containers with pretty HTML equivalents. */
+async function replaceInlineFields(
+    ctx: MarkdownPostProcessorContext,
+    container: HTMLElement,
+    originFile: string,
+    settings: QuerySettings
+): Promise<Component | undefined> {
+    let inlineFields = extractInlineFields(container.innerHTML);
+    if (!inlineFields) return undefined;
+
+    let component = new MarkdownRenderChild(container);
+    ctx.addChild(component);
+
+    let result = container.innerHTML;
+    for (let x = inlineFields.length - 1; x >= 0; x--) {
+        let field = inlineFields[x];
+        let renderContainer = document.createElement("span");
+        renderContainer.addClasses(["dataview", "inline-field"]);
+
+        // Block inline fields render the key, parenthesis ones do not.
+        if (field.wrapping == "[") {
+            renderContainer.createSpan({ text: field.key, cls: ["dataview", "inline-field-key"] });
+            let valueContainer = renderContainer.createSpan({ cls: ["dataview", "inline-field-value"] });
+            await renderValue(parseInlineValue(field.value), valueContainer, originFile, component, settings, false);
+        } else {
+            let valueContainer = renderContainer.createSpan({ cls: ["dataview", "inline-field-standalone-value"] });
+            await renderValue(parseInlineValue(field.value), valueContainer, originFile, component, settings, false);
+        }
+
+        result = result.slice(0, field.start) + renderContainer.outerHTML + result.slice(field.end);
+    }
+
+    container.innerHTML = result;
+    return component;
 }
