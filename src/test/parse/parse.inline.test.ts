@@ -101,6 +101,12 @@ describe("Inline Inline Edge Cases", () => {
         expect(result[0].key).toEqual("key!");
         expect(result[0].value).toEqual("\\[value");
     });
+
+    test("Large Leading Whitespace", () => {
+        let result = extractInlineFields("      - [ ] Huh! [p:: 1]");
+        expect(result[0].key).toEqual("p");
+        expect(result[0].value).toEqual("1");
+    });
 });
 
 describe("Inline Inline With HTML", () => {
