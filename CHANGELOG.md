@@ -1,3 +1,14 @@
+# 0.4.14
+
+Small bugfix release.
+
+- Fixes inline field evaluation when using the new fancy highlighting.
+- You can now configure whether task links should show up at the beginning or end of the task (or just disable them)
+  in the "Task Link Location" setting.
+- Most setting updates will immediately be applied to existing Dataviews.
+
+---
+
 # 0.4.13
 
 Bugfix release which adds fancy rendering to inline-inline fields and includes a few bugfixes.
