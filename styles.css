@@ -38,3 +38,34 @@
 .dataview.result-group {
     padding-left: 8px;
 }
+
+/** Inline Field Rendering. */
+
+.dataview.inline-field-key {
+    border-top-left-radius: 250px;
+    border-bottom-left-radius: 250px;
+    padding-left: 16px;
+    padding-right: 8px;
+    font-family: var(--font-monospace);
+    background-color: var(--background-inline-code);
+    color: var(--text-nav-selected);
+}
+
+.dataview.inline-field-value {
+    border-top-right-radius: 250px;
+    border-bottom-right-radius: 250px;
+    padding-left: 8px;
+    padding-right: 16px;
+    font-family: var(--font-monospace);
+    background-color: var(--background-tag);
+    color: var(--text-nav-selected);
+}
+
+.dataview.inline-field-standalone-value {
+    border-radius: 250px;
+    padding-left: 16px;
+    padding-right: 16px;
+    font-family: var(--font-monospace);
+    background-color: var(--background-tag);
+    color: var(--text-nav-selected);
+}

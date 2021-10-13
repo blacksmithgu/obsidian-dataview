@@ -209,6 +209,13 @@ all(false, false) = false
 
 Returns `true` if NONE of the values in the array are truthy.
 
+```
+none([]) = true
+none([false, false]) = true
+none([false, true]) = false
+none([1, 2, 3]) = false
+```
+
 ### `join(array)`
 
 Joins elements in an array into a single string (i.e., rendering them all on the same line). If provided with a second
@@ -219,6 +226,24 @@ join(list(1, 2, 3)) = "1, 2, 3"
 join(list(1, 2, 3), " ") = "1 2 3"
 join(6) = "6"
 join(list()) = ""
+```
+
+### `filter(array, predicate)`
+
+Filters elements in an array according to the predicate, returning a new list of the elements which matched.
+
+```
+filter([1, 2, 3], (x) => x >= 2) = [2, 3]
+filter(["yes", "no", "yas"], (x) => startswith(x, "y")) = ["yes", "yas"]
+```
+
+### `map(array, func)`
+
+Applies the function to each element in the array, returning a list of the mapped results.
+
+```
+map([1, 2, 3], (x) => x + 2) = [3, 4, 5]
+map(["yes", "no"], (x) => x + "?") = ["yes?", "no?"]
 ```
 
 ---

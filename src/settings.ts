@@ -45,6 +45,10 @@ export interface DataviewSettings extends QuerySettings {
     inlineJsQueryPrefix: string;
     /** Enable or disable executing DataviewJS queries. */
     enableDataviewJs: boolean;
+    /** Enable or disable executing inline DataviewJS queries. */
+    enableInlineDataviewJs: boolean;
+    /** Enable or disable rendering inline fields prettily. */
+    prettyRenderInlineFields: boolean;
     /** Text used for task links */
     taskLinkText: string;
 
@@ -60,7 +64,9 @@ export const DEFAULT_SETTINGS: DataviewSettings = {
     ...{
         inlineQueryPrefix: "=",
         inlineJsQueryPrefix: "$=",
-        enableDataviewJs: true,
+        enableDataviewJs: false,
+        enableInlineDataviewJs: false,
+        prettyRenderInlineFields: true,
         taskLinkText: "🔗",
         schemaVersion: 1,
     },

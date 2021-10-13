@@ -29,8 +29,12 @@ export async function renderCompactMarkdown(
     let subcontainer = container.createSpan();
     await MarkdownRenderer.renderMarkdown(markdown, subcontainer, sourcePath, component);
 
-    if (subcontainer.children.length == 1 && subcontainer.querySelector("p")) {
-        subcontainer.innerHTML = subcontainer.querySelector("p")?.innerHTML ?? "";
+    let paragraph = subcontainer.querySelector("p");
+    if (subcontainer.children.length == 1 && paragraph) {
+        while (paragraph.firstChild) {
+            subcontainer.appendChild(paragraph.firstChild);
+        }
+        subcontainer.removeChild(paragraph);
     }
 }
 

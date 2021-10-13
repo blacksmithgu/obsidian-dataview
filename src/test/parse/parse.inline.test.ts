@@ -102,3 +102,11 @@ describe("Inline Inline Edge Cases", () => {
         expect(result[0].value).toEqual("\\[value");
     });
 });
+
+describe("Inline Inline With HTML", () => {
+    test("Link", () => {
+        let result = extractInlineFields(`[link:: <a href="Page">Value</a>]`);
+        expect(result[0].key).toEqual("link");
+        expect(result[0].value).toEqual(`<a href="Page">Value</a>`);
+    });
+});
