@@ -1,6 +1,6 @@
 {
   "name": "obsidian-dataview",
-  "version": "0.4.12-hotfix1",
+  "version": "0.4.13",
   "description": "Advanced data views for Obsidian.md.",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",

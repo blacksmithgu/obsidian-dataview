@@ -1,3 +1,37 @@
+# 0.4.13
+
+Bugfix release which adds fancy rendering to inline-inline fields and includes a few bugfixes.
+
+## Pretty Inline Fields
+
+Inline fields of the form `[key:: value]` will now be rendered with fancy new HTML! By default, they are rendered with
+both the key and value. You can only render the value using parenthesis instead: `(key:: value)`. You can disable
+this feature in the configuration.
+
+Full-line inline fields (that Dataview has supported for a long time) will gain similar rendering support soon; in the
+meanwhile, give the new syntax a try!
+
+### Task Linking
+
+Tasks now render with a link to the page/section that they are defined in, making `GROUP BY` and custom task
+editing easier to do:
+
+- [ ] A Task. 🔗
+- [ ] Another Task. 🔗
+    - [ ] Some Random Subtask. 🔗
+
+You can configure the symbol for the link or disable it alltogether.
+
+### Improving DataviewJS Posture
+
+I am currently actively looking into improving DataviewJS sandboxing and general security posture. As a first small step
+in this, I have made DataviewJS opt-in instead of opt-out, and added a separate control for Inline DataviewJS. You may
+need to re-enable it in your settings if you use it.
+
+More improvements and better JavaScript sandboxing will follow.
+
+---
+
 # 0.4.12-hotfix1
 
 Re-release of 0.4.12 that fixes an important indexing issue.
