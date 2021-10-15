@@ -8,8 +8,6 @@ import {
     Setting,
     Component,
     MarkdownPostProcessor,
-    TAbstractFile,
-    TFile,
 } from "obsidian";
 import { renderErrorPre, renderList, renderTable, renderValue } from "ui/render";
 import { FullIndex } from "data/index";
@@ -20,7 +18,6 @@ import { parseField } from "expression/parse";
 import { parseQuery } from "query/parse";
 import { executeInline, executeList, executeTable, executeTask } from "query/engine";
 import { asyncTryOrPropogate, tryOrPropogate } from "util/normalize";
-import { waitFor } from "util/concurrency";
 import { asyncEvalInContext, makeApiContext } from "api/inline-api";
 import { DataviewApi } from "api/plugin-api";
 import { DataviewSettings, DEFAULT_QUERY_SETTINGS, DEFAULT_SETTINGS, QuerySettings } from "settings";
@@ -35,35 +32,16 @@ export default class DataviewPlugin extends Plugin {
 
     /** The index that stores all dataview data. */
     public index: FullIndex;
-
-    /**
-     * The API for other plugins to access dataview functionality. Initialized once the index has been initalized,
-     * so may be null when the plugin is first initializing.
-     *
-     * TODO: JavaScript async a little annoying w/o multi-threading; how do you verify it exists?
-     */
+    /** External-facing plugin API. */
     public api: DataviewApi;
-
-    public trigger(name: "dataview:metadata-change", op: "rename", file: TAbstractFile, oldPath: string): void;
-    public trigger(name: "dataview:metadata-change", op: "delete" | "update", file: TFile): void;
-    public trigger(name: "dataview:api-ready", api: DataviewApi): void;
-    public trigger(name: string, ...data: any[]): void {
-        this.app.metadataCache.trigger(name, ...data);
-    }
 
     async onload() {
         // Settings initialization; write defaults first time around.
         this.settings = Object.assign(DEFAULT_SETTINGS, (await this.loadData()) ?? {});
-
         this.addSettingTab(new DataviewSettingsTab(this.app, this));
 
-        console.log("Dataview: Version 0.4.x Loaded");
-
-        if (!this.app.workspace.layoutReady) {
-            this.app.workspace.onLayoutReady(async () => this.prepareIndexes());
-        } else {
-            this.prepareIndexes();
-        }
+        this.index = FullIndex.create(this.app.vault, this.app.metadataCache, this.app.metadataCache);
+        this.api = new DataviewApi(this.app, this.index, this.settings);
 
         // Dataview query language code blocks.
         this.registerHighPriorityCodeblockProcessor("dataview", async (source: string, el, ctx) => {
@@ -79,39 +57,24 @@ export default class DataviewPlugin extends Plugin {
             switch (query.header.type) {
                 case "task":
                     ctx.addChild(
-                        this.wrapWithEnsureIndex(
-                            ctx,
+                        new DataviewTaskRenderer(
+                            query as Query,
                             el,
-                            () =>
-                                new DataviewTaskRenderer(
-                                    query as Query,
-                                    el,
-                                    this.index,
-                                    ctx.sourcePath,
-                                    this.app.vault,
-                                    this.settings
-                                )
+                            this.index,
+                            ctx.sourcePath,
+                            this.app.vault,
+                            this.settings
                         )
                     );
                     break;
                 case "list":
                     ctx.addChild(
-                        this.wrapWithEnsureIndex(
-                            ctx,
-                            el,
-                            () =>
-                                new DataviewListRenderer(query as Query, el, this.index, ctx.sourcePath, this.settings)
-                        )
+                        new DataviewListRenderer(query as Query, el, this.index, ctx.sourcePath, this.settings)
                     );
                     break;
                 case "table":
                     ctx.addChild(
-                        this.wrapWithEnsureIndex(
-                            ctx,
-                            el,
-                            () =>
-                                new DataviewTableRenderer(query as Query, el, this.index, ctx.sourcePath, this.settings)
-                        )
+                        new DataviewTableRenderer(query as Query, el, this.index, ctx.sourcePath, this.settings)
                     );
                     break;
             }
@@ -119,13 +82,7 @@ export default class DataviewPlugin extends Plugin {
 
         // DataviewJS codeblocks.
         this.registerHighPriorityCodeblockProcessor("dataviewjs", async (source: string, el, ctx) => {
-            ctx.addChild(
-                this.wrapWithEnsureIndex(
-                    ctx,
-                    el,
-                    () => new DataviewJSRenderer(source, el, this.app, this.index, ctx.sourcePath, this.settings)
-                )
-            );
+            ctx.addChild(new DataviewJSRenderer(source, el, this.app, this.index, ctx.sourcePath, this.settings));
         });
 
         // Dataview inline queries.
@@ -139,19 +96,14 @@ export default class DataviewPlugin extends Plugin {
                 if (text.startsWith(this.settings.inlineJsQueryPrefix)) {
                     let code = text.substring(this.settings.inlineJsQueryPrefix.length).trim();
                     ctx.addChild(
-                        this.wrapInlineWithEnsureIndex(
-                            ctx,
+                        new DataviewInlineJSRenderer(
+                            code,
+                            el,
                             codeblock,
-                            () =>
-                                new DataviewInlineJSRenderer(
-                                    code,
-                                    el,
-                                    codeblock,
-                                    this.app,
-                                    this.index,
-                                    ctx.sourcePath,
-                                    this.settings
-                                )
+                            this.app,
+                            this.index,
+                            ctx.sourcePath,
+                            this.settings
                         )
                     );
                 } else if (text.startsWith(this.settings.inlineQueryPrefix)) {
@@ -164,19 +116,14 @@ export default class DataviewPlugin extends Plugin {
                     } else {
                         let fieldValue = field.value;
                         ctx.addChild(
-                            this.wrapInlineWithEnsureIndex(
-                                ctx,
+                            new DataviewInlineRenderer(
+                                fieldValue,
+                                text,
+                                el,
                                 codeblock,
-                                () =>
-                                    new DataviewInlineRenderer(
-                                        fieldValue,
-                                        text,
-                                        el,
-                                        codeblock,
-                                        this.index,
-                                        ctx.sourcePath,
-                                        this.settings
-                                    )
+                                this.index,
+                                ctx.sourcePath,
+                                this.settings
                             )
                         );
                     }
@@ -196,6 +143,18 @@ export default class DataviewPlugin extends Plugin {
         inlineInlineRenderer.sortOrder = -100;
 
         this.registerMarkdownPostProcessor(inlineInlineRenderer);
+
+        // Run index initialization, which actually traverses the vault to index files.
+        if (!this.app.workspace.layoutReady) {
+            this.app.workspace.onLayoutReady(async () => this.index.initialize());
+        } else {
+            this.index.initialize();
+        }
+
+        // Not required anymore, though holding onto it for backwards-compatibility.
+        this.app.metadataCache.trigger("dataview:api-ready", this.api);
+
+        console.log("Dataview: Version 0.4.x Loaded");
     }
 
     /**
@@ -240,53 +199,15 @@ export default class DataviewPlugin extends Plugin {
 
     onunload() {}
 
-    /** Prepare all dataview indices. */
-    async prepareIndexes() {
-        let index = await FullIndex.generate(this);
-        this.index = index;
-
-        this.api = new DataviewApi(this.app, this.index, this.settings);
-        this.trigger("dataview:api-ready", this.api);
-    }
-
     /** Update plugin settings. */
     async updateSettings(settings: Partial<DataviewSettings>) {
         Object.assign(this.settings, settings);
         await this.saveData(this.settings);
     }
 
-    /** Utility function which wraps a post processor with something that waits for the dataview index to be available. */
-    private wrapWithEnsureIndex(
-        ctx: MarkdownPostProcessorContext,
-        container: HTMLElement,
-        success: () => MarkdownRenderChild
-    ): EnsurePredicateRenderer {
-        return new EnsurePredicateRenderer(
-            ctx,
-            container,
-            () => this.index != undefined && this.index.pages && this.index.pages.size > 0,
-            success
-        );
-    }
-
-    /** Utility function which wraps a post processor with something that waits for the dataview index to be available. */
-    private wrapInlineWithEnsureIndex(
-        ctx: MarkdownPostProcessorContext,
-        container: HTMLElement,
-        success: () => MarkdownRenderChild
-    ): EnsurePredicateRenderer {
-        return new EnsureInlinePredicateRenderer(
-            ctx,
-            container,
-            () => this.index != undefined && this.index.pages && this.index.pages.size > 0,
-            success
-        );
-    }
-
     /** Call the given callback when the dataview API has initialized. */
     public withApi(callback: (api: DataviewApi) => void) {
-        if (this.api) callback(this.api);
-        else this.app.metadataCache.on("dataview:api-ready", callback);
+        callback(this.api);
     }
 }
 
@@ -497,97 +418,6 @@ class DataviewSettingsTab extends PluginSettingTab {
                     this.plugin.index.touch();
                 })
             );
-    }
-}
-
-/** A generic renderer which waits for a predicate, only continuing on success. */
-class EnsurePredicateRenderer extends MarkdownRenderChild {
-    static CHECK_INTERVAL_MS = 1_000;
-
-    dead: boolean;
-
-    constructor(
-        public ctx: MarkdownPostProcessorContext,
-        public container: HTMLElement,
-        public update: () => boolean,
-        public success: () => MarkdownRenderChild
-    ) {
-        super(container);
-
-        this.ctx = ctx;
-        this.container = container;
-        this.update = update;
-        this.success = success;
-        this.dead = false;
-    }
-
-    async onload() {
-        let loadContainer = renderErrorPre(this.container, "Dataview indices are loading");
-
-        // Wait for the given predicate to finally pass...
-        await waitFor(
-            EnsurePredicateRenderer.CHECK_INTERVAL_MS,
-            () => {
-                loadContainer.innerText += ".";
-                return this.update();
-            },
-            () => this.dead
-        );
-
-        // Clear the container before passing it off to the child.
-        this.container.innerHTML = "";
-
-        // And then pass off rendering to a child context.
-        this.ctx.addChild(this.success());
-    }
-
-    onunload() {
-        this.dead = true;
-    }
-}
-
-/** Inline version of EnsurePredicateRenderer; renders it's loading message differently. */
-class EnsureInlinePredicateRenderer extends MarkdownRenderChild {
-    static CHECK_INTERVAL_MS = 1_000;
-
-    dead: boolean;
-
-    constructor(
-        public ctx: MarkdownPostProcessorContext,
-        public container: HTMLElement,
-        public update: () => boolean,
-        public success: () => MarkdownRenderChild
-    ) {
-        super(container);
-
-        this.ctx = ctx;
-        this.container = container;
-        this.update = update;
-        this.success = success;
-        this.dead = false;
-    }
-
-    async onload() {
-        this.container.innerHTML = "(index loading)";
-
-        // Wait for the given predicate to finally pass...
-        await waitFor(
-            EnsurePredicateRenderer.CHECK_INTERVAL_MS,
-            () => {
-                return this.update();
-            },
-            () => this.dead
-        );
-
-        // Clear the container before passing it off to the child.
-        this.container.innerHTML = "";
-
-        // And then pass off rendering to a child context.
-        this.ctx.addChild(this.success());
-    }
-
-    onunload() {
-        this.dead = true;
     }
 }
 

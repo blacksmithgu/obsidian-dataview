@@ -31,7 +31,7 @@ export const DEFAULT_QUERY_SETTINGS: QuerySettings = {
     taskLinkLocation: "end",
     taskLinkText: "🔗",
     warnOnEmptyResult: true,
-    refreshInterval: 1000,
+    refreshInterval: 250,
     defaultDateFormat: "MMMM dd, yyyy",
     defaultDateTimeFormat: "h:mm a - MMMM dd, yyyy",
     maxRecursiveRenderDepth: 6,

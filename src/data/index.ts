@@ -1,11 +1,10 @@
 /** Stores various indices on all files in the vault to make dataview generation fast. */
 import { Result } from "api/result";
 import { DataObject } from "data/value";
-import { MetadataCache, TFile, Vault } from "obsidian";
+import { MetadataCache, TAbstractFile, TFile, Vault } from "obsidian";
 import { getParentFolder } from "util/normalize";
 import { PageMetadata } from "data/metadata";
 import { ParsedMarkdown, parsePage } from "data/parse/markdown";
-import DataviewPlugin from "../main";
 import { DateTime } from "luxon";
 import { parseCsv } from "data/parse/csv";
 import { FileImporter } from "data/import/import-manager";
@@ -85,20 +84,19 @@ export class IndexMap {
     }
 }
 
+/** Lists all possible index events. */
+export interface IndexEvents {
+    /** Called when dataview metadata for a file changes. */
+    trigger(evt: "dataview:metadata-change", type: "rename", file: TAbstractFile, oldPath: string): void;
+    /** Called when a file is deleted from the dataview index. */
+    trigger(evt: "dataview:metadata-change", type: "update" | "delete", file: TAbstractFile): void;
+}
+
 /** Aggregate index which has several sub-indices and will initialize all of them. */
 export class FullIndex {
     /** Generate a full index from the given vault. */
-    static async generate(plugin: DataviewPlugin): Promise<FullIndex> {
-        let index = new FullIndex(plugin);
-        await index.initialize();
-        return Promise.resolve(index);
-    }
-
-    public get vault(): Vault {
-        return this.plugin.app.vault;
-    }
-    public get metadataCache(): MetadataCache {
-        return this.plugin.app.metadataCache;
+    public static create(vault: Vault, metadata: MetadataCache, events: IndexEvents): FullIndex {
+        return new FullIndex(vault, metadata, events);
     }
 
     /* Maps path -> markdown metadata for all markdown pages. */
@@ -127,13 +125,28 @@ export class FullIndex {
     public importer: FileImporter;
 
     /** Construct a new index over the given vault and metadata cache. */
-    private constructor(private plugin: DataviewPlugin) {
+    private constructor(public vault: Vault, public metadataCache: MetadataCache, public events: IndexEvents) {
         this.pages = new Map();
         this.tags = new IndexMap();
         this.etags = new IndexMap();
         this.links = new IndexMap();
         this.folders = new IndexMap();
         this.revision = 0;
+
+        // Handles asynchronous reloading of files on web workers.
+        this.importer = new FileImporter(4, this.vault, this.metadataCache);
+        // Prefix listens to file creation/deletion/rename, and not modifies, so we let it set up it's own listeners.
+        this.prefix = PrefixIndex.create(this.vault, () => (this.revision += 1));
+        // The CSV cache also needs to listen to filesystem events for cache invalidation.
+        this.csv = new CsvCache(this.vault);
+    }
+
+    /** Runs through the whole vault to set up initial file */
+    public initialize() {
+        // Traverse all markdown files & fill in initial data.
+        let start = new Date().getTime();
+        this.vault.getMarkdownFiles().forEach(file => this.reload(file));
+        console.log("Dataview: Task & metadata parsing queued in %.3fs.", (new Date().getTime() - start) / 1000.0);
 
         // The metadata cache is updated on file changes.
         this.metadataCache.on("changed", file => this.reload(file));
@@ -152,7 +165,7 @@ export class FullIndex {
             }
 
             this.revision += 1;
-            this.plugin.trigger("dataview:metadata-change", "rename", file, oldPath);
+            this.events.trigger("dataview:metadata-change", "rename", file, oldPath);
         });
 
         // File creation does cause a metadata change, but deletes do not. Clear the caches for this.
@@ -167,23 +180,11 @@ export class FullIndex {
             this.folders.delete(file.path);
 
             this.revision += 1;
-            this.plugin.trigger("dataview:metadata-change", "delete", file);
+            this.events.trigger("dataview:metadata-change", "delete", file);
         });
-    }
 
-    /** I am not a fan of a separate "construct/initialize" step, but constructors cannot be async. */
-    private async initialize() {
-        this.importer = new FileImporter(4, this.vault, this.metadataCache);
-
-        // Prefix listens to file creation/deletion/rename, and not modifies, so we let it set up it's own listeners.
-        this.prefix = await PrefixIndex.generate(this.vault, () => (this.revision += 1));
-        // The CSV cache also needs to listen to filesystem events for cache invalidation.
-        this.csv = new CsvCache(this.vault);
-
-        // Traverse all markdown files & fill in initial data.
-        let start = new Date().getTime();
-        this.vault.getMarkdownFiles().forEach(file => this.reload(file));
-        console.log("Dataview: Task & metadata parsing queued in %.3fs.", (new Date().getTime() - start) / 1000.0);
+        // Initialize sub-indices.
+        this.prefix.initialize();
     }
 
     /** Queue a file for reloading; this is done asynchronously in the background and may take a few seconds. */
@@ -205,7 +206,7 @@ export class FullIndex {
         this.folders.set(file.path, new Set<string>([getParentFolder(file.path)]));
 
         this.revision += 1;
-        this.metadataCache.trigger("dataview:metadata-change", "update", file);
+        this.events.trigger("dataview:metadata-change", "update", file);
     }
 }
 
@@ -292,35 +293,38 @@ export class PrefixIndexNode {
 
 /** Indexes files by their full prefix - essentially a simple prefix tree. */
 export class PrefixIndex {
-    public static async generate(vault: Vault, updateRevision: () => void): Promise<PrefixIndex> {
-        let root = new PrefixIndexNode("");
-        let timeStart = new Date().getTime();
-
-        for (let file of vault.getFiles()) {
-            PrefixIndexNode.add(root, file.path);
-        }
-
-        console.log("Dataview: File prefix tree built in %.3fs.", (new Date().getTime() - timeStart) / 1000.0);
-        return new PrefixIndex(vault, root, updateRevision);
+    public static create(vault: Vault, updateRevision: () => void): PrefixIndex {
+        return new PrefixIndex(vault, updateRevision);
     }
 
-    constructor(public vault: Vault, public root: PrefixIndexNode, public updateRevision: () => void) {
+    private root: PrefixIndexNode;
+
+    constructor(public vault: Vault, public updateRevision: () => void) {
+        this.root = new PrefixIndexNode("");
+    }
+
+    /** Run through the whole vault to set up the initial prefix index. */
+    public initialize() {
+        let timeStart = new Date().getTime();
+        for (let file of this.vault.getFiles()) PrefixIndexNode.add(this.root, file.path);
+        console.log("Dataview: File prefix tree built in %.3fs.", (new Date().getTime() - timeStart) / 1000.0);
+
         // TODO: I'm not sure if there is an event for all files in a folder, or just the folder.
         // I'm assuming the former naively for now until I inevitably fix it.
         this.vault.on("delete", file => {
             PrefixIndexNode.remove(this.root, file.path);
-            updateRevision();
+            this.updateRevision();
         });
 
         this.vault.on("create", file => {
             PrefixIndexNode.add(this.root, file.path);
-            updateRevision();
+            this.updateRevision();
         });
 
         this.vault.on("rename", (file, old) => {
             PrefixIndexNode.remove(this.root, old);
             PrefixIndexNode.add(this.root, file.path);
-            updateRevision();
+            this.updateRevision();
         });
     }
 
@@ -366,11 +370,8 @@ export namespace PathFilters {
 /**
  * Caches in-use CSVs to make high-frequency reloads (such as actively looking at a document
  * that uses CSV) fast.
- *
- * Encapsulates logic for fetching CSV
  */
 export class CsvCache {
-    /** How long until a CSV cache entry is timed out, in seconds. */
     public static CACHE_EXPIRY_SECONDS: number = 5 * 60;
 
     // Cache of loaded CSVs; old entries will periodically be removed
@@ -380,14 +381,13 @@ export class CsvCache {
 
     public constructor(public vault: Vault) {
         this.cache = new Map();
-
-        this.cacheClearInterval = window.setInterval(() => {
-            this.clearOldEntries();
-        }, 60 * 1000);
     }
 
     /** Load a CSV file from the cache, doing a fresh load if it has not been loaded. */
     public async get(path: string): Promise<Result<DataObject[], string>> {
+        // Clear old entries on every fresh load, since the path being loaded may be stale.
+        this.clearOldEntries();
+
         let existing = this.cache.get(path);
         if (existing) return Result.success(existing.data);
         else {
