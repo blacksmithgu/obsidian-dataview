@@ -240,7 +240,7 @@ export class DataviewInlineApi {
                 // This may directly render, in which case it will likely return undefined or null.
                 let result = await Promise.resolve(func(this, input));
                 if (result)
-                    renderValue(
+                    await renderValue(
                         result as any,
                         this.container,
                         this.currentFilePath,
@@ -269,7 +269,7 @@ export class DataviewInlineApi {
         try {
             let result = await Promise.resolve(viewFunction(this, input));
             if (result)
-                renderValue(result as any, this.container, this.currentFilePath, this.component, this.settings, true);
+                await renderValue(result as any, this.container, this.currentFilePath, this.component, this.settings, true);
         } catch (ex) {
             renderErrorPre(this.container, `Dataview: Error while executing view '${viewFile.path}'.\n\n${ex}`);
         }
