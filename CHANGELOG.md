@@ -1,3 +1,11 @@
+# 0.4.16
+
+Small performance release which substantially reduces the impact Dataview has on vault loading times (by spreading out
+file loading). The Dataview Index is now also eagerly initialized, so plugin consumers of the API can immediately start
+using it instead of waiting for the `dataview:api-ready` event.
+
+---
+
 # 0.4.15
 
 A simple fix for #537 which properly 'awaits' value rendering in `dv.view()`. Fixes issues with values rendering out of
