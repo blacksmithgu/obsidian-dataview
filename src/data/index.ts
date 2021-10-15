@@ -174,11 +174,13 @@ export class FullIndex {
     /** I am not a fan of a separate "construct/initialize" step, but constructors cannot be async. */
     private async initialize() {
         this.importer = new FileImporter(4, this.vault, this.metadataCache);
+        this.plugin.registerInterval(this.importer.reloadHandler);
 
         // Prefix listens to file creation/deletion/rename, and not modifies, so we let it set up it's own listeners.
         this.prefix = await PrefixIndex.generate(this.vault, () => (this.revision += 1));
         // The CSV cache also needs to listen to filesystem events for cache invalidation.
         this.csv = new CsvCache(this.vault);
+        this.plugin.registerInterval(this.csv.cacheClearInterval);
 
         // Traverse all markdown files & fill in initial data.
         let start = new Date().getTime();
