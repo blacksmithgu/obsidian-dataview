@@ -1,3 +1,10 @@
+# 0.4.15
+
+A simple fix for #537 which properly 'awaits' value rendering in `dv.view()`. Fixes issues with values rendering out of
+order.
+
+---
+
 # 0.4.14
 
 Small bugfix release.
