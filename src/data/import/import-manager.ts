@@ -4,79 +4,101 @@ import { Transferable } from "data/transferable";
 import DataviewImportWorker from "web-worker:./import-entry.ts";
 import { MetadataCache, TFile, Vault } from "obsidian";
 
-/** Multi-threaded file parser which debounces queues automatically. */
-export class FileImporter {
-    /** Time in milliseconds before a file is allowed to be requeued after being queued. */
-    static QUEUE_TIMEOUT = 500;
+/** Callback when a file is resolved. */
+type FileCallback = (p: any) => void;
 
+/** Multi-threaded file parser which debounces rapid file requests automatically. */
+export class FileImporter {
     /* Background workers which do the actual file parsing. */
     workers: Worker[];
-    /** Index of the next worker which should recieve a job. */
-    nextWorkerId: number;
+    /** Tracks which workers are actively parsing a file, to make sure we properly delegate results. */
+    busy: boolean[];
 
-    /* ID for the interval which regularly checks the reload queue and reloads files. */
-    reloadHandler: number;
-    /** Paths -> files which have been queued for a reload. */
-    reloadQueue: Map<string, TFile>;
+    /** List of files which have been queued for a reload. */
+    reloadQueue: TFile[];
+    /** Fast-access set which holds the list of files queued to be reloaded; used for debouncing. */
+    reloadSet: Set<string>;
     /** Paths -> promises for file reloads which have not yet been queued. */
-    waitingCallbacks: Map<string, ((p: any) => void)[]>;
-    /** Paths -> promises waiting on the successful reload of this file. */
-    pastPromises: Map<string, ((p: any) => void)[]>;
+    callbacks: Map<string, FileCallback[]>;
 
     public constructor(public numWorkers: number, public vault: Vault, public metadataCache: MetadataCache) {
         this.workers = [];
-        this.nextWorkerId = 0;
+        this.busy = [];
 
-        this.reloadQueue = new Map();
-        this.waitingCallbacks = new Map();
-        this.pastPromises = new Map();
+        this.reloadQueue = [];
+        this.reloadSet = new Set();
+        this.callbacks = new Map();
 
         for (let index = 0; index < numWorkers; index++) {
-            let worker = new DataviewImportWorker({ name: "Dataview Indexer" });
-            worker.onmessage = evt => {
-                let callbacks = this.pastPromises.get(evt.data.path);
-                let parsed = Transferable.value(evt.data.result);
-                if (callbacks && callbacks.length > 0) {
-                    for (let callback of callbacks) callback(parsed);
-                }
+            let worker = new DataviewImportWorker({ name: "Dataview Indexer " + (index + 1) });
 
-                this.pastPromises.delete(evt.data.path);
-            };
-
+            worker.onmessage = evt => this.finish(evt.data.path, Transferable.value(evt.data.result), index);
             this.workers.push(worker);
+            this.busy.push(false);
         }
-
-        this.reloadHandler = window.setInterval(async () => {
-            let queueCopy = Array.from(this.reloadQueue.values());
-            this.reloadQueue.clear();
-
-            for (let [key, value] of this.waitingCallbacks.entries()) {
-                if (this.pastPromises.has(key))
-                    this.pastPromises.set(key, this.pastPromises.get(key)?.concat(value) ?? []);
-                else this.pastPromises.set(key, value);
-            }
-            this.waitingCallbacks.clear();
-
-            for (let file of queueCopy) {
-                let workerId = this.nextWorkerId;
-                this.vault.read(file).then(c =>
-                    this.workers[workerId].postMessage({
-                        path: file.path,
-                        contents: c,
-                        metadata: this.metadataCache.getFileCache(file),
-                    })
-                );
-
-                this.nextWorkerId = (this.nextWorkerId + 1) % this.numWorkers;
-            }
-        }, FileImporter.QUEUE_TIMEOUT);
     }
 
+    /**
+     * Queue the given file for reloading. Multiple reload requests for the same file in a short time period will be de-bounced
+     * and all be resolved by a single actual file reload.
+     */
     public reload<T>(file: TFile): Promise<T> {
-        this.reloadQueue.set(file.path, file);
-        return new Promise((resolve, _reject) => {
-            if (this.waitingCallbacks.has(file.path)) this.waitingCallbacks.get(file.path)?.push(resolve);
-            else this.waitingCallbacks.set(file.path, [resolve]);
+        let promise: Promise<T> = new Promise((resolve, _reject) => {
+            if (this.callbacks.has(file.path)) this.callbacks.get(file.path)?.push(resolve);
+            else this.callbacks.set(file.path, [resolve]);
         });
+
+        // De-bounce repeated requests for the same file.
+        if (this.reloadSet.has(file.path)) return promise;
+        this.reloadSet.add(file.path);
+
+        // Immediately run this task if there are available workers; otherwise, add it to the queue.
+        let workerId = this.nextAvailableWorker();
+        if (workerId !== undefined) {
+            this.send(file, workerId);
+        } else {
+            this.reloadQueue.push(file);
+        }
+
+        return promise;
+    }
+
+    /** Finish the parsing of a file, potentially queueing a new file. */
+    private finish(path: string, data: any, index: number) {
+        // Cache the callbacks before we do book-keeping.
+        let calls = ([] as FileCallback[]).concat(this.callbacks.get(path) ?? []);
+
+        // Book-keeping to clear metadata & allow the file to be re-loaded again.
+        this.reloadSet.delete(path);
+        this.callbacks.delete(path);
+
+        // Notify the queue this file is available for new work.
+        this.busy[index] = false;
+
+        // Queue a new job onto this worker.
+        let job = this.reloadQueue.shift();
+        if (job !== undefined) this.send(job, index);
+
+        // Resolve promises to let users know this file has finished.
+        for (let callback of calls) callback(data);
+    }
+
+    /** Send a new task to the given worker ID. */
+    private send(file: TFile, workerId: number) {
+        this.busy[workerId] = true;
+
+        this.vault.read(file).then(c =>
+            this.workers[workerId].postMessage({
+                path: file.path,
+                contents: c,
+                metadata: this.metadataCache.getFileCache(file),
+            })
+        );
+    }
+
+    /** Find the next available, non-busy worker; return undefined if all workers are busy. */
+    private nextAvailableWorker(): number | undefined {
+        let index = this.busy.indexOf(false);
+        return index == -1 ? undefined : index;
     }
 }

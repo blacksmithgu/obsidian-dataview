@@ -1,3 +1,5 @@
+/** Actual raw implementation for the background importer. Mainly handles message passing. */
+
 import { ParsedMarkdown, parseMarkdown } from "data/parse/markdown";
 import { CachedMetadata } from "obsidian";
 
