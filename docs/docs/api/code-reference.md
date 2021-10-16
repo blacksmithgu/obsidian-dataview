@@ -52,6 +52,13 @@ dv.page("books/The Raisin.md") => The page object for /books/The Raisin.md
 
 ## Render
 
+### `dv.el(text)`
+
+Renders arbitrary text in the given html element.
+```js
+dv.el("b", "This is some bold text");
+```
+
 ### `dv.header(level, text)`
 
 Renders a header of level 1 - 6 with the given text.
