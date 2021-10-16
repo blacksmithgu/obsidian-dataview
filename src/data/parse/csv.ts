@@ -8,7 +8,7 @@ export function parseCsv(content: string): DataObject[] {
     let parsed = Papa.parse(content, {
         header: true,
         skipEmptyLines: true,
-        comments: true,
+        comments: "#",
         dynamicTyping: true,
     });
 

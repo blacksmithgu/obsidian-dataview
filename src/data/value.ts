@@ -1,6 +1,6 @@
 import { DateTime, Duration } from "luxon";
 import { DEFAULT_QUERY_SETTINGS, QuerySettings } from "settings";
-import { getFileTitle } from "util/normalize";
+import { getFileTitle, normalizeHeaderForLink } from "util/normalize";
 
 /** A specific task. */
 export class Task {
@@ -119,11 +119,12 @@ export class Link {
     }
 
     public static header(path: string, header: string, embed: boolean, display?: string) {
+        // Headers need to be normalized to alpha-numeric & with extra spacing removed.
         return new Link({
             path,
             embed,
             display,
-            subpath: header,
+            subpath: normalizeHeaderForLink(header),
             type: "header",
         });
     }
