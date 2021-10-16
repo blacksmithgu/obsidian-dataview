@@ -337,9 +337,14 @@ export class PrefixIndex {
     }
 
     /** Determines if the given path exists in the prefix index. */
-    public exists(path: string): boolean {
+    public pathExists(path: string): boolean {
         let node = PrefixIndexNode.find(this.root, getParentFolder(path));
         return node != null && node.files.has(path);
+    }
+
+    /** Determines if the given prefix exists in the prefix index. */
+    public nodeExists(prefix: string): boolean {
+        return PrefixIndexNode.find(this.root, prefix) != null;
     }
 
     /**
@@ -350,7 +355,7 @@ export class PrefixIndex {
         else if (path.startsWith("/")) return path.substring(1);
 
         let relativePath = getParentFolder(origin) + "/" + path;
-        if (this.exists(relativePath)) return relativePath;
+        if (this.pathExists(relativePath)) return relativePath;
         else return path;
     }
 }
