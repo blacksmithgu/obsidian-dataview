@@ -47,7 +47,7 @@
     padding-left: 16px;
     padding-right: 8px;
     font-family: var(--font-monospace);
-    background-color: var(--background-inline-code);
+    background-color: var(--background-primary-alt);
     color: var(--text-nav-selected);
 }
 
@@ -57,7 +57,7 @@
     padding-left: 8px;
     padding-right: 16px;
     font-family: var(--font-monospace);
-    background-color: var(--background-tag);
+    background-color: var(--background-secondary-alt);
     color: var(--text-nav-selected);
 }
 
@@ -66,6 +66,6 @@
     padding-left: 16px;
     padding-right: 16px;
     font-family: var(--font-monospace);
-    background-color: var(--background-tag);
+    background-color: var(--background-secondary-alt);
     color: var(--text-nav-selected);
 }
