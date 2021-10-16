@@ -8,7 +8,7 @@ export class Task {
     text: string;
     /** The line this task shows up on. */
     line: number;
-    /** The full path of the file. */
+    /** The full path of the file this task is in. */
     path: string;
     /** Whether or not this task was completed. */
     completed: boolean;
@@ -18,10 +18,10 @@ export class Task {
     real: boolean;
     /** Any subtasks of this task. */
     subtasks: Task[];
-    /** The block this task shows up in. */
-    blockId: string;
     /** A link which points to this task, or to the closest block that this task is contained in. */
     link: Link;
+    /** A link which points to the nearest header this task is under. */
+    header: Link;
 
     /** Additional metadata like inline annotations */
     annotations?: Record<string, LiteralValue>;
@@ -69,8 +69,8 @@ export class Task {
             completed: this.completed,
             fullyCompleted: this.fullyCompleted,
             real: this.real,
-            blockId: this.blockId,
             link: this.link,
+            header: this.header,
             subtasks: this.subtasks.map(t => t.toObject(inlineAnnotations)),
             annotated:
                 !!this.due || !!this.completion || (!!this.annotations && Object.keys(this.annotations).length > 0),
@@ -182,8 +182,11 @@ export class Link {
         if (this.type == "header") result += "#" + this.subpath;
         else if (this.type == "block") result += "#^" + this.subpath;
 
-        if (this.display && !this.embed) result += "|" + this.display;
-        else if (!this.embed) result += "|" + getFileTitle(this.path);
+        if (this.display) result += "|" + this.display;
+        else {
+            result += "|" + getFileTitle(this.path);
+            if (this.type == "header" || this.type == "block") result += " > " + this.subpath;
+        }
 
         result += "]]";
         return result;
