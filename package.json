@@ -8,12 +8,13 @@
     "lib/**/*"
   ],
   "scripts": {
-    "dev": "rollup --config rollup.config.js -w",
-    "lib": "rollup --config rollup.config.js --environment BUILD:lib",
-    "build": "rollup --config rollup.config.js --environment BUILD:production",
-    "format": "npx prettier --write src",
+    "bdd": "npx jest -i --watch --no-cache",
+    "build": "npx rollup --config rollup.config.js --environment BUILD:production",
     "check-format": "npx prettier --check src",
-    "test": "jest"
+    "dev": "npx rollup --config rollup.config.js -w",
+    "format": "npx prettier --write src",
+    "lib": "npx rollup --config rollup.config.js --environment BUILD:lib",
+    "test": "npx jest"
   },
   "keywords": [],
   "author": "",

@@ -1,3 +1,5 @@
+import EventEmitter from "events";
+
 /** Basic obsidian abstraction for any file or folder in a vault. */
 export abstract class TAbstractFile {
     /**
@@ -44,10 +46,11 @@ export class TFolder extends TAbstractFile {
     }
 }
 
-export class Vault {
-    /** Add an event listener to this vault. */
-    public on(event: string, handler: Function): any {
-        // TODO: Implement actual handlers; does nothing for now.
-        return "<mocked>";
+export class Vault extends EventEmitter {
+    getFiles() {
+        return [];
+    }
+    trigger(name: string, ...data: any[]): void {
+        this.emit(name, ...data);
     }
 }
