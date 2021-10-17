@@ -8,7 +8,7 @@ import { DataObject, Link, LiteralValue, Values, Task, Groupings } from "data/va
 import { EXPRESSION } from "expression/parse";
 import { renderList, renderTable, renderValue } from "ui/render";
 import { DataviewSettings } from "settings";
-import { renderTasks, TaskViewLifecycle } from "ui/tasks";
+import { renderTasks } from "ui/tasks";
 import { DataArray } from "./data-array";
 import { BoundFunctionImpl, DEFAULT_FUNCTIONS, Functions } from "expression/functions";
 import { Context } from "expression/context";
@@ -181,7 +181,7 @@ export class DataviewApi {
     }
 
     /** Render a dataview task view with the given tasks. */
-    public taskList(
+    public async taskList(
         tasks: Task[] | DataArray<any>,
         groupByFile: boolean = true,
         container: HTMLElement,
@@ -189,6 +189,9 @@ export class DataviewApi {
         filePath: string = ""
     ) {
         if (DataArray.isDataArray(tasks)) tasks = tasks.array();
+
+        let taskComponent = new Component();
+        component.addChild(taskComponent);
 
         if (groupByFile) {
             let byFile = new Map<string, Task[]>();
@@ -204,16 +207,17 @@ export class DataviewApi {
             );
 
             let subcontainer = container.createDiv();
-            (async () => {
-                await renderTasks(subcontainer, groupings, filePath, component, this.settings);
-                component.addChild(new TaskViewLifecycle(this.app.vault, subcontainer));
-            })();
+            await renderTasks(subcontainer, groupings, filePath, taskComponent, this.app.vault, this.settings);
         } else {
             let subcontainer = container.createDiv();
-            (async () => {
-                await renderTasks(subcontainer, Groupings.base(tasks), filePath, component, this.settings);
-                component.addChild(new TaskViewLifecycle(this.app.vault, subcontainer));
-            })();
+            await renderTasks(
+                subcontainer,
+                Groupings.base(tasks),
+                filePath,
+                taskComponent,
+                this.app.vault,
+                this.settings
+            );
         }
     }
 

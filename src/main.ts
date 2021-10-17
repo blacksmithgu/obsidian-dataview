@@ -44,105 +44,27 @@ export default class DataviewPlugin extends Plugin {
         this.api = new DataviewApi(this.app, this.index, this.settings);
 
         // Dataview query language code blocks.
-        this.registerHighPriorityCodeblockProcessor("dataview", async (source: string, el, ctx) => {
-            let maybeQuery = tryOrPropogate(() => parseQuery(source));
-
-            // In case of parse error, just render the error.
-            if (!maybeQuery.successful) {
-                renderErrorPre(el, "Dataview: " + maybeQuery.error);
-                return;
-            }
-
-            let query = maybeQuery.value;
-            switch (query.header.type) {
-                case "task":
-                    ctx.addChild(
-                        new DataviewTaskRenderer(
-                            query as Query,
-                            el,
-                            this.index,
-                            ctx.sourcePath,
-                            this.app.vault,
-                            this.settings
-                        )
-                    );
-                    break;
-                case "list":
-                    ctx.addChild(
-                        new DataviewListRenderer(query as Query, el, this.index, ctx.sourcePath, this.settings)
-                    );
-                    break;
-                case "table":
-                    ctx.addChild(
-                        new DataviewTableRenderer(query as Query, el, this.index, ctx.sourcePath, this.settings)
-                    );
-                    break;
-            }
-        });
+        this.registerHighPriorityCodeblockProcessor("dataview", async (source: string, el, ctx) =>
+            this.dataview(source, el, ctx, ctx.sourcePath)
+        );
 
         // DataviewJS codeblocks.
-        this.registerHighPriorityCodeblockProcessor("dataviewjs", async (source: string, el, ctx) => {
-            ctx.addChild(new DataviewJSRenderer(source, el, this.app, this.index, ctx.sourcePath, this.settings));
-        });
+        this.registerHighPriorityCodeblockProcessor("dataviewjs", async (source: string, el, ctx) =>
+            this.dataviewjs(source, el, ctx, ctx.sourcePath)
+        );
 
         // Dataview inline queries.
-        this.registerMarkdownPostProcessor(async (el, ctx) => {
-            // Search for <code> blocks inside this element; for each one, look for things of the form `= ...`.
-            let codeblocks = el.querySelectorAll("code");
-            for (let index = 0; index < codeblocks.length; index++) {
-                let codeblock = codeblocks.item(index);
-
-                let text = codeblock.innerText.trim();
-                if (text.startsWith(this.settings.inlineJsQueryPrefix)) {
-                    let code = text.substring(this.settings.inlineJsQueryPrefix.length).trim();
-                    ctx.addChild(
-                        new DataviewInlineJSRenderer(
-                            code,
-                            el,
-                            codeblock,
-                            this.app,
-                            this.index,
-                            ctx.sourcePath,
-                            this.settings
-                        )
-                    );
-                } else if (text.startsWith(this.settings.inlineQueryPrefix)) {
-                    let potentialField = text.substring(this.settings.inlineQueryPrefix.length).trim();
-
-                    let field = tryOrPropogate(() => parseField(potentialField));
-                    if (!field.successful) {
-                        let errorBlock = el.createEl("div");
-                        renderErrorPre(errorBlock, `Dataview (inline field '${potentialField}'): ${field.error}`);
-                    } else {
-                        let fieldValue = field.value;
-                        ctx.addChild(
-                            new DataviewInlineRenderer(
-                                fieldValue,
-                                text,
-                                el,
-                                codeblock,
-                                this.index,
-                                ctx.sourcePath,
-                                this.settings
-                            )
-                        );
-                    }
-                }
-            }
-        });
+        this.registerMarkdownPostProcessor(async (el, ctx) => this.dataviewInline(el, ctx, ctx.sourcePath));
 
         // Dataview inline-inline query fancy rendering. Runs at a low priority; should apply to Dataview views.
-        let inlineInlineRenderer: MarkdownPostProcessor = async (el, ctx) => {
+        this.registerPriorityMarkdownPostProcessor(100, async (el, ctx) => {
             // Allow for lame people to disable the pretty rendering.
             if (!this.settings.prettyRenderInlineFields) return;
 
             // Handle p, header elements explicitly (opt-in rather than opt-out for now).
             for (let p of el.findAllSelf("p,h1,h2,h3,h4,h5,h6,li,span"))
                 await replaceInlineFields(ctx, p, ctx.sourcePath, this.settings);
-        };
-        inlineInlineRenderer.sortOrder = -100;
-
-        this.registerMarkdownPostProcessor(inlineInlineRenderer);
+        });
 
         // Run index initialization, which actually traverses the vault to index files.
         if (!this.app.workspace.layoutReady) {
@@ -157,6 +79,18 @@ export default class DataviewPlugin extends Plugin {
         console.log("Dataview: Version 0.4.x Loaded");
     }
 
+    onunload() {}
+
+    public registerPriorityMarkdownPostProcessor(
+        priority: number,
+        processor: (el: HTMLElement, ctx: MarkdownPostProcessorContext) => Promise<void>
+    ) {
+        let realProcessor: MarkdownPostProcessor = (el, ctx) => processor(el, ctx);
+        realProcessor.sortOrder = priority;
+
+        this.registerMarkdownPostProcessor(realProcessor);
+    }
+
     /**
      * Utility function for registering high priority codeblocks which run before any other post processing, such as
      * emoji-twitter.
@@ -165,7 +99,7 @@ export default class DataviewPlugin extends Plugin {
         language: string,
         processor: (source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext) => Promise<void>
     ) {
-        let postProcess: MarkdownPostProcessor = async (el, ctx) => {
+        this.registerPriorityMarkdownPostProcessor(-100, async (el, ctx) => {
             let codeblocks = el.querySelectorAll("pre > code");
             if (!codeblocks) return;
 
@@ -192,12 +126,96 @@ export default class DataviewPlugin extends Plugin {
 
                 await processor(code, replacement, ctx);
             }
-        };
-        postProcess.sortOrder = -100;
-        this.registerMarkdownPostProcessor(postProcess);
+        });
     }
 
-    onunload() {}
+    /**
+     * Based on the source, generate a dataview view. This works by doing an initial parsing pass, and then adding
+     * a long-lived view object to the given component for life-cycle management.
+     */
+    public async dataview(
+        source: string,
+        el: HTMLElement,
+        component: Component | MarkdownPostProcessorContext,
+        sourcePath: string
+    ) {
+        let maybeQuery = tryOrPropogate(() => parseQuery(source));
+
+        // In case of parse error, just render the error.
+        if (!maybeQuery.successful) {
+            renderErrorPre(el, "Dataview: " + maybeQuery.error);
+            return;
+        }
+
+        let query = maybeQuery.value;
+        switch (query.header.type) {
+            case "task":
+                component.addChild(
+                    new DataviewTaskRenderer(query as Query, el, this.index, sourcePath, this.app.vault, this.settings)
+                );
+                break;
+            case "list":
+                component.addChild(new DataviewListRenderer(query as Query, el, this.index, sourcePath, this.settings));
+                break;
+            case "table":
+                component.addChild(
+                    new DataviewTableRenderer(query as Query, el, this.index, sourcePath, this.settings)
+                );
+                break;
+        }
+    }
+
+    /** Generate a DataviewJS view running the given source in the given element. */
+    public async dataviewjs(
+        source: string,
+        el: HTMLElement,
+        component: Component | MarkdownPostProcessorContext,
+        sourcePath: string
+    ) {
+        component.addChild(new DataviewJSRenderer(source, el, this.app, this.index, sourcePath, this.settings));
+    }
+
+    /** Render all dataview inline expressions in the given element. */
+    public async dataviewInline(
+        el: HTMLElement,
+        component: Component | MarkdownPostProcessorContext,
+        sourcePath: string
+    ) {
+        // Search for <code> blocks inside this element; for each one, look for things of the form `= ...`.
+        let codeblocks = el.querySelectorAll("code");
+        for (let index = 0; index < codeblocks.length; index++) {
+            let codeblock = codeblocks.item(index);
+
+            let text = codeblock.innerText.trim();
+            if (text.startsWith(this.settings.inlineJsQueryPrefix)) {
+                let code = text.substring(this.settings.inlineJsQueryPrefix.length).trim();
+                component.addChild(
+                    new DataviewInlineJSRenderer(code, el, codeblock, this.app, this.index, sourcePath, this.settings)
+                );
+            } else if (text.startsWith(this.settings.inlineQueryPrefix)) {
+                let potentialField = text.substring(this.settings.inlineQueryPrefix.length).trim();
+
+                let field = tryOrPropogate(() => parseField(potentialField));
+                if (!field.successful) {
+                    let errorBlock = el.createEl("div");
+                    renderErrorPre(errorBlock, `Dataview (inline field '${potentialField}'): ${field.error}`);
+                } else {
+                    let fieldValue = field.value;
+                    component.addChild(
+                        new DataviewInlineRenderer(
+                            fieldValue,
+                            text,
+                            el,
+                            codeblock,
+                            this.index,
+                            sourcePath,
+                            this.settings
+                        )
+                    );
+                }
+            }
+        }
+    }
 
     /** Update plugin settings. */
     async updateSettings(settings: Partial<DataviewSettings>) {
@@ -546,7 +564,7 @@ class DataviewTableRenderer extends MarkdownRenderChild {
 }
 
 class DataviewTaskRenderer extends MarkdownRenderChild {
-    taskView?: MarkdownRenderChild;
+    taskBindings?: Component;
 
     constructor(
         public query: Query,
@@ -563,7 +581,7 @@ class DataviewTaskRenderer extends MarkdownRenderChild {
         await this.render();
 
         onIndexChange(this.index, this.settings.refreshInterval, this, async () => {
-            if (this.taskView) this.removeChild(this.taskView);
+            if (this.taskBindings) this.removeChild(this.taskBindings);
 
             this.container.innerHTML = "";
             await this.render();
@@ -591,10 +609,10 @@ class DataviewTaskRenderer extends MarkdownRenderChild {
                 );
             }
 
-            await Tasks.renderTasks(this.container, tasks, this.origin, this, this.settings);
+            this.taskBindings = new Component();
+            this.addChild(this.taskBindings);
 
-            // TODO: Merge this into this renderer.
-            this.addChild((this.taskView = new Tasks.TaskViewLifecycle(this.vault, this.container)));
+            await Tasks.renderTasks(this.container, tasks, this.origin, this.taskBindings, this.vault, this.settings);
         }
     }
 }

@@ -1,80 +1,44 @@
-import { Vault, MarkdownRenderChild, MarkdownRenderer, Component } from "obsidian";
+import { Vault, MarkdownRenderer, Component } from "obsidian";
 import { TASK_REGEX } from "data/parse/markdown";
 import { Grouping, Task } from "data/value";
 import { renderValue } from "ui/render";
 import { QuerySettings } from "settings";
 
-/** Holds DOM events for a rendered task view, including check functionality. */
-export class TaskViewLifecycle extends MarkdownRenderChild {
-    vault: Vault;
-
-    constructor(vault: Vault, container: HTMLElement) {
-        super(container);
-        this.vault = vault;
-        this.containerEl = container;
-    }
-
-    onload() {
-        let checkboxes = this.containerEl.querySelectorAll("input");
-        for (let index = 0; index < checkboxes.length; index++) {
-            const checkbox = checkboxes.item(index);
-            this.registerHandler(checkbox);
-        }
-    }
-
-    registerHandler(checkbox: HTMLInputElement) {
-        this.registerDomEvent(checkbox, "click", event => {
-            let file = checkbox.dataset["file"];
-            let lineno = checkbox.dataset["lineno"];
-            let text = checkbox.dataset["text"];
-            if (!file || !lineno || !text) return;
-
-            if (!checkbox.hasAttribute("checked")) {
-                let newCheckbox = createCheckbox(file, parseInt(lineno), text, true);
-
-                checkbox.parentElement?.addClass("is-checked");
-                checkbox.parentElement?.replaceChild(newCheckbox, checkbox);
-                this.registerHandler(newCheckbox);
-
-                setTaskCheckedInFile(this.vault, file, parseInt(lineno), text, false, true);
-            } else {
-                let newCheckbox = createCheckbox(file, parseInt(lineno), text, false);
-
-                checkbox.parentElement?.removeClass("is-checked");
-                checkbox.parentElement?.replaceChild(newCheckbox, checkbox);
-                this.registerHandler(newCheckbox);
-
-                setTaskCheckedInFile(this.vault, file, parseInt(lineno), text, true, false);
-            }
-        });
-    }
-}
-
-/** Render a task grouping (indenting nested groupings for clarity). */
+/**
+ * Render a task grouping (indenting nested groupings for clarity). This will automatically bind the tasks to be checkable,
+ * which requires access to a vault.
+ */
 export async function renderTasks(
     container: HTMLElement,
     tasks: Grouping<Task[]>,
     originFile: string,
     component: Component,
+    vault: Vault,
     settings: QuerySettings
 ) {
     switch (tasks.type) {
         case "base":
-            await renderTaskList(container, tasks.value, settings);
+            await renderTaskList(container, tasks.value, component, vault, settings);
             break;
         case "grouped":
             for (let { key, value } of tasks.groups) {
                 let header = container.createEl("h4");
                 await renderValue(key, header, originFile, component, settings);
                 let div = container.createDiv({ cls: ["dataview", "result-group"] });
-                await renderTasks(div, value, originFile, component, settings);
+                await renderTasks(div, value, originFile, component, vault, settings);
             }
             break;
     }
 }
 
 /** Render a list of tasks as a single list. */
-export async function renderTaskList(container: HTMLElement, tasks: Task[], settings: QuerySettings) {
+export async function renderTaskList(
+    container: HTMLElement,
+    tasks: Task[],
+    component: Component,
+    vault: Vault,
+    settings: QuerySettings
+) {
     let ul = container.createEl("ul", { cls: "contains-task-list" });
     for (let task of tasks) {
         let li = ul.createEl("li");
@@ -110,12 +74,14 @@ export async function renderTaskList(container: HTMLElement, tasks: Task[], sett
         }
 
         if (task.real) {
-            let check = createCheckbox(task.path, task.line, task.text, task.completed);
-            li.prepend(check);
+            let checkbox = createCheckbox(task.path, task.line, task.text, task.completed);
+            li.prepend(checkbox);
+
+            addCheckHandler(checkbox, vault, component);
         }
 
         if (task.subtasks.length > 0) {
-            renderTaskList(li, task.subtasks, settings);
+            renderTaskList(li, task.subtasks, component, vault, settings);
         }
     }
 }
@@ -136,6 +102,33 @@ function createCheckbox(file: string, line: number, text: string, checked: boole
     }
 
     return check;
+}
+
+function addCheckHandler(checkbox: HTMLElement, vault: Vault, component: Component) {
+    component.registerDomEvent(checkbox, "click", event => {
+        let file = checkbox.dataset["file"];
+        let lineno = checkbox.dataset["lineno"];
+        let text = checkbox.dataset["text"];
+        if (!file || !lineno || !text) return;
+
+        if (!checkbox.hasAttribute("checked")) {
+            let newCheckbox = createCheckbox(file, parseInt(lineno), text, true);
+
+            checkbox.parentElement?.addClass("is-checked");
+            checkbox.parentElement?.replaceChild(newCheckbox, checkbox);
+
+            setTaskCheckedInFile(vault, file, parseInt(lineno), text, false, true);
+            addCheckHandler(newCheckbox, vault, component);
+        } else {
+            let newCheckbox = createCheckbox(file, parseInt(lineno), text, false);
+
+            checkbox.parentElement?.removeClass("is-checked");
+            checkbox.parentElement?.replaceChild(newCheckbox, checkbox);
+
+            setTaskCheckedInFile(vault, file, parseInt(lineno), text, true, false);
+            addCheckHandler(newCheckbox, vault, component);
+        }
+    });
 }
 
 /** Check a task in a file by rewriting it. */
