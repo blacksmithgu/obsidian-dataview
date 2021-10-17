@@ -11,10 +11,12 @@ test("Emoji Folder (Node)", () => {
 });
 
 test("Emoji Folder (Index)", () => {
-    let pi = new PrefixIndexNode("<root>");
-    PrefixIndexNode.add(pi, "dataview/⚗️ KNOWLEDGE/Test.md");
+    const vault = new Vault();
+    let index = new PrefixIndex(vault, () => {});
 
-    let index = new PrefixIndex(new Vault(), pi, () => {});
+    index.initialize();
+
+    vault.trigger("create", { path: "dataview/⚗️ KNOWLEDGE/Test.md" });
 
     expect(index.get("dataview/⚗️ KNOWLEDGE")).toEqual(new Set(["dataview/⚗️ KNOWLEDGE/Test.md"]));
 });
