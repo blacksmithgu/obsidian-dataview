@@ -1,3 +1,36 @@
+# 0.4.17
+
+Minor feature release to patch up more implementation holes.
+
+## Single File Queries
+
+You can now query from a specific file (instead of just folders and tags) by specifying the full file path:
+
+```
+TASK FROM "dataview/Test"
+...
+```
+
+This is primarily useful for task queries, but will soon be useful for section and object queries in the near future as
+well.
+
+## Better Inline Field Highlighting
+
+The CSS for inline field highlighting has been fixed and some compatibility issues improved, so it should work on all
+themes now instead of only a few.
+
+## dv.el()
+
+DataviewJS now has `dv.el()`, which is like existing functions like `dv.paragraph` and `dv.span` but can create any
+HTML element type; for example:
+
+```js
+dv.el("b", "Text!");
+dv.el("i", 18);
+```
+
+---
+
 # 0.4.16
 
 Small performance release which substantially reduces the impact Dataview has on vault loading times (by spreading out
