@@ -89,12 +89,21 @@ dv.span("This is some text");
 Complex function which allows for custom views. Will attempt to load a JavaScript file at the given path, passing it
 `dv` and `input` and allowing it to execute. This allows for you to re-use custom view code across multiple pages.
 
-If you want to also include custom CSS in your view, you can instead pass a path to a folder containing `view.js` and
-`view.css`; the CSS will be added to the view automatically.
-
 ```js
 dv.view("views/custom", { arg1: ..., arg2: ... });
 ```
+
+If you want to also include custom CSS in your view, you can instead pass a path to a folder containing `view.js` and
+`view.css`; the CSS will be added to the view automatically:
+
+```
+views/custom
+ -> view.js
+ -> view.css
+```
+
+View scripts have access to the `dv` object (the API object), and an `input` object which is exactly whatever the second
+argument of `dv.view()` was.
 
 ## Dataviews
 
