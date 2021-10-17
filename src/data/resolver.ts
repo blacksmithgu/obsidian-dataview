@@ -22,7 +22,17 @@ export function matchingSourcePaths(
         case "csv":
             return Result.success(new Set<string>([index.prefix.resolveRelative(source.path, originFile)]));
         case "folder":
-            return Result.success(index.prefix.get(source.folder, PathFilters.markdown));
+            // Prefer loading from the folder at the given path.
+            if (index.prefix.nodeExists(source.folder))
+                return Result.success(index.prefix.get(source.folder, PathFilters.markdown));
+
+            // But allow for loading individual files if they exist.
+            if (index.prefix.pathExists(source.folder)) return Result.success(new Set([source.folder]));
+            else if (index.prefix.pathExists(source.folder + ".md"))
+                return Result.success(new Set([source.folder + ".md"]));
+
+            // For backwards-compat, return an empty result even if the folder does not exist.
+            return Result.success(new Set());
         case "link":
             let fullPath = index.metadataCache.getFirstLinkpathDest(source.file, originFile)?.path;
             if (!fullPath)

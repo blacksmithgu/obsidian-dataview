@@ -1,5 +1,7 @@
 import { DateTime, Duration } from "luxon";
 import { Result } from "api/result";
+import * as P from "parsimmon";
+import emojiRegex from "emoji-regex";
 
 /** Normalize a duration to all of the proper units. */
 export function normalizeDuration(dur: Duration) {
@@ -52,30 +54,6 @@ export function getExtension(path: string): string {
     return path.substring(path.lastIndexOf(".") + 1);
 }
 
-const ALLOWABLE_VAR_CHARACTERS = /[0-9\w\p{Letter}\p{Extended_Pictographic}\-]/u;
-const WHITESPACE = /\s/;
-
-/** Convert an arbitrary variable name into something JS/query friendly. */
-export function canonicalizeVarName(name: string): string {
-    // Strip down to purely alphanumeric + spaces.
-    let result = "";
-    let lastWasWhitespace = false;
-    for (let index = 0; index < name.length; index++) {
-        let ch = name[index];
-        if (ch.match(WHITESPACE)) {
-            if (!lastWasWhitespace) result += "-";
-            lastWasWhitespace = true;
-            continue;
-        }
-        lastWasWhitespace = false;
-
-        if (!ch.match(ALLOWABLE_VAR_CHARACTERS)) continue;
-        result += ch.toLocaleLowerCase();
-    }
-
-    return result;
-}
-
 /** Try calling the given function; on failure, return the error message.  */
 export function tryOrPropogate<T>(func: () => Result<T, string>): Result<T, string> {
     try {
@@ -100,4 +78,38 @@ export async function asyncTryOrPropogate<T>(func: () => Promise<Result<T, strin
  */
 export function escapeRegex(str: string) {
     return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/** A parsimmon parser which canonicalizes variable names while properly respecting emoji. */
+const VAR_NAME_CANONICALIZER: P.Parser<string> = P.alt(
+    P.regex(new RegExp(emojiRegex(), "")),
+    P.regex(/[\w\p{Letter}-]+/).map(str => str.toLocaleLowerCase()),
+    P.whitespace.map(_ => "-"),
+    P.any.map(_ => "")
+)
+    .many()
+    .map(result => result.join(""));
+
+/** Convert an arbitrary variable name into something JS/query friendly. */
+export function canonicalizeVarName(name: string): string {
+    return VAR_NAME_CANONICALIZER.tryParse(name);
+}
+
+const HEADER_CANONICALIZER: P.Parser<string> = P.alt(
+    P.regex(new RegExp(emojiRegex(), "")),
+    P.regex(/[\w\p{Letter}_-]+/),
+    P.whitespace.map(_ => " "),
+    P.any.map(_ => " ")
+)
+    .many()
+    .map(result => {
+        return result.join("").split(/\s+/).join(" ").trim();
+    });
+
+/**
+ * Normalizes the text in a header to be something that is actually linkable to. This mimics
+ * how Obsidian does it's normalization, collapsing repeated spaces and stripping out control characters.
+ */
+export function normalizeHeaderForLink(header: string): string {
+    return HEADER_CANONICALIZER.tryParse(header);
 }

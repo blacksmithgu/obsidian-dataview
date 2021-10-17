@@ -188,6 +188,7 @@ export function findTasksInFile(path: string, file: string, metadata: CachedMeta
             real: isReal,
             path,
             line: lineno,
+            header: lastHeader ? Link.header(path, lastHeader, false) : Link.file(path, false),
             link,
             subtasks: [],
             annotations,

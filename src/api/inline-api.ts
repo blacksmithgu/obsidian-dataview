@@ -165,6 +165,18 @@ export class DataviewInlineApi {
     // Rendering Functions //
     /////////////////////////
 
+    /** Render an HTML element, containing arbitrary text. */
+    public el(el: keyof HTMLElementTagNameMap, text: any) {
+        let wrapped = Values.wrapValue(text);
+        if (wrapped === null || wrapped === undefined) {
+            this.container.createEl(el, { text });
+            return;
+        }
+
+        let _el = this.container.createEl(el);
+        renderValue(wrapped.value, _el, this.currentFilePath, this.component, this.settings, true);
+    }
+
     /** Render an HTML header; the level can be anything from 1 - 6. */
     public header(level: number, text: any) {
         let headerType: "h1" | "h2" | "h3" | "h4" | "h5" | "h6";
@@ -191,38 +203,17 @@ export class DataviewInlineApi {
                 throw new Error(`Invalid header level ${level}`);
         }
 
-        let wrapped = Values.wrapValue(text);
-        if (wrapped === null || wrapped === undefined) {
-            this.container.createEl(headerType, { text });
-            return;
-        }
-
-        let header = this.container.createEl(headerType);
-        renderValue(wrapped.value, header, this.currentFilePath, this.component, this.settings, false);
+        this.el(headerType, text);
     }
 
     /** Render an HTML paragraph, containing arbitrary text. */
     public paragraph(text: any) {
-        let wrapped = Values.wrapValue(text);
-        if (wrapped === null || wrapped === undefined) {
-            this.container.createEl("p", { text });
-            return;
-        }
-
-        let p = this.container.createEl("p");
-        renderValue(wrapped.value, p, this.currentFilePath, this.component, this.settings, true);
+        this.el("p", text);
     }
 
     /** Render an inline span, containing arbitrary text. */
     public span(text: any) {
-        let wrapped = Values.wrapValue(text);
-        if (wrapped === null || wrapped === undefined) {
-            this.container.createEl("span", { text });
-            return;
-        }
-
-        let span = this.container.createEl("span");
-        renderValue(wrapped.value, span, this.currentFilePath, this.component, this.settings, true);
+        this.el("span", text);
     }
 
     /**

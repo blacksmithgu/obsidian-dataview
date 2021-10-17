@@ -116,7 +116,9 @@ As with pages, Dataview adds a number of implicit fields to each task:
 - `fullyCompleted`: Whether or not this task and **all** of its subtasks are completed.
 - `text`: The text of this task.
 - `line`: The line this task shows up on.
-- `path`: The full path of the file.
+- `path`: The full path of the file this task is in.
+- `header`: A link to the header this task is contained in.
+- `link`: A link to the closest linkable block near this task; useful for making links which go to the task.
 - `subtasks`: Any subtasks of this task.
 - `real`: If true, this is a real task; otherwise, it is a list element above/below a task.
 - `completion`: The date a task was completed. If not annotated, will default to file modified time.
