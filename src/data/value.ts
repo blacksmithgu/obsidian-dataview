@@ -118,7 +118,7 @@ export class Link {
         });
     }
 
-    public static header(path: string, header: string, embed: boolean, display?: string) {
+    public static header(path: string, header: string, embed?: boolean, display?: string) {
         // Headers need to be normalized to alpha-numeric & with extra spacing removed.
         return new Link({
             path,
@@ -129,7 +129,7 @@ export class Link {
         });
     }
 
-    public static block(path: string, blockId: string, embed: boolean, display?: string) {
+    public static block(path: string, blockId: string, embed?: boolean, display?: string) {
         return new Link({
             path,
             embed,
@@ -147,6 +147,7 @@ export class Link {
         Object.assign(this, fields);
     }
 
+    /** Checks for link equality (i.e., that the links are pointing to the same exact location). */
     public equals(other: Link): boolean {
         return this.path == other.path && this.type == other.type && this.subpath == other.subpath;
     }
@@ -163,6 +164,16 @@ export class Link {
     /** Return a new link which points to the same location but with a new display value. */
     public withDisplay(display?: string) {
         return new Link(Object.assign({}, this, { display }));
+    }
+
+    /** Convert a file link into a link to a specific header. */
+    public withHeader(header: string) {
+        return Link.header(this.path, header, this.embed, this.display);
+    }
+
+    /** Convert any link into a link to its file. */
+    public toFile() {
+        return Link.file(this.path, this.embed, this.display);
     }
 
     /** Convert this link into an embedded link. */
@@ -387,8 +398,21 @@ export namespace Values {
                 let link2 = wrap2.value as Link;
                 let normalize = linkNormalizer ?? ((x: string) => x);
 
-                // We can't compare by file name or display, since that would break link equality.
-                return normalize(link1.path).localeCompare(normalize(link2.path));
+                // We can't compare by file name or display, since that would break link equality. Compare by path.
+                let pathCompare = normalize(link1.path).localeCompare(normalize(link2.path));
+                if (pathCompare != 0) return pathCompare;
+
+                // Then compare by type.
+                let typeCompare = link1.type.localeCompare(link2.type);
+                if (typeCompare != 0) return typeCompare;
+
+                // Then compare by subpath existence.
+                if (link1.subpath && !link2.subpath) return 1;
+                if (!link1.subpath && link2.subpath) return -1;
+                if (!link1.subpath && !link2.subpath) return 0;
+
+                // Since both have a subpath, compare by subpath.
+                return (link1.subpath ?? "").localeCompare(link2.subpath ?? "");
             case "task":
                 let task1 = wrap1.value;
                 let task2 = wrap2.value as Task;
