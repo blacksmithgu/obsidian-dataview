@@ -54,7 +54,9 @@ export default class DataviewPlugin extends Plugin {
         );
 
         // Dataview inline queries.
-        this.registerMarkdownPostProcessor(async (el, ctx) => this.dataviewInline(el, ctx, ctx.sourcePath));
+        this.registerPriorityMarkdownPostProcessor(-100, async (el, ctx) =>
+            this.dataviewInline(el, ctx, ctx.sourcePath)
+        );
 
         // Dataview inline-inline query fancy rendering. Runs at a low priority; should apply to Dataview views.
         this.registerPriorityMarkdownPostProcessor(100, async (el, ctx) => {
