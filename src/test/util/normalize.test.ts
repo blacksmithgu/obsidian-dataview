@@ -20,4 +20,5 @@ describe("Variable Canonicalization", () => {
     test("Punctuation", () => expect(canonicalizeVarName("This is a Test.")).toEqual("this-is-a-test"));
     test("Dash", () => expect(canonicalizeVarName("Yes-sir")).toEqual("yes-sir"));
     test("Emoji", () => expect(canonicalizeVarName("📷")).toEqual("📷"));
+    test("Статус", () => expect(canonicalizeVarName("Статус")).toEqual("статус"));
 });

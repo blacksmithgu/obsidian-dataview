@@ -83,7 +83,7 @@ export function escapeRegex(str: string) {
 /** A parsimmon parser which canonicalizes variable names while properly respecting emoji. */
 const VAR_NAME_CANONICALIZER: P.Parser<string> = P.alt(
     P.regex(new RegExp(emojiRegex(), "")),
-    P.regex(/[\w\p{Letter}-]+/).map(str => str.toLocaleLowerCase()),
+    P.regex(/[0-9\p{Letter}_-]+/u).map(str => str.toLocaleLowerCase()),
     P.whitespace.map(_ => "-"),
     P.any.map(_ => "")
 )
@@ -97,7 +97,7 @@ export function canonicalizeVarName(name: string): string {
 
 const HEADER_CANONICALIZER: P.Parser<string> = P.alt(
     P.regex(new RegExp(emojiRegex(), "")),
-    P.regex(/[\w\p{Letter}_-]+/),
+    P.regex(/[0-9\p{Letter}_-]+/u),
     P.whitespace.map(_ => " "),
     P.any.map(_ => " ")
 )
