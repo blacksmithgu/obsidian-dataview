@@ -20,8 +20,8 @@ export class Task {
     subtasks: Task[];
     /** A link which points to this task, or to the closest block that this task is contained in. */
     link: Link;
-    /** A link which points to the nearest header this task is under. */
-    header: Link;
+    /** A link which points to the section that this task is a part of. */
+    section: Link;
 
     /** Additional metadata like inline annotations */
     annotations?: Record<string, LiteralValue>;
@@ -70,7 +70,8 @@ export class Task {
             fullyCompleted: this.fullyCompleted,
             real: this.real,
             link: this.link,
-            header: this.header,
+            section: this.section,
+            header: this.section,
             subtasks: this.subtasks.map(t => t.toObject(inlineAnnotations)),
             annotated:
                 !!this.due || !!this.completion || (!!this.annotations && Object.keys(this.annotations).length > 0),

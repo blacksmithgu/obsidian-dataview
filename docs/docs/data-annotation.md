@@ -117,7 +117,7 @@ As with pages, Dataview adds a number of implicit fields to each task:
 - `text`: The text of this task.
 - `line`: The line this task shows up on.
 - `path`: The full path of the file this task is in.
-- `header`: A link to the header this task is contained in.
+- `section`: A link to the section this task is contained in.
 - `link`: A link to the closest linkable block near this task; useful for making links which go to the task.
 - `subtasks`: Any subtasks of this task.
 - `real`: If true, this is a real task; otherwise, it is a list element above/below a task.
