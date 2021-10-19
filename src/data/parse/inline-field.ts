@@ -129,6 +129,7 @@ export function extractInlineFields(line: string): InlineField[] {
         }
     }
 
+    fields.sort((a, b) => a.start - b.start);
     return fields;
 }
 
