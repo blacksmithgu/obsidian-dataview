@@ -83,6 +83,9 @@ export interface DataArray<T> {
 
     /** Map every element in this data array to the given key, and then flatten it.*/
     to(key: string): DataArray<any>;
+    /** Map every element in this data array to the given key; unlike to(), does not flatten the result. */
+    into(key: string): DataArray<any>;
+
     /**
      * Recursively expand the given key, flattening a tree structure based on the key into a flat array. Useful for handling
      * heirarchical data like tasks with 'subtasks'.
@@ -129,6 +132,7 @@ class DataArrayImpl<T> implements DataArray<T> {
         "first",
         "last",
         "to",
+        "into",
         "lwrap",
         "expand",
         "forEach",
@@ -337,6 +341,18 @@ class DataArrayImpl<T> implements DataArray<T> {
 
             if (Array.isArray(value) || DataArray.isDataArray(value)) value.forEach(v => result.push(v));
             else result.push(value);
+        }
+
+        return this.lwrap(result);
+    }
+
+    public into(key: string): DataArray<any> {
+        let result: any[] = [];
+        for (let child of this.values) {
+            let value = child[key];
+            if (value === undefined || value === null) continue;
+
+            result.push(value);
         }
 
         return this.lwrap(result);
