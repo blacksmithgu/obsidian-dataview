@@ -1,3 +1,9 @@
+# 0.4.18
+
+Bugfix release which fixes bad inline field highlighting if '[' and '(' are mixed on the same line in particular orders.
+
+---
+
 # 0.4.17
 
 Minor feature release to patch up more implementation holes.
