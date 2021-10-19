@@ -9,22 +9,41 @@ import { Result } from "api/result";
 /** Provides a lookup table for unit durations of the given type. */
 export const DURATION_TYPES = {
     year: Duration.fromObject({ years: 1 }),
+    years: Duration.fromObject({ years: 1 }),
     yr: Duration.fromObject({ years: 1 }),
+    yrs: Duration.fromObject({ years: 1 }),
+
     month: Duration.fromObject({ months: 1 }),
+    months: Duration.fromObject({ months: 1 }),
     mo: Duration.fromObject({ months: 1 }),
+    mos: Duration.fromObject({ months: 1 }),
+
     week: Duration.fromObject({ weeks: 1 }),
+    weeks: Duration.fromObject({ weeks: 1 }),
     wk: Duration.fromObject({ weeks: 1 }),
+    wks: Duration.fromObject({ weeks: 1 }),
     w: Duration.fromObject({ weeks: 1 }),
+
     day: Duration.fromObject({ days: 1 }),
+    days: Duration.fromObject({ days: 1 }),
     d: Duration.fromObject({ days: 1 }),
+
     hour: Duration.fromObject({ hours: 1 }),
+    hours: Duration.fromObject({ hours: 1 }),
     hr: Duration.fromObject({ hours: 1 }),
+    hrs: Duration.fromObject({ hours: 1 }),
     h: Duration.fromObject({ hours: 1 }),
+
     minute: Duration.fromObject({ minutes: 1 }),
+    minutes: Duration.fromObject({ minutes: 1 }),
     min: Duration.fromObject({ minutes: 1 }),
+    mins: Duration.fromObject({ minutes: 1 }),
     m: Duration.fromObject({ minutes: 1 }),
+
     second: Duration.fromObject({ seconds: 1 }),
+    seconds: Duration.fromObject({ seconds: 1 }),
     sec: Duration.fromObject({ seconds: 1 }),
+    secs: Duration.fromObject({ seconds: 1 }),
     s: Duration.fromObject({ seconds: 1 }),
 };
 
@@ -315,11 +334,16 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
         ),
 
     // A duration of time.
-    durationType: q => P.alt(...Object.keys(DURATION_TYPES).map(P.string)) as P.Parser<keyof typeof DURATION_TYPES>,
+    durationType: _ =>
+        P.alt(
+            ...Object.keys(DURATION_TYPES)
+                .sort((a, b) => b.length - a.length)
+                .map(P.string)
+        ) as P.Parser<keyof typeof DURATION_TYPES>,
     duration: q =>
-        P.seqMap(q.number, P.optWhitespace, q.durationType, P.string("s").atMost(1), (count, _, t, _2) =>
-            DURATION_TYPES[t].mapUnits(x => x * count)
-        ),
+        P.seqMap(q.number, P.optWhitespace, q.durationType, (count, _, t) => DURATION_TYPES[t].mapUnits(x => x * count))
+            .sepBy1(P.string(",").trim(P.optWhitespace).or(P.optWhitespace))
+            .map(durations => durations.reduce((p, c) => p.plus(c))),
 
     // A raw null value.
     rawNull: q => P.string("null"),

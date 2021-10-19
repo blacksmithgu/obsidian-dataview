@@ -185,22 +185,44 @@ test("Parse Today", () => {
 
 // <-- Durations -->
 
-test("Parse day duration", () => {
-    let day = EXPRESSION.duration.tryParse("6 days");
-    let day2 = EXPRESSION.duration.tryParse("6day");
+describe("Durations", () => {
+    test("6 days", () => {
+        let day = EXPRESSION.duration.tryParse("6 days");
+        let day2 = EXPRESSION.duration.tryParse("6day");
 
-    expect(day).toEqual(day2);
-    expect(day).toEqual(Duration.fromObject({ days: 6 }));
-});
+        expect(day).toEqual(day2);
+        expect(day).toEqual(Duration.fromObject({ days: 6 }));
+    });
 
-test("Parse minute duration", () => {
-    let min = EXPRESSION.duration.tryParse("4min");
-    let min2 = EXPRESSION.duration.tryParse("4 minutes");
-    let min3 = EXPRESSION.duration.tryParse("4 minute");
+    test("4 minutes", () => {
+        let min = EXPRESSION.duration.tryParse("4min");
+        let min2 = EXPRESSION.duration.tryParse("4 minutes");
+        let min3 = EXPRESSION.duration.tryParse("4 minute");
 
-    expect(min).toEqual(min2);
-    expect(min).toEqual(min3);
-    expect(min).toEqual(Duration.fromObject({ minutes: 4 }));
+        expect(min).toEqual(min2);
+        expect(min).toEqual(min3);
+        expect(min).toEqual(Duration.fromObject({ minutes: 4 }));
+    });
+
+    test("4 hours 15 minutes", () => {
+        let dur = EXPRESSION.duration.tryParse("4 hr 15 min");
+        let dur2 = EXPRESSION.duration.tryParse("4h15m");
+        let dur3 = EXPRESSION.duration.tryParse("4 hours, 15 minutes");
+
+        expect(dur).toEqual(dur2);
+        expect(dur).toEqual(dur3);
+        expect(dur).toEqual(Duration.fromObject({ hours: 4, minutes: 15 }));
+    });
+
+    test("4 years 6 weeks 9 minutes 3 seconds", () => {
+        let dur = EXPRESSION.duration.tryParse("4 years 6 weeks 9 minutes 3 seconds");
+        let dur2 = EXPRESSION.duration.tryParse("4yr6w9m3s");
+        let dur3 = EXPRESSION.duration.tryParse("4 yrs, 6 wks, 9 mins, 3 s");
+
+        expect(dur).toEqual(dur2);
+        expect(dur).toEqual(dur3);
+        expect(dur).toEqual(Duration.fromObject({ years: 4, weeks: 6, minutes: 9, seconds: 3 }));
+    });
 });
 
 // <-- Links -->

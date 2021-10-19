@@ -155,11 +155,14 @@ Dataview understands several distinct field types to cover common use cases:
     Example:: 2021-04-18T04:19:35.000+06:30
     ```
 - **Duration**: Durations of the form `<time> <unit>`, like `6 hours` or `4 minutes`. Common english abbreviations like
-  `6hrs` or `2m` are accepted.
+  `6hrs` or `2m` are accepted. You can specify multiple units using an optional comma separator: `6 hours, 4 minutes`
+  or `6hr4min`.
     ```
     Example:: 7 hours
     Example:: 4min
     Example:: 16 days
+    Example:: 9 years, 8 months, 4 days, 16 hours, 2 minutes
+    Example:: 9 yrs 8 min
     ```
 - **Link**: Plain Obsidian links like `[[Page]]` or `[[Page|Page Display]]`.
     - If you reference a link in frontmatter, you need to quote it, as so: `key: "[[Link]]"`. This is default Obsidian-supported behavior.
