@@ -1,3 +1,21 @@
+# 0.4.19
+
+Bugfix release which corrects emoji parsing & localization issues.
+
+- Add `DataArray#into`, which lets you index into objects without flattening.
+- Renamed 'header' to 'section' in task metadata; 'header' will remain around for a few major releases to let people
+  naturally migrate.
+- Fix #487: You no longer need spaces around '*' in expressions.
+- Fix #559: Fix unicode issues in variable canonicalization which was causing problems with non-Latin inline field
+  keys.
+
+## Duration Parsing
+
+You can now include multiple units in durations: `dur(8 minutes, 4 seconds)` or `dur(2yr8mo12d)`. You can separate
+durations by commas, or use the abbreviated syntax with/without spaces.
+
+---
+
 # 0.4.18
 
 Bugfix release which fixes bad inline field highlighting if '[' and '(' are mixed on the same line in particular orders.
