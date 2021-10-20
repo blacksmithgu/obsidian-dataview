@@ -5,6 +5,10 @@ import { BinaryOp, Field, Fields, LambdaField, ListField, LiteralField, ObjectFi
 import { FolderSource, NegatedSource, Source, SourceOp, Sources, TagSource, CsvSource } from "data/source";
 import { normalizeDuration } from "util/normalize";
 import { Result } from "api/result";
+import emojiRegex from "emoji-regex";
+
+/** Emoji regex without any additional flags. */
+const EMOJI_REGEX = new RegExp(emojiRegex(), "");
 
 /** Provides a lookup table for unit durations of the given type. */
 export const DURATION_TYPES = {
@@ -210,7 +214,7 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
             .skip(P.string('"'))
             .desc("string"),
 
-    escapeCharacter: q =>
+    escapeCharacter: _ =>
         P.string("\\")
             .then(P.any)
             .map(escaped => {
@@ -221,31 +225,43 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
             }),
 
     // A boolean true/false value.
-    bool: q =>
+    bool: _ =>
         P.regexp(/true|false|True|False/)
             .map(str => str.toLowerCase() == "true")
             .desc("boolean ('true' or 'false')"),
 
     // A tag of the form '#stuff/hello-there'.
-    tag: q => P.regexp(/#[\p{Letter}\p{Extended_Pictographic}\p{Emoji_Component}\w/-]+/u).desc("tag ('#hello/stuff')"),
+    tag: _ =>
+        P.seqMap(
+            P.string("#"),
+            P.alt(P.regexp(/[\p{Letter}0-9_/-]/u), P.regexp(EMOJI_REGEX)).many(),
+            (start, rest) => start + rest.join("")
+        ).desc("tag ('#hello/stuff')"),
 
-    // A variable identifier, which is alphanumeric and must start with a letter.
-    identifier: q =>
-        P.regexp(
-            /[\p{Letter}\p{Extended_Pictographic}][\p{Letter}\p{Extended_Pictographic}\p{Emoji_Component}\w_-]*/u
+    // A variable identifier, which is alphanumeric and must start with a letter or... emoji.
+    identifier: _ =>
+        P.seqMap(
+            P.alt(P.regexp(/\p{Letter}/u), P.regexp(EMOJI_REGEX)),
+            P.alt(P.regexp(/[0-9\p{Letter}_-]/u), P.regexp(EMOJI_REGEX)).many(),
+            (first, rest) => first + rest.join("")
         ).desc("variable identifier"),
 
     // A variable identifier, which is alphanumeric and must start with a letter. Can include dots.
-    identifierDot: q =>
-        P.regexp(
-            /[\p{Letter}\p{Extended_Pictographic}][\p{Letter}\p{Extended_Pictographic}\p{Emoji_Component}\.\w_-]*/u
+    identifierDot: _ =>
+        P.seqMap(
+            P.alt(P.regexp(/\p{Letter}/u), P.regexp(EMOJI_REGEX)),
+            P.alt(P.regexp(/[0-9\p{Letter}\._-]/u), P.regexp(EMOJI_REGEX)).many(),
+            (first, rest) => first + rest.join("")
         ).desc("variable identifier"),
 
     // An Obsidian link of the form [[<link>]].
-    link: q =>
+    link: _ =>
         P.regexp(/\[\[([^\[\]]*?)\]\]/u, 1)
             .map(linkInner => parseInnerLink(linkInner))
             .desc("file link"),
+
+    // An embeddable link which can start with '!'. This overlaps with the normal negation operator, so it is only
+    // provided for metadata parsing.
     embedLink: q =>
         P.seqMap(P.string("!").atMost(1), q.link, (p, l) => {
             if (p.length > 0) l.embed = true;
@@ -253,25 +269,25 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
         }),
 
     // Binary plus or minus operator.
-    binaryPlusMinus: q =>
+    binaryPlusMinus: _ =>
         P.regexp(/\+|-/)
             .map(str => str as BinaryOp)
             .desc("'+' or '-'"),
 
     // Binary times or divide operator.
-    binaryMulDiv: q =>
+    binaryMulDiv: _ =>
         P.regexp(/\*|\//)
             .map(str => str as BinaryOp)
             .desc("'*' or '/'"),
 
     // Binary comparison operator.
-    binaryCompareOp: q =>
+    binaryCompareOp: _ =>
         P.regexp(/>=|<=|!=|>|<|=/)
             .map(str => str as BinaryOp)
             .desc("'>=' or '<=' or '!=' or '=' or '>' or '<'"),
 
     // Binary boolean combination operator.
-    binaryBooleanOp: q =>
+    binaryBooleanOp: _ =>
         P.regexp(/and|or|&|\|/i)
             .map(str => {
                 if (str.toLowerCase() == "and") return "&";
@@ -281,7 +297,7 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
             .desc("'and' or 'or'"),
 
     // A date which can be YYYY-MM[-DDTHH:mm:ss].
-    rootDate: q =>
+    rootDate: _ =>
         P.seqMap(P.regexp(/\d{4}/), P.string("-"), P.regexp(/\d{2}/), (year, _, month) => {
             return DateTime.fromObject({ year: Number.parseInt(year), month: Number.parseInt(month) });
         }).desc("date in format YYYY-MM[-DDTHH-MM-SS.MS]"),
@@ -346,7 +362,7 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
             .map(durations => durations.reduce((p, c) => p.plus(c))),
 
     // A raw null value.
-    rawNull: q => P.string("null"),
+    rawNull: _ => P.string("null"),
 
     // Source parsing.
     tagSource: q => q.tag.map(tag => Sources.tag(tag)),

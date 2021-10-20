@@ -95,9 +95,12 @@ describe("Tag Literals", () => {
 
 // <-- Identifiers -->
 
-test("Parse Identifier", () => {
-    expect(EXPRESSION.identifier.tryParse("lma0")).toEqual("lma0");
-    expect(EXPRESSION.identifier.parse("0no").status).toBe(false);
+describe("Identifiers", () => {
+    test("lma0", () => expect(EXPRESSION.identifier.tryParse("lma0")).toEqual("lma0"));
+    test("0no", () => expect(EXPRESSION.identifier.parse("0no").status).toBeFalsy());
+    test("a*b", () => expect(EXPRESSION.identifier.parse("a*b").status).toBeFalsy());
+    test("😊", () => expect(EXPRESSION.identifier.tryParse("😊")).toEqual("😊"));
+    test("📷", () => expect(EXPRESSION.identifier.tryParse("📷")).toEqual("📷"));
 });
 
 // <-- Dates -->
@@ -402,35 +405,43 @@ describe("Objects", () => {
 
 // <-- Binary Ops -->
 
-test("Parse Simple Addition", () => {
-    let result = EXPRESSION.binaryOpField.parse('16 + "what"') as Success<BinaryOpField>;
-    expect(result.status).toBe(true);
-    expect(result.value).toEqual(Fields.binaryOp(Fields.literal(16), "+", Fields.literal("what")));
-});
+describe("Binary Operators", () => {
+    test("Simple Addition", () => {
+        let result = EXPRESSION.binaryOpField.parse('16 + "what"') as Success<BinaryOpField>;
+        expect(result.status).toBe(true);
+        expect(result.value).toEqual(Fields.binaryOp(Fields.literal(16), "+", Fields.literal("what")));
+    });
 
-test("Parse Simple Division", () => {
-    expect(EXPRESSION.field.tryParse("14 / 2")).toEqual(Fields.binaryOp(Fields.literal(14), "/", Fields.literal(2)));
-    expect(EXPRESSION.field.tryParse("31 / 9.0")).toEqual(
-        Fields.binaryOp(Fields.literal(31), "/", Fields.literal(9.0))
-    );
-});
+    test("Simple Division", () => {
+        expect(EXPRESSION.field.tryParse("14 / 2")).toEqual(
+            Fields.binaryOp(Fields.literal(14), "/", Fields.literal(2))
+        );
+        expect(EXPRESSION.field.tryParse("31 / 9.0")).toEqual(
+            Fields.binaryOp(Fields.literal(31), "/", Fields.literal(9.0))
+        );
+    });
 
-test("Parse Parenthesis", () => {
-    let result = EXPRESSION.field.parse("(16 - 4) - 8") as Success<BinaryOpField>;
-    expect(result.status).toBe(true);
-    expect(result.value).toEqual(
-        Fields.binaryOp(Fields.binaryOp(Fields.literal(16), "-", Fields.literal(4)), "-", Fields.literal(8))
-    );
-});
+    test("Multiplication (No Spaces)", () => {
+        expect(EXPRESSION.field.tryParse("3*a")).toEqual(Fields.binaryOp(Fields.literal(3), "*", Fields.variable("a")));
+    });
 
-test("Parse Order of Operations", () => {
-    expect(EXPRESSION.field.tryParse("14 + 6 >= 19 - 2")).toEqual(
-        Fields.binaryOp(
-            Fields.binaryOp(Fields.literal(14), "+", Fields.literal(6)),
-            ">=",
-            Fields.binaryOp(Fields.literal(19), "-", Fields.literal(2))
-        )
-    );
+    test("Parenthesis", () => {
+        let result = EXPRESSION.field.parse("(16 - 4) - 8") as Success<BinaryOpField>;
+        expect(result.status).toBe(true);
+        expect(result.value).toEqual(
+            Fields.binaryOp(Fields.binaryOp(Fields.literal(16), "-", Fields.literal(4)), "-", Fields.literal(8))
+        );
+    });
+
+    test("Order of Operations", () => {
+        expect(EXPRESSION.field.tryParse("14 + 6 >= 19 - 2")).toEqual(
+            Fields.binaryOp(
+                Fields.binaryOp(Fields.literal(14), "+", Fields.literal(6)),
+                ">=",
+                Fields.binaryOp(Fields.literal(19), "-", Fields.literal(2))
+            )
+        );
+    });
 });
 
 // <-- Negation -->
