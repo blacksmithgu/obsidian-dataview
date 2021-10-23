@@ -171,3 +171,26 @@ export function extractSpecialTaskFields(
 
     return result;
 }
+
+export function setInlineField(source: string, key: string, value?: string): string {
+    let existing = extractInlineFields(source);
+    let existingKeys = existing.filter(f => f.key == key);
+    let existingKey = existingKeys.length == 1 ? existingKeys[0] : undefined;
+    if (!value && !existingKey) {
+        return source;
+    }
+
+    let annotation = value ? `[${key}:: ${value}]` : "";
+    if (existingKey) {
+        let prefix = source.substring(0, existingKey.start).trimRight();
+        let suffix = source.substring(existingKey.end, source.length).trimLeft();
+        if (annotation) {
+            source = `${prefix} ${annotation} ${suffix}`;
+        } else {
+            source = `${prefix} ${suffix}`;
+        }
+    } else if (annotation) {
+        source = source.trimRight() + " " + annotation;
+    }
+    return source;
+}

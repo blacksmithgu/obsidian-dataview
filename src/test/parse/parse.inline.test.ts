@@ -1,6 +1,6 @@
 import { EXPRESSION } from "expression/parse";
 import { Link } from "data/value";
-import { extractInlineFields } from "data/parse/inline-field";
+import { extractInlineFields, setInlineField } from "data/parse/inline-field";
 
 // <-- Inline field wierd edge cases -->
 
@@ -114,5 +114,25 @@ describe("Inline Inline With HTML", () => {
         let result = extractInlineFields(`[link:: <a href="Page">Value</a>]`);
         expect(result[0].key).toEqual("link");
         expect(result[0].value).toEqual(`<a href="Page">Value</a>`);
+    });
+});
+
+describe("Set inline", () => {
+    test("Add annotation", () => {
+        let input = "- [ ] an uncompleted task";
+        let result = setInlineField(input, "completion");
+        expect(result).toEqual(input);
+
+        result = setInlineField(input, "completion", "2021-02-21");
+        expect(result).toEqual(input + " [completion:: 2021-02-21]");
+    });
+
+    test("replace annotation", () => {
+        let input = "- [x] a completed task [completion:: 2021-02-21] foo bar";
+        let result = setInlineField(input, "completion");
+        expect(result).toEqual("- [x] a completed task foo bar");
+
+        result = setInlineField(input, "completion", "2021-02-22");
+        expect(result).toEqual("- [x] a completed task [completion:: 2021-02-22] foo bar");
     });
 });

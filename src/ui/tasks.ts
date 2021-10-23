@@ -3,6 +3,8 @@ import { TASK_REGEX } from "data/parse/markdown";
 import { Grouping, Task } from "data/value";
 import { renderValue } from "ui/render";
 import { QuerySettings } from "settings";
+import { DateTime } from "luxon";
+import { setInlineField } from "data/parse/inline-field";
 
 /**
  * Render a task grouping (indenting nested groupings for clarity). This will automatically bind the tasks to be checkable,
@@ -77,7 +79,7 @@ export async function renderTaskList(
             let checkbox = createCheckbox(task.path, task.line, task.text, task.completed);
             li.prepend(checkbox);
 
-            addCheckHandler(checkbox, vault, component);
+            addCheckHandler(checkbox, vault, component, settings);
         }
 
         if (task.subtasks.length > 0) {
@@ -104,7 +106,7 @@ function createCheckbox(file: string, line: number, text: string, checked: boole
     return check;
 }
 
-function addCheckHandler(checkbox: HTMLElement, vault: Vault, component: Component) {
+function addCheckHandler(checkbox: HTMLElement, vault: Vault, component: Component, settings: QuerySettings) {
     component.registerDomEvent(checkbox, "click", event => {
         let file = checkbox.dataset["file"];
         let lineno = checkbox.dataset["lineno"];
@@ -117,16 +119,16 @@ function addCheckHandler(checkbox: HTMLElement, vault: Vault, component: Compone
             checkbox.parentElement?.addClass("is-checked");
             checkbox.parentElement?.replaceChild(newCheckbox, checkbox);
 
-            setTaskCheckedInFile(vault, file, parseInt(lineno), text, false, true);
-            addCheckHandler(newCheckbox, vault, component);
+            setTaskCheckedInFile(vault, file, parseInt(lineno), text, false, true, settings.taskCompletionText);
+            addCheckHandler(newCheckbox, vault, component, settings);
         } else {
             let newCheckbox = createCheckbox(file, parseInt(lineno), text, false);
 
             checkbox.parentElement?.removeClass("is-checked");
             checkbox.parentElement?.replaceChild(newCheckbox, checkbox);
 
-            setTaskCheckedInFile(vault, file, parseInt(lineno), text, true, false);
-            addCheckHandler(newCheckbox, vault, component);
+            setTaskCheckedInFile(vault, file, parseInt(lineno), text, true, false, settings.taskCompletionText);
+            addCheckHandler(newCheckbox, vault, component, settings);
         }
     });
 }
@@ -138,7 +140,8 @@ export async function setTaskCheckedInFile(
     taskLine: number,
     taskText: string,
     wasChecked: boolean,
-    check: boolean
+    check: boolean,
+    completionKey: string
 ) {
     if (check == wasChecked) return;
 
@@ -146,7 +149,6 @@ export async function setTaskCheckedInFile(
     let splitText = text.replace("\r", "").split("\n");
 
     if (splitText.length < taskLine) return;
-
     let match = TASK_REGEX.exec(splitText[taskLine]);
     if (!match) return;
 
@@ -160,26 +162,40 @@ export async function setTaskCheckedInFile(
     if (taskText.trim() != foundText.trim()) return;
     if (wasChecked != foundCompleted) return;
 
+    let completion = undefined;
     if (check) {
         splitText[taskLine] = splitText[taskLine]
             .replace("- [ ]", "- [x]")
             .replace("- []", "- [x]")
             .replace("-[]", "- [x]")
-            .replace("-[ ]", "- [x]");
+            .replace("-[ ]", "- [x]")
+            .replace("* [ ]", "* [x]")
+            .replace("* []", "* [x]")
+            .replace("*[]", "* [x]")
+            .replace("*[ ]", "* [x]");
+        completion = DateTime.now().toISODate();
     } else {
         splitText[taskLine] = splitText[taskLine]
             .replace("- [X]", "- [ ]")
             .replace("-[X]", "- [ ]")
             .replace("- [x]", "- [ ]")
-            .replace("-[x]", "- [ ]");
+            .replace("-[x]", "- [ ]")
+            .replace("* [X]", "* [ ]")
+            .replace("*[X]", "* [ ]")
+            .replace("* [x]", "* [ ]")
+            .replace("*[x]", "* [ ]");
+    }
+
+    if (completionKey) {
+        splitText[taskLine] = setInlineField(splitText[taskLine], completionKey, completion);
     }
 
     let hasRn = text.contains("\r");
+    let separator = "\n";
     if (hasRn) {
-        let final = splitText.join("\r\n");
-        await vault.adapter.write(path, final);
-    } else {
-        let final = splitText.join("\n");
-        await vault.adapter.write(path, final);
+        separator = "\r\n";
     }
+
+    let final = splitText.join(separator);
+    await vault.adapter.write(path, final, {});
 }

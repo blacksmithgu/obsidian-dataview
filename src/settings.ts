@@ -9,6 +9,8 @@ export interface QuerySettings {
     taskLinkLocation: "start" | "end" | "none";
     /** How to render task links. If empty, will not render task links. */
     taskLinkText: string;
+    /** The name of the inline field to be added as a task's completion when checked */
+    taskCompletionText: string;
     /** If true, render a modal which shows no results were returned. */
     warnOnEmptyResult: boolean;
     /** The interval that views are refreshed, by default. */
@@ -30,6 +32,7 @@ export const DEFAULT_QUERY_SETTINGS: QuerySettings = {
     renderNullAs: "\\-",
     taskLinkLocation: "end",
     taskLinkText: "🔗",
+    taskCompletionText: "completion",
     warnOnEmptyResult: true,
     refreshInterval: 250,
     defaultDateFormat: "MMMM dd, yyyy",
