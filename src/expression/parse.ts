@@ -342,8 +342,10 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
                     .startOf("day")
                     .plus(Duration.fromObject({ days: 1 }))
             ),
+            P.string("sow").map(_ => DateTime.local().startOf("week")),
             P.string("som").map(_ => DateTime.local().startOf("month")),
             P.string("soy").map(_ => DateTime.local().startOf("year")),
+            P.string("eow").map(_ => DateTime.local().endOf("week")),
             P.string("eom").map(_ => DateTime.local().endOf("month")),
             P.string("eoy").map(_ => DateTime.local().endOf("year")),
             q.date
