@@ -248,17 +248,18 @@ class DataArrayImpl<T> implements DataArray<T> {
             .join(sep ?? ", ");
     }
 
-    public sort<U>(key: ArrayFunc<T, U>, direction?: "asc" | "desc", comparator?: ArrayComparator<U>): DataArray<T> {
+    public sort<U>(key?: ArrayFunc<T, U>, direction?: "asc" | "desc", comparator?: ArrayComparator<U>): DataArray<T> {
         if (this.values.length == 0) return this;
         let realComparator = comparator ?? this.defaultComparator;
+        let realKey = key ?? ((l: T) => l as any as U);
 
         // Associate each entry with it's index for the key function, and then do a normal sort.
         let copy = ([] as any[]).concat(this.array()).map((elem, index) => {
             return { index: index, value: elem };
         });
         copy.sort((a, b) => {
-            let aKey = key(a.value, a.index, this.values);
-            let bKey = key(b.value, b.index, this.values);
+            let aKey = realKey(a.value, a.index, this.values);
+            let bKey = realKey(b.value, b.index, this.values);
             return direction === "desc" ? -realComparator(aKey, bKey) : realComparator(aKey, bKey);
         });
 
@@ -408,6 +409,29 @@ export namespace DataArray {
         let data = [];
         for (let elem of raw) data.push(elem);
         return DataArrayImpl.wrap(data, settings);
+    }
+
+    /** Convert all arrays in a deep object into data arrays. */
+    // TODO: Can instead pass settings to the toObject() functions; will probably refactor this soon.
+    export function convert(object: any, settings: QuerySettings): any {
+        let type = Values.wrapValue(object);
+        if (!type) return object;
+
+        switch (type.type) {
+            case "array":
+                return DataArray.wrap(
+                    type.value.map(v => convert(v, settings)),
+                    settings
+                );
+            case "object":
+                let result: Record<string, any> = {};
+                for (let [key, value] of Object.entries(type.value)) {
+                    result[key] = convert(value, settings);
+                }
+                return result;
+            default:
+                return object;
+        }
     }
 
     /** Return true if the given object is a data array. */

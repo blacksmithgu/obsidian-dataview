@@ -96,7 +96,7 @@ export class DataviewApi {
         let pageObject = this.index.pages.get(normPath.path);
         if (!pageObject) return undefined;
 
-        return pageObject.toObject(this.index);
+        return DataArray.convert(pageObject.toObject(this.index), this.settings);
     }
 
     /** Return an array of page objects corresponding to pages which match the query. */
