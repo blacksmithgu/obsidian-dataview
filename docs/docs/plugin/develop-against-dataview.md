@@ -20,6 +20,7 @@ for your plugin, follow these steps:
             dataview?: {
               api?: DataviewApi;
             };
+          };
         };
       }
       interface MetadataCache {
