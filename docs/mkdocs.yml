@@ -34,6 +34,7 @@ nav:
     - Developing Against Dataview: 'plugin/develop-against-dataview.md'
   - Changelog: 'changelog.md'
 plugins:
+  - search
   - redirects:
       redirect_maps:
         docs/where-data-comes-from.md: data-annotation.md
