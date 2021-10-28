@@ -438,6 +438,16 @@ class DataviewSettingsTab extends PluginSettingTab {
                     this.plugin.index.touch();
                 })
             );
+
+        new Setting(this.containerEl)
+            .setName("Set task completion as")
+            .setDesc("Text used as inline field key to track task completion date when toggling a task's checkbox")
+            .addText(text =>
+                text.setValue(this.plugin.settings.taskCompletionText).onChange(async value => {
+                    await this.plugin.updateSettings({ taskCompletionText: value.trim() });
+                    this.plugin.index.touch();
+                })
+            );
     }
 }
 
