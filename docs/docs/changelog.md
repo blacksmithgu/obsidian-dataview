@@ -1,3 +1,18 @@
+# 0.4.20
+
+Some feature work (mostly by other contributors) while I while away at section metadata. May also fix a few bugs!
+
+- Fix #448: You can now use the "Task Completion Tracking" option to automatically add completion metadata to tasks
+  which are checked/unchecked through Dataview. Thanks to @sheeley.
+- Add a search bar to documentation. Thanks to @tzhou.
+- Add new date expressions for the start of the week (`date(sow)`), and the end of the week (`date(eow)`). Thanks
+  @Jeamee and @v_mujunma.
+
+Small minor bugfix / security releases may follow in the near future; otherwise, the next major release will include
+section and object metadata.
+
+---
+
 # 0.4.19
 
 Bugfix release which corrects emoji parsing & localization issues.
