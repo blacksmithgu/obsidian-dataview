@@ -172,25 +172,25 @@ export function extractSpecialTaskFields(
     return result;
 }
 
+/** Sets or replaces the value of an inline field; if the value is 'undefined', deletes the key. */
 export function setInlineField(source: string, key: string, value?: string): string {
     let existing = extractInlineFields(source);
     let existingKeys = existing.filter(f => f.key == key);
-    let existingKey = existingKeys.length == 1 ? existingKeys[0] : undefined;
-    if (!value && !existingKey) {
-        return source;
-    }
+
+    // Don't do anything if there are duplicate keys OR the key already doesn't exist.
+    if (existingKeys.length > 2 || (existingKeys.length == 0 && !value)) return source;
+    let existingKey = existingKeys[0];
 
     let annotation = value ? `[${key}:: ${value}]` : "";
     if (existingKey) {
-        let prefix = source.substring(0, existingKey.start).trimRight();
-        let suffix = source.substring(existingKey.end, source.length).trimLeft();
-        if (annotation) {
-            source = `${prefix} ${annotation} ${suffix}`;
-        } else {
-            source = `${prefix} ${suffix}`;
-        }
+        let prefix = source.substring(0, existingKey.start);
+        let suffix = source.substring(existingKey.end);
+
+        if (annotation) return `${prefix}${annotation}${suffix}`;
+        else return `${prefix}${suffix.trimLeft()}`;
     } else if (annotation) {
-        source = source.trimRight() + " " + annotation;
+        return `${source.trimRight()} ${annotation}`;
     }
+
     return source;
 }

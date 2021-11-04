@@ -430,7 +430,7 @@ class DataviewSettingsTab extends PluginSettingTab {
             );
 
         new Setting(this.containerEl)
-            .setName("Render Task Links As")
+            .setName("Task Link Text")
             .setDesc("Text used when linking from a task to its source note in the 'Start' and 'End' link types.")
             .addText(text =>
                 text.setValue(this.plugin.settings.taskLinkText).onChange(async value => {
@@ -440,12 +440,24 @@ class DataviewSettingsTab extends PluginSettingTab {
             );
 
         new Setting(this.containerEl)
-            .setName("Set task completion as")
-            .setDesc("Text used as inline field key to track task completion date when toggling a task's checkbox")
+            .setName("Automatic Task Completion Tracking")
+            .setDesc(
+                "If enabled, Dataview will automatically append tasks with their completion date when they are checked in Dataview views."
+            )
+            .addToggle(toggle =>
+                toggle.setValue(this.plugin.settings.taskCompletionTracking).onChange(async value => {
+                    await this.plugin.updateSettings({ taskCompletionTracking: value });
+                })
+            );
+
+        new Setting(this.containerEl)
+            .setName("Automatic Task Completion Field")
+            .setDesc(
+                "Text used as inline field key to track task completion date when toggling a task's checkbox in a dataview view."
+            )
             .addText(text =>
                 text.setValue(this.plugin.settings.taskCompletionText).onChange(async value => {
                     await this.plugin.updateSettings({ taskCompletionText: value.trim() });
-                    this.plugin.index.touch();
                 })
             );
     }

@@ -119,7 +119,15 @@ function addCheckHandler(checkbox: HTMLElement, vault: Vault, component: Compone
             checkbox.parentElement?.addClass("is-checked");
             checkbox.parentElement?.replaceChild(newCheckbox, checkbox);
 
-            setTaskCheckedInFile(vault, file, parseInt(lineno), text, false, true, settings.taskCompletionText);
+            setTaskCheckedInFile(
+                vault,
+                file,
+                parseInt(lineno),
+                text,
+                false,
+                true,
+                settings.taskCompletionTracking ? settings.taskCompletionText : undefined
+            );
             addCheckHandler(newCheckbox, vault, component, settings);
         } else {
             let newCheckbox = createCheckbox(file, parseInt(lineno), text, false);
@@ -127,7 +135,15 @@ function addCheckHandler(checkbox: HTMLElement, vault: Vault, component: Compone
             checkbox.parentElement?.removeClass("is-checked");
             checkbox.parentElement?.replaceChild(newCheckbox, checkbox);
 
-            setTaskCheckedInFile(vault, file, parseInt(lineno), text, true, false, settings.taskCompletionText);
+            setTaskCheckedInFile(
+                vault,
+                file,
+                parseInt(lineno),
+                text,
+                true,
+                false,
+                settings.taskCompletionTracking ? settings.taskCompletionText : undefined
+            );
             addCheckHandler(newCheckbox, vault, component, settings);
         }
     });
@@ -141,7 +157,7 @@ export async function setTaskCheckedInFile(
     taskText: string,
     wasChecked: boolean,
     check: boolean,
-    completionKey: string
+    completionKey?: string
 ) {
     if (check == wasChecked) return;
 
@@ -186,16 +202,10 @@ export async function setTaskCheckedInFile(
             .replace("*[x]", "* [ ]");
     }
 
-    if (completionKey) {
-        splitText[taskLine] = setInlineField(splitText[taskLine], completionKey, completion);
-    }
+    // If we should add a completion key, then do so now.
+    if (completionKey) splitText[taskLine] = setInlineField(splitText[taskLine], completionKey, completion);
 
-    let hasRn = text.contains("\r");
-    let separator = "\n";
-    if (hasRn) {
-        separator = "\r\n";
-    }
-
-    let final = splitText.join(separator);
+    // Respect '\n' or '\r\n' just to be careful (mainly relevant to avoid bad git diffs for some users).
+    let final = splitText.join(text.contains("\r") ? "\r\n" : "\n");
     await vault.adapter.write(path, final, {});
 }

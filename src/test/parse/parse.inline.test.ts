@@ -117,8 +117,8 @@ describe("Inline Inline With HTML", () => {
     });
 });
 
-describe("Set inline", () => {
-    test("Add annotation", () => {
+describe("Set Inline", () => {
+    test("Add Annotation", () => {
         let input = "- [ ] an uncompleted task";
         let result = setInlineField(input, "completion");
         expect(result).toEqual(input);
@@ -127,7 +127,7 @@ describe("Set inline", () => {
         expect(result).toEqual(input + " [completion:: 2021-02-21]");
     });
 
-    test("replace annotation", () => {
+    test("Replace Annotation", () => {
         let input = "- [x] a completed task [completion:: 2021-02-21] foo bar";
         let result = setInlineField(input, "completion");
         expect(result).toEqual("- [x] a completed task foo bar");
