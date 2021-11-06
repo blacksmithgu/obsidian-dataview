@@ -1,0 +1,67 @@
+name: Bug Report (desktop)
+description: File a bug report for Dataview on desktop Obsidian
+title: ""
+labels: ["bug", "needs-investigation"]
+assignees:
+  - blacksmithgu
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Also tell us, what did you expect to happen?
+      placeholder: Tell us what you see!
+    validations:
+      required: true
+  - type: textarea
+    id: dql
+    attributes:
+      label: DQL
+      description: If applicable, provide the query where the bug occurred
+      placeholder: |
+        ```dataview
+        LIST FROM #example
+        ```
+  - type: textarea
+    id: js
+    attributes:
+      label: JS
+      description: If applicable, provide the javascript where the bug occurred
+      render: js
+  - type: input 
+    id: version
+    attributes:
+      label: Dataview Version
+      description: What version of Dataview are you running?
+      placeholder: 0.4.20
+    validations:
+      required: true
+  - type: input 
+    id: version
+    attributes:
+      label: Dataview Version
+      placeholder: 0.4.20
+    validations:
+      required: true
+  - type: input 
+    id: obsidian-version 
+    attributes:
+      label: Obsidian Version
+      placeholder: 0.12.19
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: OS
+      options:
+         - Windows
+         - MacOS
+         - Linux
+    validations:
+      required: true
+         

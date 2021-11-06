@@ -3,7 +3,7 @@ name: Documentation
 about: Suggest improvements to documentation
 title: ''
 labels: documentation
-assignees: M-bot, blacksmithgu
+assignees: blacksmithgu
 
 ---
 
