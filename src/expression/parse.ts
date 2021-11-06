@@ -326,9 +326,9 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
             (dt: DateTime) =>
                 P.alt(
                     P.seqMap(P.string("+").or(P.string("-")), P.regexp(/\d{1,2}(:\d{2})?/), (pm, hr) =>
-                        dt.setZone("UTC" + pm + hr)
+                        dt.setZone("UTC" + pm + hr, { keepLocalTime: true })
                     ),
-                    P.seqMap(P.string("Z"), () => dt.setZone("utc"))
+                    P.seqMap(P.string("Z"), () => dt.setZone("utc", { keepLocalTime: true }))
                 )
         ),
 

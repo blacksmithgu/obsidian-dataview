@@ -157,8 +157,15 @@ test("Parse Year-Month-DayTHour:Minute:Second.Millisecond", () => {
 
 describe("Parse Year-Month-DayTHour:Minute:Second(.Millisecond?)Timezone", () => {
     test("Offset", () => {
-        let date = EXPRESSION.date.tryParse("1984-08-15T12:40:50-07:00");
-        expect(date.zoneName).toBe("UTC-7");
+        let date1 = EXPRESSION.date.tryParse("1984-08-15T12:40:50-07:00");
+        expect(date1.year).toBe(1984);
+        expect(date1.month).toBe(8);
+        expect(date1.day).toBe(15);
+        expect(date1.hour).toBe(12);
+        expect(date1.minute).toBe(40);
+        expect(date1.second).toBe(50);
+        expect(date1.millisecond).toBe(0);
+        expect(date1.zoneName).toBe("UTC-7");
 
         let date2 = EXPRESSION.date.tryParse("1984-08-15T12:40:50+9");
         expect(date2.zoneName).toBe("UTC+9");
@@ -169,6 +176,13 @@ describe("Parse Year-Month-DayTHour:Minute:Second(.Millisecond?)Timezone", () =>
 
     test("Z", () => {
         let date1 = EXPRESSION.date.tryParse("1985-12-06T19:40:10Z");
+        expect(date1.year).toBe(1985);
+        expect(date1.month).toBe(12);
+        expect(date1.day).toBe(6);
+        expect(date1.hour).toBe(19);
+        expect(date1.minute).toBe(40);
+        expect(date1.second).toBe(10);
+        expect(date1.millisecond).toBe(0);
         expect(date1.zoneName).toBe("UTC");
 
         let date2 = EXPRESSION.date.tryParse("1985-12-06T19:40:10.123Z");
