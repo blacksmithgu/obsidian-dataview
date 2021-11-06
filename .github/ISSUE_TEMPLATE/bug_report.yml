@@ -1,6 +1,6 @@
 name: Bug Report (desktop)
-description: File a bug report for Dataview on desktop Obsidian
-title: ""
+description: "File a bug report for Dataview on desktop Obsidian"
+title: " "
 labels: ["bug", "needs-investigation"]
 assignees:
   - blacksmithgu
@@ -37,13 +37,6 @@ body:
     attributes:
       label: Dataview Version
       description: What version of Dataview are you running?
-      placeholder: 0.4.20
-    validations:
-      required: true
-  - type: input 
-    id: version
-    attributes:
-      label: Dataview Version
       placeholder: 0.4.20
     validations:
       required: true
