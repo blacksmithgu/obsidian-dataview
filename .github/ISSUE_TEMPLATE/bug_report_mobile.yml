@@ -1,0 +1,66 @@
+name: Bug Report (mobile)
+description: "File a bug report for Dataview on mobile Obsidian"
+title: "Bug report"
+labels: ["bug", "needs-investigation", "mobile"]
+assignees:
+  - blacksmithgu
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Also tell us, what did you expect to happen?
+      placeholder: Tell us what you see!
+    validations:
+      required: true
+  - type: textarea
+    id: dql
+    attributes:
+      label: DQL
+      description: If applicable, provide the query where the bug occurred
+      placeholder: |
+        ```dataview
+        LIST FROM #example
+        ```
+  - type: textarea
+    id: js
+    attributes:
+      label: JS
+      description: If applicable, provide the javascript where the bug occurred
+      render: js
+  - type: input 
+    id: version
+    attributes:
+      label: Dataview Version
+      description: What version of Dataview are you running?
+      placeholder: 0.4.20
+    validations:
+      required: true
+  - type: input 
+    id: obsidian-version 
+    attributes:
+      label: Obsidian Version
+      placeholder: 0.12.19
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Device
+      description: What device are you running Obsidian on? Please provide the full model (version, year, etc.)
+      placeholder: iPhone 6
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: OS
+      description: What OS are you running Obsidian on? Please provide the full OS version.
+      placeholder: iOS 8.1
+    validations:
+      required: true
+         
