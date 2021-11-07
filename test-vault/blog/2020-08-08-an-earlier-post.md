@@ -13,4 +13,4 @@ fourth_date: 2021-11-01T01:00:00[Europe/Paris]
 
 `= this.another_date`
 
-`= this.fourth_date`
+`= localTime(this.fourth_date)`

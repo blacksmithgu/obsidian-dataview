@@ -267,6 +267,11 @@ export namespace DefaultFunctions {
         .vectorize(2, [0])
         .build();
 
+    export const localTime = new FunctionBuilder("localTime")
+        .add1("date", d => d.toLocal())
+        .vectorize(1, [0])
+        .build();
+
     const NUMBER_REGEX = /-?[0-9]+(\.[0-9]+)?/;
 
     /** Number constructor function. */
@@ -652,6 +657,7 @@ export const DEFAULT_FUNCTIONS: Record<string, FunctionImpl> = {
     elink: DefaultFunctions.elink,
     date: DefaultFunctions.date,
     dateformat: DefaultFunctions.dateformat,
+    localTime: DefaultFunctions.localTime,
     number: DefaultFunctions.number,
     string: DefaultFunctions.string,
     object: DefaultFunctions.object,
