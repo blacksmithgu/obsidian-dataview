@@ -328,7 +328,10 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
                     P.seqMap(P.string("+").or(P.string("-")), P.regexp(/\d{1,2}(:\d{2})?/), (pm, hr) =>
                         dt.setZone("UTC" + pm + hr, { keepLocalTime: true })
                     ),
-                    P.seqMap(P.string("Z"), () => dt.setZone("utc", { keepLocalTime: true }))
+                    P.seqMap(P.string("Z"), () => dt.setZone("utc", { keepLocalTime: true })),
+                    P.seqMap(P.string("["), P.regexp(/[0-9A-Za-z+-\/]+/u), P.string("]"), (_a, zone, _b) =>
+                        dt.setZone(zone, { keepLocalTime: true })
+                    )
                 )
         ),
 
