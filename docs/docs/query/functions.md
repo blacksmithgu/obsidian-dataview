@@ -95,6 +95,63 @@ elink("www.google.com", "Google") => link element to google.com, displays as "Go
 
 ---
 
+## Link Operations
+
+### `display(link)`
+
+Get the display text of a link, or null if the link does not have defined display text.
+
+```
+display([[2021-11-01|Displayed link text]]) = "Displayed link text"
+display([[2021-11-01]]) = null
+```
+
+### `isembed(link)`
+
+Return true or false depending on whether the link is an embed. Those are links that begin with an exclamation mark,
+like `![[Some Link]]`.
+
+### `path(link)`
+
+Get the path portion of a link.
+
+```
+path([[My Project]]) = "My Project"
+path([[My Project#Next Actions]]) = "My Project"
+path([[My Project#^9bcbe8]]) = "My Project"
+```
+
+### `subpath(link)`
+
+Get the subpath of a link. For links to a heading within a file the subpath will be the text of the heading. For links
+to a block the subpath will be the block ID. If neither of those cases applies then the subpath will be null.
+
+```
+subpath([[My Project#Next Actions]]) = "Next Actions"
+subpath([[My Project#^9bcbe8]]) = "9bcbe8"
+subpath([[My Project]]) = null
+```
+
+This can be used to select tasks under specific headings.
+
+```
+task from ""
+where subpath(section) = "Next Actions"
+```
+
+### `type(link)`
+
+Returns "file", "header", or "block" depending on whether the link links to an entire file, a heading within a file, or
+to a block within a file.
+
+```
+type([[My Project]]) = "file"
+type([[My Project#Next Actions]]) = "header"
+type([[My Project#^9bcbe8]]) = "block"
+```
+
+---
+
 ## Numeric Operations
 
 ### `round(number, [digits])`

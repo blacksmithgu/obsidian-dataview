@@ -11,3 +11,5 @@
 ![[Sorted Tasks]]
 
 ![[Grouped Sorted Tasks]]
+
+![[Tasks in a specific section]]
