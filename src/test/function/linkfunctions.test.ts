@@ -3,7 +3,7 @@ import { parseEval } from "test/common";
 test("Evaluate display(link)", () => {
     expect(parseEval(`display([[2021-11-01|Displayed link text]])`)).toEqual("Displayed link text");
     expect(parseEval(`display([[2021-11-01]])`)).toBeNull;
-})
+});
 
 test("Evaluate path(link)", () => {
     expect(parseEval(`path([[My Project#Next Actions]])`)).toEqual("My Project");

@@ -648,14 +648,10 @@ export namespace DefaultFunctions {
         .build();
 
     /** Get the embed property of a link. */
-    export const isembed: FunctionImpl = new FunctionBuilder("isembed")
-        .add1("link", link => link.embed)
-        .build();
+    export const isembed: FunctionImpl = new FunctionBuilder("isembed").add1("link", link => link.embed).build();
 
     /** Get the path property of a link. */
-    export const path: FunctionImpl = new FunctionBuilder("path")
-        .add1("link", link => link.path)
-        .build();
+    export const path: FunctionImpl = new FunctionBuilder("path").add1("link", link => link.path).build();
 
     /** Get the subpath property of a link. */
     export const subpath: FunctionImpl = new FunctionBuilder("subpath")
@@ -663,9 +659,7 @@ export namespace DefaultFunctions {
         .build();
 
     /** Get the type property of a link. */
-    export const type: FunctionImpl = new FunctionBuilder("type")
-        .add1("link", link => link.type)
-        .build();
+    export const type: FunctionImpl = new FunctionBuilder("type").add1("link", link => link.type).build();
 }
 
 /** Default function implementations for the expression evaluator. */
