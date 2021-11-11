@@ -11,6 +11,15 @@ The following is an extensive, but non-exhaustive list of possible literals in D
 |`-1337`|A negative number|
 |`"The quick brown fox jumps over the lazy dog"`|Some text, commonly referred to by programmers as a *string*|
 |`date(2021-11-11)`|A date, November 11th, 2021. Note: that `date()` is also a function.|
+|`date(today)`|A date representing the current date|
+|`date(now)`|A date representing the current date and time|
+|`date(tomorrow)`|A date representing tomorrow's date|
+|`date(sow)`|A date representing the start of the current week|
+|`date(eow)`|A date representing the end of the current week|
+|`date(som)`|A date representing the start of the current month|
+|`date(eom)`|A date representing the end of the current month|
+|`date(soy)`|A date representing the start of the current year|
+|`date(eoy)`|A date representing the end of the current year|
 |`dur(1 s)`|A duration; one second|
 |`dur(3 s)`|A duration; three seconds|
 |`dur(1 sec)`|A duration; one second|

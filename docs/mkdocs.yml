@@ -22,7 +22,7 @@ nav:
   - Query Language:
     - Queries: 'query/queries.md'
     - Expressions: 'query/expressions.md'
-    - Expressions: 'query/literals.md'
+    - Literals: 'query/literals.md'
     - Sources: 'query/sources.md'
     - Functions: 'query/functions.md'
     - Examples: 'query/examples.md'
