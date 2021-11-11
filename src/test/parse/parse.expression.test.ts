@@ -253,14 +253,14 @@ test("Parse link with header/block", () => {
     expect(EXPRESSION.field.tryParse("[[test/Main#Yes]]")).toEqual(
         Fields.literal(Link.header("test/Main", "Yes", false))
     );
-    expect(EXPRESSION.field.tryParse("[[2020^14df]]")).toEqual(Fields.literal(Link.block("2020", "14df", false)));
+    expect(EXPRESSION.field.tryParse("[[2020#^14df]]")).toEqual(Fields.literal(Link.block("2020", "14df", false)));
 });
 
 test("Parse link with header and display", () => {
     expect(EXPRESSION.field.tryParse("[[test/Main#what|Yes]]")).toEqual(
         Fields.literal(Link.header("test/Main", "what", false, "Yes"))
     );
-    expect(EXPRESSION.field.tryParse("[[%Man + Machine%^no|0h no]]")).toEqual(
+    expect(EXPRESSION.field.tryParse("[[%Man + Machine%#^no|0h no]]")).toEqual(
         Fields.literal(Link.block("%Man + Machine%", "no", false, "0h no"))
     );
 });

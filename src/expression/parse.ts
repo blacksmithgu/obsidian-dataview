@@ -70,12 +70,12 @@ export function parseInnerLink(link: string): Link {
         display = split[1];
     }
 
-    if (link.includes("#")) {
+    if (link.includes("#^")) {
+        let split = link.split("#^");
+        return Link.block(split[0], split[1], false, display);
+    } else if (link.includes("#")) {
         let split = link.split("#");
         return Link.header(split[0], split[1], false, display);
-    } else if (link.includes("^")) {
-        let split = link.split("^");
-        return Link.block(split[0], split[1], false, display);
     }
 
     return Link.file(link, false, display);
