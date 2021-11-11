@@ -26,6 +26,7 @@ Literal|Description
 `date(today)`|A date representing the current date
 `date(now)`|A date representing the current date and time
 `date(tomorrow)`|A date representing tomorrow's date
+`date(yesterday)`|A date representing yesterday's date
 `date(sow)`|A date representing the start of the current week
 `date(eow)`|A date representing the end of the current week
 `date(som)`|A date representing the start of the current month
