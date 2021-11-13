@@ -330,7 +330,7 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
                     ),
                     P.seqMap(P.string("Z"), () => dt.setZone("utc"))
                 )
-        ),
+        ).assert((dt: DateTime) => dt.isValid, "valid date"),
 
     // A date, plus various shorthand times of day it could be.
     datePlus: q =>
