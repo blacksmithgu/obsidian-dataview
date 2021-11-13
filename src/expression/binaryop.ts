@@ -87,7 +87,7 @@ export class BinaryOpHandler {
         let handler4 = this.map.get(BinaryOpHandler.repr(op, "*", "*"));
         if (handler4) return Result.success(handler4(left, right, ctx));
 
-        return Result.failure(`Operator '${op}' is not supported for '${leftType}' and '${rightType}`);
+        return Result.failure(`No implementation found for '${leftType} ${op} ${rightType}'`);
     }
 
     /** Create a string representation of the given triplet for unique lookup in the map. */
