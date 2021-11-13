@@ -269,12 +269,14 @@ export namespace DefaultFunctions {
             else return null;
         })
         .add1("duration", d => d)
+        .add1("null", d => d)
         .vectorize(1, [0])
         .build();
 
     /** Format a date using a luxon/moment-style date format. */
     export const dateformat = new FunctionBuilder("dateformat")
         .add2("date", "string", (date, format) => date.toFormat(format, { locale: currentLocale() }))
+        .add2("null", "string", (_nul, _format) => null)
         .vectorize(2, [0])
         .build();
 
@@ -342,6 +344,7 @@ export namespace DefaultFunctions {
                 else return c;
             }).value;
         })
+        .add2("null", "function", (_arr, _func, _ctx) => null)
         .build();
 
     export const maxby: FunctionImpl = new FunctionBuilder("maxby")
@@ -359,6 +362,7 @@ export namespace DefaultFunctions {
                 else return c;
             }).value;
         })
+        .add2("null", "function", (_arr, _func, _ctx) => null)
         .build();
 
     export const striptime = new FunctionBuilder("striptime")
@@ -528,21 +532,35 @@ export namespace DefaultFunctions {
     export const split: FunctionImpl = new FunctionBuilder("split")
         .add2("string", "string", (string, splitter) => splitImpl(string, splitter))
         .add3("string", "string", "number", (string, splitter, limit) => splitImpl(string, splitter, limit))
+        .add2("null", "*", () => null)
+        .add2("*", "null", () => null)
+        .add3("*", "*", "null", () => null)
+        .add3("*", "null", "*", () => null)
+        .add3("null", "*", "*", () => null)
         .build();
 
     export const startswith: FunctionImpl = new FunctionBuilder("startswith")
         .add2("string", "string", (str, starting) => str.startsWith(starting))
+        .add2("null", "*", () => null)
+        .add2("*", "null", () => null)
         .vectorize(2, [0, 1])
         .build();
 
     export const endswith: FunctionImpl = new FunctionBuilder("endswith")
         .add2("string", "string", (str, ending) => str.endsWith(ending))
+        .add2("null", "*", () => null)
+        .add2("*", "null", () => null)
         .vectorize(2, [0, 1])
         .build();
 
     export const padleft: FunctionImpl = new FunctionBuilder("padleft")
         .add2("string", "number", (str, len) => str.padStart(len, " "))
         .add3("string", "number", "string", (str, len, padding) => str.padStart(len, padding))
+        .add2("null", "*", () => null)
+        .add2("*", "null", () => null)
+        .add3("null", "*", "*", () => null)
+        .add3("*", "null", "*", () => null)
+        .add3("*", "*", "null", () => null)
         .vectorize(2, [0, 1])
         .vectorize(3, [0, 1, 2])
         .build();
@@ -550,6 +568,11 @@ export namespace DefaultFunctions {
     export const padright: FunctionImpl = new FunctionBuilder("padright")
         .add2("string", "number", (str, len) => str.padEnd(len, " "))
         .add3("string", "number", "string", (str, len, padding) => str.padEnd(len, padding))
+        .add2("null", "*", () => null)
+        .add2("*", "null", () => null)
+        .add3("null", "*", "*", () => null)
+        .add3("*", "null", "*", () => null)
+        .add3("*", "*", "null", () => null)
         .vectorize(2, [0, 1])
         .vectorize(3, [0, 1, 2])
         .build();
