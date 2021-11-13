@@ -10,6 +10,7 @@ import { BoundFunctionImpl, DEFAULT_FUNCTIONS, Functions } from "expression/func
 import { Context } from "expression/context";
 import { defaultLinkHandler } from "query/engine";
 import { DateTime } from "luxon";
+import * as Luxon from "luxon";
 import { DataArray } from "./data-array";
 
 /** Asynchronous API calls related to file / system IO. */
@@ -68,6 +69,9 @@ export class DataviewInlineApi {
 
     /** IO utilities which are largely asynchronous. */
     public io: DataviewInlineIOApi;
+
+    /** Re-exporting of luxon for people who can't easily require it. Sorry! */
+    public luxon = Luxon;
 
     /** Dataview functions which can be called from DataviewJS. */
     public func: Record<string, BoundFunctionImpl>;
