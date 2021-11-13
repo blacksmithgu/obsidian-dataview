@@ -397,3 +397,11 @@ about the time.
 striptime(file.ctime) = file.cday
 striptime(file.mtime) = file.mday
 ```
+
+### `localTime(date)`
+
+Converts a date in the local timezone.
+
+```
+localTime(this.date)
+```
