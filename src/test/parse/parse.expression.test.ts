@@ -180,6 +180,8 @@ describe("Parse Year-Month-DayTHour:Minute:Second(.Millisecond?)Timezone", () =>
     });
 });
 
+test("Parse invalid date", () => expect(EXPRESSION.date.parse("4237-14-73").status).toBeFalsy());
+
 test("Parse Today", () => {
     let date = EXPRESSION.dateField.tryParse("date(today)") as LiteralField;
     expect(Values.isDate(date.value)).toEqual(true);
