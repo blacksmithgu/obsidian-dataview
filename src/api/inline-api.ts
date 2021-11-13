@@ -9,7 +9,7 @@ import { DataObject, Link, Values, Task } from "data/value";
 import { BoundFunctionImpl, DEFAULT_FUNCTIONS, Functions } from "expression/functions";
 import { Context } from "expression/context";
 import { defaultLinkHandler } from "query/engine";
-import { DateTime } from "luxon";
+import { DateTime, Duration } from "luxon";
 import * as Luxon from "luxon";
 import { DataArray } from "./data-array";
 
@@ -143,13 +143,28 @@ export class DataviewInlineApi {
     }
 
     /** Create a dataview file link to the given path. */
-    public fileLink(path: string, embed: boolean = false, display?: string) {
+    public fileLink(path: string, embed: boolean = false, display?: string): Link {
         return Link.file(path, embed, display);
+    }
+
+    /** Create a dataview section link to the given path. */
+    public sectionLink(path: string, section: string, embed: boolean = false, display?: string): Link {
+        return Link.header(path, section, embed, display);
+    }
+
+    /** Create a dataview block link to the given path. */
+    public blockLink(path: string, blockId: string, embed: boolean = false, display?: string): Link {
+        return Link.block(path, blockId, embed, display);
     }
 
     /** Attempt to extract a date from a string, link or date. */
     public date(pathlike: string | Link | DateTime): DateTime | null {
         return this.api.date(pathlike);
+    }
+
+    /** Attempt to extract a duration from a string or duration. */
+    public duration(dur: string | Duration): Duration | null {
+        return this.api.duration(dur);
     }
 
     /**

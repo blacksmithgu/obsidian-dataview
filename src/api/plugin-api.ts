@@ -13,7 +13,7 @@ import { DataArray } from "./data-array";
 import { BoundFunctionImpl, DEFAULT_FUNCTIONS, Functions } from "expression/functions";
 import { Context } from "expression/context";
 import { defaultLinkHandler } from "query/engine";
-import { DateTime } from "luxon";
+import { DateTime, Duration } from "luxon";
 import * as Luxon from "luxon";
 
 /** Asynchronous API calls related to file / system IO. */
@@ -137,6 +137,11 @@ export class DataviewApi {
     /** Attempt to extract a date from a string, link or date. */
     public date(pathlike: string | Link | DateTime): DateTime | null {
         return this.func.date(pathlike) as DateTime | null;
+    }
+
+    /** Attempt to extract a duration from a string or duration. */
+    public duration(str: string | Duration): Duration | null {
+        return this.func.dur(str) as Duration | null;
     }
 
     /**

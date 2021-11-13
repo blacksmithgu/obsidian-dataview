@@ -261,6 +261,17 @@ export namespace DefaultFunctions {
         .vectorize(1, [0])
         .build();
 
+    /** Duration constructor function. */
+    export const dur = new FunctionBuilder("dur")
+        .add1("string", str => {
+            let parsedDur = EXPRESSION.duration.parse(str.trim());
+            if (parsedDur.status) return parsedDur.value;
+            else return null;
+        })
+        .add1("duration", d => d)
+        .vectorize(1, [0])
+        .build();
+
     /** Format a date using a luxon/moment-style date format. */
     export const dateformat = new FunctionBuilder("dateformat")
         .add2("date", "string", (date, format) => date.toFormat(format, { locale: currentLocale() }))
@@ -651,6 +662,7 @@ export const DEFAULT_FUNCTIONS: Record<string, FunctionImpl> = {
     link: DefaultFunctions.link,
     elink: DefaultFunctions.elink,
     date: DefaultFunctions.date,
+    dur: DefaultFunctions.dur,
     dateformat: DefaultFunctions.dateformat,
     number: DefaultFunctions.number,
     string: DefaultFunctions.string,
