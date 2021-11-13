@@ -398,10 +398,6 @@ striptime(file.ctime) = file.cday
 striptime(file.mtime) = file.mday
 ```
 
-### `localTime(date)`
+### `localtime(date)`
 
-Converts a date in the local timezone.
-
-```
-localTime(this.date)
-```
+Converts a date in a fixed timezone to a date in the current timezone.

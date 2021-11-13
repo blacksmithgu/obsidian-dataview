@@ -280,8 +280,9 @@ export namespace DefaultFunctions {
         .vectorize(2, [0])
         .build();
 
-    export const localTime = new FunctionBuilder("localTime")
+    export const localtime = new FunctionBuilder("localtime")
         .add1("date", d => d.toLocal())
+        .add1("null", () => null)
         .vectorize(1, [0])
         .build();
 
@@ -692,7 +693,7 @@ export const DEFAULT_FUNCTIONS: Record<string, FunctionImpl> = {
     date: DefaultFunctions.date,
     dur: DefaultFunctions.dur,
     dateformat: DefaultFunctions.dateformat,
-    localTime: DefaultFunctions.localTime,
+    localtime: DefaultFunctions.localtime,
     number: DefaultFunctions.number,
     string: DefaultFunctions.string,
     object: DefaultFunctions.object,
