@@ -185,54 +185,33 @@ export class DataviewInlineApi {
     /////////////////////////
 
     /** Render an HTML element, containing arbitrary text. */
-    public el(el: keyof HTMLElementTagNameMap, text: any) {
+    public async el(el: keyof HTMLElementTagNameMap, text: any, options?: DomElementInfo): Promise<HTMLElement> {
         let wrapped = Values.wrapValue(text);
         if (wrapped === null || wrapped === undefined) {
-            this.container.createEl(el, { text });
-            return;
+            return this.container.createEl(el, Object.assign({ text }, options));
         }
 
-        let _el = this.container.createEl(el);
-        renderValue(wrapped.value, _el, this.currentFilePath, this.component, this.settings, true);
+        let _el = this.container.createEl(el, options);
+        await renderValue(wrapped.value, _el, this.currentFilePath, this.component, this.settings, true);
+        return _el;
     }
 
     /** Render an HTML header; the level can be anything from 1 - 6. */
-    public header(level: number, text: any) {
-        let headerType: "h1" | "h2" | "h3" | "h4" | "h5" | "h6";
-        switch (level) {
-            case 1:
-                headerType = "h1";
-                break;
-            case 2:
-                headerType = "h2";
-                break;
-            case 3:
-                headerType = "h3";
-                break;
-            case 4:
-                headerType = "h4";
-                break;
-            case 5:
-                headerType = "h5";
-                break;
-            case 6:
-                headerType = "h6";
-                break;
-            default:
-                throw new Error(`Invalid header level ${level}`);
-        }
+    public async header(level: number, text: any, options?: DomElementInfo): Promise<HTMLElement> {
+        let header = { 1: "h1", 2: "h2", 3: "h3", 4: "h4", 5: "h5", 6: "h6" }[level];
+        if (!header) throw Error(`Unrecognized level '${level}' (expected 1, 2, 3, 4, 5, or 6)`);
 
-        this.el(headerType, text);
+        return this.el(header as keyof HTMLElementTagNameMap, text, options);
     }
 
     /** Render an HTML paragraph, containing arbitrary text. */
-    public paragraph(text: any) {
-        this.el("p", text);
+    public async paragraph(text: any, options?: DomElementInfo): Promise<HTMLElement> {
+        return this.el("p", text, options);
     }
 
     /** Render an inline span, containing arbitrary text. */
-    public span(text: any) {
-        this.el("span", text);
+    public async span(text: any, options?: DomElementInfo): Promise<HTMLElement> {
+        return this.el("span", text, options);
     }
 
     /**
