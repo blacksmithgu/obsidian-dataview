@@ -157,8 +157,15 @@ test("Parse Year-Month-DayTHour:Minute:Second.Millisecond", () => {
 
 describe("Parse Year-Month-DayTHour:Minute:Second(.Millisecond?)Timezone", () => {
     test("Offset", () => {
-        let date = EXPRESSION.date.tryParse("1984-08-15T12:40:50-07:00");
-        expect(date.zoneName).toBe("UTC-7");
+        let date1 = EXPRESSION.date.tryParse("1984-08-15T12:40:50-07:00");
+        expect(date1.year).toBe(1984);
+        expect(date1.month).toBe(8);
+        expect(date1.day).toBe(15);
+        expect(date1.hour).toBe(12);
+        expect(date1.minute).toBe(40);
+        expect(date1.second).toBe(50);
+        expect(date1.millisecond).toBe(0);
+        expect(date1.zoneName).toBe("UTC-7");
 
         let date2 = EXPRESSION.date.tryParse("1984-08-15T12:40:50+9");
         expect(date2.zoneName).toBe("UTC+9");
@@ -167,8 +174,39 @@ describe("Parse Year-Month-DayTHour:Minute:Second(.Millisecond?)Timezone", () =>
         expect(date3.zoneName).toBe("UTC+6:30");
     });
 
+    test("Named timezone", () => {
+        let date1 = EXPRESSION.date.tryParse("2021-08-15T12:40:50[Europe/Paris]");
+        expect(date1.year).toBe(2021);
+        expect(date1.month).toBe(8);
+        expect(date1.day).toBe(15);
+        expect(date1.hour).toBe(12);
+        expect(date1.minute).toBe(40);
+        expect(date1.second).toBe(50);
+        expect(date1.millisecond).toBe(0);
+        expect(date1.toString()).toBe("2021-08-15T12:40:50.000+02:00");
+        expect(date1.zoneName).toBe("Europe/Paris");
+
+        let date2 = EXPRESSION.date.tryParse("2021-11-15T12:40:50[Europe/Paris]");
+        expect(date2.year).toBe(2021);
+        expect(date2.month).toBe(11);
+        expect(date2.day).toBe(15);
+        expect(date2.hour).toBe(12);
+        expect(date2.minute).toBe(40);
+        expect(date2.second).toBe(50);
+        expect(date2.millisecond).toBe(0);
+        expect(date2.toString()).toBe("2021-11-15T12:40:50.000+01:00");
+        expect(date2.zoneName).toBe("Europe/Paris");
+    });
+
     test("Z", () => {
         let date1 = EXPRESSION.date.tryParse("1985-12-06T19:40:10Z");
+        expect(date1.year).toBe(1985);
+        expect(date1.month).toBe(12);
+        expect(date1.day).toBe(6);
+        expect(date1.hour).toBe(19);
+        expect(date1.minute).toBe(40);
+        expect(date1.second).toBe(10);
+        expect(date1.millisecond).toBe(0);
         expect(date1.zoneName).toBe("UTC");
 
         let date2 = EXPRESSION.date.tryParse("1985-12-06T19:40:10.123Z");
@@ -179,6 +217,8 @@ describe("Parse Year-Month-DayTHour:Minute:Second(.Millisecond?)Timezone", () =>
         expect(date3.zoneName).toBe("UTC");
     });
 });
+
+test("Parse invalid date", () => expect(EXPRESSION.date.parse("4237-14-73").status).toBeFalsy());
 
 test("Parse Today", () => {
     let date = EXPRESSION.dateField.tryParse("date(today)") as LiteralField;
@@ -253,14 +293,14 @@ test("Parse link with header/block", () => {
     expect(EXPRESSION.field.tryParse("[[test/Main#Yes]]")).toEqual(
         Fields.literal(Link.header("test/Main", "Yes", false))
     );
-    expect(EXPRESSION.field.tryParse("[[2020^14df]]")).toEqual(Fields.literal(Link.block("2020", "14df", false)));
+    expect(EXPRESSION.field.tryParse("[[2020#^14df]]")).toEqual(Fields.literal(Link.block("2020", "14df", false)));
 });
 
 test("Parse link with header and display", () => {
     expect(EXPRESSION.field.tryParse("[[test/Main#what|Yes]]")).toEqual(
         Fields.literal(Link.header("test/Main", "what", false, "Yes"))
     );
-    expect(EXPRESSION.field.tryParse("[[%Man + Machine%^no|0h no]]")).toEqual(
+    expect(EXPRESSION.field.tryParse("[[%Man + Machine%#^no|0h no]]")).toEqual(
         Fields.literal(Link.block("%Man + Machine%", "no", false, "0h no"))
     );
 });

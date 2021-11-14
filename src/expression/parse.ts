@@ -70,12 +70,12 @@ export function parseInnerLink(link: string): Link {
         display = split[1];
     }
 
-    if (link.includes("#")) {
+    if (link.includes("#^")) {
+        let split = link.split("#^");
+        return Link.block(split[0], split[1], false, display);
+    } else if (link.includes("#")) {
         let split = link.split("#");
         return Link.header(split[0], split[1], false, display);
-    } else if (link.includes("^")) {
-        let split = link.split("^");
-        return Link.block(split[0], split[1], false, display);
     }
 
     return Link.file(link, false, display);
@@ -326,11 +326,14 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
             (dt: DateTime) =>
                 P.alt(
                     P.seqMap(P.string("+").or(P.string("-")), P.regexp(/\d{1,2}(:\d{2})?/), (pm, hr) =>
-                        dt.setZone("UTC" + pm + hr)
+                        dt.setZone("UTC" + pm + hr, { keepLocalTime: true })
                     ),
-                    P.seqMap(P.string("Z"), () => dt.setZone("utc"))
+                    P.seqMap(P.string("Z"), () => dt.setZone("utc", { keepLocalTime: true })),
+                    P.seqMap(P.string("["), P.regexp(/[0-9A-Za-z+-\/]+/u), P.string("]"), (_a, zone, _b) =>
+                        dt.setZone(zone, { keepLocalTime: true })
+                    )
                 )
-        ),
+        ).assert((dt: DateTime) => dt.isValid, "valid date"),
 
     // A date, plus various shorthand times of day it could be.
     datePlus: q =>
@@ -341,6 +344,11 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
                 DateTime.local()
                     .startOf("day")
                     .plus(Duration.fromObject({ days: 1 }))
+            ),
+            P.string("yesterday").map(_ =>
+                DateTime.local()
+                    .startOf("day")
+                    .minus(Duration.fromObject({ days: 1 }))
             ),
             P.string("sow").map(_ => DateTime.local().startOf("week")),
             P.string("som").map(_ => DateTime.local().startOf("month")),

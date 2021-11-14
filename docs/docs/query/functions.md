@@ -50,6 +50,16 @@ date("2020-04-18") = <date object representing April 18th, 2020>
 date([[2021-04-16]]) = <date object for the given page, refering to file.day>
 ```
 
+### `dur(any)`
+
+Parses a duration from the provided string or duration, returning null on failure.
+
+```
+dur(8 minutes) = <8 minutes>
+dur("8 minutes, 4 seconds") = <8 minutes, 4 seconds>
+dur(dur(8 minutes)) = dur(8 minutes) = <8 minutes>
+```
+
 ### `number(string)`
 
 Pulls the first number out of the given string, returning it if possible. Returns null if there are no numbers in the
@@ -444,3 +454,7 @@ about the time.
 striptime(file.ctime) = file.cday
 striptime(file.mtime) = file.mday
 ```
+
+### `localtime(date)`
+
+Converts a date in a fixed timezone to a date in the current timezone.
