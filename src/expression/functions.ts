@@ -682,24 +682,16 @@ export namespace DefaultFunctions {
         .vararg((_ctx, ...args) => args.filter(v => Values.typeOf(v) != "null"))
         .build();
 
-    /** Get the display property of a link. */
-    export const display: FunctionImpl = new FunctionBuilder("display")
-        .add1("link", link => link.display ?? null)
+    /** Gets an object containing a link's own properties */
+    export const meta: FunctionImpl = new FunctionBuilder("meta")
+        .add1("link", link => ({
+            display: link.display ?? null,
+            embed: link.embed,
+            path: link.path,
+            subpath: link.subpath ?? null,
+            type: link.type,
+        }))
         .build();
-
-    /** Get the embed property of a link. */
-    export const isembed: FunctionImpl = new FunctionBuilder("isembed").add1("link", link => link.embed).build();
-
-    /** Get the path property of a link. */
-    export const path: FunctionImpl = new FunctionBuilder("path").add1("link", link => link.path).build();
-
-    /** Get the subpath property of a link. */
-    export const subpath: FunctionImpl = new FunctionBuilder("subpath")
-        .add1("link", link => link.subpath ?? null)
-        .build();
-
-    /** Get the type property of a link. */
-    export const type: FunctionImpl = new FunctionBuilder("type").add1("link", link => link.type).build();
 }
 
 /** Default function implementations for the expression evaluator. */
@@ -716,13 +708,6 @@ export const DEFAULT_FUNCTIONS: Record<string, FunctionImpl> = {
     number: DefaultFunctions.number,
     string: DefaultFunctions.string,
     object: DefaultFunctions.object,
-
-    // Link operations.
-    display: DefaultFunctions.display,
-    isembed: DefaultFunctions.isembed,
-    path: DefaultFunctions.path,
-    subpath: DefaultFunctions.subpath,
-    type: DefaultFunctions.type,
 
     // Math Operations.
     round: DefaultFunctions.round,
@@ -772,4 +757,5 @@ export const DEFAULT_FUNCTIONS: Record<string, FunctionImpl> = {
     default: DefaultFunctions.fdefault,
     ldefault: DefaultFunctions.ldefault,
     choice: DefaultFunctions.choice,
+    meta: DefaultFunctions.meta,
 };

@@ -2,6 +2,6 @@
 
 ```dataview
 task from ""
-where subpath(section) = "Section"
+where meta(section).subpath = "Section"
 group by section
 ```
