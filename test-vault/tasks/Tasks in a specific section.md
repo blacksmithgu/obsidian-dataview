@@ -1,7 +1,7 @@
 # Tasks in a specific section
 
 ```dataview
-task from ""
+task
 where meta(section).subpath = "Section"
 group by section
 ```

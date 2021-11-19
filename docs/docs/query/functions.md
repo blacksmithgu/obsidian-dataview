@@ -446,10 +446,12 @@ meta([[My Project]]).subpath = null
 
 This can be used to select tasks under specific headings.
 
-```
-task from ""
+````
+```dataview
+task
 where meta(section).subpath = "Next Actions"
 ```
+````
 
 #### `meta(link).type`
 
