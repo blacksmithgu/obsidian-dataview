@@ -1,3 +1,21 @@
+# 0.4.21
+
+Bugfix release which primarily fixes issues that Dataview had with the live preview mode in upcoming Obsidian versions;
+Dataview live preview should now be functional. Also includes a number of smaller bugfixes.
+
+- Fix #646: Add `date(yesterday)` to create a date 24 hours ago.
+- Fix #618: Luxon is now available on the dataview API (`dv.luxon`).
+- Fix #510: Add `dv.duration()` for parsing durations.
+- Fix #647: All HTML functions in the DataviewJS API now return their rendered objects.
+- Fix #652: Fix parsing of invalid dates.
+- Fix #629: Fix block link parsing.
+- Fix #601: Timezones are now rendered properly and parsed properly in Dataview dates.
+- PR #637: Add `meta(link)` which allows you to access various metadata about a link itself.
+- Various minor null safety fixes.
+- Dataview now reports it's exact version and build time in logs.
+
+---
+
 # 0.4.20
 
 Some feature work (mostly by other contributors) while I while away at section metadata. May also fix a few bugs!
