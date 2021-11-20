@@ -1,326 +1,427 @@
-/** Importer for markdown documents. */
+/** Number of spaces that a tab is equal to. */
+const TAB_TO_SPACES = 4;
+/** Threshold at which a line is considered indented for making code blocks. */
+const SPACE_THRESHOLD = TAB_TO_SPACES;
 
-import { extractInlineFields, extractSpecialTaskFields, parseInlineValue } from "data/parse/inline-field";
-import { PageMetadata } from "data/metadata";
-import { LiteralValue, Values, Task, Link } from "data/value";
-import { EXPRESSION } from "expression/parse";
-import { DateTime } from "luxon";
-import {
-    CachedMetadata,
-    getAllTags,
-    HeadingCache,
-    MetadataCache,
-    parseFrontMatterAliases,
-    parseFrontMatterTags,
-    TFile,
-} from "obsidian";
-import { canonicalizeVarName, extractDate, getFileTitle } from "util/normalize";
+/**
+ * A list element inside of a markdown list. These are a little complex, but are split up into the following components,
+ * for which there is a little bit of overlap:
+ * - text: The text content immediately at the start of this list element.
+ * - content: ALL subblocks under this list.
+ * - children: ALL list elements under this list element; this trims out markdown blocks in between child list elements.
+ */
+export type MarkdownListElement = {
+    symbol: string;
+    task?: string;
+    contents: MarkdownBlock[];
+    children: MarkdownListElement[];
+    text: MarkdownBlock[];
+    line: number;
+};
 
-export interface ParsedMarkdown {
-    fields: Map<string, LiteralValue[]>;
-    tasks: Task[];
-}
+/** A markdown block inside of a markdown document. */
+export type MarkdownBlock =
+    | { type: "paragraph"; contents: string[]; line: number }
+    | { type: "codeblock"; delimiter: string; contents: string[]; languages: string[]; line: number; indented: boolean }
+    | { type: "list"; elements: MarkdownListElement[]; line: number }
+    | { type: "rule"; symbol: string; count: number }
+    | { type: "blockquote"; contents: string[]; line: number }
+    | { type: "heading"; level: number; text: string; line: number; ruling: boolean };
 
-/** Attempt to find a date associated with the given page from metadata or filenames. */
-function findDate(file: string, fields: Map<string, LiteralValue>): DateTime | undefined {
-    for (let key of fields.keys()) {
-        if (!(key.toLocaleLowerCase() == "date" || key.toLocaleLowerCase() == "day")) continue;
+/**
+ * Semantically significant markdown lines; lines are first parsed into this before being combined into blocks
+ * to ease awkward context-dependent parts of Markdown.
+ */
+export type MarkdownLine =
+    | { type: "empty"; indent: number }
+    | { type: "text"; text: string; indent: number }
+    | { type: "list-element"; symbol: string; task?: string; text: string; indent: number }
+    | { type: "blockquote"; text: string; indent: number }
+    | { type: "heading"; level: number; text: string; indent: number }
+    | { type: "ruling"; symbol: string; count: number; indent: number }
+    | { type: "heading-ruling"; symbol: string; count: number; indent: number }
+    | { type: "codeblock"; symbol: string; count: number; languages: string[]; indent: number };
 
-        let value = fields.get(key) as LiteralValue;
-        if (Values.isDate(value)) return value;
-        else if (Values.isLink(value)) {
-            let date = extractDate(value.path);
-            if (date) return date;
+const HORIZONTAL_RULE = /^(\*{3,}|_{3,})$/u;
+const HORIZONTAL_HEADING_RULE = /^(={3,}|-{3,})$/u;
+const HEADING = /^(#{1,6})\s+(.*)$/u;
+const CODEBLOCK = /^(~{3,}|`{3,})\s*(.*)$/u;
+const LIST_ELEMENT = /^([-+*])\s*(\[.?\])?\s*(.*)$/u;
 
-            date = extractDate(value.subpath ?? "");
-            if (date) return date;
+/** Count the amount of indentation at the start of line in spaces, returning [number of spaces, rest of line]. */
+export function splitIndent(line: string): [number, string] {
+    let count = 0,
+        index = 0;
 
-            date = extractDate(value.display ?? "");
-            if (date) return date;
-        }
+    while (index < line.length) {
+        let ch = line.charAt(index);
+        if (ch == "\t") count += TAB_TO_SPACES;
+        else if (ch == " ") count += 1;
+        else break;
+
+        index++;
     }
 
-    return extractDate(getFileTitle(file));
+    return [count, line.substring(index).trim()];
 }
 
-/** Recursively convert frontmatter into fields. We have to dance around YAML structure. */
-export function parseFrontmatter(value: any): LiteralValue {
-    if (value == null) {
-        return null;
-    } else if (typeof value === "object") {
-        if (Array.isArray(value)) {
-            let result = [];
-            for (let child of value as Array<any>) {
-                result.push(parseFrontmatter(child));
+/** Reduce the indent (in spaces) on a string by the given amount. */
+export function reduceIndent(line: string, amount: number): string {
+    let index = 0,
+        count = 0;
+    while (index < line.length && count < amount) {
+        let ch = line.charAt(index);
+        if (ch == "\t") count += 4;
+        else if (ch == " ") count += 1;
+
+        index++;
+    }
+
+    return line.substring(index);
+}
+
+/** Classify any line as a markdown line type which is passed on to a renderer. */
+export function classifyLine(fullLine: string): MarkdownLine {
+    let [indent, line] = splitIndent(fullLine);
+
+    // Empty line.
+    if (line === "") return { type: "empty", indent };
+
+    // Blockquotes.
+    if (line.startsWith(">")) {
+        return { type: "blockquote", text: line.substring(1).trim(), indent };
+    }
+
+    // Simple heading via regex matching.
+    let headingMatch = HEADING.exec(line);
+    if (headingMatch) return { type: "heading", level: headingMatch[1].length, text: headingMatch[2].trim(), indent };
+
+    // Regular horizonal rules.
+    let horMatch = HORIZONTAL_RULE.exec(line);
+    if (horMatch) return { type: "ruling", symbol: horMatch[1][0], count: horMatch[1].length, indent };
+
+    // (Potentially) heading-creating horizontal rules.
+    // Special note: the '---' heading type can also be a normal horizontal rule for some reason; trhis is special-cased
+    // when handling headers.
+    let horHeaderMatch = HORIZONTAL_HEADING_RULE.exec(line);
+    if (horHeaderMatch)
+        return { type: "heading-ruling", symbol: horHeaderMatch[1][0], count: horHeaderMatch[1].length, indent };
+
+    // Codeblock starts or ends. Ends with have 'languages' as an empty array.
+    let codeblockMatch = CODEBLOCK.exec(line);
+    if (codeblockMatch) {
+        let languages = codeblockMatch[2]
+            .trim()
+            .split(/[\s,]+/)
+            .filter(l => !!l);
+        return { type: "codeblock", symbol: codeblockMatch[1][0], count: codeblockMatch[1].length, indent, languages };
+    }
+
+    // List elements.
+    let listMatch = LIST_ELEMENT.exec(line);
+    if (listMatch)
+        return {
+            type: "list-element",
+            symbol: listMatch[1],
+            task: listMatch[2] ? listMatch[2].substring(1, listMatch[2].length - 1).trim() : undefined,
+            text: listMatch[3],
+            indent,
+        };
+
+    // Default to "text".
+    return { type: "text", text: line, indent };
+}
+
+/** Determines if a given line is empty OR has at least the required indent. */
+function emptyLineOrIndented(line: string, requiredIndent: number): boolean {
+    if (line.trim() === "") return true;
+    return splitIndent(line)[0] >= requiredIndent;
+}
+
+/** Parse a markdown file into a collection of markdown blocks. */
+export function markdownFile(contents: string): MarkdownBlock[] {
+    return markdownBlocks(new LineTokenizer(contents), 0);
+}
+
+/** Parse markdown blocks from the given tokenizer that are at atleast the given indent. */
+export function markdownBlocks(tokenizer: LineTokenizer, requiredIndent: number): MarkdownBlock[] {
+    let blocks: MarkdownBlock[] = [];
+
+    // Continually read blocks from the tokenizer until there is nothing more to parse.
+    while (tokenizer.peek() !== undefined && emptyLineOrIndented(tokenizer.peek()!, requiredIndent)) {
+        let rawLine = tokenizer.next()!;
+        let lineno = tokenizer.lineno();
+        let line = classifyLine(rawLine);
+
+        // Highest priority: codeblocks formed via indentation.
+        if (line.indent >= requiredIndent + SPACE_THRESHOLD) {
+            let contents = tokenizer.takeMap(
+                fullLine => {
+                    let indent = splitIndent(fullLine)[0];
+                    if (indent < requiredIndent + SPACE_THRESHOLD) return undefined;
+
+                    return reduceIndent(fullLine, requiredIndent + SPACE_THRESHOLD);
+                },
+                [reduceIndent(rawLine, requiredIndent + SPACE_THRESHOLD)]
+            );
+
+            blocks.push({
+                type: "codeblock",
+                languages: [],
+                delimiter: "<indented>",
+                line: lineno,
+                indented: true,
+                contents,
+            });
+            continue;
+        }
+
+        // Simple single-line headings.
+        if (line.type == "heading") {
+            blocks.push({ type: "heading", level: line.level, text: line.text, line: lineno, ruling: false });
+            continue;
+        }
+        // Blockquotes of the form '>'.
+        else if (line.type == "blockquote") {
+            let contents = tokenizer.takeMap(
+                fullLine => {
+                    let line = classifyLine(fullLine);
+                    return line.type == "blockquote" && line.indent >= requiredIndent ? line.text : undefined;
+                },
+                [line.text]
+            );
+
+            blocks.push({ type: "blockquote", line: lineno, contents });
+        }
+        // Any of the valid rulings; if we encounter them here, they are not following arbitrary text.
+        // The '===' case is handled by the general text handler.
+        else if (line.type == "ruling" || (line.type == "heading-ruling" && line.symbol == "-")) {
+            blocks.push({ type: "rule", symbol: line.symbol, count: line.count });
+            continue;
+        }
+        // Normal codeblocks wrapped by '```' or '~~~`.
+        else if (line.type == "codeblock") {
+            // This is implemented via a manual loop so we can properly consume the closing '```' if needed.
+            let contents: string[] = [];
+            while (tokenizer.peek() !== undefined) {
+                let rawCline = tokenizer.peek()!;
+                let cline = classifyLine(rawCline);
+
+                // Early terminate on any lines that have a lesser indent. There is no terminator to consume.
+                if (cline.indent < line.indent) break;
+
+                // Terminate (consuming the line) on a codeblock end.
+                if (
+                    cline.type == "codeblock" &&
+                    cline.indent == line.indent &&
+                    cline.count >= line.count &&
+                    cline.symbol == line.symbol &&
+                    cline.languages.length == 0
+                ) {
+                    tokenizer.next();
+                    break;
+                } else {
+                    // Otherwise, this is contents inside of the codeblock.
+                    contents.push(reduceIndent(rawCline, line.indent));
+                    tokenizer.next();
+                }
             }
 
-            return result;
-        } else {
-            let object = value as Record<string, any>;
-            let result: Record<string, LiteralValue> = {};
-            for (let key in object) {
-                result[key] = parseFrontmatter(object[key]);
-            }
-
-            return result;
+            blocks.push({
+                type: "codeblock",
+                delimiter: line.symbol.repeat(line.count),
+                languages: line.languages,
+                line: lineno,
+                indented: false,
+                contents,
+            });
         }
-    } else if (typeof value === "number") {
-        return value;
-    } else if (typeof value === "boolean") {
-        return value;
-    } else if (typeof value === "string") {
-        let dateParse = EXPRESSION.date.parse(value);
-        if (dateParse.status) return dateParse.value;
+        // Lists.
+        else if (line.type == "list-element") {
+            let first = markdownListElement(tokenizer, line.symbol, line.text, lineno, line.indent, line.task);
+            blocks.push(markdownList(tokenizer, first));
+        }
+        // Arbitrary text. This also handles the annoying alternative header type.
+        else if (line.type == "text" || (line.type == "heading-ruling" && line.symbol == "=")) {
+            markdownTextContinuation(tokenizer, [rawLine], lineno).forEach(b => blocks.push(b));
+        }
 
-        let durationParse = EXPRESSION.duration.parse(value);
-        if (durationParse.status) return durationParse.value;
-
-        let linkParse = EXPRESSION.embedLink.parse(value);
-        if (linkParse.status) return linkParse.value;
-
-        return value;
+        // Default case: empty. Just skip the line.
     }
 
-    // Backup if we don't understand the type.
-    return null;
-}
-
-/** Add an inline field to a nexisting field array, converting a single value into an array if it is present multiple times. */
-export function addInlineField(fields: Map<string, LiteralValue>, name: string, value: LiteralValue) {
-    if (fields.has(name)) {
-        let existing = fields.get(name) as LiteralValue;
-        if (Values.isArray(existing)) fields.set(name, existing.concat([value]));
-        else fields.set(name, [existing, value]);
-    } else {
-        fields.set(name, value);
-    }
-}
-
-/** Matches lines of the form "- [ ] <task thing>". */
-export const TASK_REGEX = /^(\s*)[-*]\s*(\[[ Xx\.]?\])?\s*([^-*].*)$/iu;
-/** Matches Obsidian block IDs, which are at the end of the line of the form ^blockid. */
-export const TASK_BLOCK_REGEX = /\^(\S+)$/;
-
-/** Return true if the given predicate is true for the task or any subtasks. */
-export function taskAny(t: Task, f: (t: Task) => boolean): boolean {
-    if (f(t)) return true;
-    for (let sub of t.subtasks) if (taskAny(sub, f)) return true;
-
-    return false;
-}
-
-export function alast<T>(arr: Array<T>): T | undefined {
-    if (arr.length > 0) return arr[arr.length - 1];
-    else return undefined;
-}
-
-/** Find the header that is most immediately above the given line number. */
-export function findPreviousHeader(line: number, headers: HeadingCache[]): string | undefined {
-    if (headers.length == 0) return undefined;
-    if (headers[0].position.start.line > line) return undefined;
-
-    let index = headers.length - 1;
-    while (index >= 0 && headers[index].position.start.line > line) index--;
-
-    return headers[index].heading;
+    return blocks;
 }
 
 /**
- * A hacky approach to scanning for all tasks using regex. Does not support multiline
- * tasks yet (though can probably be retro-fitted to do so).
+ * Continually parse text lines regardless of indent until another line type is encountered; this
+ * will also handle h1 '===' headers, producing an optional terminating 'header' object.
  */
-export function findTasksInFile(path: string, file: string, metadata: CachedMetadata): Task[] {
-    // Dummy top of the stack that we'll just never get rid of.
-    let stack: [Task, number][] = [];
-    stack.push([
-        new Task({ text: "Root", line: -1, path, completed: false, fullyCompleted: false, real: false, subtasks: [] }),
-        -4,
-    ]);
+export function markdownTextContinuation(tokenizer: LineTokenizer, initial: string[], lineno: number): MarkdownBlock[] {
+    // Take textual lines first...
+    let contents = tokenizer.takeMap(
+        l => {
+            let line = classifyLine(l);
+            return line.type == "text" ? line.text : undefined;
+        },
+        initial.map(t => t.trim())
+    );
 
-    let lineno = -1;
-    for (let line of file.replace("\r", "").split("\n")) {
-        lineno += 1;
+    // If the terminating line is a header line, then make a header.
+    if (tokenizer.peek() !== undefined && classifyLine(tokenizer.peek()!).type == "heading-ruling") {
+        tokenizer.next();
 
-        // Check that we are actually a list element, to skip lines which obviously won't match.
-        if (!line.includes("*") && !line.includes("-")) {
-            while (stack.length > 1) stack.pop();
-            continue;
-        }
-
-        let match = TASK_REGEX.exec(line);
-        if (!match) {
-            if (line.trim().length == 0) continue;
-
-            // Non-empty line that is not a task, reset.
-            while (stack.length > 1) stack.pop();
-            continue;
-        }
-
-        // Look for block IDs on this line; if present, link to that. Otherwise, link to the nearest header
-        // and then to just the page.
-        let link = Link.file(path, false);
-        let blockMatch = TASK_BLOCK_REGEX.exec(line);
-        let lastHeader = findPreviousHeader(lineno, metadata.headings || []);
-        if (blockMatch) {
-            link = Link.block(path, blockMatch[1], false);
-        } else if (lastHeader) {
-            link = Link.header(path, lastHeader, false);
-        }
-
-        // Add all inline field definitions.
-        let annotations: Record<string, LiteralValue> = {};
-        for (let field of extractInlineFields(line)) {
-            let value = parseInlineValue(field.value);
-
-            annotations[field.key] = value;
-            annotations[canonicalizeVarName(field.key)] = value;
-        }
-
-        let special = extractSpecialTaskFields(line, annotations);
-
-        let indent = match[1].replace("\t", "    ").length;
-        let isReal = !!match[2] && match[2].trim().length > 0;
-        let isCompleted = !isReal || match[2] == "[X]" || match[2] == "[x]";
-        let task = new Task({
-            text: match[3],
-            completed: isCompleted,
-            fullyCompleted: isCompleted,
-            real: isReal,
-            path,
-            line: lineno,
-            section: lastHeader ? Link.header(path, lastHeader, false) : Link.file(path, false),
-            link,
-            subtasks: [],
-            annotations,
-            created: special.created,
-            due: special.due,
-            completion: special.completed,
+        let result: MarkdownBlock[] = [];
+        if (contents.length > 1) result.push({ type: "paragraph", contents: contents.slice(0, -2), line: lineno });
+        result.push({
+            type: "heading",
+            level: 1,
+            text: contents[contents.length - 1],
+            line: lineno + contents.length - 1,
+            ruling: true,
         });
-
-        while (indent <= (alast(stack)?.[1] ?? -4)) stack.pop();
-
-        for (let [elem, _] of stack) elem.fullyCompleted = elem.fullyCompleted && task.fullyCompleted;
-        alast(stack)?.[0].subtasks.push(task);
-        stack.push([task, indent]);
+        return result;
+    } else {
+        return [{ type: "paragraph", contents, line: lineno }];
     }
-
-    // Return everything under the root, which should be all tasks.
-    // Strip trees of tasks which are purely not real (lol?).
-    return stack[0][0].subtasks.filter(t => taskAny(t, st => st.real));
 }
 
-export function parseMarkdown(
-    path: string,
-    metadata: CachedMetadata,
-    contents: string,
-    inlineRegex: RegExp
-): ParsedMarkdown {
-    let fields: Map<string, LiteralValue[]> = new Map();
+export function markdownListElement(
+    tokenizer: LineTokenizer,
+    symbol: string,
+    text: string,
+    lineno: number,
+    indent: number,
+    task?: string
+): MarkdownListElement {
+    // Fetch any following text lines and combine them into the same text element.
+    let followingText = tokenizer.takeMap(
+        l => {
+            let line = classifyLine(l);
+            return line.type == "text" ? line.text : undefined;
+        },
+        [text.trim()]
+    );
 
-    // Trawl through file contents to locate custom inline file content...
-    for (let line of contents.split("\n")) {
-        // Fast bail-out for lines that are too long.
-        if (!line.includes("::")) continue;
-        line = line.trim();
+    let initialParagraph = { type: "paragraph", contents: followingText, line: lineno } as MarkdownBlock;
 
-        // Skip real task lines, since they can have their own custom metadata.
-        // TODO: Abstract this check (i.e., improve task parsing to be more encapsulated).
-        let taskParse = TASK_REGEX.exec(line);
-        if (taskParse && (taskParse[2]?.trim()?.length ?? 0) > 0) continue;
+    // Then look for any / all markdown blocks that are at least the given indent + 4.
+    let subblocks = markdownBlocks(tokenizer, indent + SPACE_THRESHOLD);
 
-        // Handle inline-inline fields (haha...)
-        let hasInlineInline = false;
-        for (let field of extractInlineFields(line)) {
-            let value = parseInlineValue(field.value);
+    // For the subblocks, concatenate non-list blocks into the base list item, and then discard any non-list elements
+    // after that.
+    let index = 0;
+    let prefix: MarkdownBlock[] = [];
+    for (; index < subblocks.length && subblocks[index].type != "list"; index++) prefix.push(subblocks[index]);
 
-            fields.set(field.key, (fields.get(field.key) ?? []).concat([value]));
-            let simpleName = canonicalizeVarName(field.key);
-            if (simpleName.length > 0 && simpleName != field.key.trim()) {
-                fields.set(simpleName, (fields.get(simpleName) ?? []).concat([value]));
-            }
-
-            hasInlineInline = true;
-        }
-
-        // Handle full-line inline fields if there are no inline-inline fields.
-        if (!hasInlineInline) {
-            let match = inlineRegex.exec(line);
-            if (match) {
-                let name = match[1].trim();
-                let inlineField = parseInlineValue(match[2]);
-
-                fields.set(name, (fields.get(name) ?? []).concat([inlineField]));
-                let simpleName = canonicalizeVarName(match[1].trim());
-                if (simpleName.length > 0 && simpleName != match[1].trim()) {
-                    fields.set(simpleName, (fields.get(simpleName) ?? []).concat([inlineField]));
-                }
-            }
-        }
+    // index is now at the first list element or at the end.
+    let children: MarkdownListElement[] = [];
+    for (; index < subblocks.length; index++) {
+        let item = subblocks[index];
+        if (item.type == "list") item.elements.forEach(i => children.push(i));
     }
 
-    // And extract tasks...
-    let tasks = findTasksInFile(path, contents, metadata);
-
-    return { fields, tasks };
+    return { symbol, contents: subblocks, children, task, text: [initialParagraph].concat(prefix), line: lineno };
 }
 
-/** Extract markdown metadata from the given Obsidian markdown file. */
-export function parsePage(file: TFile, cache: MetadataCache, markdownData: ParsedMarkdown): PageMetadata {
-    let tags = new Set<string>();
-    let aliases = new Set<string>();
-    let fields = new Map<string, LiteralValue>();
+export function markdownList(tokenizer: LineTokenizer, first: MarkdownListElement): MarkdownBlock {
+    let elements = [first];
 
-    // Pull out the easy-to-extract information from the cache first...
-    let fileCache = cache.getFileCache(file);
-    if (fileCache) {
-        // File tags, including front-matter and in-file tags.
-        getAllTags(fileCache)?.forEach(t => tags.add(t));
+    while (tokenizer.peek() !== undefined) {
+        let line = classifyLine(tokenizer.peek()!);
+        if (line.type != "list-element" && line.type != "empty") break;
 
-        // Front-matter file tags, aliases, AND frontmatter properties.
-        if (fileCache.frontmatter) {
-            let frontTags = parseFrontMatterTags(fileCache.frontmatter);
-            if (frontTags) {
-                for (let tag of frontTags) {
-                    if (!tag.startsWith("#")) tag = "#" + tag;
-                    tags.add(tag);
-                }
-            }
+        tokenizer.next();
+        if (line.type == "empty") continue;
 
-            let frontAliases = parseFrontMatterAliases(fileCache.frontmatter);
-            if (frontAliases) {
-                for (let alias of frontAliases) aliases.add(alias);
-            }
+        elements.push(
+            markdownListElement(tokenizer, line.symbol, line.text, tokenizer.lineno(), line.indent, line.task)
+        );
+    }
 
-            let frontFields = parseFrontmatter(fileCache.frontmatter) as Record<string, LiteralValue>;
-            for (let [key, value] of Object.entries(frontFields)) fields.set(key, value);
+    return { type: "list", elements, line: first.line };
+}
+
+//////////////////////////////
+// Line Tokenizer Utilities //
+//////////////////////////////
+
+/** Simple utility for splitting file contents efficiently into lines, tracking line numbers, and allowing iteration. */
+class LineTokenizer {
+    private index: number;
+    private lineNumber: number;
+    private rn: boolean;
+
+    private nextLine: string | undefined;
+
+    public constructor(public contents: string) {
+        this.index = 0;
+        this.lineNumber = -1;
+        this.rn = contents.includes("\r\n");
+        this.nextLine = this.rawNext();
+    }
+
+    /** Peek at the next line in the input. */
+    public peek(): string | undefined {
+        return this.nextLine;
+    }
+
+    /** Advance the tokenizer to the next line and return the parsed line. */
+    public next(): string | undefined {
+        let result = this.nextLine;
+        this.nextLine = this.rawNext();
+        this.lineNumber += 1;
+
+        return result;
+    }
+
+    /** Obtain the line number for the last-fetched line. */
+    public lineno(): number {
+        return this.lineNumber;
+    }
+
+    /** Obtain the position that the tokenizer is in the input. */
+    public position(): number {
+        return this.index;
+    }
+
+    /** Seek the tokenize to the given location. */
+    public seek(location: number) {
+        this.index = Math.max(0, Math.min(location, this.contents.length));
+    }
+
+    /** Take consecutive lines until the tokenizer runs out or the predicate returns false. */
+    public takeWhile(predicate: (line: string) => boolean, output?: string[]): string[] {
+        let result: string[] = output !== undefined ? output : [];
+        while (this.peek() !== undefined && predicate(this.peek()!)) result.push(this.next()!);
+        return result;
+    }
+
+    /**
+     * Take elements while the given mapping on them returns non-undefined values; the output results will be the
+     * result of the mapping.
+     */
+    public takeMap(mapping: (line: string) => string | undefined, output?: string[]): string[] {
+        let result: string[] = output !== undefined ? output : [];
+        while (this.peek() !== undefined) {
+            let mapped = mapping(this.peek()!);
+            if (mapped === undefined) return result;
+            this.next();
+
+            result.push(mapped);
         }
+
+        return result;
     }
 
-    // Grab links from the frontmatter cache.
-    let links: Link[] = [];
-    if (file.path in cache.resolvedLinks) {
-        for (let resolved in cache.resolvedLinks[file.path]) links.push(Link.file(resolved));
+    /** Return the next line in the input. */
+    private rawNext(): string | undefined {
+        if (this.index >= this.contents.length) return undefined;
+
+        let nextBreak = this.contents.indexOf(this.rn ? "\r\n" : "\n", this.index);
+        if (nextBreak == -1) nextBreak = this.contents.length;
+
+        let oldPosition = this.index;
+        this.index = nextBreak + (this.rn ? 2 : 1);
+        return this.contents.substring(oldPosition, nextBreak);
     }
-
-    // Merge frontmatter fields with parsed fields.
-    for (let [name, values] of markdownData.fields.entries()) {
-        for (let value of values) addInlineField(fields, name, value);
-    }
-
-    // Add task defaults; this should probably be done in the task parsing directly
-    // once the parser has access to the common file metadata.
-    let pageCtime = DateTime.fromMillis(file.stat.ctime);
-    let fixedTasks = markdownData.tasks.map(t => t.withDefaultDates(pageCtime, undefined));
-
-    return new PageMetadata(file.path, {
-        fields,
-        tags,
-        aliases,
-        links,
-        tasks: fixedTasks,
-        ctime: pageCtime,
-        mtime: DateTime.fromMillis(file.stat.mtime),
-        size: file.stat.size,
-        day: findDate(file.path, fields),
-    });
 }
