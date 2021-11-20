@@ -7,7 +7,6 @@ import {
     App,
     Setting,
     Component,
-    MarkdownPostProcessor,
 } from "obsidian";
 import { renderErrorPre, renderList, renderTable, renderValue } from "ui/render";
 import { FullIndex } from "data/index";
@@ -35,6 +34,11 @@ export default class DataviewPlugin extends Plugin {
     /** External-facing plugin API. */
     public api: DataviewApi;
 
+    /** The current dataview version. */
+    public version: string = "[VI]{version}[/VI]";
+    /** The date that this version of the plugin was compiled. */
+    public versionDate: string = "[VI]{date}[/VI]";
+
     async onload() {
         // Settings initialization; write defaults first time around.
         this.settings = Object.assign(DEFAULT_SETTINGS, (await this.loadData()) ?? {});
@@ -44,12 +48,12 @@ export default class DataviewPlugin extends Plugin {
         this.api = new DataviewApi(this.app, this.index, this.settings);
 
         // Dataview query language code blocks.
-        this.registerHighPriorityCodeblockProcessor("dataview", async (source: string, el, ctx) =>
+        this.registerPriorityCodeblockPostProcessor("dataview", -100, async (source: string, el, ctx) =>
             this.dataview(source, el, ctx, ctx.sourcePath)
         );
 
         // DataviewJS codeblocks.
-        this.registerHighPriorityCodeblockProcessor("dataviewjs", async (source: string, el, ctx) =>
+        this.registerPriorityCodeblockPostProcessor("dataviewjs", -100, async (source: string, el, ctx) =>
             this.dataviewjs(source, el, ctx, ctx.sourcePath)
         );
 
@@ -78,57 +82,28 @@ export default class DataviewPlugin extends Plugin {
         // Not required anymore, though holding onto it for backwards-compatibility.
         this.app.metadataCache.trigger("dataview:api-ready", this.api);
 
-        console.log("Dataview: Version 0.4.x Loaded");
+        console.log(`Dataview: Version ${this.version} Loaded (Compiled ${this.versionDate})`);
     }
 
     onunload() {}
 
+    /** Register a markdown post processor with the given priority. */
     public registerPriorityMarkdownPostProcessor(
         priority: number,
         processor: (el: HTMLElement, ctx: MarkdownPostProcessorContext) => Promise<void>
     ) {
-        let realProcessor: MarkdownPostProcessor = (el, ctx) => processor(el, ctx);
-        realProcessor.sortOrder = priority;
-
-        this.registerMarkdownPostProcessor(realProcessor);
+        let registered = this.registerMarkdownPostProcessor(processor);
+        registered.sortOrder = priority;
     }
 
-    /**
-     * Utility function for registering high priority codeblocks which run before any other post processing, such as
-     * emoji-twitter.
-     */
-    public registerHighPriorityCodeblockProcessor(
+    /** Register a markdown codeblock post processor with the given priority. */
+    public registerPriorityCodeblockPostProcessor(
         language: string,
+        priority: number,
         processor: (source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext) => Promise<void>
     ) {
-        this.registerPriorityMarkdownPostProcessor(-100, async (el, ctx) => {
-            let codeblocks = el.querySelectorAll("pre > code");
-            if (!codeblocks) return;
-
-            for (let index = 0; index < codeblocks.length; index++) {
-                let codeblock = codeblocks.item(index) as HTMLElement;
-
-                let clanguages = Array.from(codeblock.classList)
-                    .filter(c => c.startsWith("language-"))
-                    .map(c => c.substring("language-".length));
-                clanguages = clanguages.concat(
-                    Array.from(codeblock.classList)
-                        .filter(c => c.startsWith(":"))
-                        .map(c => c.substring(":".length))
-                );
-
-                if (!clanguages.contains(language)) continue;
-                if (!codeblock.parentElement) continue;
-
-                let code = codeblock.innerText;
-
-                // We know the parent element is a pre, replace it.
-                let replacement = document.createElement("div");
-                codeblock.parentElement.replaceWith(replacement);
-
-                await processor(code, replacement, ctx);
-            }
-        });
+        let registered = this.registerMarkdownCodeBlockProcessor(language, processor);
+        registered.sortOrder = priority;
     }
 
     /**
@@ -319,6 +294,19 @@ class DataviewSettingsTab extends PluginSettingTab {
             );
 
         new Setting(this.containerEl)
+            .setName("Automatic View Refreshing")
+            .setDesc(
+                "If enabled, views will automatically refresh when files in your vault change; this can negatively affect" +
+                    " some functionality like embeds in views, so turn it off if such functionality is not working."
+            )
+            .addToggle(toggle =>
+                toggle.setValue(this.plugin.settings.refreshEnabled).onChange(async value => {
+                    await this.plugin.updateSettings({ warnOnEmptyResult: value });
+                    this.plugin.index.touch();
+                })
+            );
+
+        new Setting(this.containerEl)
             .setName("Refresh Interval")
             .setDesc("How frequently views are updated (in milliseconds) in preview mode when files are changing.")
             .addText(text =>
@@ -478,10 +466,12 @@ class DataviewListRenderer extends MarkdownRenderChild {
     async onload() {
         await this.render();
 
-        onIndexChange(this.index, this.settings.refreshInterval, this, async () => {
-            this.container.innerHTML = "";
-            await this.render();
-        });
+        if (this.settings.refreshEnabled) {
+            onIndexChange(this.index, this.settings.refreshInterval, this, async () => {
+                this.container.innerHTML = "";
+                await this.render();
+            });
+        }
     }
 
     async render() {
@@ -534,10 +524,12 @@ class DataviewTableRenderer extends MarkdownRenderChild {
     async onload() {
         await this.render();
 
-        onIndexChange(this.index, this.settings.refreshInterval, this, async () => {
-            this.container.innerHTML = "";
-            await this.render();
-        });
+        if (this.settings.refreshEnabled) {
+            onIndexChange(this.index, this.settings.refreshInterval, this, async () => {
+                this.container.innerHTML = "";
+                await this.render();
+            });
+        }
     }
 
     async render() {
@@ -604,12 +596,14 @@ class DataviewTaskRenderer extends MarkdownRenderChild {
     async onload() {
         await this.render();
 
-        onIndexChange(this.index, this.settings.refreshInterval, this, async () => {
-            if (this.taskBindings) this.removeChild(this.taskBindings);
+        if (this.settings.refreshEnabled) {
+            onIndexChange(this.index, this.settings.refreshInterval, this, async () => {
+                if (this.taskBindings) this.removeChild(this.taskBindings);
 
-            this.container.innerHTML = "";
-            await this.render();
-        });
+                this.container.innerHTML = "";
+                await this.render();
+            });
+        }
     }
 
     async render() {
@@ -661,10 +655,12 @@ class DataviewInlineRenderer extends MarkdownRenderChild {
     async onload() {
         await this.render();
 
-        onIndexChange(this.index, this.settings.refreshInterval, this, async () => {
-            this.errorbox?.remove();
-            await this.render();
-        });
+        if (this.settings.refreshEnabled) {
+            onIndexChange(this.index, this.settings.refreshInterval, this, async () => {
+                this.errorbox?.remove();
+                await this.render();
+            });
+        }
     }
 
     async render() {
@@ -698,10 +694,12 @@ class DataviewJSRenderer extends MarkdownRenderChild {
     async onload() {
         await this.render();
 
-        onIndexChange(this.index, this.settings.refreshInterval, this, async () => {
-            this.container.innerHTML = "";
-            await this.render();
-        });
+        if (this.settings.refreshEnabled) {
+            onIndexChange(this.index, this.settings.refreshInterval, this, async () => {
+                this.container.innerHTML = "";
+                await this.render();
+            });
+        }
     }
 
     async render() {
@@ -749,10 +747,12 @@ class DataviewInlineJSRenderer extends MarkdownRenderChild {
     async onload() {
         await this.render();
 
-        onIndexChange(this.index, this.settings.refreshInterval, this, async () => {
-            this.errorbox?.remove();
-            await this.render();
-        });
+        if (this.settings.refreshEnabled) {
+            onIndexChange(this.index, this.settings.refreshInterval, this, async () => {
+                this.errorbox?.remove();
+                await this.render();
+            });
+        }
     }
 
     async render() {

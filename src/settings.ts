@@ -15,6 +15,8 @@ export interface QuerySettings {
     taskCompletionText: string;
     /** If true, render a modal which shows no results were returned. */
     warnOnEmptyResult: boolean;
+    /** Whether or not automatic view refreshing is enabled. */
+    refreshEnabled: boolean;
     /** The interval that views are refreshed, by default. */
     refreshInterval: number;
     /** The default format that dates are rendered in (using luxon's moment-like formatting). */
@@ -37,6 +39,7 @@ export const DEFAULT_QUERY_SETTINGS: QuerySettings = {
     taskCompletionTracking: false,
     taskCompletionText: "completion",
     warnOnEmptyResult: true,
+    refreshEnabled: true,
     refreshInterval: 250,
     defaultDateFormat: "MMMM dd, yyyy",
     defaultDateTimeFormat: "h:mm a - MMMM dd, yyyy",

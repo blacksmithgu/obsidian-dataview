@@ -4,6 +4,7 @@ import webWorker from "rollup-plugin-web-worker-loader";
 import copy from "rollup-plugin-copy";
 import ttypescript from "ttypescript";
 import typescript2 from "rollup-plugin-typescript2";
+import versionInjector from "rollup-plugin-version-injector";
 
 const LIBRARY_CONFIG = {
     input: "src/index.ts",
@@ -21,6 +22,7 @@ const LIBRARY_CONFIG = {
         nodeResolve({ browser: true }),
         commonjs(),
         webWorker({ inline: true, forceInline: true, targetPlatform: "browser" }),
+        versionInjector({ logLevel: "warn" }),
     ],
     onwarn: (warning, warn) => {
         // Sorry rollup, but we're using eval...
@@ -44,6 +46,7 @@ const PROD_PLUGIN_CONFIG = {
         commonjs(),
         webWorker({ inline: true, forceInline: true, targetPlatform: "browser" }),
         typescript2({ tsconfig: "tsconfig.json" }),
+        versionInjector({ logLevel: "warn" }),
     ],
     onwarn: (warning, warn) => {
         // Sorry rollup, but we're using eval...
@@ -66,6 +69,7 @@ const DEV_PLUGIN_CONFIG = {
         commonjs(),
         webWorker({ inline: true, forceInline: true, targetPlatform: "browser" }),
         typescript2({ tsconfig: "tsconfig.json" }),
+        versionInjector({ logLevel: "warn" }),
         copy({
             targets: [
                 { src: "manifest.json", dest: "test-vault/.obsidian/plugins/dataview/" },
