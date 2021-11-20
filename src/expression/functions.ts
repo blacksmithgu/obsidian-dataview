@@ -681,6 +681,17 @@ export namespace DefaultFunctions {
     export const nonnull = new FunctionBuilder("nonnull")
         .vararg((_ctx, ...args) => args.filter(v => Values.typeOf(v) != "null"))
         .build();
+
+    /** Gets an object containing a link's own properties */
+    export const meta: FunctionImpl = new FunctionBuilder("meta")
+        .add1("link", link => ({
+            display: link.display ?? null,
+            embed: link.embed,
+            path: link.path,
+            subpath: link.subpath ?? null,
+            type: link.type,
+        }))
+        .build();
 }
 
 /** Default function implementations for the expression evaluator. */
@@ -746,4 +757,5 @@ export const DEFAULT_FUNCTIONS: Record<string, FunctionImpl> = {
     default: DefaultFunctions.fdefault,
     ldefault: DefaultFunctions.ldefault,
     choice: DefaultFunctions.choice,
+    meta: DefaultFunctions.meta,
 };
