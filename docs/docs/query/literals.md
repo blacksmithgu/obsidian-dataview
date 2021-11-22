@@ -76,12 +76,12 @@ Literal|Description
 #### Weeks
 Literal|Description
 -|-
-`dur(1 w)`|one day
-`dur(3 w)`|three days
-`dur(1 wk)`|one day
-`dur(3 wks)`|three days
-`dur(1 week)`|one day
-`dur(3 weeks)`|three days
+`dur(1 w)`|one week
+`dur(3 w)`|three weeks
+`dur(1 wk)`|one week
+`dur(3 wks)`|three weeks
+`dur(1 week)`|one week
+`dur(3 weeks)`|three weeks
 
 #### Months
 Literal|Description
