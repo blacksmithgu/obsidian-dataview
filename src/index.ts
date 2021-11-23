@@ -1,4 +1,4 @@
-export { DvAPIInterface as DataviewAPI } from "./types/api";
+export { DvAPIInterface as DataviewAPI } from "./typings/api";
 
 // Data Types
 export type { DateTime, Duration } from "luxon";
@@ -18,8 +18,8 @@ export type { FullIndex, PrefixIndex, IndexMap } from "data/index";
 
 import "obsidian";
 import { App } from "obsidian";
-import { DvAPIInterface } from "./types/api";
-import { DvEventFullName, IndexEvtFullName } from "./types/events";
+import { DvAPIInterface } from "./typings/api";
+import { DvEventFullName, IndexEvtFullName } from "./typings/events";
 
 // EVENTS
 

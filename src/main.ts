@@ -24,7 +24,7 @@ import { Groupings, Link, LiteralValue, Task } from "data/value";
 import { DateTime } from "luxon";
 import { currentLocale } from "util/locale";
 import { extractInlineFields, parseInlineValue } from "data/parse/inline-field";
-import { API_NAME, DvAPIInterface } from "./types/api";
+import { API_NAME, DvAPIInterface } from "./typings/api";
 
 const API_NAME: API_NAME extends keyof typeof window ? API_NAME : never = "DataviewAPI" as const; // this line will throw error if name out of sync
 

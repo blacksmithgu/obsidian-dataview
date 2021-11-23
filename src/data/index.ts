@@ -8,7 +8,7 @@ import { ParsedMarkdown, parsePage } from "data/parse/markdown";
 import { DateTime } from "luxon";
 import { parseCsv } from "data/parse/csv";
 import { FileImporter } from "data/import/import-manager";
-import { IndexEvtFullName, IndexEvtTriggerArgs } from "../types/events";
+import { IndexEvtFullName, IndexEvtTriggerArgs } from "../typings/events";
 
 /** A generic index which indexes variables of the form key -> value[], allowing both forward and reverse lookups. */
 export class IndexMap {

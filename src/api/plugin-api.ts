@@ -16,7 +16,7 @@ import { defaultLinkHandler } from "query/engine";
 import { DateTime, Duration } from "luxon";
 import * as Luxon from "luxon";
 import { compare, satisfies } from "compare-versions";
-import { DvAPIInterface, DvIOAPIInterface } from "../types/api";
+import { DvAPIInterface, DvIOAPIInterface } from "../typings/api";
 
 /** Asynchronous API calls related to file / system IO. */
 export class DataviewIOApi implements DvIOAPIInterface {
