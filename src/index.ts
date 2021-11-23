@@ -1,4 +1,4 @@
-export { DataviewAPIInterface as DataviewAPI } from "./types/api";
+export { DvAPIInterface as DataviewAPI } from "./types/api";
 
 // Data Types
 export type { DateTime, Duration } from "luxon";
@@ -18,13 +18,13 @@ export type { FullIndex, PrefixIndex, IndexMap } from "data/index";
 
 import "obsidian";
 import { App } from "obsidian";
-import { DataviewAPIInterface, DVEventPrefix, DataviewEvents } from "./types/api";
+import { DvAPIInterface, DvEventPrefix, DataviewEvents } from "./types/api";
 
 // EVENTS
 
 type OnArgs<T> = T extends [infer A, ...infer B]
     ? A extends string
-        ? [name: `${typeof DVEventPrefix}${A}`, callback: (...args: B) => any]
+        ? [name: `${typeof DvEventPrefix}${A}`, callback: (...args: B) => any]
         : never
     : never;
 declare module "obsidian" {
@@ -35,7 +35,7 @@ declare module "obsidian" {
 
 // UTIL FUNCTIONS
 
-export const getAPI = (app?: App): DataviewAPIInterface | undefined => {
+export const getAPI = (app?: App): DvAPIInterface | undefined => {
     if (app) return app.plugins.plugins.dataview?.api;
     else return window["DataviewAPI"];
 };

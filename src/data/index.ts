@@ -8,7 +8,7 @@ import { ParsedMarkdown, parsePage } from "data/parse/markdown";
 import { DateTime } from "luxon";
 import { parseCsv } from "data/parse/csv";
 import { FileImporter } from "data/import/import-manager";
-import { DVEventPrefix, IndexEventArgs, IndexEvents } from "../types/api";
+import { DvEventPrefix, IndexEventArgs, IndexEvents } from "../types/api";
 
 /** A generic index which indexes variables of the form key -> value[], allowing both forward and reverse lookups. */
 export class IndexMap {
@@ -85,7 +85,7 @@ export class IndexMap {
     }
 }
 
-const IndexEvtName = `${DVEventPrefix}${"metadata-change" as IndexEvents[0]}` as const;
+const IndexEvtName = `${DvEventPrefix}${"metadata-change" as IndexEvents[0]}` as const;
 
 /** Aggregate index which has several sub-indices and will initialize all of them. */
 export class FullIndex {

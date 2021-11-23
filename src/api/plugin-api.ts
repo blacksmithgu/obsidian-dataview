@@ -16,10 +16,10 @@ import { defaultLinkHandler } from "query/engine";
 import { DateTime, Duration } from "luxon";
 import * as Luxon from "luxon";
 import { compare, satisfies } from "compare-versions";
-import { DataviewAPIInterface as APIInterface } from "../types/api";
+import { DvAPIInterface, DvIOAPIInterface } from "../types/api";
 
 /** Asynchronous API calls related to file / system IO. */
-export class DataviewIOApi {
+export class DataviewIOApi implements DvIOAPIInterface {
     public constructor(public api: DataviewApi) {}
 
     /** Load the contents of a CSV asynchronously, returning a data array of rows (or undefined if it does not exist). */
@@ -52,7 +52,7 @@ export class DataviewIOApi {
     }
 }
 
-export class DataviewApi {
+export class DataviewApi implements DvAPIInterface {
     /** Evaluation context which expressions can be evaluated in. */
     public evaluationContext: Context;
     public io: DataviewIOApi;
@@ -75,7 +75,7 @@ export class DataviewApi {
     }
 
     /** utils to check api version */
-    public ver: APIInterface["ver"] = (() => {
+    public ver: DvAPIInterface["ver"] = (() => {
         const { verNum: version } = this;
         return {
             get verNum() {

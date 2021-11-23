@@ -11,7 +11,7 @@ import { DateTime, Duration } from "luxon";
 import * as Luxon from "luxon";
 
 /** Asynchronous API calls related to file / system IO. */
-export interface DataviewIOApi {
+export interface DvIOAPIInterface {
     /** Load the contents of a CSV asynchronously, returning a data array of rows (or undefined if it does not exist). */
     csv(path: Link | string, originFile?: string): Promise<DataArray<DataObject> | undefined>;
     /** Asynchronously load the contents of any link or path in an Obsidian vault. */
@@ -21,7 +21,7 @@ export interface DataviewIOApi {
 }
 
 // declare api interface here to check breaking changes
-export interface DataviewAPIInterface {
+export interface DvAPIInterface {
     /** utils to check api version */
     ver: {
         verNum: string;
@@ -63,7 +63,7 @@ export interface DataviewAPIInterface {
     evaluationContext: Context;
 
     /** Asynchronous API calls related to file / system IO. */
-    io: DataviewIOApi;
+    io: DvIOAPIInterface;
 
     /** Dataview functions which can be called from DataviewJS. */
     func: Record<string, BoundFunctionImpl>;
@@ -130,8 +130,8 @@ export interface DataviewAPIInterface {
     ): Promise<void>;
 }
 
-export const DVEventPrefix = "dataview:" as const;
-export type DataviewEvents = [name: "api-ready", api: DataviewAPIInterface] | IndexEvents;
+export const DvEventPrefix = "dataview:" as const;
+export type DataviewEvents = [name: "api-ready", api: DvAPIInterface] | IndexEvents;
 
 export type IndexEvents = [name: "metadata-change", ...args: IndexEventArgs];
 /** All possible index events. */
@@ -143,6 +143,6 @@ export type IndexEventArgs =
 
 declare global {
     // Must use var, no const/let
-    var DataviewAPI: DataviewAPIInterface | undefined;
+    var DataviewAPI: DvAPIInterface | undefined;
 }
 export type API_NAME = "DataviewAPI";

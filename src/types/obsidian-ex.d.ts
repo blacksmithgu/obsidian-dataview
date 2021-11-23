@@ -1,5 +1,5 @@
 import "obsidian";
-import { DataviewAPIInterface, DataviewEvents } from "./api";
+import { DvAPIInterface, DataviewEvents } from "./api";
 
 declare module "obsidian" {
     interface MetadataCache {
@@ -11,7 +11,7 @@ declare module "obsidian" {
             enabledPlugins: Set<string>;
             plugins: {
                 dataview?: {
-                    api: DataviewAPIInterface;
+                    api: DvAPIInterface;
                 };
             };
         };
