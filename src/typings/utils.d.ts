@@ -1,6 +1,5 @@
 // https://github.com/microsoft/TypeScript/issues/32164#issuecomment-921223692
 
-
 export type Overloads<T extends (...args: any[]) => any> = T extends {
     (...args: infer A1): infer R1;
     (...args: infer A2): infer R2;
