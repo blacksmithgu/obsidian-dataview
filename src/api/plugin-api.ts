@@ -15,6 +15,8 @@ import { Context } from "expression/context";
 import { defaultLinkHandler } from "query/engine";
 import { DateTime, Duration } from "luxon";
 import * as Luxon from "luxon";
+import { compare, satisfies } from "compare-versions";
+import { DataviewAPIInterface as APIInterface } from "../types/api";
 
 /** Asynchronous API calls related to file / system IO. */
 export class DataviewIOApi {
@@ -61,11 +63,28 @@ export class DataviewApi {
     /** Re-exporting of luxon for people who can't easily require it. Sorry! */
     public luxon = Luxon;
 
-    public constructor(public app: App, public index: FullIndex, public settings: DataviewSettings) {
+    public constructor(
+        public app: App,
+        public index: FullIndex,
+        public settings: DataviewSettings,
+        private verNum: string
+    ) {
         this.evaluationContext = new Context(defaultLinkHandler(index, ""), settings);
         this.func = Functions.bindAll(DEFAULT_FUNCTIONS, this.evaluationContext);
         this.io = new DataviewIOApi(this);
     }
+
+    /** utils to check api version */
+    public ver: APIInterface["ver"] = (() => {
+        const { verNum: version } = this;
+        return {
+            get verNum() {
+                return version;
+            },
+            compare: (op, ver) => compare(version, ver, op),
+            satisfies: range => satisfies(version, range),
+        };
+    })();
 
     /////////////////////////////
     // Index + Data Collection //

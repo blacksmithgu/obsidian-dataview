@@ -1,4 +1,4 @@
-export type { DataviewApi } from "api/plugin-api";
+export { DataviewAPIInterface as DataviewAPI } from "./types/api";
 
 // Data Types
 export type { DateTime, Duration } from "luxon";
@@ -16,5 +16,28 @@ export type {
 // Dataview Index.
 export type { FullIndex, PrefixIndex, IndexMap } from "data/index";
 
-// Dummy property to avoid some rollup warnings about an "empty chunk" (since this is only typings).
-export const DATAVIEW_PLACEHOLDER_VALUE = null;
+import "obsidian";
+import { App } from "obsidian";
+import { DataviewAPIInterface, DVEventPrefix, DataviewEvents } from "./types/api";
+
+// EVENTS
+
+type OnArgs<T> = T extends [infer A, ...infer B]
+    ? A extends string
+        ? [name: `${typeof DVEventPrefix}${A}`, callback: (...args: B) => any]
+        : never
+    : never;
+declare module "obsidian" {
+    interface MetadataCache {
+        on(...args: OnArgs<DataviewEvents>): EventRef;
+    }
+}
+
+// UTIL FUNCTIONS
+
+export const getAPI = (app?: App): DataviewAPIInterface | undefined => {
+    if (app) return app.plugins.plugins.dataview?.api;
+    else return window["DataviewAPI"];
+};
+
+export const isPluginEnabled = (app: App) => app.plugins.enabledPlugins.has("dataview");

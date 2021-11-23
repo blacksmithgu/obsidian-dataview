@@ -24,6 +24,9 @@ import { Groupings, Link, LiteralValue, Task } from "data/value";
 import { DateTime } from "luxon";
 import { currentLocale } from "util/locale";
 import { extractInlineFields, parseInlineValue } from "data/parse/inline-field";
+import { API_NAME, DataviewAPIInterface as APIInterface } from "./types/api";
+
+const API_NAME: API_NAME extends keyof typeof window ? API_NAME : never = "DataviewAPI" as const; // this line will throw error if name out of sync
 
 export default class DataviewPlugin extends Plugin {
     /** Plugin-wide default settigns. */
@@ -32,7 +35,7 @@ export default class DataviewPlugin extends Plugin {
     /** The index that stores all dataview data. */
     public index: FullIndex;
     /** External-facing plugin API. */
-    public api: DataviewApi;
+    public api: APIInterface;
 
     /** The current dataview version. */
     public version: string = "[VI]{version}[/VI]";
@@ -44,8 +47,10 @@ export default class DataviewPlugin extends Plugin {
         this.settings = Object.assign(DEFAULT_SETTINGS, (await this.loadData()) ?? {});
         this.addSettingTab(new DataviewSettingsTab(this.app, this));
 
-        this.index = FullIndex.create(this.app.vault, this.app.metadataCache, this.app.metadataCache);
-        this.api = new DataviewApi(this.app, this.index, this.settings);
+        this.index = FullIndex.create(this.app.vault, this.app.metadataCache);
+        this.api = new DataviewApi(this.app, this.index, this.settings, this.manifest.version);
+        // Register api to global window object
+        (window[API_NAME] = this.api) && this.register(() => delete window[API_NAME]);
 
         // Dataview query language code blocks.
         this.registerPriorityCodeblockPostProcessor("dataview", -100, async (source: string, el, ctx) =>
@@ -149,7 +154,9 @@ export default class DataviewPlugin extends Plugin {
         component: Component | MarkdownPostProcessorContext,
         sourcePath: string
     ) {
-        component.addChild(new DataviewJSRenderer(source, el, this.app, this.index, sourcePath, this.settings));
+        component.addChild(
+            new DataviewJSRenderer(source, el, this.app, this.index, sourcePath, this.settings, this.manifest.version)
+        );
     }
 
     /** Render all dataview inline expressions in the given element. */
@@ -167,7 +174,16 @@ export default class DataviewPlugin extends Plugin {
             if (text.startsWith(this.settings.inlineJsQueryPrefix)) {
                 let code = text.substring(this.settings.inlineJsQueryPrefix.length).trim();
                 component.addChild(
-                    new DataviewInlineJSRenderer(code, el, codeblock, this.app, this.index, sourcePath, this.settings)
+                    new DataviewInlineJSRenderer(
+                        code,
+                        el,
+                        codeblock,
+                        this.app,
+                        this.index,
+                        sourcePath,
+                        this.settings,
+                        this.manifest.version
+                    )
                 );
             } else if (text.startsWith(this.settings.inlineQueryPrefix)) {
                 let potentialField = text.substring(this.settings.inlineQueryPrefix.length).trim();
@@ -201,7 +217,7 @@ export default class DataviewPlugin extends Plugin {
     }
 
     /** Call the given callback when the dataview API has initialized. */
-    public withApi(callback: (api: DataviewApi) => void) {
+    public withApi(callback: (api: APIInterface) => void) {
         callback(this.api);
     }
 }
@@ -686,7 +702,8 @@ class DataviewJSRenderer extends MarkdownRenderChild {
         public app: App,
         public index: FullIndex,
         public origin: string,
-        public settings: DataviewSettings
+        public settings: DataviewSettings,
+        public verNum: string
     ) {
         super(container);
     }
@@ -716,7 +733,7 @@ class DataviewJSRenderer extends MarkdownRenderChild {
         try {
             await asyncEvalInContext(
                 DataviewJSRenderer.PREAMBLE + this.script,
-                makeApiContext(this.index, this, this.app, this.settings, this.container, this.origin)
+                makeApiContext(this.index, this, this.app, this.settings, this.verNum, this.container, this.origin)
             );
         } catch (e) {
             this.containerEl.innerHTML = "";
@@ -739,7 +756,8 @@ class DataviewInlineJSRenderer extends MarkdownRenderChild {
         public app: App,
         public index: FullIndex,
         public origin: string,
-        public settings: DataviewSettings
+        public settings: DataviewSettings,
+        public verNum: string
     ) {
         super(container);
     }
@@ -769,7 +787,7 @@ class DataviewInlineJSRenderer extends MarkdownRenderChild {
             let temp = document.createElement("span");
             let result = await asyncEvalInContext(
                 DataviewInlineJSRenderer.PREAMBLE + this.script,
-                makeApiContext(this.index, this, this.app, this.settings, temp, this.origin)
+                makeApiContext(this.index, this, this.app, this.settings, this.verNum, temp, this.origin)
             );
             this.target.replaceWith(temp);
             this.target = temp;

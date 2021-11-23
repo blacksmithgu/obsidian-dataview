@@ -29,6 +29,7 @@
     "@types/papaparse": "^5.2.6",
     "@types/parsimmon": "^1.10.6",
     "@zerollup/ts-transform-paths": "^1.7.18",
+    "compare-versions": "^4.1.1",
     "jest": "^27.1.0",
     "obsidian": "^0.12.11",
     "prettier": "2.3.2",
