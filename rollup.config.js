@@ -36,10 +36,7 @@ const DEV_PLUGIN_CONFIG = {
         undefined,
         copy({
             targets: [
-                {
-                    src: "manifest.json",
-                    dest: "test-vault/.obsidian/plugins/dataview/",
-                },
+                { src: "manifest.json", dest: "test-vault/.obsidian/plugins/dataview/" },
                 { src: "styles.css", dest: "test-vault/.obsidian/plugins/dataview/" },
             ],
         })
@@ -66,10 +63,10 @@ const LIBRARY_CONFIG = {
         sourcemap: true,
         format: "cjs",
     },
-    plugins: getRollupPlugins({
-        tsconfig: "tsconfig-lib.json",
-        typescript: ttypescript,
-    }),
+    plugins: getRollupPlugins(
+        { tsconfig: "tsconfig-lib.json", typescript: ttypescript },
+        copy({ targets: [{ src: "src/types/*.d.ts", dest: "lib/types" }] })
+    ),
 };
 
 let configs = [];

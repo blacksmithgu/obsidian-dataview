@@ -8,7 +8,7 @@ import { ParsedMarkdown, parsePage } from "data/parse/markdown";
 import { DateTime } from "luxon";
 import { parseCsv } from "data/parse/csv";
 import { FileImporter } from "data/import/import-manager";
-import { DvEventPrefix, IndexEventArgs, IndexEvents } from "../types/api";
+import { IndexEvtFullName, IndexEvtTriggerArgs } from "../types/events";
 
 /** A generic index which indexes variables of the form key -> value[], allowing both forward and reverse lookups. */
 export class IndexMap {
@@ -85,8 +85,6 @@ export class IndexMap {
     }
 }
 
-const IndexEvtName = `${DvEventPrefix}${"metadata-change" as IndexEvents[0]}` as const;
-
 /** Aggregate index which has several sub-indices and will initialize all of them. */
 export class FullIndex {
     /** Generate a full index from the given vault. */
@@ -136,8 +134,8 @@ export class FullIndex {
         this.csv = new CsvCache(this.vault);
     }
 
-    trigger(...args: IndexEventArgs): void {
-        this.metadataCache.trigger(IndexEvtName, ...args);
+    trigger(...args: IndexEvtTriggerArgs): void {
+        this.metadataCache.trigger("dataview:metadata-change" as IndexEvtFullName, ...args);
     }
 
     /** Runs through the whole vault to set up initial file */

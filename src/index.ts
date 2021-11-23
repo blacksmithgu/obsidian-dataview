@@ -18,18 +18,21 @@ export type { FullIndex, PrefixIndex, IndexMap } from "data/index";
 
 import "obsidian";
 import { App } from "obsidian";
-import { DvAPIInterface, DvEventPrefix, DataviewEvents } from "./types/api";
+import { DvAPIInterface } from "./types/api";
+import { DvEventFullName, IndexEvtFullName } from "./types/events";
 
 // EVENTS
 
-type OnArgs<T> = T extends [infer A, ...infer B]
-    ? A extends string
-        ? [name: `${typeof DvEventPrefix}${A}`, callback: (...args: B) => any]
-        : never
-    : never;
 declare module "obsidian" {
     interface MetadataCache {
-        on(...args: OnArgs<DataviewEvents>): EventRef;
+        /**
+         * @deprecated Not required anymore, though holding onto it for backwards-compatibility.
+         */
+        on(name: DvEventFullName<"api-ready">, callback: (api: DvAPIInterface) => void): EventRef;
+        /** Index events: Called when dataview metadata for a file changes. */
+        on(name: IndexEvtFullName, callback: (type: "rename", file: TAbstractFile, oldPath: string) => void): EventRef;
+        /** Index events: Called when a file is deleted from the dataview index. */
+        on(name: IndexEvtFullName, callback: (type: "delete" | "update", file: TFile) => void): EventRef;
     }
 }
 

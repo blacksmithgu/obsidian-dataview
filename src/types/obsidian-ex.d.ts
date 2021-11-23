@@ -1,9 +1,10 @@
 import "obsidian";
-import { DvAPIInterface, DataviewEvents } from "./api";
+import { DvAPIInterface } from "./api";
+import { DvEvtTriggerArgs } from "./events";
 
 declare module "obsidian" {
     interface MetadataCache {
-        trigger(...args: DataviewEvents): void;
+        trigger(...args: DvEvtTriggerArgs): void;
         trigger(name: string, ...data: any[]): void;
     }
     interface App {

@@ -1,5 +1,4 @@
 import compareVersions from "compare-versions";
-import { TAbstractFile, TFile } from "obsidian";
 import { App, Component } from "obsidian";
 import { FullIndex } from "../data";
 import { DataObject, Link, LiteralValue, Values, Task } from "../data/value";
@@ -130,17 +129,7 @@ export interface DvAPIInterface {
     ): Promise<void>;
 }
 
-export const DvEventPrefix = "dataview:" as const;
-export type DataviewEvents = [name: "api-ready", api: DvAPIInterface] | IndexEvents;
-
-export type IndexEvents = [name: "metadata-change", ...args: IndexEventArgs];
-/** All possible index events. */
-export type IndexEventArgs =
-    /** Called when dataview metadata for a file changes. */
-    | [type: "rename", file: TAbstractFile, oldPath: string]
-    /** Called when a file is deleted from the dataview index. */
-    | [type: "delete" | "update", file: TFile];
-
+// Global API helpers
 declare global {
     // Must use var, no const/let
     var DataviewAPI: DvAPIInterface | undefined;

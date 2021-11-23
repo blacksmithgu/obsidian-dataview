@@ -13,7 +13,8 @@ Following these steps will allow you to access Dataview in a typed way, includin
 - **Check and compare Dataview API version**: use utils provided in [`api.ver`](../../../src/types/api.ts) (require version 0.4.22+)
 - **Bind to Dataview events**: `plugin.registerEvent(plugin.app.metadataCache.on("dataview:...", (...) => ...))`.
 
-For full API definitions and index events available, check [this file](../../../src/types/api.ts)
+> - For full API definitions available, check [api.ts](../../../src/types/api.ts)
+> - For all events hooked on MetadataCache, check [index.ts](../../../src/index.ts)
 
 ## Value Utilities
 
