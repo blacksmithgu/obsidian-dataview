@@ -6,33 +6,48 @@ import ttypescript from "ttypescript";
 import typescript2 from "rollup-plugin-typescript2";
 import versionInjector from "rollup-plugin-version-injector";
 
-const LIBRARY_CONFIG = {
-    input: "src/index.ts",
-    output: {
-        dir: "lib",
-        sourcemap: true,
-        format: "cjs",
-    },
+const BASE_CONFIG = {
+    input: "src/main.ts",
     external: ["obsidian"],
-    plugins: [
-        typescript2({
-            tsconfig: "tsconfig-lib.json",
-            typescript: ttypescript,
-        }),
-        nodeResolve({ browser: true }),
-        commonjs(),
-        webWorker({ inline: true, forceInline: true, targetPlatform: "browser" }),
-        versionInjector({ logLevel: "warn" }),
-    ],
     onwarn: (warning, warn) => {
         // Sorry rollup, but we're using eval...
         if (/Use of eval is strongly discouraged/.test(warning.message)) return;
         warn(warning);
     },
 };
+const getRollupPlugins = (tsconfig, ...plugins) =>
+    [
+        typescript2(tsconfig),
+        nodeResolve({ browser: true }),
+        commonjs(),
+        webWorker({ inline: true, forceInline: true, targetPlatform: "browser" }),
+        versionInjector({ logLevel: "warn" }),
+    ].concat(plugins);
+
+const DEV_PLUGIN_CONFIG = {
+    ...BASE_CONFIG,
+    output: {
+        dir: "test-vault/.obsidian/plugins/dataview",
+        sourcemap: "inline",
+        format: "cjs",
+        exports: "default",
+    },
+    plugins: getRollupPlugins(
+        undefined,
+        copy({
+            targets: [
+                {
+                    src: "manifest.json",
+                    dest: "test-vault/.obsidian/plugins/dataview/",
+                },
+                { src: "styles.css", dest: "test-vault/.obsidian/plugins/dataview/" },
+            ],
+        })
+    ),
+};
 
 const PROD_PLUGIN_CONFIG = {
-    input: "src/main.ts",
+    ...BASE_CONFIG,
     output: {
         dir: "build",
         sourcemap: "inline",
@@ -40,48 +55,21 @@ const PROD_PLUGIN_CONFIG = {
         format: "cjs",
         exports: "default",
     },
-    external: ["obsidian"],
-    plugins: [
-        nodeResolve({ browser: true }),
-        commonjs(),
-        webWorker({ inline: true, forceInline: true, targetPlatform: "browser" }),
-        typescript2({ tsconfig: "tsconfig.json" }),
-        versionInjector({ logLevel: "warn" }),
-    ],
-    onwarn: (warning, warn) => {
-        // Sorry rollup, but we're using eval...
-        if (/Use of eval is strongly discouraged/.test(warning.message)) return;
-        warn(warning);
-    },
+    plugins: getRollupPlugins(),
 };
 
-const DEV_PLUGIN_CONFIG = {
-    input: "src/main.ts",
+const LIBRARY_CONFIG = {
+    ...BASE_CONFIG,
+    input: "src/index.ts",
     output: {
-        dir: "test-vault/.obsidian/plugins/dataview",
+        dir: "lib",
+        sourcemap: true,
         format: "cjs",
-        sourcemap: "inline",
-        exports: "default",
     },
-    external: ["obsidian"],
-    plugins: [
-        nodeResolve({ browser: true }),
-        commonjs(),
-        webWorker({ inline: true, forceInline: true, targetPlatform: "browser" }),
-        typescript2({ tsconfig: "tsconfig.json" }),
-        versionInjector({ logLevel: "warn" }),
-        copy({
-            targets: [
-                { src: "manifest.json", dest: "test-vault/.obsidian/plugins/dataview/" },
-                { src: "styles.css", dest: "test-vault/.obsidian/plugins/dataview/" },
-            ],
-        }),
-    ],
-    onwarn: (warning, warn) => {
-        // Sorry rollup, but we're using eval...
-        if (/Use of eval is strongly discouraged/.test(warning.message)) return;
-        warn(warning);
-    },
+    plugins: getRollupPlugins({
+        tsconfig: "tsconfig-lib.json",
+        typescript: ttypescript,
+    }),
 };
 
 let configs = [];
