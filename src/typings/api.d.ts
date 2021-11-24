@@ -22,12 +22,13 @@ export interface DvIOAPIInterface {
 // declare api interface here to check breaking changes
 export interface DvAPIInterface {
     /** utils to check api version */
-    ver: {
+    version: {
+        /** Version string provided in Plugin.menifest, doesn't start with "v" */
         verNum: string;
         /**
          * Compare [semver](https://semver.org/) version strings using the specified operator.
          *
-         * @param verToCompare version to compare
+         * @param verToCompare version to compare with current version
          * @param operator Allowed arithmetic operator to use
          * @returns `true` if the comparison between the verToCompare and the current version satisfies the operator, `false` otherwise.
          *
