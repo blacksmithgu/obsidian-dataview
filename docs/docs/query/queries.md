@@ -301,3 +301,18 @@ For example, flatten the `authors` field in each literature note to give one row
     |Soap Dragons SN|Joe McCormick|
     |smithPainAssaultSelf2007 SN|Jonathan A. Smith|
     |smithPainAssaultSelf2007 SN|Mike Osborn|
+
+### LIMIT
+
+Restrict the results to at most N values.
+
+```
+LIMIT 5
+```
+
+Commands are processed in the order they are written, so the following sorts the results *after* they have already been limited:
+
+```
+LIMIT 5
+SORT date ASCENDING
+```
