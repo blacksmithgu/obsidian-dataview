@@ -51,6 +51,32 @@ export const DURATION_TYPES = {
     s: Duration.fromObject({ seconds: 1 }),
 };
 
+/** Shorthand for common dates (relative to right now). */
+export const DATE_SHORTHANDS = {
+    now: () => DateTime.local(),
+    today: () => DateTime.local().startOf("day"),
+    yesterday: () =>
+        DateTime.local()
+            .startOf("day")
+            .minus(Duration.fromObject({ days: 1 })),
+    tommorow: () =>
+        DateTime.local()
+            .startOf("day")
+            .plus(Duration.fromObject({ days: 1 })),
+    sow: () => DateTime.local().startOf("week"),
+    "start-of-week": () => DateTime.local().startOf("week"),
+    eow: () => DateTime.local().endOf("week"),
+    "end-of-week": () => DateTime.local().endOf("week"),
+    soy: () => DateTime.local().startOf("year"),
+    "start-of-year": () => DateTime.local().startOf("year"),
+    eoy: () => DateTime.local().endOf("year"),
+    "end-of-year": () => DateTime.local().endOf("year"),
+    som: () => DateTime.local().startOf("month"),
+    "start-of-month": () => DateTime.local().startOf("month"),
+    eom: () => DateTime.local().endOf("month"),
+    "end-of-month": () => DateTime.local().endOf("month"),
+};
+
 /**
  * Keywords which cannot be used as variables directly. Use `row.<thing>` if it is a variable you have defined and want
  * to access.
@@ -136,6 +162,7 @@ interface ExpressionLanguage {
     link: Link;
     embedLink: Link;
     rootDate: DateTime;
+    dateShorthand: keyof typeof DATE_SHORTHANDS;
     date: DateTime;
     datePlus: DateTime;
     durationType: keyof typeof DURATION_TYPES;
@@ -301,6 +328,12 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
         P.seqMap(P.regexp(/\d{4}/), P.string("-"), P.regexp(/\d{2}/), (year, _, month) => {
             return DateTime.fromObject({ year: Number.parseInt(year), month: Number.parseInt(month) });
         }).desc("date in format YYYY-MM[-DDTHH-MM-SS.MS]"),
+    dateShorthand: _ =>
+        P.alt(
+            ...Object.keys(DATE_SHORTHANDS)
+                .sort((a, b) => b.length - a.length)
+                .map(P.string)
+        ) as P.Parser<keyof typeof DATE_SHORTHANDS>,
     date: q =>
         chainOpt<DateTime>(
             q.rootDate,
@@ -338,24 +371,7 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
     // A date, plus various shorthand times of day it could be.
     datePlus: q =>
         P.alt<DateTime>(
-            P.string("now").map(_ => DateTime.local()),
-            P.string("today").map(_ => DateTime.local().startOf("day")),
-            P.string("tomorrow").map(_ =>
-                DateTime.local()
-                    .startOf("day")
-                    .plus(Duration.fromObject({ days: 1 }))
-            ),
-            P.string("yesterday").map(_ =>
-                DateTime.local()
-                    .startOf("day")
-                    .minus(Duration.fromObject({ days: 1 }))
-            ),
-            P.string("sow").map(_ => DateTime.local().startOf("week")),
-            P.string("som").map(_ => DateTime.local().startOf("month")),
-            P.string("soy").map(_ => DateTime.local().startOf("year")),
-            P.string("eow").map(_ => DateTime.local().endOf("week")),
-            P.string("eom").map(_ => DateTime.local().endOf("month")),
-            P.string("eoy").map(_ => DateTime.local().endOf("year")),
+            q.dateShorthand.map(d => DATE_SHORTHANDS[d]()),
             q.date
         ),
 
