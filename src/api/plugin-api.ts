@@ -78,7 +78,7 @@ export class DataviewApi implements DvAPIInterface {
     public version: DvAPIInterface["version"] = (() => {
         const { verNum: version } = this;
         return {
-            get verNum() {
+            get current() {
                 return version;
             },
             compare: (op, ver) => compare(version, ver, op),

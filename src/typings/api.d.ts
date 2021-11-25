@@ -24,7 +24,7 @@ export interface DvAPIInterface {
     /** utils to check api version */
     version: {
         /** Version string provided in Plugin.menifest, doesn't start with "v" */
-        verNum: string;
+        current: string;
         /**
          * Compare [semver](https://semver.org/) version strings using the specified operator.
          *
