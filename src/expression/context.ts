@@ -210,27 +210,27 @@ export class Context {
                         switch (index) {
                             case "year":
                             case "years":
-                                return Result.success(object.value.years);
+                                return Result.success(object.value.shiftTo("years").years);
                             case "month":
                             case "months":
-                                return Result.success(object.value.months);
+                                return Result.success(object.value.shiftTo("months").months);
                             case "weeks":
-                                return Result.success(object.value.weeks);
+                                return Result.success(object.value.shiftTo("weeks").weeks);
                             case "day":
                             case "days":
-                                return Result.success(object.value.days);
+                                return Result.success(object.value.shiftTo("days").days);
                             case "hour":
                             case "hours":
-                                return Result.success(object.value.hours);
+                                return Result.success(object.value.shiftTo("hours").hours);
                             case "minute":
                             case "minutes":
-                                return Result.success(object.value.minutes);
+                                return Result.success(object.value.shiftTo("minutes").minutes);
                             case "second":
                             case "seconds":
-                                return Result.success(object.value.seconds);
+                                return Result.success(object.value.shiftTo("seconds").seconds);
                             case "millisecond":
                             case "milliseconds":
-                                return Result.success(object.value.milliseconds);
+                                return Result.success(object.value.shiftTo("millisecond").milliseconds);
                             default:
                                 return Result.success(null);
                         }

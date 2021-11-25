@@ -68,7 +68,7 @@ export default class DataviewPlugin extends Plugin {
             if (!this.settings.prettyRenderInlineFields) return;
 
             // Handle p, header elements explicitly (opt-in rather than opt-out for now).
-            for (let p of el.findAllSelf("p,h1,h2,h3,h4,h5,h6,li,span"))
+            for (let p of el.findAllSelf("p,h1,h2,h3,h4,h5,h6,li,span,th,td"))
                 await replaceInlineFields(ctx, p, ctx.sourcePath, this.settings);
         });
 
