@@ -37,11 +37,6 @@ export default class DataviewPlugin extends Plugin {
     /** External-facing plugin API. */
     public api: DvAPIInterface;
 
-    /** The current dataview version. */
-    public version: string = "[VI]{version}[/VI]";
-    /** The date that this version of the plugin was compiled. */
-    public versionDate: string = "[VI]{date}[/VI]";
-
     async onload() {
         // Settings initialization; write defaults first time around.
         this.settings = Object.assign(DEFAULT_SETTINGS, (await this.loadData()) ?? {});
@@ -87,7 +82,7 @@ export default class DataviewPlugin extends Plugin {
         // Not required anymore, though holding onto it for backwards-compatibility.
         this.app.metadataCache.trigger("dataview:api-ready", this.api);
 
-        console.log(`Dataview: Version ${this.version} Loaded (Compiled ${this.versionDate})`);
+        console.log(`Dataview: Version ${this.manifest.version} Loaded (Compiled at %s)`, "[VI]{date}[/VI]");
     }
 
     onunload() {}
