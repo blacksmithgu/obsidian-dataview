@@ -4,7 +4,7 @@ import { DataObject } from "data/value";
 import { MetadataCache, TFile, Vault } from "obsidian";
 import { getParentFolder } from "util/normalize";
 import { PageMetadata } from "data/metadata";
-import { ParsedMarkdown, parsePage } from "data/parse/markdown";
+import { ParsedMarkdown, parsePage } from "data/parse/markdown-file";
 import { DateTime } from "luxon";
 import { parseCsv } from "data/parse/csv";
 import { FileImporter } from "data/import/import-manager";

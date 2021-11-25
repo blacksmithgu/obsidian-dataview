@@ -112,7 +112,8 @@ As with pages, Dataview adds a number of implicit fields to each task:
 
 - Tasks inherit *all fields* from their parent page - so if you have a `rating` field in your page, you can also access
   it on your task.
-- `completed`: Whether or not this *specific* task has been completed.
+- `completed`: Whether or not this *specific* task has been completed; this does not consider the
+  completion/non-completion of any child tasks.
 - `fullyCompleted`: Whether or not this task and **all** of its subtasks are completed.
 - `text`: The text of this task.
 - `line`: The line this task shows up on.

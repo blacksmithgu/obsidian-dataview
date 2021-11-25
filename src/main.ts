@@ -16,7 +16,7 @@ import { Field } from "expression/field";
 import { parseField } from "expression/parse";
 import { parseQuery } from "query/parse";
 import { executeInline, executeList, executeTable, executeTask } from "query/engine";
-import { asyncTryOrPropogate, tryOrPropogate } from "util/normalize";
+import { asyncTryOrPropogate, canonicalizeVarName, tryOrPropogate } from "util/normalize";
 import { asyncEvalInContext, makeApiContext } from "api/inline-api";
 import { DataviewApi } from "api/plugin-api";
 import { DataviewSettings, DEFAULT_QUERY_SETTINGS, DEFAULT_SETTINGS, QuerySettings } from "settings";
@@ -832,7 +832,15 @@ async function replaceInlineFields(
 
         // Block inline fields render the key, parenthesis ones do not.
         if (field.wrapping == "[") {
-            renderContainer.createSpan({ text: field.key, cls: ["dataview", "inline-field-key"] });
+            renderContainer.createSpan({
+                text: field.key,
+                cls: ["dataview", "inline-field-key"],
+                attr: {
+                    "data-dv-key": field.key,
+                    "data-dv-norm-key": canonicalizeVarName(field.key),
+                },
+            });
+
             let valueContainer = renderContainer.createSpan({ cls: ["dataview", "inline-field-value"] });
             await renderValue(parseInlineValue(field.value), valueContainer, originFile, component, settings, false);
         } else {

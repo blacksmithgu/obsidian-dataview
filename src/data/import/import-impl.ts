@@ -1,6 +1,6 @@
 /** Actual raw implementation for the background importer. Mainly handles message passing. */
 
-import { ParsedMarkdown, parseMarkdown } from "data/parse/markdown";
+import { ParsedMarkdown, parseMarkdown } from "data/parse/markdown-file";
 import { CachedMetadata } from "obsidian";
 
 export function runImport(path: string, contents: string, metadata: CachedMetadata): ParsedMarkdown {

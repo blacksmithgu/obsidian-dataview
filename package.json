@@ -16,8 +16,8 @@
     "lib": "npx rollup --config rollup.config.js --environment BUILD:lib",
     "test": "npx jest"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": ["obsidian", "dataview"],
+  "author": "Michael Brenan",
   "license": "MIT",
   "devDependencies": {
     "@rollup/plugin-commonjs": "^20.0.0",
