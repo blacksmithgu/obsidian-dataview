@@ -233,7 +233,7 @@ export namespace DefaultFunctions {
     /** Date constructor function. */
     export const date = new FunctionBuilder("date")
         .add1("string", str => {
-            let parsedDate = EXPRESSION.date.parse(str);
+            let parsedDate = EXPRESSION.datePlus.parse(str);
             if (parsedDate.status) return parsedDate.value;
             else return null;
         })
