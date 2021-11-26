@@ -82,6 +82,7 @@ export class DataviewInlineApi {
         container: HTMLElement,
         app: App,
         settings: DataviewSettings,
+        verNum: string,
         currentFilePath: string
     ) {
         this.index = index;
@@ -91,7 +92,7 @@ export class DataviewInlineApi {
         this.currentFilePath = currentFilePath;
         this.settings = settings;
 
-        this.api = new DataviewApi(this.app, this.index, this.settings);
+        this.api = new DataviewApi(this.app, this.index, this.settings, verNum);
         this.io = new DataviewInlineIOApi(this.api.io, this.currentFilePath);
 
         // Set up the evaluation context with variables from the current file.
@@ -324,8 +325,9 @@ export function makeApiContext(
     component: Component,
     app: App,
     settings: DataviewSettings,
+    verNum: string,
     container: HTMLElement,
     originFile: string
 ): DataviewInlineApi {
-    return new DataviewInlineApi(index, component, container, app, settings, originFile);
+    return new DataviewInlineApi(index, component, container, app, settings, verNum, originFile);
 }

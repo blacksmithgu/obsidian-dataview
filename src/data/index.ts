@@ -1,13 +1,14 @@
 /** Stores various indices on all files in the vault to make dataview generation fast. */
 import { Result } from "api/result";
 import { DataObject } from "data/value";
-import { MetadataCache, TAbstractFile, TFile, Vault } from "obsidian";
+import { MetadataCache, TFile, Vault } from "obsidian";
 import { getParentFolder } from "util/normalize";
 import { PageMetadata } from "data/metadata";
 import { ParsedMarkdown, parsePage } from "data/parse/markdown";
 import { DateTime } from "luxon";
 import { parseCsv } from "data/parse/csv";
 import { FileImporter } from "data/import/import-manager";
+import { IndexEvtFullName, IndexEvtTriggerArgs } from "../typings/events";
 
 /** A generic index which indexes variables of the form key -> value[], allowing both forward and reverse lookups. */
 export class IndexMap {
@@ -84,19 +85,11 @@ export class IndexMap {
     }
 }
 
-/** Lists all possible index events. */
-export interface IndexEvents {
-    /** Called when dataview metadata for a file changes. */
-    trigger(evt: "dataview:metadata-change", type: "rename", file: TAbstractFile, oldPath: string): void;
-    /** Called when a file is deleted from the dataview index. */
-    trigger(evt: "dataview:metadata-change", type: "update" | "delete", file: TAbstractFile): void;
-}
-
 /** Aggregate index which has several sub-indices and will initialize all of them. */
 export class FullIndex {
     /** Generate a full index from the given vault. */
-    public static create(vault: Vault, metadata: MetadataCache, events: IndexEvents): FullIndex {
-        return new FullIndex(vault, metadata, events);
+    public static create(vault: Vault, metadata: MetadataCache): FullIndex {
+        return new FullIndex(vault, metadata);
     }
 
     /* Maps path -> markdown metadata for all markdown pages. */
@@ -125,7 +118,7 @@ export class FullIndex {
     public importer: FileImporter;
 
     /** Construct a new index over the given vault and metadata cache. */
-    private constructor(public vault: Vault, public metadataCache: MetadataCache, public events: IndexEvents) {
+    private constructor(public vault: Vault, public metadataCache: MetadataCache) {
         this.pages = new Map();
         this.tags = new IndexMap();
         this.etags = new IndexMap();
@@ -139,6 +132,10 @@ export class FullIndex {
         this.prefix = PrefixIndex.create(this.vault, () => (this.revision += 1));
         // The CSV cache also needs to listen to filesystem events for cache invalidation.
         this.csv = new CsvCache(this.vault);
+    }
+
+    trigger(...args: IndexEvtTriggerArgs): void {
+        this.metadataCache.trigger("dataview:metadata-change" as IndexEvtFullName, ...args);
     }
 
     /** Runs through the whole vault to set up initial file */
@@ -165,7 +162,7 @@ export class FullIndex {
             }
 
             this.revision += 1;
-            this.events.trigger("dataview:metadata-change", "rename", file, oldPath);
+            this.trigger("rename", file, oldPath);
         });
 
         // File creation does cause a metadata change, but deletes do not. Clear the caches for this.
@@ -180,7 +177,7 @@ export class FullIndex {
             this.folders.delete(file.path);
 
             this.revision += 1;
-            this.events.trigger("dataview:metadata-change", "delete", file);
+            this.trigger("delete", file);
         });
 
         // Initialize sub-indices.
@@ -206,7 +203,7 @@ export class FullIndex {
         this.folders.set(file.path, new Set<string>([getParentFolder(file.path)]));
 
         this.revision += 1;
-        this.events.trigger("dataview:metadata-change", "update", file);
+        this.trigger("update", file);
     }
 }
 
