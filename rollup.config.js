@@ -4,7 +4,6 @@ import webWorker from "rollup-plugin-web-worker-loader";
 import copy from "rollup-plugin-copy";
 import ttypescript from "ttypescript";
 import typescript2 from "rollup-plugin-typescript2";
-import versionInjector from "rollup-plugin-version-injector";
 
 const BASE_CONFIG = {
     input: "src/main.ts",
@@ -21,7 +20,6 @@ const getRollupPlugins = (tsconfig, ...plugins) =>
         nodeResolve({ browser: true }),
         commonjs(),
         webWorker({ inline: true, forceInline: true, targetPlatform: "browser" }),
-        versionInjector({ logLevel: "warn" }),
     ].concat(plugins);
 
 const DEV_PLUGIN_CONFIG = {
