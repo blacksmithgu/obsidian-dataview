@@ -90,7 +90,7 @@ export class PageMetadata {
                 path: this.path,
                 folder: this.folder(),
                 name: this.name(),
-                link: Link.file(this.path, false),
+                link: Link.file(this.path),
                 outlinks: this.fileLinks(),
                 inlinks: Array.from(index.links.getInverse(this.path)).map(l => Link.file(l, false)),
                 etags: Array.from(this.tags),

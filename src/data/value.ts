@@ -110,15 +110,18 @@ export class Link {
     /** The type of this link, which determines what 'subpath' refers to, if anything. */
     public type: "file" | "header" | "block";
 
+    /** Create a link to a specific file. */
     public static file(path: string, embed: boolean = false, display?: string) {
         return new Link({
             path,
             embed,
             display,
+            subpath: undefined,
             type: "file",
         });
     }
 
+    /** Create a link to a specific file and header in that file. */
     public static header(path: string, header: string, embed?: boolean, display?: string) {
         // Headers need to be normalized to alpha-numeric & with extra spacing removed.
         return new Link({
@@ -130,6 +133,7 @@ export class Link {
         });
     }
 
+    /** Create a link to a specific file and block in that file. */
     public static block(path: string, blockId: string, embed?: boolean, display?: string) {
         return new Link({
             path,

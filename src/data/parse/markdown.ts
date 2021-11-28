@@ -425,3 +425,5 @@ class LineTokenizer {
         return this.contents.substring(oldPosition, nextBreak);
     }
 }
+
+// Link extraction from a line of text.

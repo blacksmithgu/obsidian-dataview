@@ -44,7 +44,8 @@ export default class DataviewPlugin extends Plugin {
 
         this.index = FullIndex.create(this.app.vault, this.app.metadataCache);
         this.api = new DataviewApi(this.app, this.index, this.settings, this.manifest.version);
-        // Register api to global window object
+
+        // Register API to global window object.
         (window[API_NAME] = this.api) && this.register(() => delete window[API_NAME]);
 
         // Dataview query language code blocks.
