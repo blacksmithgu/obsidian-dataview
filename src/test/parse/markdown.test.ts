@@ -1,6 +1,7 @@
 /** Extensively tests the built-in markdown tokenizer and parser. */
 
-import { classifyLine, markdownFile, reduceIndent, splitIndent } from "data/parse/markdown";
+import { classifyLine, extractLinks, extractTags, markdownFile, reduceIndent, splitIndent } from "data/parse/markdown";
+import { Link } from "data/value";
 
 describe("Split Indent", () => {
     test("None", () => expect(splitIndent("hello")).toEqual([0, "hello"]));
@@ -78,6 +79,20 @@ describe("Headings", () => {
             { type: "paragraph", contents: ["Hello"], line: 0 },
             { type: "paragraph", contents: ["=="], line: 2 },
         ]));
+});
+
+describe("Frontmatter", () => {
+    test("Single Line", () => {
+        expect(markdownFile("---\nok: true\n---\n")).toEqual([
+            { type: "frontmatter", line: 0, contents: ["ok: true"] },
+        ]);
+    });
+
+    test("Multiline", () => {
+        expect(markdownFile("---\nok: true\nyes: no\n---\n")).toEqual([
+            { type: "frontmatter", line: 0, contents: ["ok: true", "yes: no"] },
+        ]);
+    });
 });
 
 describe("Codeblocks", () => {
@@ -211,4 +226,22 @@ describe("List Elements", () => {
                 ],
             },
         ]));
+});
+
+describe("Tag Extraction", () => {
+    test("No Tags", () => expect(extractTags("hello")).toEqual([]));
+    test("No Tags (Header)", () => expect(extractTags("# hello #")).toEqual([]));
+    test("1 Tag", () => expect(extractTags("#hello")).toEqual(["#hello"]));
+    test("1 Tag (Spaces)", () => expect(extractTags("   #hello-there ")).toEqual(["#hello-there"]));
+    test("2 Tags (Spaces)", () => expect(extractTags("   #good #riddance ")).toEqual(["#good", "#riddance"]));
+});
+
+describe("Link Extraction", () => {
+    test("No Links", () => expect(extractLinks("!!")).toEqual([]));
+    test("One Link", () => expect(extractLinks("[[Yes]]")).toEqual([Link.file("Yes")]));
+    test("Two Links", () => expect(extractLinks("[[Yes]][[No]]")).toEqual([Link.file("Yes"), Link.file("No")]));
+    test("Two Links (In Word)", () =>
+        expect(extractLinks("[[Yes]]or[[No]]")).toEqual([Link.file("Yes"), Link.file("No")]));
+    test("Two Links (Random Brackets)", () =>
+        expect(extractLinks("[[Yes|Maybe]]]][[[No]]")).toEqual([Link.file("Yes", false, "Maybe"), Link.file("No")]));
 });

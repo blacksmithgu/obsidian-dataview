@@ -187,9 +187,9 @@ export function setInlineField(source: string, key: string, value?: string): str
         let suffix = source.substring(existingKey.end);
 
         if (annotation) return `${prefix}${annotation}${suffix}`;
-        else return `${prefix}${suffix.trimLeft()}`;
+        else return `${prefix}${suffix.trimStart()}`;
     } else if (annotation) {
-        return `${source.trimRight()} ${annotation}`;
+        return `${source.trimEnd()} ${annotation}`;
     }
 
     return source;

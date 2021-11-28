@@ -1,3 +1,6 @@
+import { EXPRESSION } from "expression/parse";
+import { Link } from "index";
+
 /** Number of spaces that a tab is equal to. */
 const TAB_TO_SPACES = 4;
 /** Threshold at which a line is considered indented for making code blocks. */
@@ -22,6 +25,7 @@ export type MarkdownListElement = {
 /** A markdown block inside of a markdown document. */
 export type MarkdownBlock =
     | { type: "paragraph"; contents: string[]; line: number }
+    | { type: "frontmatter"; contents: string[]; line: number }
     | { type: "codeblock"; delimiter: string; contents: string[]; languages: string[]; line: number; indented: boolean }
     | { type: "list"; elements: MarkdownListElement[]; line: number }
     | { type: "rule"; symbol: string; count: number }
@@ -140,11 +144,15 @@ function emptyLineOrIndented(line: string, requiredIndent: number): boolean {
 
 /** Parse a markdown file into a collection of markdown blocks. */
 export function markdownFile(contents: string): MarkdownBlock[] {
-    return markdownBlocks(new LineTokenizer(contents), 0);
+    return markdownBlocks(new LineTokenizer(contents), 0, true);
 }
 
 /** Parse markdown blocks from the given tokenizer that are at atleast the given indent. */
-export function markdownBlocks(tokenizer: LineTokenizer, requiredIndent: number): MarkdownBlock[] {
+export function markdownBlocks(
+    tokenizer: LineTokenizer,
+    requiredIndent: number,
+    checkFrontmatter: boolean = false
+): MarkdownBlock[] {
     let blocks: MarkdownBlock[] = [];
 
     // Continually read blocks from the tokenizer until there is nothing more to parse.
@@ -152,6 +160,17 @@ export function markdownBlocks(tokenizer: LineTokenizer, requiredIndent: number)
         let rawLine = tokenizer.next()!;
         let lineno = tokenizer.lineno();
         let line = classifyLine(rawLine);
+
+        // Check frontmatter on the first line. This could alternatively go into `markdownFile()`, but we'll but it here
+        // for now.
+        if (checkFrontmatter && lineno == 0 && line.type == "heading-ruling" && line.symbol == "-") {
+            // Take lines until we encounter the closing ruling; then consume that line so we can continue parsing as normal.
+            let contents: string[] = tokenizer.takeWhile(l => classifyLine(l).type !== "heading-ruling");
+            tokenizer.next();
+
+            blocks.push({ type: "frontmatter", contents, line: 0 });
+            continue;
+        }
 
         // Highest priority: codeblocks formed via indentation.
         if (line.indent >= requiredIndent + SPACE_THRESHOLD) {
@@ -285,6 +304,7 @@ export function markdownTextContinuation(tokenizer: LineTokenizer, initial: stri
     }
 }
 
+/** Consume a single list element in a list. */
 export function markdownListElement(
     tokenizer: LineTokenizer,
     symbol: string,
@@ -323,6 +343,7 @@ export function markdownListElement(
     return { symbol, contents: subblocks, children, task, text: [initialParagraph].concat(prefix), line: lineno };
 }
 
+/** Repeatedly consume list elements until a full list is generated. */
 export function markdownList(tokenizer: LineTokenizer, first: MarkdownListElement): MarkdownBlock {
     let elements = [first];
 
@@ -426,4 +447,46 @@ class LineTokenizer {
     }
 }
 
-// Link extraction from a line of text.
+////////////////////////////
+// Block post-processing. //
+////////////////////////////
+
+// This is certainly a little confusing looking!
+const POTENTIAL_LINK = /!?\[\[[^\[\]]+\]\]/giu;
+
+/** Extract links from a line in the document. */
+export function extractLinks(line: string): Link[] {
+    // Look for all instances of '[[' in the line and attempt to parse from there.
+    let matches = line.matchAll(POTENTIAL_LINK);
+    if (!matches) return [];
+
+    let result = [];
+    for (let match of matches) {
+        let maybeLink = EXPRESSION.embedLink.parse(match[0]);
+        if (maybeLink.status) result.push(maybeLink.value);
+    }
+
+    return result;
+}
+
+const POTENTIAL_TAG = /#[^#\s]+/giu;
+
+/** Extract tags from a line in the document. */
+export function extractTags(line: string): string[] {
+    // Look for any instance of '#' followed immediately by a non-space character, extract the whole
+    // section, and try and parse it as a tag.
+    let matches = line.matchAll(POTENTIAL_TAG);
+    if (!matches) return [];
+
+    let result = [];
+    for (let match of matches) {
+        let maybeTag = EXPRESSION.tag.parse(match[0]);
+        if (maybeTag.status) result.push(maybeTag.value);
+    }
+
+    return result;
+}
+
+////////////////////////////////////////
+// General Page Metadata Construction //
+////////////////////////////////////////
