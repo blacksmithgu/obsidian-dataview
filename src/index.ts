@@ -3,18 +3,17 @@ export { DvAPIInterface as DataviewAPI } from "./typings/api";
 // Data Types
 export type { DateTime, Duration } from "luxon";
 export type {
-    Link,
-    Task,
     DataObject,
     LiteralType,
     LiteralValue,
     LiteralRepr,
     WrappedLiteralValue,
     LiteralValueWrapper,
-} from "data/value";
+} from "data-model/value";
+export type { Link } from "data-model/link";
 
 // Dataview Index.
-export type { FullIndex, PrefixIndex, IndexMap } from "data/index";
+export type { FullIndex, PrefixIndex, IndexMap } from "data-index/index";
 
 import "obsidian";
 import { App } from "obsidian";

@@ -1,5 +1,5 @@
-import { Values } from "data/value";
-import { QuerySettings } from "settings";
+import { Values } from "data-model/value";
+import { DEFAULT_QUERY_SETTINGS, QuerySettings } from "settings";
 
 /** A function which maps an array element to some value. */
 export type ArrayFunc<T, O> = (elem: T, index: number, arr: T[]) => O;
@@ -137,14 +137,15 @@ class DataArrayImpl<T> implements DataArray<T> {
         "expand",
         "forEach",
         "length",
-        "values",
         "array",
-        "defaultComparator",
+        "__values",
+        "__settings",
+        "__defaultComparator",
         "toString",
     ]);
 
     private static ARRAY_PROXY: ProxyHandler<DataArrayImpl<any>> = {
-        get: function (target, prop, reciever) {
+        get: function (target, prop) {
             if (typeof prop === "symbol") return (target as any)[prop];
             else if (typeof prop === "number") return target.values[prop];
             else if (!isNaN(parseInt(prop))) return target.values[parseInt(prop)];
@@ -166,19 +167,19 @@ class DataArrayImpl<T> implements DataArray<T> {
     [key: string]: any;
 
     private constructor(
-        public values: any[],
-        public settings: QuerySettings,
-        public defaultComparator: ArrayComparator<any> = Values.compareValue
+        public __values: any[],
+        public __settings: QuerySettings,
+        public __defaultComparator: ArrayComparator<any> = Values.compareValue
     ) {
-        this.length = values.length;
+        this.length = __values.length;
     }
 
     private lwrap<U>(values: U[]): DataArray<U> {
-        return DataArrayImpl.wrap(values, this.settings, this.defaultComparator);
+        return DataArrayImpl.wrap(values, this.__settings, this.__defaultComparator);
     }
 
     public where(predicate: ArrayFunc<T, boolean>): DataArray<T> {
-        return this.lwrap(this.values.filter(predicate));
+        return this.lwrap(this.__values.filter(predicate));
     }
 
     public filter(predicate: ArrayFunc<T, boolean>): DataArray<T> {
@@ -186,13 +187,13 @@ class DataArrayImpl<T> implements DataArray<T> {
     }
 
     public map<U>(f: ArrayFunc<T, U>): DataArray<U> {
-        return this.lwrap(this.values.map(f));
+        return this.lwrap(this.__values.map(f));
     }
 
     public flatMap<U>(f: ArrayFunc<T, U[]>): DataArray<U> {
         let result = [];
         for (let index = 0; index < this.length; index++) {
-            let value = f(this.values[index], index, this.values);
+            let value = f(this.__values[index], index, this.__values);
             if (!value || value.length == 0) continue;
 
             for (let r of value) result.push(r);
@@ -202,37 +203,37 @@ class DataArrayImpl<T> implements DataArray<T> {
     }
 
     public mutate(f: ArrayFunc<T, any>): DataArray<any> {
-        this.values.forEach(f);
+        this.__values.forEach(f);
         return this;
     }
 
     public limit(count: number): DataArray<T> {
-        return this.lwrap(this.values.slice(0, count));
+        return this.lwrap(this.__values.slice(0, count));
     }
 
     public slice(start?: number, end?: number): DataArray<T> {
-        return this.lwrap(this.values.slice(start, end));
+        return this.lwrap(this.__values.slice(start, end));
     }
 
     public concat(other: DataArray<T>): DataArray<T> {
-        return this.lwrap(this.values.concat(other.values));
+        return this.lwrap(this.__values.concat(other.values));
     }
 
     /** Return the first index of the given (optionally starting the search) */
     public indexOf(element: T, fromIndex?: number): number {
-        return this.findIndex(e => this.defaultComparator(e, element) == 0, fromIndex);
+        return this.findIndex(e => this.__defaultComparator(e, element) == 0, fromIndex);
     }
 
     /** Return the first element that satisfies the given predicate. */
     public find(pred: ArrayFunc<T, boolean>): T | undefined {
         let index = this.findIndex(pred);
         if (index == -1) return undefined;
-        else return this.values[index];
+        else return this.__values[index];
     }
 
     public findIndex(pred: ArrayFunc<T, boolean>, fromIndex?: number): number {
         for (let index = fromIndex ?? 0; index < this.length; index++) {
-            if (pred(this.values[index], index, this.values)) return index;
+            if (pred(this.__values[index], index, this.__values)) return index;
         }
 
         return -1;
@@ -243,14 +244,14 @@ class DataArrayImpl<T> implements DataArray<T> {
     }
 
     public join(sep?: string): string {
-        return this.map(s => Values.toString(s, this.settings))
+        return this.map(s => Values.toString(s, this.__settings))
             .array()
             .join(sep ?? ", ");
     }
 
     public sort<U>(key?: ArrayFunc<T, U>, direction?: "asc" | "desc", comparator?: ArrayComparator<U>): DataArray<T> {
-        if (this.values.length == 0) return this;
-        let realComparator = comparator ?? this.defaultComparator;
+        if (this.__values.length == 0) return this;
+        let realComparator = comparator ?? this.__defaultComparator;
         let realKey = key ?? ((l: T) => l as any as U);
 
         // Associate each entry with it's index for the key function, and then do a normal sort.
@@ -258,8 +259,8 @@ class DataArrayImpl<T> implements DataArray<T> {
             return { index: index, value: elem };
         });
         copy.sort((a, b) => {
-            let aKey = realKey(a.value, a.index, this.values);
-            let bKey = realKey(b.value, b.index, this.values);
+            let aKey = realKey(a.value, a.index, this.__values);
+            let bKey = realKey(b.value, b.index, this.__values);
             return direction === "desc" ? -realComparator(aKey, bKey) : realComparator(aKey, bKey);
         });
 
@@ -270,12 +271,12 @@ class DataArrayImpl<T> implements DataArray<T> {
         key: ArrayFunc<T, U>,
         comparator?: ArrayComparator<U>
     ): DataArray<{ key: U; rows: DataArray<T> }> {
-        if (this.values.length == 0) return this.lwrap([]);
+        if (this.__values.length == 0) return this.lwrap([]);
 
         // JavaScript sucks and we can't make hash maps over arbitrary types (only strings/ints), so
         // we do a poor man algorithm where we SORT, followed by grouping.
         let intermediate = this.sort(key, "asc", comparator);
-        comparator = comparator ?? this.defaultComparator;
+        comparator = comparator ?? this.__defaultComparator;
 
         let result: { key: U; rows: DataArray<T> }[] = [];
         let currentRow = [intermediate[0]];
@@ -296,14 +297,14 @@ class DataArrayImpl<T> implements DataArray<T> {
     }
 
     public distinct<U>(key?: ArrayFunc<T, U>, comparator?: ArrayComparator<U>): DataArray<T> {
-        if (this.values.length == 0) return this;
+        if (this.__values.length == 0) return this;
         let realKey = key ?? (x => x as any as U);
 
         // For similar reasons to groupBy, do a sort and take the first element of each block.
         let intermediate = this.map((x, index) => {
-            return { key: realKey(x, index, this.values), value: x };
+            return { key: realKey(x, index, this.__values), value: x };
         }).sort(x => x.key, "asc", comparator);
-        comparator = comparator ?? this.defaultComparator;
+        comparator = comparator ?? this.__defaultComparator;
 
         let result: T[] = [intermediate[0].value];
         for (let index = 1; index < intermediate.length; index++) {
@@ -316,27 +317,27 @@ class DataArrayImpl<T> implements DataArray<T> {
     }
 
     public every(f: ArrayFunc<T, boolean>): boolean {
-        return this.values.every(f);
+        return this.__values.every(f);
     }
 
     public some(f: ArrayFunc<T, boolean>): boolean {
-        return this.values.some(f);
+        return this.__values.some(f);
     }
 
     public none(f: ArrayFunc<T, boolean>): boolean {
-        return this.values.every((v, i, a) => !f(v, i, a));
+        return this.__values.every((v, i, a) => !f(v, i, a));
     }
 
     public first(): T {
-        return this.values.length > 0 ? this.values[0] : undefined;
+        return this.__values.length > 0 ? this.__values[0] : undefined;
     }
     public last(): T {
-        return this.values.length > 0 ? this.values[this.values.length - 1] : undefined;
+        return this.__values.length > 0 ? this.__values[this.__values.length - 1] : undefined;
     }
 
     public to(key: string): DataArray<any> {
         let result: any[] = [];
-        for (let child of this.values) {
+        for (let child of this.__values) {
             let value = child[key];
             if (value === undefined || value === null) continue;
 
@@ -349,7 +350,7 @@ class DataArrayImpl<T> implements DataArray<T> {
 
     public into(key: string): DataArray<any> {
         let result: any[] = [];
-        for (let child of this.values) {
+        for (let child of this.__values) {
             let value = child[key];
             if (value === undefined || value === null) continue;
 
@@ -361,7 +362,7 @@ class DataArrayImpl<T> implements DataArray<T> {
 
     public expand(key: string): DataArray<any> {
         let result = [];
-        let queue: any[] = ([] as any[]).concat(this.values);
+        let queue: any[] = ([] as any[]).concat(this.__values);
 
         while (queue.length > 0) {
             let next = queue.pop();
@@ -379,21 +380,21 @@ class DataArrayImpl<T> implements DataArray<T> {
     }
 
     public forEach(f: ArrayFunc<T, void>) {
-        for (let index = 0; index < this.values.length; index++) {
-            f(this.values[index], index, this.values);
+        for (let index = 0; index < this.__values.length; index++) {
+            f(this.__values[index], index, this.__values);
         }
     }
 
     public array(): T[] {
-        return ([] as any[]).concat(this.values);
+        return ([] as any[]).concat(this.__values);
     }
 
     public [Symbol.iterator](): Iterator<T> {
-        return this.values[Symbol.iterator]();
+        return this.__values[Symbol.iterator]();
     }
 
     public toString(): string {
-        return this.values.toString();
+        return this.__values.toString();
     }
 }
 
@@ -409,6 +410,11 @@ export namespace DataArray {
         let data = [];
         for (let elem of raw) data.push(elem);
         return DataArrayImpl.wrap(data, settings);
+    }
+
+    /** Create a new DataArray with default settings; generally good for using data array features internally. */
+    export function fromDefault<T>(raw: Iterable<T>): DataArray<T> {
+        return from(raw, DEFAULT_QUERY_SETTINGS);
     }
 
     /** Convert all arrays in a deep object into data arrays. */

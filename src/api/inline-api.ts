@@ -1,17 +1,19 @@
 /** Fancy wrappers for the JavaScript API, used both by external plugins AND by the dataview javascript view. */
 
 import { App, Component } from "obsidian";
-import { FullIndex } from "data/index";
+import { FullIndex } from "data-index/index";
 import { renderValue, renderErrorPre } from "ui/render";
 import { DataviewApi, DataviewIOApi } from "api/plugin-api";
 import { DataviewSettings } from "settings";
-import { DataObject, Link, Values, Task } from "data/value";
+import { DataObject, Values } from "data-model/value";
+import { Link } from "data-model/link";
 import { BoundFunctionImpl, DEFAULT_FUNCTIONS, Functions } from "expression/functions";
 import { Context } from "expression/context";
 import { defaultLinkHandler } from "query/engine";
 import { DateTime, Duration } from "luxon";
 import * as Luxon from "luxon";
-import { DataArray } from "./data-array";
+import { DataArray } from "api/data-array";
+import { ListItem } from "data-model/markdown";
 
 /** Asynchronous API calls related to file / system IO. */
 export class DataviewInlineIOApi {
@@ -294,7 +296,7 @@ export class DataviewInlineApi {
     }
 
     /** Render a dataview task view with the given tasks. */
-    public taskList(tasks: Task[] | DataArray<Task>, groupByFile: boolean = true) {
+    public taskList(tasks: ListItem[] | DataArray<ListItem>, groupByFile: boolean = true) {
         return this.api.taskList(tasks, groupByFile, this.container, this.component, this.currentFilePath);
     }
 }

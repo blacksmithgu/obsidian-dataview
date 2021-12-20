@@ -9,7 +9,7 @@ import {
     Component,
 } from "obsidian";
 import { renderErrorPre, renderList, renderTable, renderValue } from "ui/render";
-import { FullIndex } from "data/index";
+import { FullIndex } from "data-index/index";
 import * as Tasks from "ui/tasks";
 import { ListQuery, Query, TableQuery } from "query/query";
 import { Field } from "expression/field";
@@ -20,11 +20,12 @@ import { asyncTryOrPropogate, canonicalizeVarName, tryOrPropogate } from "util/n
 import { asyncEvalInContext, makeApiContext } from "api/inline-api";
 import { DataviewApi } from "api/plugin-api";
 import { DataviewSettings, DEFAULT_QUERY_SETTINGS, DEFAULT_SETTINGS, QuerySettings } from "settings";
-import { Groupings, Link, LiteralValue, Task } from "data/value";
+import { Groupings, LiteralValue } from "data-model/value";
 import { DateTime } from "luxon";
 import { currentLocale } from "util/locale";
-import { extractInlineFields, parseInlineValue } from "data/parse/inline-field";
+import { extractInlineFields, parseInlineValue } from "data-source/parsers/inline-field";
 import { API_NAME, DvAPIInterface } from "./typings/api";
+import { ListItem } from "data-model/markdown";
 
 const API_NAME: API_NAME extends keyof typeof window ? API_NAME : never = "DataviewAPI" as const; // this line will throw error if name out of sync
 
@@ -479,7 +480,7 @@ class DataviewListRenderer extends MarkdownRenderChild {
         await this.render();
 
         if (this.settings.refreshEnabled) {
-            onIndexChange(this.index, this.settings.refreshInterval, this, async () => {
+            onIndexChange(this.index, this.settings.refreshInterval, this, this.container, async () => {
                 this.container.innerHTML = "";
                 await this.render();
             });
@@ -537,7 +538,7 @@ class DataviewTableRenderer extends MarkdownRenderChild {
         await this.render();
 
         if (this.settings.refreshEnabled) {
-            onIndexChange(this.index, this.settings.refreshInterval, this, async () => {
+            onIndexChange(this.index, this.settings.refreshInterval, this, this.container, async () => {
                 this.container.innerHTML = "";
                 await this.render();
             });
@@ -609,7 +610,7 @@ class DataviewTaskRenderer extends MarkdownRenderChild {
         await this.render();
 
         if (this.settings.refreshEnabled) {
-            onIndexChange(this.index, this.settings.refreshInterval, this, async () => {
+            onIndexChange(this.index, this.settings.refreshInterval, this, this.container, async () => {
                 if (this.taskBindings) this.removeChild(this.taskBindings);
 
                 this.container.innerHTML = "";
@@ -622,12 +623,14 @@ class DataviewTaskRenderer extends MarkdownRenderChild {
         let result = await asyncTryOrPropogate(() => executeTask(this.query, this.origin, this.index, this.settings));
         if (!result.successful) {
             renderErrorPre(this.container, "Dataview: " + result.error);
+        } else if (this.settings.warnOnEmptyResult && Groupings.empty(result.value.tasks)) {
+            renderErrorPre(this.container, "Dataview: Task query returned no tasks.");
         } else {
             // If there is no grouping going on, group by the file path by default.
             let tasks = result.value.tasks;
             if (tasks.type == "base") {
-                let byFile = new Map<string, Task[]>();
-                for (let task of tasks.value as Task[]) {
+                let byFile = new Map<string, ListItem[]>();
+                for (let task of tasks.value as ListItem[]) {
                     if (!byFile.has(task.path)) byFile.set(task.path, []);
                     byFile.get(task.path)?.push(task);
                 }
@@ -668,7 +671,7 @@ class DataviewInlineRenderer extends MarkdownRenderChild {
         await this.render();
 
         if (this.settings.refreshEnabled) {
-            onIndexChange(this.index, this.settings.refreshInterval, this, async () => {
+            onIndexChange(this.index, this.settings.refreshInterval, this, this.container, async () => {
                 this.errorbox?.remove();
                 await this.render();
             });
@@ -708,7 +711,7 @@ class DataviewJSRenderer extends MarkdownRenderChild {
         await this.render();
 
         if (this.settings.refreshEnabled) {
-            onIndexChange(this.index, this.settings.refreshInterval, this, async () => {
+            onIndexChange(this.index, this.settings.refreshInterval, this, this.container, async () => {
                 this.container.innerHTML = "";
                 await this.render();
             });
@@ -762,7 +765,7 @@ class DataviewInlineJSRenderer extends MarkdownRenderChild {
         await this.render();
 
         if (this.settings.refreshEnabled) {
-            onIndexChange(this.index, this.settings.refreshInterval, this, async () => {
+            onIndexChange(this.index, this.settings.refreshInterval, this, this.container, async () => {
                 this.errorbox?.remove();
                 await this.render();
             });
@@ -797,14 +800,21 @@ class DataviewInlineJSRenderer extends MarkdownRenderChild {
     }
 }
 
-/** Adds a simple handler which runs the given action on any index update. */
-function onIndexChange(index: FullIndex, interval: number, component: Component, action: () => any) {
+/** Adds a simple handler which runs the given action on any index update. This skips updates if the view is unloaded. */
+function onIndexChange(
+    index: FullIndex,
+    interval: number,
+    component: Component,
+    container: HTMLElement,
+    action: () => any
+) {
     let lastReload = index.revision;
 
     component.registerInterval(
         window.setInterval(() => {
             // If the index revision has changed recently, then queue a reload.
-            if (lastReload != index.revision) {
+            // We check 'offsetParent' per @Licat's advice on how to check when a view is rendered.
+            if (lastReload != index.revision && !!container.offsetParent) {
                 action();
                 lastReload = index.revision;
             }

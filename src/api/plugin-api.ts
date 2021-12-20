@@ -1,10 +1,11 @@
 /** The general, externally accessible plugin API (available at `app.plugins.plugins.dataview.api`). */
 
 import { App, Component } from "obsidian";
-import { FullIndex } from "data";
-import { matchingSourcePaths } from "data/resolver";
-import { Sources } from "data/source";
-import { DataObject, Link, LiteralValue, Values, Task, Groupings } from "data/value";
+import { FullIndex } from "data-index";
+import { matchingSourcePaths } from "data-index/resolver";
+import { Sources } from "data-index/source";
+import { DataObject, LiteralValue, Values, Groupings } from "data-model/value";
+import { Link } from "data-model/link";
 import { EXPRESSION } from "expression/parse";
 import { renderList, renderTable, renderValue } from "ui/render";
 import { DataviewSettings } from "settings";
@@ -17,6 +18,7 @@ import { DateTime, Duration } from "luxon";
 import * as Luxon from "luxon";
 import { compare, satisfies } from "compare-versions";
 import { DvAPIInterface, DvIOAPIInterface } from "../typings/api";
+import { ListItem } from "data-model/markdown";
 
 /** Asynchronous API calls related to file / system IO. */
 export class DataviewIOApi implements DvIOAPIInterface {
@@ -209,7 +211,7 @@ export class DataviewApi implements DvAPIInterface {
 
     /** Render a dataview task view with the given tasks. */
     public async taskList(
-        tasks: Task[] | DataArray<any>,
+        tasks: ListItem[] | DataArray<any>,
         groupByFile: boolean = true,
         container: HTMLElement,
         component: Component,
@@ -221,8 +223,8 @@ export class DataviewApi implements DvAPIInterface {
         component.addChild(taskComponent);
 
         if (groupByFile) {
-            let byFile = new Map<string, Task[]>();
-            for (let task of tasks as Task[]) {
+            let byFile = new Map<string, ListItem[]>();
+            for (let task of tasks as ListItem[]) {
                 if (!byFile.has(task.path)) byFile.set(task.path, []);
                 byFile.get(task.path)?.push(task);
             }

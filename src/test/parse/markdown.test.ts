@@ -229,19 +229,30 @@ describe("List Elements", () => {
 });
 
 describe("Tag Extraction", () => {
-    test("No Tags", () => expect(extractTags("hello")).toEqual([]));
-    test("No Tags (Header)", () => expect(extractTags("# hello #")).toEqual([]));
-    test("1 Tag", () => expect(extractTags("#hello")).toEqual(["#hello"]));
-    test("1 Tag (Spaces)", () => expect(extractTags("   #hello-there ")).toEqual(["#hello-there"]));
-    test("2 Tags (Spaces)", () => expect(extractTags("   #good #riddance ")).toEqual(["#good", "#riddance"]));
+    let extractSimpleTags = (line: string) => {
+        return extractTags(line).map(t => t.value);
+    };
+
+    test("No Tags", () => expect(extractSimpleTags("hello")).toEqual([]));
+    test("No Tags (Header)", () => expect(extractSimpleTags("# hello #")).toEqual([]));
+    test("1 Tag", () => expect(extractSimpleTags("#hello")).toEqual(["#hello"]));
+    test("1 Tag (Spaces)", () => expect(extractSimpleTags("   #hello-there ")).toEqual(["#hello-there"]));
+    test("2 Tags (Spaces)", () => expect(extractSimpleTags("   #good #riddance ")).toEqual(["#good", "#riddance"]));
 });
 
 describe("Link Extraction", () => {
-    test("No Links", () => expect(extractLinks("!!")).toEqual([]));
-    test("One Link", () => expect(extractLinks("[[Yes]]")).toEqual([Link.file("Yes")]));
-    test("Two Links", () => expect(extractLinks("[[Yes]][[No]]")).toEqual([Link.file("Yes"), Link.file("No")]));
+    let extractSimpleLinks = (line: string) => {
+        return extractLinks(line).map(t => t.value);
+    };
+
+    test("No Links", () => expect(extractSimpleLinks("!!")).toEqual([]));
+    test("One Link", () => expect(extractSimpleLinks("[[Yes]]")).toEqual([Link.file("Yes")]));
+    test("Two Links", () => expect(extractSimpleLinks("[[Yes]][[No]]")).toEqual([Link.file("Yes"), Link.file("No")]));
     test("Two Links (In Word)", () =>
-        expect(extractLinks("[[Yes]]or[[No]]")).toEqual([Link.file("Yes"), Link.file("No")]));
+        expect(extractSimpleLinks("[[Yes]]or[[No]]")).toEqual([Link.file("Yes"), Link.file("No")]));
     test("Two Links (Random Brackets)", () =>
-        expect(extractLinks("[[Yes|Maybe]]]][[[No]]")).toEqual([Link.file("Yes", false, "Maybe"), Link.file("No")]));
+        expect(extractSimpleLinks("[[Yes|Maybe]]]][[[No]]")).toEqual([
+            Link.file("Yes", false, "Maybe"),
+            Link.file("No"),
+        ]));
 });
