@@ -9,7 +9,7 @@ Dataview, so they are fast to query. Dataview currently supports three source ty
   - If you have both a file and a folder with the exact same path, Dataview will prefer the folder. You can force
     it to read from the file by specifying markdown: `folder/File.md`.
 3. **Links**: You can either select links TO a file, or all links FROM a file.
-  - To obtain all pages which link TO `[[note]]`, use `[[note]]`.
+  - To obtain all pages which link TO `[[note]]`, use `[[note]]` (leave empty [[]]] for links to current page).
   - To obtain all pages which link FROM `[[note]]` (i.e., all the links in that file), use `outgoing([[note]])`.
 
 You can compose these filters in order to get more advanced sources using `and` and `or`.
