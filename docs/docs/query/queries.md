@@ -201,6 +201,25 @@ statements:
 
     - [ ] What even is a task, anyway?
 
+### Task Queries
+
+Calendar views render all pages which match the query in a calendar view, using
+the given date expression to chose which date to render a page on.
+
+=== "Syntax"
+    ```
+    CALENDAR <date>
+    FROM <source>
+    ```
+=== "Query"
+    ``` sql
+    CALENDAR file.mtime
+    FROM "dataview"
+    ```
+=== "Output"
+The output will be a calendar that displays a dot per file in the dataview
+directory. The dot will be placed on the date that the file was modified on.
+
 ## Data Commands
 
 The different commands that dataview queries can be made up of. Commands are

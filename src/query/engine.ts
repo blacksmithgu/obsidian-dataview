@@ -4,11 +4,12 @@
 import { FullIndex } from "data/index";
 import { Context, LinkHandler } from "expression/context";
 import { resolveSource, Datarow, matchingSourcePaths } from "data/resolver";
-import { DataObject, LiteralValue, Values, Task, Grouping } from "data/value";
-import { ListQuery, Query, QueryOperation, TableQuery } from "query/query";
+import { DataObject, LiteralValue, Values, Task, Grouping, Link } from "data/value";
+import { CalendarQuery, ListQuery, Query, QueryOperation, TableQuery } from "query/query";
 import { Result } from "api/result";
 import { Field } from "expression/field";
 import { QuerySettings } from "settings";
+import { DateTime } from "luxon";
 
 function iden<T>(x: T): T {
     return x;
@@ -461,4 +462,43 @@ export function defaultLinkHandler(index: FullIndex, origin: string): LinkHandle
             return !!realFile;
         },
     };
+}
+
+/** Execute a calendar-based query, returning the final results. */
+export async function executeCalendar(
+    query: Query,
+    index: FullIndex,
+    origin: string,
+    settings: QuerySettings
+): Promise<Result<CalendarExecution, string>> {
+    // Start by collecting all of the files that match the 'from' queries.
+    let fileset = await resolveSource(query.source, index, origin);
+    if (!fileset.successful) return Result.failure(fileset.error);
+
+    // Extract information about the origin page to add to the root context.
+    let rootContext = new Context(defaultLinkHandler(index, origin), settings, {
+        this: index.pages.get(origin)?.toObject(index) ?? {},
+    });
+
+    let targetField = (query.header as CalendarQuery).field.field;
+    let fields: Record<string, Field> = {
+        target: targetField,
+        link: { type: "index", object: { type: "variable", name: "file" }, index: { type: "variable", name: "link" } },
+    };
+
+    return executeCoreExtract(fileset.value, rootContext, query.operations, fields).map(core => {
+        let data = core.data.map(p =>
+            iden({
+                date: p.data["target"] as DateTime,
+                link: p.data["link"] as Link,
+            })
+        );
+
+        return { core, data };
+    });
+}
+
+export interface CalendarExecution {
+    core: CoreExecution;
+    data: { date: DateTime; link: Link; value?: LiteralValue[] }[];
 }

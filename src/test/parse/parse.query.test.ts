@@ -1,4 +1,4 @@
-import { TableQuery, ListQuery, SortByStep, QueryFields } from "query/query";
+import { TableQuery, ListQuery, CalendarQuery, SortByStep, QueryFields } from "query/query";
 import { QUERY_LANGUAGE, parseQuery } from "query/parse";
 import { Sources } from "data/source";
 import { DEFAULT_QUERY_SETTINGS } from "settings";
@@ -113,5 +113,16 @@ describe("Table Queries", () => {
 
         let tq = q.header as TableQuery;
         expect(tq.showId).toBe(false);
+    });
+});
+
+describe("Calendar Queries", () => {
+    test("Minimal Query", () => {
+        let simple = parseQuery("CALENDAR my-date FROM #games\n" + "WHERE foo > 100").orElseThrow();
+        expect(simple.header.type).toBe("calendar");
+        expect((simple.header as CalendarQuery).field).toEqual(
+            QueryFields.named("my-date", Fields.variable("my-date"))
+        );
+        expect(simple.source).toEqual(Sources.tag("#games"));
     });
 });

@@ -46,6 +46,7 @@
   "dependencies": {
     "emoji-regex": "^10.0.0",
     "luxon": "^2.0.2",
+    "obsidian-calendar-ui": "^0.3.12",
     "papaparse": "^5.3.1",
     "parsimmon": "^1.18.0"
   }

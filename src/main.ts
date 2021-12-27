@@ -1,13 +1,15 @@
 import {
+    App,
+    Component,
+    MarkdownPostProcessorContext,
     MarkdownRenderChild,
     Plugin,
-    Vault,
-    MarkdownPostProcessorContext,
     PluginSettingTab,
-    App,
     Setting,
-    Component,
+    Vault,
 } from "obsidian";
+import { Calendar, ICalendarSource, IDayMetadata, IDot } from "obsidian-calendar-ui";
+import type { Moment } from "moment";
 import { renderErrorPre, renderList, renderTable, renderValue } from "ui/render";
 import { FullIndex } from "data/index";
 import * as Tasks from "ui/tasks";
@@ -15,7 +17,7 @@ import { ListQuery, Query, TableQuery } from "query/query";
 import { Field } from "expression/field";
 import { parseField } from "expression/parse";
 import { parseQuery } from "query/parse";
-import { executeInline, executeList, executeTable, executeTask } from "query/engine";
+import { executeCalendar, executeInline, executeList, executeTable, executeTask } from "query/engine";
 import { asyncTryOrPropogate, canonicalizeVarName, tryOrPropogate } from "util/normalize";
 import { asyncEvalInContext, makeApiContext } from "api/inline-api";
 import { DataviewApi } from "api/plugin-api";
@@ -138,6 +140,11 @@ export default class DataviewPlugin extends Plugin {
             case "table":
                 component.addChild(
                     new DataviewTableRenderer(query as Query, el, this.index, sourcePath, this.settings)
+                );
+                break;
+            case "calendar":
+                component.addChild(
+                    new DataviewCalendarRenderer(query as Query, el, this.index, sourcePath, this.settings, this.app)
                 );
                 break;
         }
@@ -588,6 +595,118 @@ class DataviewTableRenderer extends MarkdownRenderChild {
         if (result.data.length == 0 && this.settings.warnOnEmptyResult) {
             renderErrorPre(this.container, "Dataview: Query returned 0 results.");
         }
+    }
+}
+
+// CalendarFile is a representation of a particular file, displayed in the calendar view.
+// It'll be represented in the calendar as a dot.
+interface CalendarFile extends IDot {
+    link: Link;
+}
+
+class DataviewCalendarRenderer extends MarkdownRenderChild {
+    private calendar: Calendar;
+    constructor(
+        public query: Query,
+        public container: HTMLElement,
+        public index: FullIndex,
+        public origin: string,
+        public settings: DataviewSettings,
+        public app: App
+    ) {
+        super(container);
+    }
+
+    async onload() {
+        await this.render();
+
+        if (this.settings.refreshEnabled) {
+            onIndexChange(this.index, this.settings.refreshInterval, this, async () => {
+                this.container.innerHTML = "";
+                await this.render();
+            });
+        }
+    }
+
+    async render() {
+        let maybeResult = await asyncTryOrPropogate(() =>
+            executeCalendar(this.query, this.index, this.origin, this.settings)
+        );
+        if (!maybeResult.successful) {
+            renderErrorPre(this.container, "Dataview: " + maybeResult.error);
+            return;
+        } else if (maybeResult.value.data.length == 0 && this.settings.warnOnEmptyResult) {
+            renderErrorPre(this.container, "Dataview: Query returned 0 results.");
+            return;
+        }
+        let dateMap = new Map<string, CalendarFile[]>();
+        for (let data of maybeResult.value.data) {
+            const dot = {
+                color: "default",
+                className: "note",
+                isFilled: true,
+                link: data.link,
+            };
+            const d = data.date.toFormat("yyyyLLdd");
+            if (!dateMap.has(d)) {
+                dateMap.set(d, [dot]);
+            } else {
+                dateMap.get(d)?.push(dot);
+            }
+        }
+
+        const querySource: ICalendarSource = {
+            getDailyMetadata: async (date: Moment): Promise<IDayMetadata> => {
+                return {
+                    dots: dateMap.get(date.format("YYYYMMDD")) || [],
+                };
+            },
+        };
+
+        const sources: ICalendarSource[] = [querySource];
+        const renderer = this;
+        this.calendar = new Calendar({
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            target: (this as any).container,
+            props: {
+                onHoverDay(date: Moment, targetEl: EventTarget): void {
+                    const vals = dateMap.get(date.format("YYYYMMDD"));
+                    if (!vals || vals.length == 0) {
+                        return;
+                    }
+                    if (vals?.length == 0) {
+                        return;
+                    }
+
+                    renderer.app.workspace.trigger("link-hover", {}, targetEl, vals[0].link.path, vals[0].link.path);
+                },
+                onClickDay: async date => {
+                    const vals = dateMap.get(date.format("YYYYMMDD"));
+                    if (!vals || vals.length == 0) {
+                        return;
+                    }
+                    if (vals?.length == 0) {
+                        return;
+                    }
+                    const file = renderer.app.metadataCache.getFirstLinkpathDest(vals[0].link.path, "");
+                    if (file == null) {
+                        return;
+                    }
+                    const mode = (this.app.vault as any).getConfig("defaultViewMode");
+                    const leaf = renderer.app.workspace.getUnpinnedLeaf();
+                    await leaf.openFile(file, { active: true, mode });
+                },
+                showWeekNums: false,
+                sources,
+            },
+        });
+    }
+
+    onClose(): Promise<void> {
+        if (this.calendar) {
+            this.calendar.$destroy();
+        }
+        return Promise.resolve();
     }
 }
 
