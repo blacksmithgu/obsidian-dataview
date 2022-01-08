@@ -3,7 +3,7 @@ import { Source } from "data/source";
 import { Field } from "expression/field";
 
 /** The supported query types (corresponding to view types). */
-export type QueryType = "list" | "table" | "task";
+export type QueryType = "list" | "table" | "task" | "calendar";
 
 /** Fields used in the query portion. */
 export interface NamedField {
@@ -59,7 +59,14 @@ export interface TaskQuery {
     type: "task";
 }
 
-export type QueryHeader = ListQuery | TableQuery | TaskQuery;
+/** A query which renders a collection of notes in a calendar view. */
+export interface CalendarQuery {
+    type: "calendar";
+    /** The date field that we'll be grouping notes by for the calendar view */
+    field: NamedField;
+}
+
+export type QueryHeader = ListQuery | TableQuery | TaskQuery | CalendarQuery;
 
 export interface WhereStep {
     type: "where";

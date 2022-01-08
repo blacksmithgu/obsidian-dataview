@@ -47,9 +47,9 @@ interface QueryLanguageTypes {
 export const QUERY_LANGUAGE = P.createLanguage<QueryLanguageTypes>({
     // Simple atom parsing, like words, identifiers, numbers.
     queryType: q =>
-        P.alt<string>(P.regexp(/TABLE|LIST|TASK/i))
+        P.alt<string>(P.regexp(/TABLE|LIST|TASK|CALENDAR/i))
             .map(str => str.toLowerCase() as QueryType)
-            .desc("query type ('TABLE', 'LIST', or 'TASK')"),
+            .desc("query type ('TABLE', 'LIST', 'TASK', or 'CALENDAR')"),
     explicitNamedField: q =>
         P.seqMap(
             EXPRESSION.field.skip(P.whitespace),
@@ -106,6 +106,14 @@ export const QUERY_LANGUAGE = P.createLanguage<QueryLanguageTypes>({
                     );
                 case "task":
                     return P.succeed({ type: "task" });
+                case "calendar":
+                    return P.seqMap(q.namedField, field => {
+                        return {
+                            type: "calendar",
+                            showId: true,
+                            field,
+                        };
+                    });
                 default:
                     return P.fail(`Unrecognized query type '${qtype}'`);
             }
