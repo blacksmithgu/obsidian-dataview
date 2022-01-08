@@ -128,7 +128,7 @@ export class FullIndex extends Component {
         this.revision = 0;
 
         // Handles asynchronous reloading of files on web workers.
-        this.addChild((this.importer = new FileImporter(4, this.vault, this.metadataCache)));
+        this.addChild((this.importer = new FileImporter(2, this.vault, this.metadataCache)));
         // Prefix listens to file creation/deletion/rename, and not modifies, so we let it set up it's own listeners.
         this.addChild((this.prefix = PrefixIndex.create(this.vault, () => this.touch())));
         // The CSV cache also needs to listen to filesystem events for cache invalidation.
