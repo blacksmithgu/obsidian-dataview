@@ -43,6 +43,7 @@ export default class DataviewPlugin extends Plugin {
         this.addSettingTab(new DataviewSettingsTab(this.app, this));
 
         this.index = FullIndex.create(this.app.vault, this.app.metadataCache);
+        this.addChild(this.index);
         this.api = new DataviewApi(this.app, this.index, this.settings, this.manifest.version);
 
         // Register API to global window object.
