@@ -321,7 +321,7 @@ class DataviewSettingsTab extends PluginSettingTab {
             )
             .addToggle(toggle =>
                 toggle.setValue(this.plugin.settings.refreshEnabled).onChange(async value => {
-                    await this.plugin.updateSettings({ warnOnEmptyResult: value });
+                    await this.plugin.updateSettings({ refreshEnabled: value });
                     this.plugin.index.touch();
                 })
             );
