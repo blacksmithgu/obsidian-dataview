@@ -1,7 +1,7 @@
 /** Stores various indices on all files in the vault to make dataview generation fast. */
 import { Result } from "api/result";
 import { DataObject } from "data/value";
-import { Component, MetadataCache, TFile, Vault } from "obsidian";
+import { Component, MetadataCache, TAbstractFile, TFile, Vault } from "obsidian";
 import { getParentFolder } from "util/normalize";
 import { PageMetadata } from "data/metadata";
 import { ParsedMarkdown, parsePage } from "data/parse/markdown-file";
@@ -150,23 +150,7 @@ export class FullIndex extends Component {
         this.registerEvent(this.metadataCache.on("changed", file => this.reload(file)));
 
         // Renames do not set off the metadata cache; catch these explicitly.
-        this.registerEvent(
-            this.vault.on("rename", (file, oldPath) => {
-                this.folders.delete(oldPath);
-
-                if (file instanceof TFile) {
-                    this.pages.delete(oldPath);
-                    this.tags.delete(oldPath);
-                    this.etags.delete(oldPath);
-                    this.links.delete(oldPath);
-
-                    this.reload(file);
-                }
-
-                this.touch();
-                this.trigger("rename", file, oldPath);
-            })
-        );
+        this.registerEvent(this.vault.on("rename", this.rename, this));
 
         // File creation does cause a metadata change, but deletes do not. Clear the caches for this.
         this.registerEvent(
@@ -187,6 +171,27 @@ export class FullIndex extends Component {
 
         // Initialize sub-indices.
         this.prefix.initialize();
+    }
+
+    public rename(file: TAbstractFile, oldPath: string) {
+        this.folders.rename(oldPath, file.path);
+
+        if (file instanceof TFile) {
+            if (this.pages.has(oldPath)) {
+                const oldMeta = this.pages.get(oldPath);
+                this.pages.delete(oldPath);
+                if (oldMeta) {
+                    oldMeta.path = file.path;
+                    this.pages.set(file.path, oldMeta);
+                }
+            }
+            this.tags.rename(oldPath, file.path);
+            this.links.rename(oldPath, file.path);
+            this.etags.rename(oldPath, file.path);
+        }
+
+        this.touch();
+        this.trigger("rename", file, oldPath);
     }
 
     /** Queue a file for reloading; this is done asynchronously in the background and may take a few seconds. */
