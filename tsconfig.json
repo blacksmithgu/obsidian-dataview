@@ -5,7 +5,7 @@
     "inlineSourceMap": true,
     "inlineSources": true,
     "module": "ESNext",
-    "target": "es6",
+    "target": "es2018",
     "allowJs": false,
     "noImplicitAny": true,
     "strictFunctionTypes": true,

@@ -89,7 +89,7 @@ export class FileImporter extends Component {
     private send(file: TFile, workerId: number) {
         this.busy[workerId] = true;
 
-        this.vault.read(file).then(c =>
+        this.vault.cachedRead(file).then(c =>
             this.workers[workerId].postMessage({
                 path: file.path,
                 contents: c,
