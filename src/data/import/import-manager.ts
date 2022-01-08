@@ -2,13 +2,13 @@
 
 import { Transferable } from "data/transferable";
 import DataviewImportWorker from "web-worker:./import-entry.ts";
-import { MetadataCache, TFile, Vault } from "obsidian";
+import { Component, MetadataCache, TFile, Vault } from "obsidian";
 
 /** Callback when a file is resolved. */
 type FileCallback = (p: any) => void;
 
 /** Multi-threaded file parser which debounces rapid file requests automatically. */
-export class FileImporter {
+export class FileImporter extends Component {
     /* Background workers which do the actual file parsing. */
     workers: Worker[];
     /** Tracks which workers are actively parsing a file, to make sure we properly delegate results. */
@@ -22,6 +22,7 @@ export class FileImporter {
     callbacks: Map<string, FileCallback[]>;
 
     public constructor(public numWorkers: number, public vault: Vault, public metadataCache: MetadataCache) {
+        super();
         this.workers = [];
         this.busy = [];
 
@@ -34,6 +35,7 @@ export class FileImporter {
 
             worker.onmessage = evt => this.finish(evt.data.path, Transferable.value(evt.data.result), index);
             this.workers.push(worker);
+            this.register(() => worker.terminate());
             this.busy.push(false);
         }
     }

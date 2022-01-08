@@ -54,3 +54,7 @@ export class Vault extends EventEmitter {
         this.emit(name, ...data);
     }
 }
+
+export class Component {
+    registerEvent() {}
+}
