@@ -22,7 +22,7 @@ export class FileImporter extends Component {
     callbacks: Map<string, FileCallback[]>;
 
     public constructor(public numWorkers: number, public vault: Vault, public metadataCache: MetadataCache) {
-        super()
+        super();
         this.workers = [];
         this.busy = [];
 
@@ -35,7 +35,7 @@ export class FileImporter extends Component {
 
             worker.onmessage = evt => this.finish(evt.data.path, Transferable.value(evt.data.result), index);
             this.workers.push(worker);
-            this.register(() => worker.terminate())
+            this.register(() => worker.terminate());
             this.busy.push(false);
         }
     }

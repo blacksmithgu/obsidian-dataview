@@ -128,9 +128,9 @@ export class FullIndex extends Component {
         this.revision = 0;
 
         // Handles asynchronous reloading of files on web workers.
-        this.addChild(this.importer = new FileImporter(4, this.vault, this.metadataCache));
+        this.addChild((this.importer = new FileImporter(4, this.vault, this.metadataCache)));
         // Prefix listens to file creation/deletion/rename, and not modifies, so we let it set up it's own listeners.
-        this.addChild(this.prefix = PrefixIndex.create(this.vault, () => (this.revision += 1)));
+        this.addChild((this.prefix = PrefixIndex.create(this.vault, () => (this.revision += 1))));
         // The CSV cache also needs to listen to filesystem events for cache invalidation.
         this.csv = new CsvCache(this.vault);
     }
@@ -150,36 +150,40 @@ export class FullIndex extends Component {
         this.registerEvent(this.metadataCache.on("changed", file => this.reload(file)));
 
         // Renames do not set off the metadata cache; catch these explicitly.
-        this.registerEvent(this.vault.on("rename", (file, oldPath) => {
-            this.folders.delete(oldPath);
+        this.registerEvent(
+            this.vault.on("rename", (file, oldPath) => {
+                this.folders.delete(oldPath);
 
-            if (file instanceof TFile) {
-                this.pages.delete(oldPath);
-                this.tags.delete(oldPath);
-                this.etags.delete(oldPath);
-                this.links.delete(oldPath);
+                if (file instanceof TFile) {
+                    this.pages.delete(oldPath);
+                    this.tags.delete(oldPath);
+                    this.etags.delete(oldPath);
+                    this.links.delete(oldPath);
 
-                this.reload(file);
-            }
+                    this.reload(file);
+                }
 
-            this.revision += 1;
-            this.trigger("rename", file, oldPath);
-        }));
+                this.revision += 1;
+                this.trigger("rename", file, oldPath);
+            })
+        );
 
         // File creation does cause a metadata change, but deletes do not. Clear the caches for this.
-        this.registerEvent(this.vault.on("delete", af => {
-            if (!(af instanceof TFile)) return;
-            let file = af as TFile;
+        this.registerEvent(
+            this.vault.on("delete", af => {
+                if (!(af instanceof TFile)) return;
+                let file = af as TFile;
 
-            this.pages.delete(file.path);
-            this.tags.delete(file.path);
-            this.etags.delete(file.path);
-            this.links.delete(file.path);
-            this.folders.delete(file.path);
+                this.pages.delete(file.path);
+                this.tags.delete(file.path);
+                this.etags.delete(file.path);
+                this.links.delete(file.path);
+                this.folders.delete(file.path);
 
-            this.revision += 1;
-            this.trigger("delete", file);
-        }));
+                this.revision += 1;
+                this.trigger("delete", file);
+            })
+        );
 
         // Initialize sub-indices.
         this.prefix.initialize();
@@ -310,21 +314,27 @@ export class PrefixIndex extends Component {
 
         // TODO: I'm not sure if there is an event for all files in a folder, or just the folder.
         // I'm assuming the former naively for now until I inevitably fix it.
-        this.registerEvent(this.vault.on("delete", file => {
-            PrefixIndexNode.remove(this.root, file.path);
-            this.updateRevision();
-        }));
+        this.registerEvent(
+            this.vault.on("delete", file => {
+                PrefixIndexNode.remove(this.root, file.path);
+                this.updateRevision();
+            })
+        );
 
-        this.registerEvent(this.vault.on("create", file => {
-            PrefixIndexNode.add(this.root, file.path);
-            this.updateRevision();
-        }));
+        this.registerEvent(
+            this.vault.on("create", file => {
+                PrefixIndexNode.add(this.root, file.path);
+                this.updateRevision();
+            })
+        );
 
-        this.registerEvent(this.vault.on("rename", (file, old) => {
-            PrefixIndexNode.remove(this.root, old);
-            PrefixIndexNode.add(this.root, file.path);
-            this.updateRevision();
-        }));
+        this.registerEvent(
+            this.vault.on("rename", (file, old) => {
+                PrefixIndexNode.remove(this.root, old);
+                PrefixIndexNode.add(this.root, file.path);
+                this.updateRevision();
+            })
+        );
     }
 
     /** Get the list of all files under the given path. */
