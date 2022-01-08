@@ -1,6 +1,7 @@
 import {
     App,
     Component,
+    debounce,
     MarkdownPostProcessorContext,
     MarkdownRenderChild,
     Plugin,
@@ -28,6 +29,13 @@ import { currentLocale } from "util/locale";
 import { extractInlineFields, parseInlineValue } from "data/parse/inline-field";
 import { API_NAME, DvAPIInterface } from "./typings/api";
 
+declare module "obsidian" {
+    interface Workspace {
+        /** Sent to rendered dataview components to tell them to possibly refresh */
+        on(name: "dataview:refresh-views", callback: () => void, ctx?: any): EventRef;
+    }
+}
+
 const API_NAME: API_NAME extends keyof typeof window ? API_NAME : never = "DataviewAPI" as const; // this line will throw error if name out of sync
 
 export default class DataviewPlugin extends Plugin {
@@ -44,8 +52,13 @@ export default class DataviewPlugin extends Plugin {
         this.settings = Object.assign(DEFAULT_SETTINGS, (await this.loadData()) ?? {});
         this.addSettingTab(new DataviewSettingsTab(this.app, this));
 
-        this.index = FullIndex.create(this.app.vault, this.app.metadataCache);
+        // Set up view refreshing
+        this.updateRefreshSettings();
+        this.index = FullIndex.create(this.app.vault, this.app.metadataCache, () => {
+            if (this.settings.refreshEnabled) this.debouncedRefresh();
+        });
         this.addChild(this.index);
+
         this.api = new DataviewApi(this.app, this.index, this.settings, this.manifest.version);
 
         // Register API to global window object.
@@ -87,6 +100,16 @@ export default class DataviewPlugin extends Plugin {
         this.app.metadataCache.trigger("dataview:api-ready", this.api);
 
         console.log(`Dataview: Version ${this.manifest.version} Loaded`);
+    }
+
+    private debouncedRefresh: () => void;
+
+    private updateRefreshSettings() {
+        this.debouncedRefresh = debounce(
+            () => this.app.workspace.trigger("dataview:refresh-views"),
+            this.settings.refreshInterval,
+            true
+        );
     }
 
     onunload() {}
@@ -217,6 +240,7 @@ export default class DataviewPlugin extends Plugin {
     /** Update plugin settings. */
     async updateSettings(settings: Partial<DataviewSettings>) {
         Object.assign(this.settings, settings);
+        this.updateRefreshSettings();
         await this.saveData(this.settings);
     }
 

@@ -88,8 +88,8 @@ export class IndexMap {
 /** Aggregate index which has several sub-indices and will initialize all of them. */
 export class FullIndex extends Component {
     /** Generate a full index from the given vault. */
-    public static create(vault: Vault, metadata: MetadataCache): FullIndex {
-        return new FullIndex(vault, metadata);
+    public static create(vault: Vault, metadata: MetadataCache, onChange: () => void): FullIndex {
+        return new FullIndex(vault, metadata, onChange);
     }
 
     /* Maps path -> markdown metadata for all markdown pages. */
@@ -118,7 +118,7 @@ export class FullIndex extends Component {
     public importer: FileImporter;
 
     /** Construct a new index over the given vault and metadata cache. */
-    private constructor(public vault: Vault, public metadataCache: MetadataCache) {
+    private constructor(public vault: Vault, public metadataCache: MetadataCache, public onChange: () => void) {
         super();
         this.pages = new Map();
         this.tags = new IndexMap();
@@ -130,7 +130,7 @@ export class FullIndex extends Component {
         // Handles asynchronous reloading of files on web workers.
         this.addChild((this.importer = new FileImporter(4, this.vault, this.metadataCache)));
         // Prefix listens to file creation/deletion/rename, and not modifies, so we let it set up it's own listeners.
-        this.addChild((this.prefix = PrefixIndex.create(this.vault, () => (this.revision += 1))));
+        this.addChild((this.prefix = PrefixIndex.create(this.vault, () => this.touch())));
         // The CSV cache also needs to listen to filesystem events for cache invalidation.
         this.csv = new CsvCache(this.vault);
     }
@@ -163,7 +163,7 @@ export class FullIndex extends Component {
                     this.reload(file);
                 }
 
-                this.revision += 1;
+                this.touch();
                 this.trigger("rename", file, oldPath);
             })
         );
@@ -180,7 +180,7 @@ export class FullIndex extends Component {
                 this.links.delete(file.path);
                 this.folders.delete(file.path);
 
-                this.revision += 1;
+                this.touch();
                 this.trigger("delete", file);
             })
         );
@@ -197,6 +197,7 @@ export class FullIndex extends Component {
     /** "Touch" the index, incrementing the revision number and causing downstream views to reload. */
     public touch() {
         this.revision += 1;
+        this.onChange();
     }
 
     private reloadInternal(file: TFile, parsed: ParsedMarkdown) {
@@ -207,7 +208,7 @@ export class FullIndex extends Component {
         this.links.set(file.path, new Set<string>(meta.links.map(l => l.path)));
         this.folders.set(file.path, new Set<string>([getParentFolder(file.path)]));
 
-        this.revision += 1;
+        this.touch();
         this.trigger("update", file);
     }
 }
