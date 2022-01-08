@@ -34,6 +34,7 @@ declare module "obsidian" {
         /** Sent to rendered dataview components to tell them to possibly refresh */
         on(name: "dataview:refresh-views", callback: () => void, ctx?: any): EventRef;
     }
+    interface MarkdownRenderChild extends Component {}
 }
 
 const API_NAME: API_NAME extends keyof typeof window ? API_NAME : never = "DataviewAPI" as const; // this line will throw error if name out of sync
@@ -155,15 +156,25 @@ export default class DataviewPlugin extends Plugin {
         switch (query.header.type) {
             case "task":
                 component.addChild(
-                    new DataviewTaskRenderer(query as Query, el, this.index, sourcePath, this.app.vault, this.settings)
+                    new DataviewTaskRenderer(
+                        query as Query,
+                        el,
+                        this.index,
+                        sourcePath,
+                        this.app.vault,
+                        this.settings,
+                        this.app
+                    )
                 );
                 break;
             case "list":
-                component.addChild(new DataviewListRenderer(query as Query, el, this.index, sourcePath, this.settings));
+                component.addChild(
+                    new DataviewListRenderer(query as Query, el, this.index, sourcePath, this.settings, this.app)
+                );
                 break;
             case "table":
                 component.addChild(
-                    new DataviewTableRenderer(query as Query, el, this.index, sourcePath, this.settings)
+                    new DataviewTableRenderer(query as Query, el, this.index, sourcePath, this.settings, this.app)
                 );
                 break;
             case "calendar":
@@ -229,7 +240,8 @@ export default class DataviewPlugin extends Plugin {
                             codeblock,
                             this.index,
                             sourcePath,
-                            this.settings
+                            this.settings,
+                            this.app
                         )
                     );
                 }
@@ -495,30 +507,51 @@ class DataviewSettingsTab extends PluginSettingTab {
     }
 }
 
+abstract class DataviewRefreshableRenderer extends MarkdownRenderChild {
+    public container: HTMLElement;
+    public index: FullIndex;
+    public app: App;
+    public settings: DataviewSettings;
+    private lastReload: number;
+
+    abstract render(): Promise<void>;
+
+    onload() {
+        this.render();
+        this.lastReload = this.index.revision;
+        // Refresh after index changes stop
+        this.registerEvent(this.app.workspace.on("dataview:refresh-views", this.maybeRefresh));
+        // ...or when the DOM is shown (sidebar expands, tab selected, nodes scrolled into view)
+        this.register(this.container.onNodeInserted(this.maybeRefresh));
+    }
+
+    maybeRefresh = () => {
+        // If the index revision has changed recently, then queue a reload.
+        if (this.lastReload != this.index.revision) {
+            // But only if we're mounted in the DOM and auto-refreshing is active
+            if (this.container.isShown() && this.settings.refreshEnabled) {
+                this.lastReload = this.index.revision;
+                this.render();
+            }
+        }
+    };
+}
+
 /** Renders a list dataview for the given query. */
-class DataviewListRenderer extends MarkdownRenderChild {
+class DataviewListRenderer extends DataviewRefreshableRenderer {
     constructor(
         public query: Query,
         public container: HTMLElement,
         public index: FullIndex,
         public origin: string,
-        public settings: DataviewSettings
+        public settings: DataviewSettings,
+        public app: App
     ) {
         super(container);
     }
 
-    async onload() {
-        await this.render();
-
-        if (this.settings.refreshEnabled) {
-            onIndexChange(this.index, this.settings.refreshInterval, this, async () => {
-                this.container.innerHTML = "";
-                await this.render();
-            });
-        }
-    }
-
     async render() {
+        this.container.innerHTML = "";
         let maybeResult = await asyncTryOrPropogate(() =>
             executeList(this.query, this.index, this.origin, this.settings)
         );
@@ -554,29 +587,20 @@ class DataviewListRenderer extends MarkdownRenderChild {
     }
 }
 
-class DataviewTableRenderer extends MarkdownRenderChild {
+class DataviewTableRenderer extends DataviewRefreshableRenderer {
     constructor(
         public query: Query,
         public container: HTMLElement,
         public index: FullIndex,
         public origin: string,
-        public settings: DataviewSettings
+        public settings: DataviewSettings,
+        public app: App
     ) {
         super(container);
     }
 
-    async onload() {
-        await this.render();
-
-        if (this.settings.refreshEnabled) {
-            onIndexChange(this.index, this.settings.refreshInterval, this, async () => {
-                this.container.innerHTML = "";
-                await this.render();
-            });
-        }
-    }
-
     async render() {
+        this.container.innerHTML = "";
         let maybeResult = await asyncTryOrPropogate(() =>
             executeTable(this.query, this.index, this.origin, this.settings)
         );
@@ -629,7 +653,7 @@ interface CalendarFile extends IDot {
     link: Link;
 }
 
-class DataviewCalendarRenderer extends MarkdownRenderChild {
+class DataviewCalendarRenderer extends DataviewRefreshableRenderer {
     private calendar: Calendar;
     constructor(
         public query: Query,
@@ -642,18 +666,8 @@ class DataviewCalendarRenderer extends MarkdownRenderChild {
         super(container);
     }
 
-    async onload() {
-        await this.render();
-
-        if (this.settings.refreshEnabled) {
-            onIndexChange(this.index, this.settings.refreshInterval, this, async () => {
-                this.container.innerHTML = "";
-                await this.render();
-            });
-        }
-    }
-
     async render() {
+        this.container.innerHTML = "";
         let maybeResult = await asyncTryOrPropogate(() =>
             executeCalendar(this.query, this.index, this.origin, this.settings)
         );
@@ -735,7 +749,7 @@ class DataviewCalendarRenderer extends MarkdownRenderChild {
     }
 }
 
-class DataviewTaskRenderer extends MarkdownRenderChild {
+class DataviewTaskRenderer extends DataviewRefreshableRenderer {
     taskBindings?: Component;
 
     constructor(
@@ -744,25 +758,15 @@ class DataviewTaskRenderer extends MarkdownRenderChild {
         public index: FullIndex,
         public origin: string,
         public vault: Vault,
-        public settings: DataviewSettings
+        public settings: DataviewSettings,
+        public app: App
     ) {
         super(container);
     }
 
-    async onload() {
-        await this.render();
-
-        if (this.settings.refreshEnabled) {
-            onIndexChange(this.index, this.settings.refreshInterval, this, async () => {
-                if (this.taskBindings) this.removeChild(this.taskBindings);
-
-                this.container.innerHTML = "";
-                await this.render();
-            });
-        }
-    }
-
     async render() {
+        if (this.taskBindings) this.removeChild(this.taskBindings);
+        this.container.innerHTML = "";
         let result = await asyncTryOrPropogate(() => executeTask(this.query, this.origin, this.index, this.settings));
         if (!result.successful) {
             renderErrorPre(this.container, "Dataview: " + result.error);
@@ -792,7 +796,7 @@ class DataviewTaskRenderer extends MarkdownRenderChild {
 }
 
 /** Renders inline query results. */
-class DataviewInlineRenderer extends MarkdownRenderChild {
+class DataviewInlineRenderer extends DataviewRefreshableRenderer {
     // The box that the error is rendered in, if relevant.
     errorbox?: HTMLElement;
 
@@ -803,23 +807,14 @@ class DataviewInlineRenderer extends MarkdownRenderChild {
         public target: HTMLElement,
         public index: FullIndex,
         public origin: string,
-        public settings: DataviewSettings
+        public settings: DataviewSettings,
+        public app: App
     ) {
         super(container);
     }
 
-    async onload() {
-        await this.render();
-
-        if (this.settings.refreshEnabled) {
-            onIndexChange(this.index, this.settings.refreshInterval, this, async () => {
-                this.errorbox?.remove();
-                await this.render();
-            });
-        }
-    }
-
     async render() {
+        this.errorbox?.remove();
         let result = tryOrPropogate(() => executeInline(this.field, this.origin, this.index, this.settings));
         if (!result.successful) {
             this.errorbox = this.container.createEl("div");
@@ -833,7 +828,7 @@ class DataviewInlineRenderer extends MarkdownRenderChild {
     }
 }
 
-class DataviewJSRenderer extends MarkdownRenderChild {
+class DataviewJSRenderer extends DataviewRefreshableRenderer {
     static PREAMBLE: string = "const dataview = this;const dv = this;";
 
     constructor(
@@ -848,18 +843,8 @@ class DataviewJSRenderer extends MarkdownRenderChild {
         super(container);
     }
 
-    async onload() {
-        await this.render();
-
-        if (this.settings.refreshEnabled) {
-            onIndexChange(this.index, this.settings.refreshInterval, this, async () => {
-                this.container.innerHTML = "";
-                await this.render();
-            });
-        }
-    }
-
     async render() {
+        this.container.innerHTML = "";
         if (!this.settings.enableDataviewJs) {
             this.containerEl.innerHTML = "";
             renderErrorPre(
@@ -883,7 +868,7 @@ class DataviewJSRenderer extends MarkdownRenderChild {
 }
 
 /** Inline JS renderer accessible using '=$' by default. */
-class DataviewInlineJSRenderer extends MarkdownRenderChild {
+class DataviewInlineJSRenderer extends DataviewRefreshableRenderer {
     static PREAMBLE: string = "const dataview = this;const dv=this;";
 
     // The box that the error is rendered in, if relevant.
@@ -902,18 +887,8 @@ class DataviewInlineJSRenderer extends MarkdownRenderChild {
         super(container);
     }
 
-    async onload() {
-        await this.render();
-
-        if (this.settings.refreshEnabled) {
-            onIndexChange(this.index, this.settings.refreshInterval, this, async () => {
-                this.errorbox?.remove();
-                await this.render();
-            });
-        }
-    }
-
     async render() {
+        this.errorbox?.remove();
         if (!this.settings.enableDataviewJs || !this.settings.enableInlineDataviewJs) {
             let temp = document.createElement("span");
             temp.innerText = "(disabled; enable in settings)";
@@ -939,21 +914,6 @@ class DataviewInlineJSRenderer extends MarkdownRenderChild {
             renderErrorPre(this.errorbox, "Dataview (for inline JS query '" + this.script + "'): " + e);
         }
     }
-}
-
-/** Adds a simple handler which runs the given action on any index update. */
-function onIndexChange(index: FullIndex, interval: number, component: Component, action: () => any) {
-    let lastReload = index.revision;
-
-    component.registerInterval(
-        window.setInterval(() => {
-            // If the index revision has changed recently, then queue a reload.
-            if (lastReload != index.revision) {
-                action();
-                lastReload = index.revision;
-            }
-        }, interval)
-    );
 }
 
 /** Replaces raw textual inline fields in text containers with pretty HTML equivalents. */
