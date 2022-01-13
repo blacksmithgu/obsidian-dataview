@@ -222,14 +222,7 @@ export class PrefixIndex extends Component {
     }
 
     /** Run through the whole vault to set up the initial prefix index. */
-    public initialize() {
-        let timeStart = new Date().getTime();
-        console.log("Dataview: File prefix tree built in %.3fs.", (new Date().getTime() - timeStart) / 1000.0);
-
-        this.registerEvent(this.vault.on("delete", file => this.updateRevision()));
-        this.registerEvent(this.vault.on("create", file => this.updateRevision()));
-        this.registerEvent(this.vault.on("rename", (file, old) => this.updateRevision()));
-    }
+    public initialize() {}
 
     private *walk(folder: TFolder, filter?: (path: string) => boolean): Generator<string> {
         for (const file of folder.children) {
