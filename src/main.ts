@@ -53,11 +53,11 @@ export default class DataviewPlugin extends Plugin {
         this.settings = Object.assign(DEFAULT_SETTINGS, (await this.loadData()) ?? {});
         this.addSettingTab(new DataviewSettingsTab(this.app, this));
 
-        // Set up view refreshing
-        this.updateRefreshSettings();
         this.index = FullIndex.create(this.app.vault, this.app.metadataCache, () => {
             if (this.settings.refreshEnabled) this.debouncedRefresh();
         });
+        // Set up view refreshing
+        this.updateRefreshSettings();
         this.addChild(this.index);
 
         this.api = new DataviewApi(this.app, this.index, this.settings, this.manifest.version);
@@ -103,7 +103,7 @@ export default class DataviewPlugin extends Plugin {
         console.log(`Dataview: Version ${this.manifest.version} Loaded`);
     }
 
-    private debouncedRefresh: () => void;
+    private debouncedRefresh: () => void = () => null;
 
     private updateRefreshSettings() {
         this.debouncedRefresh = debounce(
