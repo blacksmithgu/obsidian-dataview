@@ -1,7 +1,7 @@
 /** Stores various indices on all files in the vault to make dataview generation fast. */
 import { Result } from "api/result";
 import { DataObject } from "data/value";
-import { Component, MetadataCache, TAbstractFile, TFile, Vault } from "obsidian";
+import { Component, MetadataCache, TAbstractFile, TFile, TFolder, Vault } from "obsidian";
 import { getParentFolder } from "util/normalize";
 import { PageMetadata } from "data/metadata";
 import { ParsedMarkdown, parsePage } from "data/parse/markdown-file";
@@ -9,6 +9,8 @@ import { DateTime } from "luxon";
 import { parseCsv } from "data/parse/csv";
 import { FileImporter } from "data/import/import-manager";
 import { IndexEvtFullName, IndexEvtTriggerArgs } from "../typings/events";
+
+const emptySet: Readonly<Set<string>> = Object.freeze(new Set<string>());
 
 /** A generic index which indexes variables of the form key -> value[], allowing both forward and reverse lookups. */
 export class IndexMap {
@@ -23,7 +25,7 @@ export class IndexMap {
         this.invMap = new Map();
     }
 
-    /** Returns all values for the given key. */
+    /** Returns all values for the given key.  (This is unused except for tests - does it really need to be here?) */
     public get(key: string): Set<string> {
         let result = this.map.get(key);
         if (result) {
@@ -33,25 +35,19 @@ export class IndexMap {
         }
     }
 
-    /** Returns all keys that reference the given key. */
-    public getInverse(value: string): Set<string> {
-        let result = this.invMap.get(value);
-        if (result) {
-            return new Set(result);
-        } else {
-            return new Set();
-        }
+    /** Returns all keys that reference the given key. Mutating the returned set is not allowed. */
+    public getInverse(value: string): Readonly<Set<string>> {
+        return this.invMap.get(value) || emptySet;
     }
 
-    public set(key: string, values: Set<string>): IndexMap {
-        if (this.map.has(key)) this.delete(key);
-
+    public set(key: string, values: Set<string>): this {
+        this.delete(key);
+        if (!values.size) return this; // no need to store if no values
         this.map.set(key, values);
         for (let value of values) {
-            if (!this.invMap.has(value)) this.invMap.set(value, new Set());
-            this.invMap.get(value)?.add(key);
+            if (!this.invMap.has(value)) this.invMap.set(value, new Set([key]));
+            else this.invMap.get(value)?.add(key);
         }
-
         return this;
     }
 
@@ -101,8 +97,6 @@ export class FullIndex extends Component {
     public etags: IndexMap;
     /** Map files -> linked files in that file, and linked file -> files that link to it. */
     public links: IndexMap;
-    /** Map exact folder paths to files; the 'exact' version of 'prefix'. */
-    public folders: IndexMap;
     /** Search files by path prefix. */
     public prefix: PrefixIndex;
     /** Caches rows of CSV files. */
@@ -124,7 +118,6 @@ export class FullIndex extends Component {
         this.tags = new IndexMap();
         this.etags = new IndexMap();
         this.links = new IndexMap();
-        this.folders = new IndexMap();
         this.revision = 0;
 
         // Handles asynchronous reloading of files on web workers.
@@ -143,7 +136,11 @@ export class FullIndex extends Component {
     public initialize() {
         // Traverse all markdown files & fill in initial data.
         let start = new Date().getTime();
-        this.vault.getMarkdownFiles().forEach(file => this.reload(file));
+        const empty = { fields: new Map(), tasks: [] };
+        for (const file of this.vault.getMarkdownFiles()) {
+            this.reloadInternal(file, empty);
+            this.reload(file);
+        }
         console.log("Dataview: Task & metadata parsing queued in %.3fs.", (new Date().getTime() - start) / 1000.0);
 
         // The metadata cache is updated on file changes.
@@ -162,7 +159,6 @@ export class FullIndex extends Component {
                 this.tags.delete(file.path);
                 this.etags.delete(file.path);
                 this.links.delete(file.path);
-                this.folders.delete(file.path);
 
                 this.touch();
                 this.trigger("delete", file);
@@ -174,8 +170,6 @@ export class FullIndex extends Component {
     }
 
     public rename(file: TAbstractFile, oldPath: string) {
-        this.folders.rename(oldPath, file.path);
-
         if (file instanceof TFile) {
             if (this.pages.has(oldPath)) {
                 const oldMeta = this.pages.get(oldPath);
@@ -211,91 +205,9 @@ export class FullIndex extends Component {
         this.tags.set(file.path, meta.fullTags());
         this.etags.set(file.path, meta.tags);
         this.links.set(file.path, new Set<string>(meta.links.map(l => l.path)));
-        this.folders.set(file.path, new Set<string>([getParentFolder(file.path)]));
 
         this.touch();
         this.trigger("update", file);
-    }
-}
-
-/** A node in the prefix tree. */
-export class PrefixIndexNode {
-    // The set of file / folder names at this level; these are *full paths*.
-    files: Set<string>;
-    // The segment name corresponding to the current node.
-    element: string;
-    // The *total* number of child files in and under this node.
-    totalCount: number;
-    // A map of name segment -> node for that segment.
-    children: Map<string, PrefixIndexNode>;
-
-    constructor(element: string) {
-        this.element = element;
-        this.files = new Set();
-        this.totalCount = 0;
-        this.children = new Map();
-    }
-
-    public static add(root: PrefixIndexNode, path: string) {
-        let parts = path.split("/");
-        let node = root;
-        for (let index = 0; index < parts.length - 1; index++) {
-            if (!node.children.has(parts[index])) node.children.set(parts[index], new PrefixIndexNode(parts[index]));
-
-            node.totalCount += 1;
-            node = node.children.get(parts[index]) as PrefixIndexNode;
-        }
-
-        node.totalCount += 1;
-        node.files.add(path);
-    }
-
-    public static remove(root: PrefixIndexNode, path: string) {
-        let parts = path.split("/");
-        let node = root;
-        let nodes = [];
-        for (let index = 0; index < parts.length - 1; index++) {
-            if (!node.children.has(parts[index])) return;
-
-            nodes.push(node);
-            node = node.children.get(parts[index]) as PrefixIndexNode;
-        }
-
-        if (!node.files.has(path)) return;
-        node.files.delete(path);
-        node.totalCount -= 1;
-
-        for (let p of nodes) p.totalCount -= 1;
-    }
-
-    public static find(root: PrefixIndexNode, prefix: string): PrefixIndexNode | null {
-        if (prefix.length == 0 || prefix == "/") return root;
-        let parts = prefix.split("/");
-        let node = root;
-        for (let index = 0; index < parts.length; index++) {
-            if (!node.children.has(parts[index])) return null;
-
-            node = node.children.get(parts[index]) as PrefixIndexNode;
-        }
-
-        return node;
-    }
-
-    /** Gather all files at and under the given node, optionally filtering the result by the given filter. */
-    public static gather(root: PrefixIndexNode, filter?: (path: string) => boolean): Set<string> {
-        let result = new Set<string>();
-        PrefixIndexNode.gatherRec(root, result);
-
-        if (filter) {
-            return new Set(Array.from(result).filter(filter));
-        } else {
-            return result;
-        }
-    }
-
-    static gatherRec(root: PrefixIndexNode, output: Set<string>) {
-        for (let file of root.files) output.add(file);
-        for (let child of root.children.values()) this.gatherRec(child, output);
     }
 }
 
@@ -305,61 +217,44 @@ export class PrefixIndex extends Component {
         return new PrefixIndex(vault, updateRevision);
     }
 
-    private root: PrefixIndexNode;
-
     constructor(public vault: Vault, public updateRevision: () => void) {
         super();
-        this.root = new PrefixIndexNode("");
     }
 
     /** Run through the whole vault to set up the initial prefix index. */
     public initialize() {
         let timeStart = new Date().getTime();
-        for (let file of this.vault.getFiles()) PrefixIndexNode.add(this.root, file.path);
         console.log("Dataview: File prefix tree built in %.3fs.", (new Date().getTime() - timeStart) / 1000.0);
 
-        // TODO: I'm not sure if there is an event for all files in a folder, or just the folder.
-        // I'm assuming the former naively for now until I inevitably fix it.
-        this.registerEvent(
-            this.vault.on("delete", file => {
-                PrefixIndexNode.remove(this.root, file.path);
-                this.updateRevision();
-            })
-        );
+        this.registerEvent(this.vault.on("delete", file => this.updateRevision()));
+        this.registerEvent(this.vault.on("create", file => this.updateRevision()));
+        this.registerEvent(this.vault.on("rename", (file, old) => this.updateRevision()));
+    }
 
-        this.registerEvent(
-            this.vault.on("create", file => {
-                PrefixIndexNode.add(this.root, file.path);
-                this.updateRevision();
-            })
-        );
-
-        this.registerEvent(
-            this.vault.on("rename", (file, old) => {
-                PrefixIndexNode.remove(this.root, old);
-                PrefixIndexNode.add(this.root, file.path);
-                this.updateRevision();
-            })
-        );
+    private *walk(folder: TFolder, filter?: (path: string) => boolean): Generator<string> {
+        for (const file of folder.children) {
+            if (file instanceof TFolder) {
+                yield* this.walk(file, filter);
+            } else if (filter ? filter(file.path) : true) {
+                yield file.path;
+            }
+        }
     }
 
     /** Get the list of all files under the given path. */
     public get(prefix: string, filter?: (path: string) => boolean): Set<string> {
-        let node = PrefixIndexNode.find(this.root, prefix);
-        if (node == null || node == undefined) return new Set();
-
-        return PrefixIndexNode.gather(node, filter);
+        let folder = this.vault.getAbstractFileByPath(prefix || "/");
+        return new Set(folder instanceof TFolder ? this.walk(folder, filter) : []);
     }
 
     /** Determines if the given path exists in the prefix index. */
     public pathExists(path: string): boolean {
-        let node = PrefixIndexNode.find(this.root, getParentFolder(path));
-        return node != null && node.files.has(path);
+        return this.vault.getAbstractFileByPath(path || "/") != null;
     }
 
     /** Determines if the given prefix exists in the prefix index. */
     public nodeExists(prefix: string): boolean {
-        return PrefixIndexNode.find(this.root, prefix) != null;
+        return this.vault.getAbstractFileByPath(prefix || "/") instanceof TFolder;
     }
 
     /**
