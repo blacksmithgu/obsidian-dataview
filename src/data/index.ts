@@ -41,8 +41,18 @@ export class IndexMap {
     }
 
     public set(key: string, values: Set<string>): this {
-        this.delete(key);
-        if (!values.size) return this; // no need to store if no values
+        if (!values.size) {
+            // no need to store if no values
+            this.delete(key);
+            return this;
+        }
+        let oldValues = this.map.get(key);
+        if (oldValues) {
+            for (let value of oldValues) {
+                // Only delete the ones we're not adding back
+                if (!values.has(key)) this.invMap.get(value)?.delete(key);
+            }
+        }
         this.map.set(key, values);
         for (let value of values) {
             if (!this.invMap.has(value)) this.invMap.set(value, new Set([key]));
