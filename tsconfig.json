@@ -17,7 +17,7 @@
     "importHelpers": true,
     "downlevelIteration": true,
     "esModuleInterop": true,
-    "lib": ["dom", "es5", "scripthost", "es2015"]
+    "lib": ["dom", "es5", "scripthost", "es2018"]
   },
   "include": ["src/**/*.ts"],
   "exclude": ["lib/**/*"]
