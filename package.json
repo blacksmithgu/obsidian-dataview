@@ -1,6 +1,6 @@
 {
   "name": "obsidian-dataview",
-  "version": "0.4.21",
+  "version": "0.4.22",
   "description": "Advanced data views for Obsidian.md.",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -16,7 +16,10 @@
     "lib": "npx rollup --config rollup.config.js --environment BUILD:lib",
     "test": "npx jest"
   },
-  "keywords": ["obsidian", "dataview"],
+  "keywords": [
+    "obsidian",
+    "dataview"
+  ],
   "author": "Michael Brenan",
   "license": "MIT",
   "devDependencies": {

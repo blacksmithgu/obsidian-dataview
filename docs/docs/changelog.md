@@ -1,3 +1,19 @@
+# 0.4.22
+
+The @pjeby update! This includes several performance improvements suggested by @pjeby to dramatically improve background
+Dataview performance as well as reduce some memory pressure. It also includes some minor bug-fixes and preliminary
+functionality:
+
+- Target ES2018 for better Promise support
+- Allow parsing shorthands in `dv.date()`.
+- Add additional metadata to inline field rendering which can be styled.
+- Cleanup events & workers on plugin uninstall, improving the Dataview uninstall/disable/reload experience.
+- Add preliminary `CALENDAR` queries - rendering similar to the obsidian-calendar plugin, see the documentation!
+
+Dataview should perform much better on startup and when you have lots of tabs open - thanks again to @pjeby.
+
+---
+
 # 0.4.21
 
 Bugfix release which primarily fixes issues that Dataview had with the live preview mode in upcoming Obsidian versions;
