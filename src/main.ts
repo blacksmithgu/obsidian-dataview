@@ -364,7 +364,7 @@ class DataviewSettingsTab extends PluginSettingTab {
 
         new Setting(this.containerEl)
             .setName("Refresh Interval")
-            .setDesc("How frequently views are updated (in milliseconds) in preview mode when files are changing.")
+            .setDesc("How long to wait (in milliseconds) for files to stop changing before updating views.")
             .addText(text =>
                 text
                     .setPlaceholder("500")
