@@ -21,4 +21,13 @@ test("Inverted Get", () => {
     expect(index.getInverse("a")).toEqual(new Set(["test", "test2"]));
     expect(index.getInverse("b")).toEqual(new Set(["test"]));
     expect(index.getInverse("")).toEqual(new Set());
+
+    index.set("test", new Set(["a", "c"]));
+    expect(index.getInverse("b")).toEqual(new Set([]));
+    expect(index.getInverse("a")).toEqual(new Set(["test", "test2"]));
+    expect(index.getInverse("c")).toEqual(new Set(["test", "test2"]));
+
+    index.set("test", new Set([]));
+    expect(index.getInverse("a")).toEqual(new Set(["test2"]));
+    expect(index.getInverse("c")).toEqual(new Set(["test2"]));
 });
