@@ -59,7 +59,7 @@ export const DATE_SHORTHANDS = {
         DateTime.local()
             .startOf("day")
             .minus(Duration.fromObject({ days: 1 })),
-    tommorow: () =>
+    tomorrow: () =>
         DateTime.local()
             .startOf("day")
             .plus(Duration.fromObject({ days: 1 })),

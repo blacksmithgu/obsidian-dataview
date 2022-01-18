@@ -7,27 +7,25 @@ import {
     Plugin,
     PluginSettingTab,
     Setting,
-    Vault,
 } from "obsidian";
-import { Calendar, ICalendarSource, IDayMetadata, IDot } from "obsidian-calendar-ui";
-import type { Moment } from "moment";
-import { renderErrorPre, renderList, renderTable, renderValue } from "ui/render";
+import { renderErrorPre, renderValue } from "ui/render";
 import { FullIndex } from "data/index";
-import * as Tasks from "ui/tasks";
-import { ListQuery, Query, TableQuery } from "query/query";
-import { Field } from "expression/field";
+import { Query } from "query/query";
 import { parseField } from "expression/parse";
 import { parseQuery } from "query/parse";
-import { executeCalendar, executeInline, executeList, executeTable, executeTask } from "query/engine";
-import { asyncTryOrPropogate, canonicalizeVarName, tryOrPropogate } from "util/normalize";
-import { asyncEvalInContext, makeApiContext } from "api/inline-api";
+import { canonicalizeVarName, tryOrPropogate } from "util/normalize";
 import { DataviewApi } from "api/plugin-api";
 import { DataviewSettings, DEFAULT_QUERY_SETTINGS, DEFAULT_SETTINGS, QuerySettings } from "settings";
-import { Groupings, Link, LiteralValue, Task } from "data/value";
-import { DateTime } from "luxon";
-import { currentLocale } from "util/locale";
 import { extractInlineFields, parseInlineValue } from "data/parse/inline-field";
 import { API_NAME, DvAPIInterface } from "./typings/api";
+import { DataviewListRenderer } from "ui/views/list-view";
+import { DataviewTableRenderer } from "ui/views/table-view";
+import { DataviewCalendarRenderer } from "ui/views/calendar-view";
+import { DataviewInlineRenderer } from "ui/views/inline-view";
+import { DataviewInlineJSRenderer, DataviewJSRenderer } from "ui/views/js-view";
+import { DataviewTaskRenderer } from "ui/views/task-view";
+import { currentLocale } from "util/locale";
+import { DateTime } from "luxon";
 
 declare module "obsidian" {
     interface Workspace {
@@ -51,7 +49,7 @@ export default class DataviewPlugin extends Plugin {
     async onload() {
         // Settings initialization; write defaults first time around.
         this.settings = Object.assign(DEFAULT_SETTINGS, (await this.loadData()) ?? {});
-        this.addSettingTab(new DataviewSettingsTab(this.app, this));
+        this.addSettingTab(new GeneralSettingsTab(this.app, this));
 
         this.index = FullIndex.create(this.app.vault, this.app.metadataCache, () => {
             if (this.settings.refreshEnabled) this.debouncedRefresh();
@@ -263,7 +261,7 @@ export default class DataviewPlugin extends Plugin {
 }
 
 /** All of the dataview settings in a single, nice tab. */
-class DataviewSettingsTab extends PluginSettingTab {
+class GeneralSettingsTab extends PluginSettingTab {
     constructor(app: App, private plugin: DataviewPlugin) {
         super(app, plugin);
     }
@@ -504,415 +502,6 @@ class DataviewSettingsTab extends PluginSettingTab {
                     await this.plugin.updateSettings({ taskCompletionText: value.trim() });
                 })
             );
-    }
-}
-
-abstract class DataviewRefreshableRenderer extends MarkdownRenderChild {
-    public container: HTMLElement;
-    public index: FullIndex;
-    public app: App;
-    public settings: DataviewSettings;
-    private lastReload: number;
-
-    abstract render(): Promise<void>;
-
-    onload() {
-        this.render();
-        this.lastReload = this.index.revision;
-        // Refresh after index changes stop
-        this.registerEvent(this.app.workspace.on("dataview:refresh-views", this.maybeRefresh));
-        // ...or when the DOM is shown (sidebar expands, tab selected, nodes scrolled into view)
-        this.register(this.container.onNodeInserted(this.maybeRefresh));
-    }
-
-    maybeRefresh = () => {
-        // If the index revision has changed recently, then queue a reload.
-        if (this.lastReload != this.index.revision) {
-            // But only if we're mounted in the DOM and auto-refreshing is active
-            if (this.container.isShown() && this.settings.refreshEnabled) {
-                this.lastReload = this.index.revision;
-                this.render();
-            }
-        }
-    };
-}
-
-/** Renders a list dataview for the given query. */
-class DataviewListRenderer extends DataviewRefreshableRenderer {
-    constructor(
-        public query: Query,
-        public container: HTMLElement,
-        public index: FullIndex,
-        public origin: string,
-        public settings: DataviewSettings,
-        public app: App
-    ) {
-        super(container);
-    }
-
-    async render() {
-        this.container.innerHTML = "";
-        let maybeResult = await asyncTryOrPropogate(() =>
-            executeList(this.query, this.index, this.origin, this.settings)
-        );
-        if (!maybeResult.successful) {
-            renderErrorPre(this.container, "Dataview: " + maybeResult.error);
-            return;
-        } else if (maybeResult.value.data.length == 0 && this.settings.warnOnEmptyResult) {
-            renderErrorPre(this.container, "Dataview: Query returned 0 results.");
-            return;
-        }
-
-        let showId = (this.query.header as ListQuery).showId;
-        let showValue = !!(this.query.header as ListQuery).format;
-
-        let result = maybeResult.value;
-        let rendered: LiteralValue[] = [];
-        for (let row of result.data) {
-            if (showValue && showId) {
-                let span = document.createElement("span");
-                await renderValue(row.primary, span, this.origin, this, this.settings, false, "list");
-                span.appendText(": ");
-                await renderValue(row.value || null, span, this.origin, this, this.settings, true, "list");
-
-                rendered.push(span);
-            } else if (showId) {
-                rendered.push(row.primary);
-            } else if (showValue) {
-                rendered.push(row.value || null);
-            }
-        }
-
-        await renderList(this.container, rendered, this, this.origin, this.settings);
-    }
-}
-
-class DataviewTableRenderer extends DataviewRefreshableRenderer {
-    constructor(
-        public query: Query,
-        public container: HTMLElement,
-        public index: FullIndex,
-        public origin: string,
-        public settings: DataviewSettings,
-        public app: App
-    ) {
-        super(container);
-    }
-
-    async render() {
-        this.container.innerHTML = "";
-        let maybeResult = await asyncTryOrPropogate(() =>
-            executeTable(this.query, this.index, this.origin, this.settings)
-        );
-        if (!maybeResult.successful) {
-            renderErrorPre(this.container, "Dataview: " + maybeResult.error);
-            return;
-        }
-
-        let result = maybeResult.value;
-
-        if ((this.query.header as TableQuery).showId) {
-            let dataWithNames: LiteralValue[][] = [];
-            for (let entry of result.data) {
-                dataWithNames.push([entry.id].concat(entry.values));
-            }
-            let name =
-                result.idMeaning.type === "group"
-                    ? this.settings.tableGroupColumnName
-                    : this.settings.tableIdColumnName;
-
-            await renderTable(
-                this.container,
-                [name].concat(result.names),
-                dataWithNames,
-                this,
-                this.origin,
-                this.settings
-            );
-        } else {
-            await renderTable(
-                this.container,
-                result.names,
-                result.data.map(v => v.values),
-                this,
-                this.origin,
-                this.settings
-            );
-        }
-
-        // Render after the empty table, so the table header still renders.
-        if (result.data.length == 0 && this.settings.warnOnEmptyResult) {
-            renderErrorPre(this.container, "Dataview: Query returned 0 results.");
-        }
-    }
-}
-
-// CalendarFile is a representation of a particular file, displayed in the calendar view.
-// It'll be represented in the calendar as a dot.
-interface CalendarFile extends IDot {
-    link: Link;
-}
-
-class DataviewCalendarRenderer extends DataviewRefreshableRenderer {
-    private calendar: Calendar;
-    constructor(
-        public query: Query,
-        public container: HTMLElement,
-        public index: FullIndex,
-        public origin: string,
-        public settings: DataviewSettings,
-        public app: App
-    ) {
-        super(container);
-    }
-
-    async render() {
-        this.container.innerHTML = "";
-        let maybeResult = await asyncTryOrPropogate(() =>
-            executeCalendar(this.query, this.index, this.origin, this.settings)
-        );
-        if (!maybeResult.successful) {
-            renderErrorPre(this.container, "Dataview: " + maybeResult.error);
-            return;
-        } else if (maybeResult.value.data.length == 0 && this.settings.warnOnEmptyResult) {
-            renderErrorPre(this.container, "Dataview: Query returned 0 results.");
-            return;
-        }
-        let dateMap = new Map<string, CalendarFile[]>();
-        for (let data of maybeResult.value.data) {
-            const dot = {
-                color: "default",
-                className: "note",
-                isFilled: true,
-                link: data.link,
-            };
-            const d = data.date.toFormat("yyyyLLdd");
-            if (!dateMap.has(d)) {
-                dateMap.set(d, [dot]);
-            } else {
-                dateMap.get(d)?.push(dot);
-            }
-        }
-
-        const querySource: ICalendarSource = {
-            getDailyMetadata: async (date: Moment): Promise<IDayMetadata> => {
-                return {
-                    dots: dateMap.get(date.format("YYYYMMDD")) || [],
-                };
-            },
-        };
-
-        const sources: ICalendarSource[] = [querySource];
-        const renderer = this;
-        this.calendar = new Calendar({
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            target: (this as any).container,
-            props: {
-                onHoverDay(date: Moment, targetEl: EventTarget): void {
-                    const vals = dateMap.get(date.format("YYYYMMDD"));
-                    if (!vals || vals.length == 0) {
-                        return;
-                    }
-                    if (vals?.length == 0) {
-                        return;
-                    }
-
-                    renderer.app.workspace.trigger("link-hover", {}, targetEl, vals[0].link.path, vals[0].link.path);
-                },
-                onClickDay: async date => {
-                    const vals = dateMap.get(date.format("YYYYMMDD"));
-                    if (!vals || vals.length == 0) {
-                        return;
-                    }
-                    if (vals?.length == 0) {
-                        return;
-                    }
-                    const file = renderer.app.metadataCache.getFirstLinkpathDest(vals[0].link.path, "");
-                    if (file == null) {
-                        return;
-                    }
-                    const mode = (this.app.vault as any).getConfig("defaultViewMode");
-                    const leaf = renderer.app.workspace.getUnpinnedLeaf();
-                    await leaf.openFile(file, { active: true, mode });
-                },
-                showWeekNums: false,
-                sources,
-            },
-        });
-    }
-
-    onClose(): Promise<void> {
-        if (this.calendar) {
-            this.calendar.$destroy();
-        }
-        return Promise.resolve();
-    }
-}
-
-class DataviewTaskRenderer extends DataviewRefreshableRenderer {
-    taskBindings?: Component;
-
-    constructor(
-        public query: Query,
-        public container: HTMLElement,
-        public index: FullIndex,
-        public origin: string,
-        public vault: Vault,
-        public settings: DataviewSettings,
-        public app: App
-    ) {
-        super(container);
-    }
-
-    async render() {
-        if (this.taskBindings) this.removeChild(this.taskBindings);
-        this.container.innerHTML = "";
-        let result = await asyncTryOrPropogate(() => executeTask(this.query, this.origin, this.index, this.settings));
-        if (!result.successful) {
-            renderErrorPre(this.container, "Dataview: " + result.error);
-        } else {
-            // If there is no grouping going on, group by the file path by default.
-            let tasks = result.value.tasks;
-            if (tasks.type == "base") {
-                let byFile = new Map<string, Task[]>();
-                for (let task of tasks.value as Task[]) {
-                    if (!byFile.has(task.path)) byFile.set(task.path, []);
-                    byFile.get(task.path)?.push(task);
-                }
-
-                tasks = Groupings.grouped(
-                    Array.from(byFile.entries()).map(([path, tasks]) => {
-                        return { key: Link.file(path), value: Groupings.base(tasks) };
-                    })
-                );
-            }
-
-            this.taskBindings = new Component();
-            this.addChild(this.taskBindings);
-
-            await Tasks.renderTasks(this.container, tasks, this.origin, this.taskBindings, this.vault, this.settings);
-        }
-    }
-}
-
-/** Renders inline query results. */
-class DataviewInlineRenderer extends DataviewRefreshableRenderer {
-    // The box that the error is rendered in, if relevant.
-    errorbox?: HTMLElement;
-
-    constructor(
-        public field: Field,
-        public fieldText: string,
-        public container: HTMLElement,
-        public target: HTMLElement,
-        public index: FullIndex,
-        public origin: string,
-        public settings: DataviewSettings,
-        public app: App
-    ) {
-        super(container);
-    }
-
-    async render() {
-        this.errorbox?.remove();
-        let result = tryOrPropogate(() => executeInline(this.field, this.origin, this.index, this.settings));
-        if (!result.successful) {
-            this.errorbox = this.container.createEl("div");
-            renderErrorPre(this.errorbox, "Dataview (for inline query '" + this.fieldText + "'): " + result.error);
-        } else {
-            let temp = document.createElement("span");
-            await renderValue(result.value, temp, this.origin, this, this.settings, false);
-
-            this.target.replaceWith(temp);
-        }
-    }
-}
-
-class DataviewJSRenderer extends DataviewRefreshableRenderer {
-    static PREAMBLE: string = "const dataview = this;const dv = this;";
-
-    constructor(
-        public script: string,
-        public container: HTMLElement,
-        public app: App,
-        public index: FullIndex,
-        public origin: string,
-        public settings: DataviewSettings,
-        public verNum: string
-    ) {
-        super(container);
-    }
-
-    async render() {
-        this.container.innerHTML = "";
-        if (!this.settings.enableDataviewJs) {
-            this.containerEl.innerHTML = "";
-            renderErrorPre(
-                this.container,
-                "Dataview JS queries are disabled. You can enable them in the Dataview settings."
-            );
-            return;
-        }
-
-        // Assume that the code is javascript, and try to eval it.
-        try {
-            await asyncEvalInContext(
-                DataviewJSRenderer.PREAMBLE + this.script,
-                makeApiContext(this.index, this, this.app, this.settings, this.verNum, this.container, this.origin)
-            );
-        } catch (e) {
-            this.containerEl.innerHTML = "";
-            renderErrorPre(this.container, "Evaluation Error: " + e.stack);
-        }
-    }
-}
-
-/** Inline JS renderer accessible using '=$' by default. */
-class DataviewInlineJSRenderer extends DataviewRefreshableRenderer {
-    static PREAMBLE: string = "const dataview = this;const dv=this;";
-
-    // The box that the error is rendered in, if relevant.
-    errorbox?: HTMLElement;
-
-    constructor(
-        public script: string,
-        public container: HTMLElement,
-        public target: HTMLElement,
-        public app: App,
-        public index: FullIndex,
-        public origin: string,
-        public settings: DataviewSettings,
-        public verNum: string
-    ) {
-        super(container);
-    }
-
-    async render() {
-        this.errorbox?.remove();
-        if (!this.settings.enableDataviewJs || !this.settings.enableInlineDataviewJs) {
-            let temp = document.createElement("span");
-            temp.innerText = "(disabled; enable in settings)";
-            this.target.replaceWith(temp);
-            this.target = temp;
-            return;
-        }
-
-        // Assume that the code is javascript, and try to eval it.
-        try {
-            let temp = document.createElement("span");
-            let result = await asyncEvalInContext(
-                DataviewInlineJSRenderer.PREAMBLE + this.script,
-                makeApiContext(this.index, this, this.app, this.settings, this.verNum, temp, this.origin)
-            );
-            this.target.replaceWith(temp);
-            this.target = temp;
-            if (result === undefined) return;
-
-            renderValue(result, temp, this.origin, this, this.settings, false);
-        } catch (e) {
-            this.errorbox = this.container.createEl("div");
-            renderErrorPre(this.errorbox, "Dataview (for inline JS query '" + this.script + "'): " + e);
-        }
     }
 }
 
