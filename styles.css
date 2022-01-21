@@ -40,7 +40,6 @@
 }
 
 /** Inline Field Rendering. */
-
 .dataview.inline-field-key {
     border-top-left-radius: 250px;
     border-bottom-left-radius: 250px;
@@ -68,4 +67,9 @@
     font-family: var(--font-monospace);
     background-color: var(--background-secondary-alt);
     color: var(--text-nav-selected);
+}
+
+/** Live Preview padding fixes, specifically for DataviewJS custom HTML elements. */
+.is-live-preview .block-language-dataviewjs > p,span {
+    line-height: 1.0;
 }

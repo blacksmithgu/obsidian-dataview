@@ -201,7 +201,7 @@ statements:
 
     - [ ] What even is a task, anyway?
 
-### Task Queries
+### Calendar Queries
 
 Calendar views render all pages which match the query in a calendar view, using
 the given date expression to chose which date to render a page on.

@@ -1,6 +1,6 @@
 import { DateTime, Duration } from "luxon";
 import { DEFAULT_QUERY_SETTINGS, QuerySettings } from "settings";
-import { getFileTitle, normalizeHeaderForLink } from "util/normalize";
+import { getFileTitle, normalizeHeaderForLink, renderMinimalDuration } from "util/normalize";
 
 /** A specific task. */
 export class Task {
@@ -342,7 +342,7 @@ export namespace Values {
 
                 return wrapped.value.toFormat(setting.defaultDateTimeFormat);
             case "duration":
-                return wrapped.value.toISOTime();
+                return renderMinimalDuration(wrapped.value);
         }
     }
 
@@ -591,5 +591,10 @@ export namespace Groupings {
 
     export function grouped<T>(values: { key: LiteralValue; value: Grouping<T> }[]): Grouping<T> {
         return { type: "grouped", groups: values };
+    }
+
+    export function numElements<T>(value: Grouping<T[]>): number {
+        if (value.type == "base") return value.value.length;
+        else return value.groups.reduce((acc, curr) => acc + numElements(curr.value), 0);
     }
 }

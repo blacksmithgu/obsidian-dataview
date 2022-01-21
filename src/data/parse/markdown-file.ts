@@ -99,7 +99,7 @@ export function addInlineField(fields: Map<string, LiteralValue>, name: string, 
 /** Matches lines of the form "- [ ] <task thing>". */
 export const TASK_REGEX = /^(\s*)[-*]\s*(\[[ Xx\.]?\])?\s*([^-*].*)$/iu;
 /** Matches Obsidian block IDs, which are at the end of the line of the form ^blockid. */
-export const TASK_BLOCK_REGEX = /\^(\S+)$/;
+export const TASK_BLOCK_REGEX = /\^([a-zA-Z0-9]+)$/;
 
 /** Return true if the given predicate is true for the task or any subtasks. */
 export function taskAny(t: Task, f: (t: Task) => boolean): boolean {

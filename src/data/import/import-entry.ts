@@ -1,5 +1,4 @@
 /** Entry-point script used by the index as a web worker. */
-
 import { runImport } from "data/import/import-impl";
 import { Transferable } from "data/transferable";
 

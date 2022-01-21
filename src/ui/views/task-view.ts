@@ -30,6 +30,8 @@ export class DataviewTaskRenderer extends DataviewRefreshableRenderer {
         let result = await asyncTryOrPropogate(() => executeTask(this.query, this.origin, this.index, this.settings));
         if (!result.successful) {
             renderErrorPre(this.container, "Dataview: " + result.error);
+        } else if (this.settings.warnOnEmptyResult && Groupings.numElements(result.value.tasks) == 0) {
+            renderErrorPre(this.container, "Dataview: Query returned 0 results.");
         } else {
             // If there is no grouping going on, group by the file path by default.
             let tasks = result.value.tasks;

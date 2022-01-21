@@ -8,7 +8,7 @@ import {
     PluginSettingTab,
     Setting,
 } from "obsidian";
-import { renderErrorPre, renderValue } from "ui/render";
+import { renderCodeBlock, renderErrorPre, renderValue } from "ui/render";
 import { FullIndex } from "data/index";
 import { Query } from "query/query";
 import { parseField } from "expression/parse";
@@ -81,7 +81,7 @@ export default class DataviewPlugin extends Plugin {
         // Dataview inline-inline query fancy rendering. Runs at a low priority; should apply to Dataview views.
         this.registerPriorityMarkdownPostProcessor(100, async (el, ctx) => {
             // Allow for lame people to disable the pretty rendering.
-            if (!this.settings.prettyRenderInlineFields) return;
+            if (!this.settings.prettyRenderInlineFields || isDataviewDisabled(ctx.sourcePath)) return;
 
             // Handle p, header elements explicitly (opt-in rather than opt-out for now).
             for (let p of el.findAllSelf("p,h1,h2,h3,h4,h5,h6,li,span,th,td"))
@@ -142,6 +142,11 @@ export default class DataviewPlugin extends Plugin {
         component: Component | MarkdownPostProcessorContext,
         sourcePath: string
     ) {
+        if (isDataviewDisabled(sourcePath)) {
+            renderCodeBlock(el, source);
+            return;
+        }
+
         let maybeQuery = tryOrPropogate(() => parseQuery(source));
 
         // In case of parse error, just render the error.
@@ -190,6 +195,11 @@ export default class DataviewPlugin extends Plugin {
         component: Component | MarkdownPostProcessorContext,
         sourcePath: string
     ) {
+        if (isDataviewDisabled(sourcePath)) {
+            renderCodeBlock(el, source, "javascript");
+            return;
+        }
+
         component.addChild(
             new DataviewJSRenderer(source, el, this.app, this.index, sourcePath, this.settings, this.manifest.version)
         );
@@ -201,6 +211,8 @@ export default class DataviewPlugin extends Plugin {
         component: Component | MarkdownPostProcessorContext,
         sourcePath: string
     ) {
+        if (isDataviewDisabled(sourcePath)) return;
+
         // Search for <code> blocks inside this element; for each one, look for things of the form `= ...`.
         let codeblocks = el.querySelectorAll("code");
         for (let index = 0; index < codeblocks.length; index++) {
@@ -547,4 +559,12 @@ async function replaceInlineFields(
 
     container.innerHTML = result;
     return component;
+}
+
+/** Determines if source-path has a `?no-dataview` annotation that disables dataview. */
+function isDataviewDisabled(sourcePath: string): boolean {
+    let questionLocation = sourcePath.lastIndexOf("?");
+    if (questionLocation == -1) return false;
+
+    return sourcePath.substring(questionLocation).contains("no-dataview");
 }

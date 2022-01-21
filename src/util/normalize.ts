@@ -2,6 +2,7 @@ import { DateTime, Duration } from "luxon";
 import { Result } from "api/result";
 import * as P from "parsimmon";
 import emojiRegex from "emoji-regex";
+import { QuerySettings } from "settings";
 
 /** Normalize a duration to all of the proper units. */
 export function normalizeDuration(dur: Duration) {
@@ -112,4 +113,33 @@ const HEADER_CANONICALIZER: P.Parser<string> = P.alt(
  */
 export function normalizeHeaderForLink(header: string): string {
     return HEADER_CANONICALIZER.tryParse(header);
+}
+
+/** Render a DateTime in a minimal format to save space. */
+export function renderMinimalDate(time: DateTime, settings: QuerySettings, locale: string): string {
+    // If there is no relevant time specified, fall back to just rendering the date.
+    if (time.second == 0 && time.minute == 0 && time.hour == 0) {
+        return time.toFormat(settings.defaultDateFormat, { locale });
+    }
+
+    return time.toFormat(settings.defaultDateTimeFormat, { locale });
+}
+
+/** Render a duration in a minimal format to save space. */
+export function renderMinimalDuration(dur: Duration): string {
+    dur = normalizeDuration(dur);
+
+    // TODO: Luxon does not have multi-lingual/locale-aware duration rendering.
+    let result = "";
+    if (dur.years) result += `${dur.years} years, `;
+    if (dur.months) result += `${dur.months} months, `;
+    if (dur.weeks) result += `${dur.weeks} weeks, `;
+    if (dur.days) result += `${dur.days} days, `;
+    if (dur.hours) result += `${dur.hours} hours, `;
+    if (dur.minutes) result += `${dur.minutes} minutes, `;
+    if (dur.seconds) result += `${Math.round(dur.seconds)} seconds, `;
+    if (dur.milliseconds) result += `${Math.round(dur.milliseconds)} ms, `;
+
+    if (result.endsWith(", ")) result = result.substring(0, result.length - 2);
+    return result;
 }

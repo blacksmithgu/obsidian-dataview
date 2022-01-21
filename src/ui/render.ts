@@ -1,9 +1,8 @@
-import { DateTime, Duration } from "luxon";
 import { Component, MarkdownRenderer } from "obsidian";
 import { DataArray } from "api/data-array";
 import { QuerySettings } from "settings";
 import { currentLocale } from "util/locale";
-import { normalizeDuration } from "util/normalize";
+import { renderMinimalDate, renderMinimalDuration } from "util/normalize";
 import { LiteralValue, Values } from "data/value";
 
 /** Make an Obsidian-friendly internal link. */
@@ -87,39 +86,19 @@ export function renderErrorPre(container: HTMLElement, error: string): HTMLEleme
     return pre;
 }
 
+/** Render a static codeblock. */
+export function renderCodeBlock(container: HTMLElement, source: string, language?: string): HTMLElement {
+    let code = container.createEl("code", { cls: ["dataview"] });
+    if (language) code.classList.add("language-" + language);
+    code.appendText(source);
+    return code;
+}
+
 /** Render a span block with an error in it; returns the element to allow for dynamic updating. */
 export function renderErrorSpan(container: HTMLElement, error: string): HTMLElement {
     let pre = container.createEl("span", { cls: ["dataview", "dataview-error"] });
     pre.appendText(error);
     return pre;
-}
-
-/** Render a DateTime in a minimal format to save space. */
-export function renderMinimalDate(time: DateTime, settings: QuerySettings): string {
-    // If there is no relevant time specified, fall back to just rendering the date.
-    if (time.second == 0 && time.minute == 0 && time.hour == 0) {
-        return time.toFormat(settings.defaultDateFormat, { locale: currentLocale() });
-    }
-
-    return time.toFormat(settings.defaultDateTimeFormat, { locale: currentLocale() });
-}
-
-/** Render a duration in a minimal format to save space. */
-export function renderMinimalDuration(dur: Duration): string {
-    dur = normalizeDuration(dur);
-
-    let result = "";
-    if (dur.years) result += `${dur.years} years, `;
-    if (dur.months) result += `${dur.months} months, `;
-    if (dur.weeks) result += `${dur.weeks} weeks, `;
-    if (dur.days) result += `${dur.days} days, `;
-    if (dur.hours) result += `${dur.hours} hours, `;
-    if (dur.minutes) result += `${dur.minutes} minutes, `;
-    if (dur.seconds) result += `${Math.round(dur.seconds)} seconds, `;
-    if (dur.milliseconds) result += `${Math.round(dur.milliseconds)} ms, `;
-
-    if (result.endsWith(", ")) result = result.substring(0, result.length - 2);
-    return result;
 }
 
 export type ValueRenderContext = "root" | "list";
@@ -144,7 +123,7 @@ export async function renderValue(
     if (Values.isNull(field)) {
         await renderCompactMarkdown(settings.renderNullAs, container, originFile, component);
     } else if (Values.isDate(field)) {
-        container.appendText(renderMinimalDate(field, settings));
+        container.appendText(renderMinimalDate(field, settings, currentLocale()));
     } else if (Values.isDuration(field)) {
         container.appendText(renderMinimalDuration(field));
     } else if (Values.isString(field) || Values.isBoolean(field) || Values.isNumber(field)) {
