@@ -20,7 +20,7 @@ export abstract class TAbstractFile {
     parent: TFolder;
 }
 
-/** Tracks file created/modify time as well as file system size. */
+/** Tracks file created/modified time as well as file system size. */
 export interface FileStats {
     /** @public */
     ctime: number;
