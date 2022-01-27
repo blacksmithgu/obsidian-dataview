@@ -63,7 +63,7 @@ const LIBRARY_CONFIG = {
     },
     plugins: getRollupPlugins(
         { tsconfig: "tsconfig-lib.json", typescript: ttypescript },
-        copy({ targets: [{ src: "src/types/*.d.ts", dest: "lib/types" }] })
+        copy({ targets: [{ src: "src/typings/*.d.ts", dest: "lib/typings" }] })
     ),
 };
 
