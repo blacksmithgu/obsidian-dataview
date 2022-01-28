@@ -181,7 +181,7 @@ export class DataviewApi implements DvAPIInterface {
     ///////////////
 
     /** Render a dataview list of the given values. */
-    public list(
+    public async list(
         values: any[] | DataArray<any> | undefined,
         container: HTMLElement,
         component: Component,
@@ -190,11 +190,11 @@ export class DataviewApi implements DvAPIInterface {
         if (!values) return;
         if (DataArray.isDataArray(values)) values = values.array();
 
-        renderList(container, values as any[], component, filePath, this.settings);
+        await renderList(container, values as any[], component, filePath, this.settings);
     }
 
     /** Render a dataview table with the given headers, and the 2D array of values. */
-    public table(
+    public async table(
         headers: string[],
         values: any[][] | DataArray<any> | undefined,
         container: HTMLElement,
@@ -204,7 +204,7 @@ export class DataviewApi implements DvAPIInterface {
         if (!values) values = [];
         if (DataArray.isDataArray(values)) values = values.array();
 
-        renderTable(container, headers, values as any[][], component, filePath, this.settings);
+        await renderTable(container, headers, values as any[][], component, filePath, this.settings);
     }
 
     /** Render a dataview task view with the given tasks. */
