@@ -103,7 +103,7 @@ export interface DvAPIInterface {
         container: HTMLElement,
         component: Component,
         filePath: string
-    ): void;
+    ): Promise<void>;
     /** Render a dataview table with the given headers, and the 2D array of values. */
     table(
         headers: string[],
@@ -111,7 +111,7 @@ export interface DvAPIInterface {
         container: HTMLElement,
         component: Component,
         filePath: string
-    ): void;
+    ): Promise<void>;
     /** Render a dataview task view with the given tasks. */
     taskList(
         tasks: Task[] | DataArray<any>,
