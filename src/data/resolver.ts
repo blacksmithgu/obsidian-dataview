@@ -35,8 +35,10 @@ export function matchingSourcePaths(
             return Result.success(new Set());
         case "link":
             let fullPath = index.metadataCache.getFirstLinkpathDest(source.file, originFile)?.path;
-            if (!fullPath)
-                return Result.failure(`Could not resolve link "${source.file}" during link lookup - does it exist?`);
+            if (!fullPath) {
+                // Look in links which includes unresolved links
+                return Result.success(index.links.getInverse(source.file));
+            }
 
             if (source.direction === "incoming") {
                 // To find all incoming links (i.e., things that link to this), use the index that Obsidian provides.

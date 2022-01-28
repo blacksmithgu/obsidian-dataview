@@ -301,6 +301,10 @@ export function parsePage(file: TFile, cache: MetadataCache, markdownData: Parse
     if (file.path in cache.resolvedLinks) {
         for (let resolved in cache.resolvedLinks[file.path]) links.push(Link.file(resolved));
     }
+    // Also include unresolved links
+    if (file.path in cache.unresolvedLinks) {
+        for (let unresolved in cache.unresolvedLinks[file.path]) links.push(Link.file(unresolved));
+    }
 
     // Merge frontmatter fields with parsed fields.
     for (let [name, values] of markdownData.fields.entries()) {
