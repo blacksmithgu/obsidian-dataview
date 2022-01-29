@@ -9,14 +9,14 @@ import {
     Setting,
 } from "obsidian";
 import { renderCodeBlock, renderErrorPre, renderValue } from "ui/render";
-import { FullIndex } from "data/index";
+import { FullIndex } from "data-index/index";
 import { Query } from "query/query";
 import { parseField } from "expression/parse";
 import { parseQuery } from "query/parse";
 import { canonicalizeVarName, tryOrPropogate } from "util/normalize";
 import { DataviewApi } from "api/plugin-api";
 import { DataviewSettings, DEFAULT_QUERY_SETTINGS, DEFAULT_SETTINGS, QuerySettings } from "settings";
-import { extractInlineFields, parseInlineValue } from "data/parse/inline-field";
+import { extractInlineFields, parseInlineValue } from "data-import/inline-field";
 import { API_NAME, DvAPIInterface } from "./typings/api";
 import { DataviewListRenderer } from "ui/views/list-view";
 import { DataviewTableRenderer } from "ui/views/table-view";

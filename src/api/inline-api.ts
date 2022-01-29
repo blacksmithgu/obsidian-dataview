@@ -1,11 +1,11 @@
 /** Fancy wrappers for the JavaScript API, used both by external plugins AND by the dataview javascript view. */
 
 import { App, Component } from "obsidian";
-import { FullIndex } from "data/index";
+import { FullIndex } from "data-index";
 import { renderValue, renderErrorPre } from "ui/render";
 import { DataviewApi, DataviewIOApi } from "api/plugin-api";
 import { DataviewSettings } from "settings";
-import { DataObject, Link, Values, Task } from "data/value";
+import { DataObject, Link, Values, Task } from "data-model/value";
 import { BoundFunctionImpl, DEFAULT_FUNCTIONS, Functions } from "expression/functions";
 import { Context } from "expression/context";
 import { defaultLinkHandler } from "query/engine";

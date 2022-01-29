@@ -1,95 +1,14 @@
 /** Stores various indices on all files in the vault to make dataview generation fast. */
 import { Result } from "api/result";
-import { DataObject } from "data/value";
+import { DataObject } from "data-model/value";
 import { Component, MetadataCache, TAbstractFile, TFile, TFolder, Vault } from "obsidian";
 import { getParentFolder } from "util/normalize";
-import { PageMetadata } from "data/metadata";
-import { ParsedMarkdown, parsePage } from "data/parse/markdown-file";
+import { PageMetadata } from "data-model/markdown";
+import { ParsedMarkdown, parsePage } from "data-import/markdown-file";
 import { DateTime } from "luxon";
-import { parseCsv } from "data/parse/csv";
-import { FileImporter } from "data/import/import-manager";
+import { parseCsv } from "data-import/csv";
+import { FileImporter } from "data-import/web-worker/import-manager";
 import { IndexEvtFullName, IndexEvtTriggerArgs } from "../typings/events";
-
-const emptySet: Readonly<Set<string>> = Object.freeze(new Set<string>());
-
-/** A generic index which indexes variables of the form key -> value[], allowing both forward and reverse lookups. */
-export class IndexMap {
-    /** Maps key -> values for that key. */
-    map: Map<string, Set<string>>;
-    /** Cached inverse map; maps value -> keys that reference that value. */
-    invMap: Map<string, Set<string>>;
-
-    /** Create a new, empty index map. */
-    public constructor() {
-        this.map = new Map();
-        this.invMap = new Map();
-    }
-
-    /** Returns all values for the given key.  (This is unused except for tests - does it really need to be here?) */
-    public get(key: string): Set<string> {
-        let result = this.map.get(key);
-        if (result) {
-            return new Set(result);
-        } else {
-            return new Set();
-        }
-    }
-
-    /** Returns all keys that reference the given key. Mutating the returned set is not allowed. */
-    public getInverse(value: string): Readonly<Set<string>> {
-        return this.invMap.get(value) || emptySet;
-    }
-
-    public set(key: string, values: Set<string>): this {
-        if (!values.size) {
-            // no need to store if no values
-            this.delete(key);
-            return this;
-        }
-        let oldValues = this.map.get(key);
-        if (oldValues) {
-            for (let value of oldValues) {
-                // Only delete the ones we're not adding back
-                if (!values.has(key)) this.invMap.get(value)?.delete(key);
-            }
-        }
-        this.map.set(key, values);
-        for (let value of values) {
-            if (!this.invMap.has(value)) this.invMap.set(value, new Set([key]));
-            else this.invMap.get(value)?.add(key);
-        }
-        return this;
-    }
-
-    /** Clears all values for the given key so they can be re-added. */
-    public delete(key: string): boolean {
-        let oldValues = this.map.get(key);
-        if (!oldValues) return false;
-
-        this.map.delete(key);
-        for (let value of oldValues) {
-            this.invMap.get(value)?.delete(key);
-        }
-
-        return true;
-    }
-
-    /** Rename all references to the given key to a new value. */
-    public rename(oldKey: string, newKey: string): boolean {
-        let oldValues = this.map.get(oldKey);
-        if (!oldValues) return false;
-
-        this.delete(oldKey);
-        this.set(newKey, oldValues);
-        return true;
-    }
-
-    /** Clear the entire index. */
-    public clear() {
-        this.map.clear();
-        this.invMap.clear();
-    }
-}
 
 /** Aggregate index which has several sub-indices and will initialize all of them. */
 export class FullIndex extends Component {
@@ -135,7 +54,7 @@ export class FullIndex extends Component {
         // Prefix listens to file creation/deletion/rename, and not modifies, so we let it set up it's own listeners.
         this.addChild((this.prefix = PrefixIndex.create(this.vault, () => this.touch())));
         // The CSV cache also needs to listen to filesystem events for cache invalidation.
-        this.csv = new CsvCache(this.vault);
+        this.addChild((this.csv = new CsvCache(this.vault)));
     }
 
     trigger(...args: IndexEvtTriggerArgs): void {
@@ -289,7 +208,7 @@ export namespace PathFilters {
  * Caches in-use CSVs to make high-frequency reloads (such as actively looking at a document
  * that uses CSV) fast.
  */
-export class CsvCache {
+export class CsvCache extends Component {
     public static CACHE_EXPIRY_SECONDS: number = 5 * 60;
 
     // Cache of loaded CSVs; old entries will periodically be removed
@@ -298,7 +217,22 @@ export class CsvCache {
     cacheClearInterval: number;
 
     public constructor(public vault: Vault) {
+        super();
+
         this.cache = new Map();
+
+        // Force-flush the cache on CSV file deletions or modifications.
+        this.registerEvent(
+            this.vault.on("modify", file => {
+                if (file instanceof TFile && PathFilters.csv(file.path)) this.cache.delete(file.path);
+            })
+        );
+
+        this.registerEvent(
+            this.vault.on("delete", file => {
+                if (file instanceof TFile && PathFilters.csv(file.path)) this.cache.delete(file.path);
+            })
+        );
     }
 
     /** Load a CSV file from the cache, doing a fresh load if it has not been loaded. */
@@ -309,14 +243,14 @@ export class CsvCache {
         let existing = this.cache.get(path);
         if (existing) return Result.success(existing.data);
         else {
-            let value = await this.load(path);
+            let value = await this.loadInternal(path);
             if (value.successful) this.cache.set(path, { data: value.value, loadTime: DateTime.now() });
             return value;
         }
     }
 
     /** Do the actual raw loading of a CSV path (which is either local or an HTTP request). */
-    private async load(path: string): Promise<Result<DataObject[], string>> {
+    private async loadInternal(path: string): Promise<Result<DataObject[], string>> {
         // Allow http://, https://, and file:// prefixes which use AJAX.
         if (path.startsWith("http://") || path.startsWith("https://") || path.startsWith("file://")) {
             try {
@@ -352,4 +286,85 @@ export class CsvCache {
 
         keysToRemove.forEach(key => this.cache.delete(key));
     }
+}
+
+/** A generic index which indexes variables of the form key -> value[], allowing both forward and reverse lookups. */
+export class IndexMap {
+    /** Maps key -> values for that key. */
+    map: Map<string, Set<string>>;
+    /** Cached inverse map; maps value -> keys that reference that value. */
+    invMap: Map<string, Set<string>>;
+
+    /** Create a new, empty index map. */
+    public constructor() {
+        this.map = new Map();
+        this.invMap = new Map();
+    }
+
+    /** Returns all values for the given key.  (This is unused except for tests - does it really need to be here?) */
+    public get(key: string): Set<string> {
+        let result = this.map.get(key);
+        if (result) {
+            return new Set(result);
+        } else {
+            return new Set();
+        }
+    }
+
+    /** Returns all keys that reference the given key. Mutating the returned set is not allowed. */
+    public getInverse(value: string): Readonly<Set<string>> {
+        return this.invMap.get(value) || IndexMap.EMPTY_SET;
+    }
+
+    public set(key: string, values: Set<string>): this {
+        if (!values.size) {
+            // no need to store if no values
+            this.delete(key);
+            return this;
+        }
+        let oldValues = this.map.get(key);
+        if (oldValues) {
+            for (let value of oldValues) {
+                // Only delete the ones we're not adding back
+                if (!values.has(key)) this.invMap.get(value)?.delete(key);
+            }
+        }
+        this.map.set(key, values);
+        for (let value of values) {
+            if (!this.invMap.has(value)) this.invMap.set(value, new Set([key]));
+            else this.invMap.get(value)?.add(key);
+        }
+        return this;
+    }
+
+    /** Clears all values for the given key so they can be re-added. */
+    public delete(key: string): boolean {
+        let oldValues = this.map.get(key);
+        if (!oldValues) return false;
+
+        this.map.delete(key);
+        for (let value of oldValues) {
+            this.invMap.get(value)?.delete(key);
+        }
+
+        return true;
+    }
+
+    /** Rename all references to the given key to a new value. */
+    public rename(oldKey: string, newKey: string): boolean {
+        let oldValues = this.map.get(oldKey);
+        if (!oldValues) return false;
+
+        this.delete(oldKey);
+        this.set(newKey, oldValues);
+        return true;
+    }
+
+    /** Clear the entire index. */
+    public clear() {
+        this.map.clear();
+        this.invMap.clear();
+    }
+
+    static EMPTY_SET: Readonly<Set<string>> = Object.freeze(new Set<string>());
 }

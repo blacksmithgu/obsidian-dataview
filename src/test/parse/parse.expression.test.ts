@@ -2,8 +2,8 @@ import { BinaryOpField, Fields, LiteralField } from "expression/field";
 import { EXPRESSION } from "expression/parse";
 import { DateTime, Duration } from "luxon";
 import { Success } from "parsimmon";
-import { Sources } from "data/source";
-import { Link, Values } from "data/value";
+import { Sources } from "data-index/source";
+import { Values, Link } from "data-model/value";
 
 // <-- Integer Literals -->
 

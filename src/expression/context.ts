@@ -1,6 +1,6 @@
 /** Core implementation of the query language evaluation engine. */
 
-import { DataObject, LiteralValue, Values } from "data/value";
+import { DataObject, LiteralValue, Values } from "data-model/value";
 import { Result } from "api/result";
 import { BinaryOpHandler, createBinaryOps } from "./binaryop";
 import { Field, Fields } from "./field";

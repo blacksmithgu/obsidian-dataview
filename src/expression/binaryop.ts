@@ -1,5 +1,5 @@
 /** Provides a global dispatch table for evaluating binary operators, including comparison. */
-import { LiteralRepr, LiteralType, LiteralValue, Values } from "data/value";
+import { LiteralRepr, LiteralType, LiteralValue, Values } from "data-model/value";
 import { normalizeDuration } from "util/normalize";
 import { Result } from "api/result";
 import { BinaryOp } from "expression/field";

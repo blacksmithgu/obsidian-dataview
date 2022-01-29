@@ -1,4 +1,4 @@
-import { FullIndex } from "data";
+import { FullIndex } from "data-index";
 import { App, MarkdownRenderChild } from "obsidian";
 import { DataviewSettings } from "settings";
 
@@ -23,7 +23,7 @@ export abstract class DataviewRefreshableRenderer extends MarkdownRenderChild {
 
     maybeRefresh = () => {
         // If the index revision has changed recently, then queue a reload.
-        // But only if we're mounted in the DOM and auto-refreshing is active
+        // But only if we're mounted in the DOM and auto-refreshing is active.
         if (this.lastReload != this.index.revision && this.container.isShown() && this.settings.refreshEnabled) {
             this.lastReload = this.index.revision;
             this.render();

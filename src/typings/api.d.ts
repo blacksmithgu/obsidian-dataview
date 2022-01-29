@@ -1,7 +1,7 @@
 import compareVersions from "compare-versions";
 import { App, Component } from "obsidian";
-import { FullIndex } from "../data";
-import { DataObject, Link, LiteralValue, Values, Task } from "../data/value";
+import { FullIndex } from "../data-index";
+import { DataObject, Link, LiteralValue, Values, Task } from "../data-model/value";
 import { DataviewSettings } from "../settings";
 import { DataArray } from "../api/data-array";
 import { BoundFunctionImpl } from "../expression/functions";

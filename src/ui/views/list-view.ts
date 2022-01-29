@@ -1,4 +1,4 @@
-import { FullIndex } from "data";
+import { FullIndex } from "data-index";
 import { LiteralValue } from "index";
 import { App } from "obsidian";
 import { executeList } from "query/engine";

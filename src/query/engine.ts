@@ -1,10 +1,10 @@
 /**
  * Takes a full query and a set of indices, and (hopefully quickly) returns all relevant files.
  */
-import { FullIndex } from "data/index";
+import { FullIndex } from "data-index/index";
 import { Context, LinkHandler } from "expression/context";
-import { resolveSource, Datarow, matchingSourcePaths } from "data/resolver";
-import { DataObject, LiteralValue, Values, Task, Grouping, Link } from "data/value";
+import { resolveSource, Datarow, matchingSourcePaths } from "data-index/resolver";
+import { DataObject, Link, LiteralValue, Values, Task, Grouping } from "data-model/value";
 import { CalendarQuery, ListQuery, Query, QueryOperation, TableQuery } from "query/query";
 import { Result } from "api/result";
 import { Field } from "expression/field";

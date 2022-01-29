@@ -14,7 +14,7 @@ import {
     SortByStep,
     WhereStep,
 } from "./query";
-import { Source, Sources } from "data/source";
+import { Source, Sources } from "data-index/source";
 import { Fields } from "expression/field";
 import { DEFAULT_QUERY_SETTINGS } from "settings";
 import { Result } from "api/result";

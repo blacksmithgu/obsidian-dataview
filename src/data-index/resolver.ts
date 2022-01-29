@@ -1,9 +1,9 @@
 /** Collect data matching a source query. */
 
-import { FullIndex, PathFilters } from "data/index";
+import { FullIndex, PathFilters } from "data-index/index";
 import { Result } from "api/result";
 import { Source } from "./source";
-import { DataObject, Link, LiteralValue } from "./value";
+import { DataObject, Link, LiteralValue } from "../data-model/value";
 
 /** A data row which has an ID and associated data (like page link / page data). */
 export type Datarow<T> = { id: LiteralValue; data: T };

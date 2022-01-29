@@ -1,7 +1,4 @@
-import { IndexMap } from "data/index";
-
-// TODO: Replace this with a mock that actually works when expanding vault tests.
-jest.mock("data/import/import-manager");
+import { IndexMap } from "data-index/index";
 
 test("Simple Set/Get", () => {
     let index = new IndexMap();

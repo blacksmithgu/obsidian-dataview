@@ -1,7 +1,7 @@
 import { getExtension, getFileTitle, getParentFolder, stripTime } from "util/normalize";
 import { DateTime } from "luxon";
-import type { FullIndex } from "data/index";
-import { Link, LiteralValue, Task } from "data/value";
+import type { FullIndex } from "data-index/index";
+import { LiteralValue, Link, Task } from "data-model/value";
 
 /** All extracted markdown file metadata obtained from a file. */
 export class PageMetadata {

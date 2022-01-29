@@ -1,10 +1,10 @@
 import { Vault, MarkdownRenderer, Component } from "obsidian";
-import { TASK_REGEX } from "data/parse/markdown-file";
-import { Grouping, Task } from "data/value";
+import { TASK_REGEX } from "data-import/markdown-file";
+import { Grouping, Task } from "data-model/value";
 import { renderValue } from "ui/render";
 import { QuerySettings } from "settings";
 import { DateTime } from "luxon";
-import { setInlineField } from "data/parse/inline-field";
+import { setInlineField } from "data-import/inline-field";
 
 /**
  * Render a task grouping (indenting nested groupings for clarity). This will automatically bind the tasks to be checkable,

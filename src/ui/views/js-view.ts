@@ -1,5 +1,5 @@
 import { asyncEvalInContext, makeApiContext } from "api/inline-api";
-import { FullIndex } from "data";
+import { FullIndex } from "data-index";
 import { App } from "obsidian";
 import { DataviewSettings } from "settings";
 import { renderErrorPre, renderValue } from "ui/render";

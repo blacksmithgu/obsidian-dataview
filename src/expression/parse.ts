@@ -1,8 +1,8 @@
 import { DateTime, Duration } from "luxon";
-import { Link, LiteralValue } from "data/value";
+import { LiteralValue, Link } from "data-model/value";
 import * as P from "parsimmon";
 import { BinaryOp, Field, Fields, LambdaField, ListField, LiteralField, ObjectField, VariableField } from "./field";
-import { FolderSource, NegatedSource, Source, SourceOp, Sources, TagSource, CsvSource } from "data/source";
+import { FolderSource, NegatedSource, Source, SourceOp, Sources, TagSource, CsvSource } from "data-index/source";
 import { normalizeDuration } from "util/normalize";
 import { Result } from "api/result";
 import emojiRegex from "emoji-regex";

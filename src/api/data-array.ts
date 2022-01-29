@@ -1,4 +1,4 @@
-import { Values } from "data/value";
+import { Values } from "data-model/value";
 import { QuerySettings } from "settings";
 
 /** A function which maps an array element to some value. */

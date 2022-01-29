@@ -1,27 +1,11 @@
-import { Link, Task, Values } from "data/value";
+import { Task, Link, Values } from "data-model/value";
 import { DateTime, Duration } from "luxon";
 
-/** An encoded type which can be transfered across threads. */
-export type TransferableValue =
-    | null
-    | undefined
-    | number
-    | string
-    | boolean
-    | Array<TransferableValue>
-    | Record<string, any>
-    | Map<string, TransferableValue>
-    | Set<TransferableValue>
-    | {
-          "___transfer-type": "date" | "duration" | "link" | "task";
-          value: Record<string, TransferableValue>;
-          options?: Record<string, TransferableValue>;
-      };
-
+/** Simplifies passing dataview values across the JS web worker barrier. */
 export namespace Transferable {
-    /** Convert a literal value to a serializer-friendly transferable value. Does not work for all types. */
-    export function transferable(value: any): TransferableValue {
-        // Handle non-dataview values first.
+    /** Convert a literal value to a serializer-friendly transferable value. */
+    export function transferable(value: any): any {
+        // Handle simple universal types first.
         if (value instanceof Map) {
             let copied = new Map();
             for (let [key, val] of value.entries()) copied.set(transferable(key), transferable(val));
@@ -31,6 +15,9 @@ export namespace Transferable {
             for (let val of value) copied.add(transferable(val));
             return copied;
         }
+
+        // Then a few dataview-ish types.
+        if (value instanceof Task) return { "___transfer-type": "task", value: transferable(value.toObject(false)) };
 
         let wrapped = Values.wrapValue(value);
         if (wrapped === undefined) throw Error("Unrecognized transferable value: " + value);
@@ -51,21 +38,17 @@ export namespace Transferable {
                 return { "___transfer-type": "duration", value: transferable(wrapped.value.toObject()) };
             case "array":
                 return wrapped.value.map(v => transferable(v));
+            case "link":
+                return { "___transfer-type": "link", value: transferable(wrapped.value.toObject()) };
             case "object":
                 let result: Record<string, any> = {};
                 for (let [key, value] of Object.entries(wrapped.value)) result[key] = transferable(value);
                 return result;
-            case "link":
-                return { "___transfer-type": "link", value: transferable(wrapped.value.toObject()) };
-            case "task":
-                return { "___transfer-type": "task", value: transferable(wrapped.value.toObject(false)) };
-            default:
-                throw Error("Unrecognized transferable literal value: " + value);
         }
     }
 
     /** Convert a transferable value back to a literal value we can work with. */
-    export function value(transferable: TransferableValue): any {
+    export function value(transferable: any): any {
         if (transferable === null) {
             return null;
         } else if (transferable === undefined) {

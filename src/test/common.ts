@@ -1,4 +1,4 @@
-import { LiteralValue } from "data/value";
+import { LiteralValue } from "data-model/value";
 import { Context, LinkHandler } from "expression/context";
 import { EXPRESSION } from "expression/parse";
 import { DEFAULT_QUERY_SETTINGS } from "settings";

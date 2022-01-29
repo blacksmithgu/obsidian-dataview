@@ -1,4 +1,4 @@
-import { FullIndex } from "data";
+import { FullIndex } from "data-index";
 import { Field } from "expression/field";
 import { App } from "obsidian";
 import { executeInline } from "query/engine";

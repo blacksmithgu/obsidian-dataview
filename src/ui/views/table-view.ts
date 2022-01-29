@@ -1,5 +1,5 @@
-import { FullIndex } from "data";
-import { LiteralValue } from "index";
+import { FullIndex } from "data-index";
+import { LiteralValue } from "data-model/value";
 import { App } from "obsidian";
 import { executeTable } from "query/engine";
 import { Query, TableQuery } from "query/query";

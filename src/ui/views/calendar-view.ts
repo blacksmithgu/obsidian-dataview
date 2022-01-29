@@ -1,4 +1,4 @@
-import { FullIndex } from "data";
+import { FullIndex } from "data-index";
 import { Link } from "index";
 import { App } from "obsidian";
 import { Calendar, ICalendarSource, IDayMetadata, IDot } from "obsidian-calendar-ui";

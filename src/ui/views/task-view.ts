@@ -1,5 +1,5 @@
-import { FullIndex } from "data";
-import { Groupings, Task, Link } from "data/value";
+import { FullIndex } from "data-index";
+import { Groupings, Link, Task } from "data-model/value";
 import { App, Component, Vault } from "obsidian";
 import { executeTask } from "query/engine";
 import { Query } from "query/query";

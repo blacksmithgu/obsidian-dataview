@@ -11,10 +11,10 @@ export type {
     LiteralRepr,
     WrappedLiteralValue,
     LiteralValueWrapper,
-} from "data/value";
+} from "data-model/value";
 
 // Dataview Index.
-export type { FullIndex, PrefixIndex, IndexMap } from "data/index";
+export type { FullIndex, PrefixIndex, IndexMap } from "data-index/index";
 
 import "obsidian";
 import { App } from "obsidian";

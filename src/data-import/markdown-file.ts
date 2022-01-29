@@ -1,8 +1,8 @@
 /** Importer for markdown documents. */
 
-import { extractInlineFields, extractSpecialTaskFields, parseInlineValue } from "data/parse/inline-field";
-import { PageMetadata } from "data/metadata";
-import { LiteralValue, Values, Task, Link } from "data/value";
+import { extractInlineFields, extractSpecialTaskFields, parseInlineValue } from "data-import/inline-field";
+import { PageMetadata } from "data-model/markdown";
+import { LiteralValue, Link, Values, Task } from "data-model/value";
 import { EXPRESSION } from "expression/parse";
 import { DateTime } from "luxon";
 import {

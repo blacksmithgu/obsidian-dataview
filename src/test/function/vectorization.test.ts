@@ -1,4 +1,4 @@
-import { LiteralValue } from "data/value";
+import { LiteralValue } from "data-model/value";
 import { parseEval } from "test/common";
 
 describe("Single List Argument", () => {

@@ -97,123 +97,6 @@ export class Task {
     }
 }
 
-/** An Obsidian link with all associated metadata. */
-export class Link {
-    /** The file path this link points to. */
-    public path: string;
-    /** The display name associated with the link. */
-    public display?: string;
-    /** The block ID or header this link points to within a file, if relevant. */
-    public subpath?: string;
-    /** Is this link an embedded link (!)? */
-    public embed: boolean;
-    /** The type of this link, which determines what 'subpath' refers to, if anything. */
-    public type: "file" | "header" | "block";
-
-    /** Create a link to a specific file. */
-    public static file(path: string, embed: boolean = false, display?: string) {
-        return new Link({
-            path,
-            embed,
-            display,
-            subpath: undefined,
-            type: "file",
-        });
-    }
-
-    /** Create a link to a specific file and header in that file. */
-    public static header(path: string, header: string, embed?: boolean, display?: string) {
-        // Headers need to be normalized to alpha-numeric & with extra spacing removed.
-        return new Link({
-            path,
-            embed,
-            display,
-            subpath: normalizeHeaderForLink(header),
-            type: "header",
-        });
-    }
-
-    /** Create a link to a specific file and block in that file. */
-    public static block(path: string, blockId: string, embed?: boolean, display?: string) {
-        return new Link({
-            path,
-            embed,
-            display,
-            subpath: blockId,
-            type: "block",
-        });
-    }
-
-    public static fromObject(object: Record<string, any>) {
-        return new Link(object);
-    }
-
-    private constructor(fields: Partial<Link>) {
-        Object.assign(this, fields);
-    }
-
-    /** Checks for link equality (i.e., that the links are pointing to the same exact location). */
-    public equals(other: Link): boolean {
-        return this.path == other.path && this.type == other.type && this.subpath == other.subpath;
-    }
-
-    public toString(): string {
-        return this.markdown();
-    }
-
-    /** Convert this link to a raw object which */
-    public toObject(): Record<string, any> {
-        return { path: this.path, type: this.type, subpath: this.subpath, display: this.display, embed: this.embed };
-    }
-
-    /** Return a new link which points to the same location but with a new display value. */
-    public withDisplay(display?: string) {
-        return new Link(Object.assign({}, this, { display }));
-    }
-
-    /** Convert a file link into a link to a specific header. */
-    public withHeader(header: string) {
-        return Link.header(this.path, header, this.embed, this.display);
-    }
-
-    /** Convert any link into a link to its file. */
-    public toFile() {
-        return Link.file(this.path, this.embed, this.display);
-    }
-
-    /** Convert this link into an embedded link. */
-    public toEmbed(): Link {
-        if (this.embed) return this;
-        else {
-            let link = new Link(this);
-            link.embed = true;
-            return link;
-        }
-    }
-
-    /** Convert this link to markdown so it can be rendered. */
-    public markdown(): string {
-        let result = (this.embed ? "!" : "") + "[[" + this.path;
-
-        if (this.type == "header") result += "#" + this.subpath;
-        else if (this.type == "block") result += "#^" + this.subpath;
-
-        if (this.display) result += "|" + this.display;
-        else {
-            result += "|" + getFileTitle(this.path);
-            if (this.type == "header" || this.type == "block") result += " > " + this.subpath;
-        }
-
-        result += "]]";
-        return result;
-    }
-
-    /** The stripped name of the file this link points into. */
-    public fileName(): string {
-        return getFileTitle(this.path).replace(".md", "");
-    }
-}
-
 /** Shorthand for a mapping from keys to values. */
 export type DataObject = { [key: string]: LiteralValue };
 /** The literal types supported by the query engine. */
@@ -224,7 +107,6 @@ export type LiteralType =
     | "date"
     | "duration"
     | "link"
-    | "task"
     | "array"
     | "object"
     | "html"
@@ -238,7 +120,6 @@ export type LiteralValue =
     | DateTime
     | Duration
     | Link
-    | Task
     | Array<LiteralValue>
     | DataObject
     | HTMLElement
@@ -265,8 +146,6 @@ export type LiteralRepr<T extends LiteralType> = T extends "boolean"
     ? null
     : T extends "link"
     ? Link
-    : T extends "task"
-    ? Task
     : T extends "array"
     ? Array<LiteralValue>
     : T extends "object"
@@ -285,7 +164,6 @@ export type WrappedLiteralValue =
     | LiteralValueWrapper<"date">
     | LiteralValueWrapper<"duration">
     | LiteralValueWrapper<"link">
-    | LiteralValueWrapper<"task">
     | LiteralValueWrapper<"array">
     | LiteralValueWrapper<"object">
     | LiteralValueWrapper<"html">
@@ -316,8 +194,6 @@ export namespace Values {
             case "null":
                 return "" + wrapped.value;
             case "link":
-                return wrapped.value.markdown();
-            case "task":
                 return wrapped.value.markdown();
             case "function":
                 return "<function>";
@@ -357,7 +233,6 @@ export namespace Values {
         else if (isHtml(val)) return { type: "html", value: val };
         else if (isArray(val)) return { type: "array", value: val };
         else if (isLink(val)) return { type: "link", value: val };
-        else if (isTask(val)) return { type: "task", value: val };
         else if (isFunction(val)) return { type: "function", value: val };
         else if (isObject(val)) return { type: "object", value: val };
         else return undefined;
@@ -418,15 +293,6 @@ export namespace Values {
 
                 // Since both have a subpath, compare by subpath.
                 return (link1.subpath ?? "").localeCompare(link2.subpath ?? "");
-            case "task":
-                let task1 = wrap1.value;
-                let task2 = wrap2.value as Task;
-
-                // Use object comparison & compare the unique identifiers (path, line, and text as backup).
-                return compareValue(
-                    { path: task1.path, line: task1.line, text: task1.text },
-                    { path: task2.path, line: task2.line, text: task2.text }
-                );
             case "date":
                 return wrap1.value < (wrap2.value as DateTime)
                     ? -1
@@ -489,8 +355,6 @@ export namespace Values {
                 return wrapped.value;
             case "link":
                 return !!wrapped.value.path;
-            case "task":
-                return wrapped.value.text.length > 0;
             case "date":
                 return wrapped.value.toMillis() != 0;
             case "duration":
@@ -555,10 +419,6 @@ export namespace Values {
         return val instanceof Link;
     }
 
-    export function isTask(val: any): val is Task {
-        return val instanceof Task;
-    }
-
     export function isHtml(val: any): val is HTMLElement {
         if (typeof HTMLElement !== "undefined") {
             return val instanceof HTMLElement;
@@ -569,13 +429,7 @@ export namespace Values {
 
     export function isObject(val: any): val is Record<string, any> {
         return (
-            typeof val == "object" &&
-            !isHtml(val) &&
-            !isArray(val) &&
-            !isDuration(val) &&
-            !isDate(val) &&
-            !isLink(val) &&
-            !isTask(val)
+            typeof val == "object" && !isHtml(val) && !isArray(val) && !isDuration(val) && !isDate(val) && !isLink(val)
         );
     }
 
@@ -596,5 +450,129 @@ export namespace Groupings {
     export function numElements<T>(value: Grouping<T[]>): number {
         if (value.type == "base") return value.value.length;
         else return value.groups.reduce((acc, curr) => acc + numElements(curr.value), 0);
+    }
+}
+
+//////////
+// LINK //
+//////////
+
+/** The Obsidian 'link', used for uniquely describing a file, header, or block. */
+export class Link {
+    /** The file path this link points to. */
+    public path: string;
+    /** The display name associated with the link. */
+    public display?: string;
+    /** The block ID or header this link points to within a file, if relevant. */
+    public subpath?: string;
+    /** Is this link an embedded link (!)? */
+    public embed: boolean;
+    /** The type of this link, which determines what 'subpath' refers to, if anything. */
+    public type: "file" | "header" | "block";
+
+    /** Create a link to a specific file. */
+    public static file(path: string, embed: boolean = false, display?: string) {
+        return new Link({
+            path,
+            embed,
+            display,
+            subpath: undefined,
+            type: "file",
+        });
+    }
+
+    /** Create a link to a specific file and header in that file. */
+    public static header(path: string, header: string, embed?: boolean, display?: string) {
+        // Headers need to be normalized to alpha-numeric & with extra spacing removed.
+        return new Link({
+            path,
+            embed,
+            display,
+            subpath: normalizeHeaderForLink(header),
+            type: "header",
+        });
+    }
+
+    /** Create a link to a specific file and block in that file. */
+    public static block(path: string, blockId: string, embed?: boolean, display?: string) {
+        return new Link({
+            path,
+            embed,
+            display,
+            subpath: blockId,
+            type: "block",
+        });
+    }
+
+    public static fromObject(object: Record<string, any>) {
+        return new Link(object);
+    }
+
+    private constructor(fields: Partial<Link>) {
+        Object.assign(this, fields);
+    }
+
+    /** Checks for link equality (i.e., that the links are pointing to the same exact location). */
+    public equals(other: Link): boolean {
+        return this.path == other.path && this.type == other.type && this.subpath == other.subpath;
+    }
+
+    /** Convert this link to it's markdown representation. */
+    public toString(): string {
+        return this.markdown();
+    }
+
+    /** Convert this link to a raw object which is serialization-friendly. */
+    public toObject(): Record<string, any> {
+        return { path: this.path, type: this.type, subpath: this.subpath, display: this.display, embed: this.embed };
+    }
+
+    /** Return a new link which points to the same location but with a new display value. */
+    public withDisplay(display?: string) {
+        return new Link(Object.assign({}, this, { display }));
+    }
+
+    /** Convert a file link into a link to a specific header. */
+    public withHeader(header: string) {
+        return Link.header(this.path, header, this.embed, this.display);
+    }
+
+    /** Convert any link into a link to its file. */
+    public toFile() {
+        return Link.file(this.path, this.embed, this.display);
+    }
+
+    /** Convert this link into an embedded link. */
+    public toEmbed(): Link {
+        if (this.embed) {
+            return this;
+        } else {
+            let link = new Link(this);
+            link.embed = true;
+            return link;
+        }
+    }
+
+    /** Convert this link to markdown so it can be rendered. */
+    public markdown(): string {
+        let result = (this.embed ? "!" : "") + "[[" + this.path;
+
+        if (this.type == "header") result += "#" + this.subpath;
+        else if (this.type == "block") result += "#^" + this.subpath;
+
+        if (this.display) {
+            result += "|" + this.display;
+        } else {
+            result += "|" + getFileTitle(this.path);
+            if (this.type == "header" || this.type == "block") result += " > " + this.subpath;
+        }
+
+        result += "]]";
+        return result;
+    }
+
+    /** The stripped name of the file this link points to. */
+    public fileName(): string {
+        return getFileTitle(this.path).replace(".md", "");
     }
 }

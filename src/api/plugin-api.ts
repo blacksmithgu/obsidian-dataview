@@ -1,10 +1,10 @@
 /** The general, externally accessible plugin API (available at `app.plugins.plugins.dataview.api`). */
 
 import { App, Component } from "obsidian";
-import { FullIndex } from "data";
-import { matchingSourcePaths } from "data/resolver";
-import { Sources } from "data/source";
-import { DataObject, Link, LiteralValue, Values, Task, Groupings } from "data/value";
+import { FullIndex } from "data-index/index";
+import { matchingSourcePaths } from "data-index/resolver";
+import { Sources } from "data-index/source";
+import { DataObject, Link, LiteralValue, Values, Task, Groupings } from "data-model/value";
 import { EXPRESSION } from "expression/parse";
 import { renderList, renderTable, renderValue } from "ui/render";
 import { DataviewSettings } from "settings";

@@ -3,7 +3,7 @@ import { DataArray } from "api/data-array";
 import { QuerySettings } from "settings";
 import { currentLocale } from "util/locale";
 import { renderMinimalDate, renderMinimalDuration } from "util/normalize";
-import { LiteralValue, Values } from "data/value";
+import { LiteralValue, Values } from "data-model/value";
 
 /** Make an Obsidian-friendly internal link. */
 export function createAnchor(text: string, target: string, internal: boolean): HTMLAnchorElement {
@@ -164,7 +164,7 @@ export async function renderValue(
         }
     } else if (Values.isObject(field)) {
         // Don't render classes in case they have recursive references; spoopy.
-        if (!Values.isTask(field) && field?.constructor?.name && field?.constructor?.name != "Object") {
+        if (field?.constructor?.name && field?.constructor?.name != "Object") {
             container.appendText(`<${field.constructor.name}>`);
             return;
         }

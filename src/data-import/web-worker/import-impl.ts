@@ -1,5 +1,5 @@
 /** Actual import implementation backend. This must remain separate from `import-entry` since it is used without web workers. */
-import { ParsedMarkdown, parseMarkdown } from "data/parse/markdown-file";
+import { ParsedMarkdown, parseMarkdown } from "data-import/markdown-file";
 import { CachedMetadata } from "obsidian";
 
 export function runImport(path: string, contents: string, metadata: CachedMetadata): ParsedMarkdown {

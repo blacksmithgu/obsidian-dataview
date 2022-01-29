@@ -1,7 +1,7 @@
 /** Parse inline fields and other embedded metadata in a line. */
 
 import { EXPRESSION } from "expression/parse";
-import { LiteralValue, Values } from "data/value";
+import { LiteralValue, Values } from "data-model/value";
 import { DateTime } from "luxon";
 
 /** A parsed inline field. */

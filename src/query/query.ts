@@ -1,5 +1,5 @@
 /** Provides an AST for complex queries. */
-import { Source } from "data/source";
+import { Source } from "data-index/source";
 import { Field } from "expression/field";
 
 /** The supported query types (corresponding to view types). */
