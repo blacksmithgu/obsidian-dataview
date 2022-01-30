@@ -1,5 +1,5 @@
 /** Provides a global dispatch table for evaluating binary operators, including comparison. */
-import { LiteralRepr, LiteralType, LiteralValue, Values } from "data-model/value";
+import { LiteralRepr, LiteralType, Literal, Values } from "data-model/value";
 import { normalizeDuration } from "util/normalize";
 import { Result } from "api/result";
 import { BinaryOp } from "expression/field";
@@ -10,19 +10,15 @@ export type LiteralTypeOrAll = LiteralType | "*";
 
 /** Maps a literal type or the catch-all '*'. */
 export type LiteralReprAll<T extends LiteralTypeOrAll> = T extends "*"
-    ? LiteralValue
+    ? Literal
     : T extends LiteralType
     ? LiteralRepr<T>
     : any;
 
 /** An implementation for a binary operator. */
-export type BinaryOpImpl<A extends LiteralValue, B extends LiteralValue> = (
-    first: A,
-    second: B,
-    ctx: Context
-) => LiteralValue;
+export type BinaryOpImpl<A extends Literal, B extends Literal> = (first: A, second: B, ctx: Context) => Literal;
 /** An implementation of a comparator (returning a number) which then automatically defines all of the comparison operators. */
-export type CompareImpl<T extends LiteralValue> = (first: T, second: T, ctx: Context) => number;
+export type CompareImpl<T extends Literal> = (first: T, second: T, ctx: Context) => number;
 
 /** Provides implementations for binary operators on two types using a registry. */
 export class BinaryOpHandler {
@@ -66,7 +62,7 @@ export class BinaryOpHandler {
     }
 
     /** Attempt to evaluate the given binary operator on the two literal fields. */
-    public evaluate(op: BinaryOp, left: LiteralValue, right: LiteralValue, ctx: Context): Result<LiteralValue, string> {
+    public evaluate(op: BinaryOp, left: Literal, right: Literal, ctx: Context): Result<Literal, string> {
         let leftType = Values.typeOf(left);
         let rightType = Values.typeOf(right);
         if (!leftType) return Result.failure(`Unrecognized value '${left}'`);
@@ -126,7 +122,7 @@ export function createBinaryOps(linkNormalizer: (x: string) => string): BinaryOp
             .register("duration", "+", "duration", (a, b) => normalizeDuration(a.plus(b)))
             .register("duration", "-", "duration", (a, b) => normalizeDuration(a.minus(b)))
             // Array operations.
-            .register("array", "+", "array", (a, b) => ([] as LiteralValue[]).concat(a).concat(b))
+            .register("array", "+", "array", (a, b) => ([] as Literal[]).concat(a).concat(b))
             // Object operations.
             .register("object", "+", "object", (a, b) => Object.assign({}, a, b))
     );

@@ -1,7 +1,7 @@
 /** Parse inline fields and other embedded metadata in a line. */
 
 import { EXPRESSION } from "expression/parse";
-import { LiteralValue, Values } from "data-model/value";
+import { Literal, Values } from "data-model/value";
 import { DateTime } from "luxon";
 
 /** A parsed inline field. */
@@ -98,7 +98,7 @@ function findSpecificInlineField(line: string, start: number): InlineField | und
 }
 
 /** Parse a textual inline field value into something we can work with. */
-export function parseInlineValue(value: string): LiteralValue {
+export function parseInlineValue(value: string): Literal {
     // The stripped literal field parser understands all of the non-array/non-object fields and can parse them for us.
     // Inline field objects are not currently supported; inline array objects have to be handled by the parser
     // separately.
@@ -140,7 +140,7 @@ export const DONE_DATE_REGEX = /\u{2705}\s*(\d{4}-\d{2}-\d{2})/u;
 /** Parse special completed/due/done task fields which are marked via emoji. */
 export function extractSpecialTaskFields(
     line: string,
-    annotations?: Record<string, LiteralValue>
+    annotations?: Record<string, Literal>
 ): {
     created?: DateTime;
     due?: DateTime;

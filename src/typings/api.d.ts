@@ -1,7 +1,7 @@
 import compareVersions from "compare-versions";
 import { App, Component } from "obsidian";
 import { FullIndex } from "../data-index";
-import { DataObject, Link, LiteralValue, Values, Task } from "../data-model/value";
+import { DataObject, Link, Literal, Values, Task } from "../data-model/value";
 import { DataviewSettings } from "../settings";
 import { DataArray } from "../api/data-array";
 import { BoundFunctionImpl } from "../expression/functions";
@@ -74,9 +74,9 @@ export interface DvAPIInterface {
     /** Return an array of paths (as strings) corresponding to pages which match the query. */
     pagePaths(query?: string, originFile?: string): DataArray<string>;
     /** Map a page path to the actual data contained within that page. */
-    page(path: string | Link, originFile?: string): Record<string, LiteralValue> | undefined;
+    page(path: string | Link, originFile?: string): Record<string, Literal> | undefined;
     /** Return an array of page objects corresponding to pages which match the query. */
-    pages(query?: string, originFile?: string): DataArray<Record<string, LiteralValue>>;
+    pages(query?: string, originFile?: string): DataArray<Record<string, Literal>>;
     /**
      * Convert an input element or array into a Dataview data-array. If the input is already a data array,
      * it is returned unchanged.

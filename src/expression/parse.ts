@@ -1,5 +1,5 @@
 import { DateTime, Duration } from "luxon";
-import { LiteralValue, Link } from "data-model/value";
+import { Literal, Link } from "data-model/value";
 import * as P from "parsimmon";
 import { BinaryOp, Field, Fields, LambdaField, ListField, LiteralField, ObjectField, VariableField } from "./field";
 import { FolderSource, NegatedSource, Source, SourceOp, Sources, TagSource, CsvSource } from "data-index/source";
@@ -199,9 +199,9 @@ interface ExpressionLanguage {
     listField: ListField;
     objectField: ObjectField;
 
-    atomInlineField: LiteralValue;
-    inlineFieldList: LiteralValue[];
-    inlineField: LiteralValue;
+    atomInlineField: Literal;
+    inlineFieldList: Literal[];
+    inlineField: Literal;
 
     negatedField: Field;
     atomField: Field;

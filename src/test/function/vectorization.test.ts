@@ -1,4 +1,4 @@
-import { LiteralValue } from "data-model/value";
+import { Literal } from "data-model/value";
 import { parseEval } from "test/common";
 
 describe("Single List Argument", () => {
@@ -15,6 +15,6 @@ describe("Multi-List Arguments", () => {
         check('replace(["a", "b", "c"], ["a", "b", "c"], ["x", "y", "z"])', ["x", "y", "z"]));
 });
 
-function check(statement: string, result: LiteralValue) {
+function check(statement: string, result: Literal) {
     expect(parseEval(statement)).toEqual(result);
 }

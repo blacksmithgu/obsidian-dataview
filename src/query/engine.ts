@@ -4,7 +4,7 @@
 import { FullIndex } from "data-index/index";
 import { Context, LinkHandler } from "expression/context";
 import { resolveSource, Datarow, matchingSourcePaths } from "data-index/resolver";
-import { DataObject, Link, LiteralValue, Values, Task, Grouping } from "data-model/value";
+import { DataObject, Link, Literal, Values, Task, Grouping } from "data-model/value";
 import { CalendarQuery, ListQuery, Query, QueryOperation, TableQuery } from "query/query";
 import { Result } from "api/result";
 import { Field } from "expression/field";
@@ -65,10 +65,10 @@ export function executeCore(rows: Pagerow[], context: Context, ops: QueryOperati
                 break;
             case "sort":
                 let sortFields = op.fields;
-                let taggedData: { data: Pagerow; fields: LiteralValue[] }[] = [];
+                let taggedData: { data: Pagerow; fields: Literal[] }[] = [];
                 outer: for (let index = 0; index < rows.length; index++) {
                     let row = rows[index];
-                    let rowSorts: LiteralValue[] = [];
+                    let rowSorts: Literal[] = [];
                     for (let sIndex = 0; sIndex < sortFields.length; sIndex++) {
                         let value = context.evaluate(sortFields[sIndex].field, row.data);
                         if (!value.successful) {
@@ -116,7 +116,7 @@ export function executeCore(rows: Pagerow[], context: Context, ops: QueryOperati
                 rows = rows.slice(0, limiting.value);
                 break;
             case "group":
-                let groupData: { data: Pagerow; key: LiteralValue }[] = [];
+                let groupData: { data: Pagerow; key: Literal }[] = [];
                 for (let index = 0; index < rows.length; index++) {
                     let value = context.evaluate(op.field.field, rows[index].data);
                     if (!value.successful) {
@@ -139,7 +139,7 @@ export function executeCore(rows: Pagerow[], context: Context, ops: QueryOperati
                 });
 
                 // Then walk through and find fields that are equal.
-                let finalGroupData: { key: LiteralValue; rows: DataObject[]; [groupKey: string]: LiteralValue }[] = [];
+                let finalGroupData: { key: Literal; rows: DataObject[]; [groupKey: string]: Literal }[] = [];
                 if (groupData.length > 0)
                     finalGroupData.push({
                         key: groupData[0].key,
@@ -278,7 +278,7 @@ export function executeCoreExtract(
 
 export interface ListExecution {
     core: CoreExecution;
-    data: { primary: LiteralValue; value?: LiteralValue }[];
+    data: { primary: Literal; value?: Literal }[];
     primaryMeaning: IdentifierMeaning;
 }
 
@@ -317,7 +317,7 @@ export async function executeList(
 export interface TableExecution {
     core: CoreExecution;
     names: string[];
-    data: { id: LiteralValue; values: LiteralValue[] }[];
+    data: { id: Literal; values: Literal[] }[];
     idMeaning: IdentifierMeaning;
 }
 
@@ -435,7 +435,7 @@ export function executeInline(
     origin: string,
     index: FullIndex,
     settings: QuerySettings
-): Result<LiteralValue, string> {
+): Result<Literal, string> {
     return new Context(defaultLinkHandler(index, origin), settings, {
         this: index.pages.get(origin)?.toObject(index) ?? {},
     }).evaluate(field);
@@ -500,5 +500,5 @@ export async function executeCalendar(
 
 export interface CalendarExecution {
     core: CoreExecution;
-    data: { date: DateTime; link: Link; value?: LiteralValue[] }[];
+    data: { date: DateTime; link: Link; value?: Literal[] }[];
 }

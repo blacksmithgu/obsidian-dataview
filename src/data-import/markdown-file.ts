@@ -2,7 +2,7 @@
 
 import { extractInlineFields, extractSpecialTaskFields, parseInlineValue } from "data-import/inline-field";
 import { PageMetadata } from "data-model/markdown";
-import { LiteralValue, Link, Values, Task } from "data-model/value";
+import { Literal, Link, Values, Task } from "data-model/value";
 import { EXPRESSION } from "expression/parse";
 import { DateTime } from "luxon";
 import {
@@ -17,16 +17,16 @@ import {
 import { canonicalizeVarName, extractDate, getFileTitle } from "util/normalize";
 
 export interface ParsedMarkdown {
-    fields: Map<string, LiteralValue[]>;
+    fields: Map<string, Literal[]>;
     tasks: Task[];
 }
 
 /** Attempt to find a date associated with the given page from metadata or filenames. */
-function findDate(file: string, fields: Map<string, LiteralValue>): DateTime | undefined {
+function findDate(file: string, fields: Map<string, Literal>): DateTime | undefined {
     for (let key of fields.keys()) {
         if (!(key.toLocaleLowerCase() == "date" || key.toLocaleLowerCase() == "day")) continue;
 
-        let value = fields.get(key) as LiteralValue;
+        let value = fields.get(key) as Literal;
         if (Values.isDate(value)) return value;
         else if (Values.isLink(value)) {
             let date = extractDate(value.path);
@@ -44,7 +44,7 @@ function findDate(file: string, fields: Map<string, LiteralValue>): DateTime | u
 }
 
 /** Recursively convert frontmatter into fields. We have to dance around YAML structure. */
-export function parseFrontmatter(value: any): LiteralValue {
+export function parseFrontmatter(value: any): Literal {
     if (value == null) {
         return null;
     } else if (typeof value === "object") {
@@ -57,7 +57,7 @@ export function parseFrontmatter(value: any): LiteralValue {
             return result;
         } else {
             let object = value as Record<string, any>;
-            let result: Record<string, LiteralValue> = {};
+            let result: Record<string, Literal> = {};
             for (let key in object) {
                 result[key] = parseFrontmatter(object[key]);
             }
@@ -86,9 +86,9 @@ export function parseFrontmatter(value: any): LiteralValue {
 }
 
 /** Add an inline field to a nexisting field array, converting a single value into an array if it is present multiple times. */
-export function addInlineField(fields: Map<string, LiteralValue>, name: string, value: LiteralValue) {
+export function addInlineField(fields: Map<string, Literal>, name: string, value: Literal) {
     if (fields.has(name)) {
-        let existing = fields.get(name) as LiteralValue;
+        let existing = fields.get(name) as Literal;
         if (Values.isArray(existing)) fields.set(name, existing.concat([value]));
         else fields.set(name, [existing, value]);
     } else {
@@ -168,7 +168,7 @@ export function findTasksInFile(path: string, file: string, metadata: CachedMeta
         }
 
         // Add all inline field definitions.
-        let annotations: Record<string, LiteralValue> = {};
+        let annotations: Record<string, Literal> = {};
         for (let field of extractInlineFields(line)) {
             let value = parseInlineValue(field.value);
 
@@ -215,7 +215,7 @@ export function parseMarkdown(
     contents: string,
     inlineRegex: RegExp
 ): ParsedMarkdown {
-    let fields: Map<string, LiteralValue[]> = new Map();
+    let fields: Map<string, Literal[]> = new Map();
 
     // Trawl through file contents to locate custom inline file content...
     for (let line of contents.split("\n")) {
@@ -268,7 +268,7 @@ export function parseMarkdown(
 export function parsePage(file: TFile, cache: MetadataCache, markdownData: ParsedMarkdown): PageMetadata {
     let tags = new Set<string>();
     let aliases = new Set<string>();
-    let fields = new Map<string, LiteralValue>();
+    let fields = new Map<string, Literal>();
 
     // Pull out the easy-to-extract information from the cache first...
     let fileCache = cache.getFileCache(file);
@@ -291,7 +291,7 @@ export function parsePage(file: TFile, cache: MetadataCache, markdownData: Parse
                 for (let alias of frontAliases) aliases.add(alias);
             }
 
-            let frontFields = parseFrontmatter(fileCache.frontmatter) as Record<string, LiteralValue>;
+            let frontFields = parseFrontmatter(fileCache.frontmatter) as Record<string, Literal>;
             for (let [key, value] of Object.entries(frontFields)) fields.set(key, value);
         }
     }

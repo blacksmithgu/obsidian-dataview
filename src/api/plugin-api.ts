@@ -4,7 +4,7 @@ import { App, Component } from "obsidian";
 import { FullIndex } from "data-index/index";
 import { matchingSourcePaths } from "data-index/resolver";
 import { Sources } from "data-index/source";
-import { DataObject, Link, LiteralValue, Values, Task, Groupings } from "data-model/value";
+import { DataObject, Link, Literal, Values, Task, Groupings } from "data-model/value";
 import { EXPRESSION } from "expression/parse";
 import { renderList, renderTable, renderValue } from "ui/render";
 import { DataviewSettings } from "settings";
@@ -106,7 +106,7 @@ export class DataviewApi implements DvAPIInterface {
     }
 
     /** Map a page path to the actual data contained within that page. */
-    public page(path: string | Link, originFile?: string): Record<string, LiteralValue> | undefined {
+    public page(path: string | Link, originFile?: string): Record<string, Literal> | undefined {
         if (!(typeof path === "string") && !Values.isLink(path)) {
             throw Error("dv.page only handles string and link paths; was provided type '" + typeof path + "'");
         }
@@ -122,7 +122,7 @@ export class DataviewApi implements DvAPIInterface {
     }
 
     /** Return an array of page objects corresponding to pages which match the query. */
-    public pages(query?: string, originFile?: string): DataArray<Record<string, LiteralValue>> {
+    public pages(query?: string, originFile?: string): DataArray<Record<string, Literal>> {
         return this.pagePaths(query, originFile).flatMap(p => {
             let res = this.page(p, originFile);
             return res ? [res] : [];
@@ -256,6 +256,6 @@ export class DataviewApi implements DvAPIInterface {
         filePath: string,
         inline: boolean = false
     ) {
-        await renderValue(value as LiteralValue, container, filePath, component, this.settings, inline);
+        await renderValue(value as Literal, container, filePath, component, this.settings, inline);
     }
 }

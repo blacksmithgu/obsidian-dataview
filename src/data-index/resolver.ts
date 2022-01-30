@@ -3,10 +3,10 @@
 import { FullIndex, PathFilters } from "data-index/index";
 import { Result } from "api/result";
 import { Source } from "./source";
-import { DataObject, Link, LiteralValue } from "../data-model/value";
+import { DataObject, Link, Literal } from "../data-model/value";
 
 /** A data row which has an ID and associated data (like page link / page data). */
-export type Datarow<T> = { id: LiteralValue; data: T };
+export type Datarow<T> = { id: Literal; data: T };
 
 /** Find source paths which match the given source. */
 export function matchingSourcePaths(

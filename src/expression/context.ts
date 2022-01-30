@@ -1,6 +1,6 @@
 /** Core implementation of the query language evaluation engine. */
 
-import { DataObject, LiteralValue, Values } from "data-model/value";
+import { DataObject, Literal, Values } from "data-model/value";
 import { Result } from "api/result";
 import { BinaryOpHandler, createBinaryOps } from "./binaryop";
 import { Field, Fields } from "./field";
@@ -10,7 +10,7 @@ import { QuerySettings } from "settings";
 /** Handles link resolution and normalization inside of a context. */
 export interface LinkHandler {
     /** Resolve a link to the metadata it contains. */
-    resolve(path: string): Record<string, LiteralValue> | null;
+    resolve(path: string): Record<string, Literal> | null;
     /**
      * Normalize a link to it's fully-qualified path for comparison purposes.
      * If the path does not exist, returns it unchanged.
@@ -32,29 +32,29 @@ export class Context {
     public constructor(
         public linkHandler: LinkHandler,
         public settings: QuerySettings,
-        public globals: Record<string, LiteralValue> = {},
+        public globals: Record<string, Literal> = {},
         public binaryOps: BinaryOpHandler = createBinaryOps(linkHandler.normalize),
         public functions: Record<string, FunctionImpl> = DEFAULT_FUNCTIONS
     ) {}
 
     /** Set a global value in this context. */
-    public set(name: string, value: LiteralValue): Context {
+    public set(name: string, value: Literal): Context {
         this.globals[name] = value;
         return this;
     }
 
     /** Get the value of a global variable by name. Returns null if not present. */
-    public get(name: string): LiteralValue {
+    public get(name: string): Literal {
         return this.globals[name] ?? null;
     }
 
     /** Try to evaluate an arbitary field in this context, raising an exception on failure. */
-    public tryEvaluate(field: Field, data: Record<string, LiteralValue> = {}): LiteralValue {
+    public tryEvaluate(field: Field, data: Record<string, Literal> = {}): Literal {
         return this.evaluate(field, data).orElseThrow();
     }
 
     /** Evaluate an arbitrary field in this context. */
-    public evaluate(field: Field, data: Record<string, LiteralValue> = {}): Result<LiteralValue, string> {
+    public evaluate(field: Field, data: Record<string, Literal> = {}): Result<Literal, string> {
         switch (field.type) {
             case "literal":
                 return Result.success(field.value);
@@ -87,8 +87,8 @@ export class Context {
             case "lambda":
                 // Just relying on JS to capture 'data' for us implicitly; unsure
                 // if this is correct thing to do. Could cause wierd behaviors.
-                return Result.success((ctx: Context, ...args: LiteralValue[]) => {
-                    let copy: Record<string, LiteralValue> = Object.assign({}, data);
+                return Result.success((ctx: Context, ...args: Literal[]) => {
+                    let copy: Record<string, Literal> = Object.assign({}, data);
                     for (let arg = 0; arg < Math.min(args.length, field.arguments.length); arg++) {
                         copy[field.arguments[arg]] = args[arg];
                     }
@@ -103,7 +103,7 @@ export class Context {
                 if (!rawFunc.successful) return rawFunc;
                 let func = rawFunc.value;
 
-                let args: LiteralValue[] = [];
+                let args: Literal[] = [];
                 for (let arg of field.arguments) {
                     let resolved = this.evaluate(arg, data);
                     if (!resolved.successful) return resolved;
@@ -137,7 +137,7 @@ export class Context {
 
                 let checkedObject =
                     field.object.type == "variable" && field.object.name == "row"
-                        ? Result.success<LiteralValue, string>(Object.assign({}, this.globals, data))
+                        ? Result.success<Literal, string>(Object.assign({}, this.globals, data))
                         : this.evaluate(field.object, data);
                 if (!checkedObject.successful) return checkedObject;
 
@@ -160,7 +160,7 @@ export class Context {
                             if (index >= object.value.length || index < 0) return Result.success(null);
                             else return Result.success(object.value[index]);
                         } else if (Values.isString(index)) {
-                            let result: LiteralValue[] = [];
+                            let result: Literal[] = [];
                             for (let value of object.value) {
                                 let next = this.evaluate(Fields.index(Fields.literal(value), Fields.literal(index)));
                                 if (!next.successful) continue;

@@ -3,7 +3,7 @@ import { DataArray } from "api/data-array";
 import { QuerySettings } from "settings";
 import { currentLocale } from "util/locale";
 import { renderMinimalDate, renderMinimalDuration } from "util/normalize";
-import { LiteralValue, Values } from "data-model/value";
+import { Literal, Values } from "data-model/value";
 
 /** Make an Obsidian-friendly internal link. */
 export function createAnchor(text: string, target: string, internal: boolean): HTMLAnchorElement {
@@ -40,7 +40,7 @@ export async function renderCompactMarkdown(
 /** Create a list inside the given container, with the given data. */
 export async function renderList(
     container: HTMLElement,
-    elements: LiteralValue[],
+    elements: Literal[],
     component: Component,
     originFile: string,
     settings: QuerySettings
@@ -56,7 +56,7 @@ export async function renderList(
 export async function renderTable(
     container: HTMLElement,
     headers: string[],
-    values: LiteralValue[][],
+    values: Literal[][],
     component: Component,
     originFile: string,
     settings: QuerySettings
@@ -105,7 +105,7 @@ export type ValueRenderContext = "root" | "list";
 
 /** Prettily render a value into a container with the given settings. */
 export async function renderValue(
-    field: LiteralValue,
+    field: Literal,
     container: HTMLElement,
     originFile: string,
     component: Component,

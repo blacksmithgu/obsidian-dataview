@@ -1,7 +1,7 @@
 /** Default function implementations for the expression evaluator. */
 
 import { DateTime } from "luxon";
-import { LiteralType, Link, LiteralValue, Values } from "data-model/value";
+import { LiteralType, Link, Literal, Values } from "data-model/value";
 import { currentLocale } from "util/locale";
 import { LiteralReprAll, LiteralTypeOrAll } from "./binaryop";
 import type { Context } from "./context";
@@ -13,9 +13,9 @@ import { escapeRegex } from "util/normalize";
  * A function implementation which takes in a function context and a variable number of arguments. Throws an error if an
  * invalid number/type of arguments are passed.
  */
-export type FunctionImpl = (context: Context, ...rest: LiteralValue[]) => LiteralValue;
+export type FunctionImpl = (context: Context, ...rest: Literal[]) => Literal;
 /** A "bound" function implementation which has already had a function context passed to it. */
-export type BoundFunctionImpl = (...args: LiteralValue[]) => LiteralValue;
+export type BoundFunctionImpl = (...args: Literal[]) => Literal;
 
 /** A function variant used in the function builder which holds the argument types. */
 interface FunctionVariant {
@@ -47,7 +47,7 @@ export class FunctionBuilder {
     /** Add a function variant which takes in a single argument. */
     public add1<T extends LiteralTypeOrAll>(
         argType: T,
-        impl: (a: LiteralReprAll<T>, context: Context) => LiteralValue
+        impl: (a: LiteralReprAll<T>, context: Context) => Literal
     ): FunctionBuilder {
         this.variants.push({
             args: [argType],
@@ -61,7 +61,7 @@ export class FunctionBuilder {
     public add2<T extends LiteralTypeOrAll, U extends LiteralTypeOrAll>(
         arg1: T,
         arg2: U,
-        impl: (a: LiteralReprAll<T>, b: LiteralReprAll<U>, context: Context) => LiteralValue
+        impl: (a: LiteralReprAll<T>, b: LiteralReprAll<U>, context: Context) => Literal
     ): FunctionBuilder {
         this.variants.push({
             args: [arg1, arg2],
@@ -76,7 +76,7 @@ export class FunctionBuilder {
         arg1: T,
         arg2: U,
         arg3: V,
-        impl: (a: LiteralReprAll<T>, b: LiteralReprAll<U>, c: LiteralReprAll<V>, context: Context) => LiteralValue
+        impl: (a: LiteralReprAll<T>, b: LiteralReprAll<U>, c: LiteralReprAll<V>, context: Context) => Literal
     ): FunctionBuilder {
         this.variants.push({
             args: [arg1, arg2, arg3],
@@ -95,7 +95,7 @@ export class FunctionBuilder {
 
     /** Return a function which checks the number and type of arguments, passing them on to the first matching variant. */
     public build(): FunctionImpl {
-        let self: FunctionImpl = (context: Context, ...args: LiteralValue[]) => {
+        let self: FunctionImpl = (context: Context, ...args: Literal[]) => {
             let types: LiteralType[] = [];
             for (let arg of args) {
                 let argType = Values.typeOf(arg);
@@ -155,7 +155,7 @@ export class FunctionBuilder {
 export namespace Functions {
     /** Bind a context to a function implementation, yielding a function which does not need the context argument. */
     export function bind(func: FunctionImpl, context: Context): BoundFunctionImpl {
-        return (...args: LiteralValue[]) => func(context, ...args);
+        return (...args: Literal[]) => func(context, ...args);
     }
 
     /** Bind a context to all functions in the given map, yielding a new map of bound functions. */
@@ -188,7 +188,7 @@ export namespace DefaultFunctions {
     /** Object constructor function. */
     export const object: FunctionImpl = (_context, ...args) => {
         if (args.length % 2 != 0) throw Error("object() requires an even number of arguments");
-        let result: Record<string, LiteralValue> = {};
+        let result: Record<string, Literal> = {};
         for (let index = 0; index < args.length; index += 2) {
             let key = args[index];
             if (!Values.isString(key)) throw Error("keys should be of type string for object(key1, value1, ...)");
@@ -427,14 +427,14 @@ export namespace DefaultFunctions {
         .build();
 
     /** Extract 0 or more keys from a given object via indexing. */
-    export const extract: FunctionImpl = (context: Context, ...args: LiteralValue[]) => {
+    export const extract: FunctionImpl = (context: Context, ...args: Literal[]) => {
         if (args.length == 0) return "extract(object, key1, ...) requires at least 1 argument";
 
         // Manually handle vectorization in the first argument.
         let object = args[0];
         if (Values.isArray(object)) return object.map(v => extract(context, v, ...args.slice(1)));
 
-        let result: Record<string, LiteralValue> = {};
+        let result: Record<string, Literal> = {};
         for (let index = 1; index < args.length; index++) {
             let key = args[index];
             if (!Values.isString(key)) throw Error("extract(object, key1, ...) must be called with string keys");
@@ -462,9 +462,9 @@ export namespace DefaultFunctions {
 
     // Sort an array; if given two arguments, sorts by the key returned.
     export const sort: FunctionImpl = new FunctionBuilder("sort")
-        .add1("array", (list, context) => sort(context, list, (_ctx: Context, a: LiteralValue) => a))
+        .add1("array", (list, context) => sort(context, list, (_ctx: Context, a: Literal) => a))
         .add2("array", "function", (list, key, context) => {
-            let result = ([] as LiteralValue[]).concat(list);
+            let result = ([] as Literal[]).concat(list);
             result.sort((a, b) => {
                 let akey = key(context, a);
                 let bkey = key(context, b);

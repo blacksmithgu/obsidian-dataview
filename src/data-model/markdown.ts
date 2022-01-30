@@ -1,7 +1,7 @@
 import { getExtension, getFileTitle, getParentFolder, stripTime } from "util/normalize";
 import { DateTime } from "luxon";
 import type { FullIndex } from "data-index/index";
-import { LiteralValue, Link, Task } from "data-model/value";
+import { Literal, Link, Task } from "data-model/value";
 
 /** All extracted markdown file metadata obtained from a file. */
 export class PageMetadata {
@@ -18,7 +18,7 @@ export class PageMetadata {
     /** The first H1/H2 header in the file. May not exist. */
     public title?: string;
     /** All of the fields contained in this markdown file - both frontmatter AND in-file links. */
-    public fields: Map<string, LiteralValue>;
+    public fields: Map<string, Literal>;
     /** All of the exact tags (prefixed with '#') in this file overall. */
     public tags: Set<string>;
     /** All of the aliases defined for this file. */
@@ -30,7 +30,7 @@ export class PageMetadata {
 
     public constructor(path: string, init?: Partial<PageMetadata>) {
         this.path = path;
-        this.fields = new Map<string, LiteralValue>();
+        this.fields = new Map<string, Literal>();
         this.tags = new Set<string>();
         this.aliases = new Set<string>();
         this.links = [];
@@ -82,7 +82,7 @@ export class PageMetadata {
     }
 
     /** Map this metadata to a full object; uses the index for additional data lookups.  */
-    public toObject(index: FullIndex): Record<string, LiteralValue> {
+    public toObject(index: FullIndex): Record<string, Literal> {
         // Static fields first. Note this object should not have any pointers to the original object (so that the
         // index cannot accidentally be mutated).
         let result: any = {

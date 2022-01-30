@@ -7,10 +7,10 @@ export type {
     Task,
     DataObject,
     LiteralType,
-    LiteralValue,
+    Literal as LiteralValue,
     LiteralRepr,
-    WrappedLiteralValue,
-    LiteralValueWrapper,
+    WrappedLiteral as WrappedLiteralValue,
+    LiteralWrapper as LiteralValueWrapper,
 } from "data-model/value";
 
 // Dataview Index.

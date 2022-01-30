@@ -24,7 +24,7 @@ export class Task {
     section: Link;
 
     /** Additional metadata like inline annotations */
-    annotations?: Record<string, LiteralValue>;
+    annotations?: Record<string, Literal>;
     /** Special annotation for when this task was created. */
     created?: DateTime;
     /** Special annotation for when this task was due. */
@@ -33,7 +33,7 @@ export class Task {
     completion?: DateTime;
 
     /** Create a task from a record. */
-    public static fromObject(obj: Record<string, LiteralValue>): Task {
+    public static fromObject(obj: Record<string, Literal>): Task {
         return new Task(obj);
     }
 
@@ -61,8 +61,8 @@ export class Task {
         return newTask;
     }
 
-    public toObject(inlineAnnotations: boolean = true): Record<string, LiteralValue> {
-        let result: Record<string, LiteralValue> = {
+    public toObject(inlineAnnotations: boolean = true): Record<string, Literal> {
+        let result: Record<string, Literal> = {
             text: this.text,
             line: this.line,
             path: this.path,
@@ -98,7 +98,7 @@ export class Task {
 }
 
 /** Shorthand for a mapping from keys to values. */
-export type DataObject = { [key: string]: LiteralValue };
+export type DataObject = { [key: string]: Literal };
 /** The literal types supported by the query engine. */
 export type LiteralType =
     | "boolean"
@@ -113,14 +113,14 @@ export type LiteralType =
     | "function"
     | "null";
 /** The raw values that a literal can take on. */
-export type LiteralValue =
+export type Literal =
     | boolean
     | number
     | string
     | DateTime
     | Duration
     | Link
-    | Array<LiteralValue>
+    | Array<Literal>
     | DataObject
     | HTMLElement
     | Function
@@ -129,7 +129,7 @@ export type LiteralValue =
 /** A grouping on a type which supports recursively-nested groups. */
 export type Grouping<T> =
     | { type: "base"; value: T }
-    | { type: "grouped"; groups: { key: LiteralValue; value: Grouping<T> }[] };
+    | { type: "grouped"; groups: { key: Literal; value: Grouping<T> }[] };
 
 /** Maps the string type to it's external, API-facing representation. */
 export type LiteralRepr<T extends LiteralType> = T extends "boolean"
@@ -147,9 +147,9 @@ export type LiteralRepr<T extends LiteralType> = T extends "boolean"
     : T extends "link"
     ? Link
     : T extends "array"
-    ? Array<LiteralValue>
+    ? Array<Literal>
     : T extends "object"
-    ? Record<string, LiteralValue>
+    ? Record<string, Literal>
     : T extends "html"
     ? HTMLElement
     : T extends "function"
@@ -157,20 +157,20 @@ export type LiteralRepr<T extends LiteralType> = T extends "boolean"
     : any;
 
 /** A wrapped literal value which can be switched on. */
-export type WrappedLiteralValue =
-    | LiteralValueWrapper<"string">
-    | LiteralValueWrapper<"number">
-    | LiteralValueWrapper<"boolean">
-    | LiteralValueWrapper<"date">
-    | LiteralValueWrapper<"duration">
-    | LiteralValueWrapper<"link">
-    | LiteralValueWrapper<"array">
-    | LiteralValueWrapper<"object">
-    | LiteralValueWrapper<"html">
-    | LiteralValueWrapper<"function">
-    | LiteralValueWrapper<"null">;
+export type WrappedLiteral =
+    | LiteralWrapper<"string">
+    | LiteralWrapper<"number">
+    | LiteralWrapper<"boolean">
+    | LiteralWrapper<"date">
+    | LiteralWrapper<"duration">
+    | LiteralWrapper<"link">
+    | LiteralWrapper<"array">
+    | LiteralWrapper<"object">
+    | LiteralWrapper<"html">
+    | LiteralWrapper<"function">
+    | LiteralWrapper<"null">;
 
-export interface LiteralValueWrapper<T extends LiteralType> {
+export interface LiteralWrapper<T extends LiteralType> {
     type: T;
     value: LiteralRepr<T>;
 }
@@ -223,7 +223,7 @@ export namespace Values {
     }
 
     /** Wrap a literal value so you can switch on it easily. */
-    export function wrapValue(val: LiteralValue): WrappedLiteralValue | undefined {
+    export function wrapValue(val: Literal): WrappedLiteral | undefined {
         if (isNull(val)) return { type: "null", value: val };
         else if (isNumber(val)) return { type: "number", value: val };
         else if (isString(val)) return { type: "string", value: val };
@@ -239,11 +239,7 @@ export namespace Values {
     }
 
     /** Compare two arbitrary JavaScript values. Produces a total ordering over ANY possible dataview value. */
-    export function compareValue(
-        val1: LiteralValue,
-        val2: LiteralValue,
-        linkNormalizer?: (link: string) => string
-    ): number {
+    export function compareValue(val1: Literal, val2: Literal, linkNormalizer?: (link: string) => string): number {
         // Handle undefined/nulls first.
         if (val1 === undefined) val1 = null;
         if (val2 === undefined) val2 = null;
@@ -342,7 +338,7 @@ export namespace Values {
     }
 
     /** Determine if the given value is "truthy" (i.e., is non-null and has data in it). */
-    export function isTruthy(field: LiteralValue): boolean {
+    export function isTruthy(field: Literal): boolean {
         let wrapped = wrapValue(field);
         if (!wrapped) return false;
 
@@ -373,13 +369,13 @@ export namespace Values {
     }
 
     /** Deep copy a field. */
-    export function deepCopy<T extends LiteralValue>(field: T): T {
+    export function deepCopy<T extends Literal>(field: T): T {
         if (field === null || field === undefined) return field;
 
         if (Values.isArray(field)) {
-            return ([] as LiteralValue[]).concat(field.map(v => deepCopy(v))) as T;
+            return ([] as Literal[]).concat(field.map(v => deepCopy(v))) as T;
         } else if (Values.isObject(field)) {
-            let result: Record<string, LiteralValue> = {};
+            let result: Record<string, Literal> = {};
             for (let [key, value] of Object.entries(field)) result[key] = deepCopy(value);
             return result as T;
         } else {
@@ -443,7 +439,7 @@ export namespace Groupings {
         return { type: "base", value };
     }
 
-    export function grouped<T>(values: { key: LiteralValue; value: Grouping<T> }[]): Grouping<T> {
+    export function grouped<T>(values: { key: Literal; value: Grouping<T> }[]): Grouping<T> {
         return { type: "grouped", groups: values };
     }
 

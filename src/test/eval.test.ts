@@ -4,7 +4,7 @@ import { EXPRESSION } from "expression/parse";
 import { Context, LinkHandler } from "expression/context";
 import { Duration } from "luxon";
 import { Fields } from "expression/field";
-import { LiteralValue, Link } from "data-model/value";
+import { Literal, Link } from "data-model/value";
 import { DEFAULT_QUERY_SETTINGS } from "settings";
 
 // <-- Numeric Operations -->
@@ -93,7 +93,7 @@ describe("Immediately Invoked Lambdas", () => {
 });
 
 /** Parse a field expression and evaluate it in the simple context. */
-function parseEval(text: string): LiteralValue {
+function parseEval(text: string): Literal {
     let field = EXPRESSION.field.tryParse(text);
     return simpleContext().tryEvaluate(field);
 }

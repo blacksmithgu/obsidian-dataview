@@ -1,5 +1,5 @@
 import { FullIndex } from "data-index";
-import { LiteralValue } from "data-model/value";
+import { Literal } from "data-model/value";
 import { App } from "obsidian";
 import { executeTable } from "query/engine";
 import { Query, TableQuery } from "query/query";
@@ -33,7 +33,7 @@ export class DataviewTableRenderer extends DataviewRefreshableRenderer {
         let result = maybeResult.value;
 
         if ((this.query.header as TableQuery).showId) {
-            let dataWithNames: LiteralValue[][] = [];
+            let dataWithNames: Literal[][] = [];
             for (let entry of result.data) {
                 dataWithNames.push([entry.id].concat(entry.values));
             }
