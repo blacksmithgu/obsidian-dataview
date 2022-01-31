@@ -26,6 +26,7 @@ import { DataviewInlineJSRenderer, DataviewJSRenderer } from "ui/views/js-view";
 import { DataviewTaskRenderer } from "ui/views/task-view";
 import { currentLocale } from "util/locale";
 import { DateTime } from "luxon";
+import { DataviewInlineApi } from "api/inline-api";
 
 declare module "obsidian" {
     interface Workspace {
@@ -266,9 +267,17 @@ export default class DataviewPlugin extends Plugin {
         await this.saveData(this.settings);
     }
 
-    /** Call the given callback when the dataview API has initialized. */
+    /** @deprecated Call the given callback when the dataview API has initialized. */
     public withApi(callback: (api: DvAPIInterface) => void) {
         callback(this.api);
+    }
+
+    /**
+     * Create an API element localized to the given path, with lifecycle management managed by the given component.
+     * The API will output results to the given HTML element.
+     */
+    public localApi(path: string, component: Component, el: HTMLElement): DataviewInlineApi {
+        return new DataviewInlineApi(this.index, component, el, this.app, this.settings, this.manifest.version, path);
     }
 }
 
