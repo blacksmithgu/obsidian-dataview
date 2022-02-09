@@ -15,7 +15,7 @@ import { DataArray } from "./data-array";
 
 /** Asynchronous API calls related to file / system IO. */
 export class DataviewInlineIOApi {
-    public constructor(public api: DataviewIOApi, public currentFile: string) {}
+    public constructor(public api: DataviewIOApi, public currentFile: string) { }
 
     /** Load the contents of a CSV asynchronously, returning a data array of rows (or undefined if it does not exist). */
     public async csv(path: string, originFile?: string): Promise<DataArray<DataObject> | undefined> {
@@ -189,14 +189,18 @@ export class DataviewInlineApi {
     public async el<K extends keyof HTMLElementTagNameMap>(
         el: K,
         text: any,
-        options?: DomElementInfo
+        { container = this.container, ...options }: DomElementInfo & { container?: HTMLElement | Promise<HTMLElement> } = {}
     ): Promise<HTMLElementTagNameMap[K]> {
+
         let wrapped = Values.wrapValue(text);
+
+        const parent = await Promise.resolve(container);
+
         if (wrapped === null || wrapped === undefined) {
-            return this.container.createEl(el, Object.assign({ text }, options));
+            return parent.createEl(el, Object.assign({ text }, options));
         }
 
-        let _el = this.container.createEl(el, options);
+        let _el = parent.createEl(el, options);
         await renderValue(wrapped.value, _el, this.currentFilePath, this.component, this.settings, true);
         return _el;
     }
@@ -303,7 +307,7 @@ export class DataviewInlineApi {
  * Evaluate a script where 'this' for the script is set to the given context. Allows you to define global variables.
  */
 export function evalInContext(script: string, context: any): any {
-    return function () {
+    return function() {
         return eval(script);
     }.call(context);
 }
