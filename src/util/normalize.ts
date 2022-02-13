@@ -55,6 +55,17 @@ export function getExtension(path: string): string {
     return path.substring(path.lastIndexOf(".") + 1);
 }
 
+/** Parse all subtags out of the given tag. I.e., #hello/i/am would yield [#hello/i/am, #hello/i, #hello]. */
+export function extractSubtags(tag: string): string[] {
+    let result = [tag];
+    while (tag.includes("/")) {
+        tag = tag.substring(0, tag.lastIndexOf("/"));
+        result.push(tag);
+    }
+
+    return result;
+}
+
 /** Try calling the given function; on failure, return the error message.  */
 export function tryOrPropogate<T>(func: () => Result<T, string>): Result<T, string> {
     try {

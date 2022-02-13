@@ -1,7 +1,9 @@
-import { getExtension, getFileTitle, getParentFolder, stripTime } from "util/normalize";
+import { extractSubtags, getExtension, getFileTitle, getParentFolder, stripTime } from "util/normalize";
 import { DateTime } from "luxon";
 import type { FullIndex } from "data-index/index";
-import { Literal, Link, Task } from "data-model/value";
+import { Literal, Link } from "data-model/value";
+import { DataObject } from "index";
+import { SListItem, SMarkdownPage } from "data-model/serialized/markdown";
 
 /** All extracted markdown file metadata obtained from a file. */
 export class PageMetadata {
@@ -25,29 +27,22 @@ export class PageMetadata {
     public aliases: Set<string>;
     /** All OUTGOING links (including embeds, header + block links) in this file. */
     public links: Link[];
-    /** All tasks contained within this file. */
-    public tasks: Task[];
+    /** All list items contained within this page. Filter for tasks to get just tasks. */
+    public lists: ListItem[];
+    /** The raw frontmatter for this document. */
+    public frontmatter: Record<string, Literal>;
 
     public constructor(path: string, init?: Partial<PageMetadata>) {
         this.path = path;
         this.fields = new Map<string, Literal>();
+        this.frontmatter = {};
         this.tags = new Set<string>();
         this.aliases = new Set<string>();
         this.links = [];
-        this.tasks = [];
 
         Object.assign(this, init);
-    }
 
-    /** Parse all subtags out of the given tag. I.e., #hello/i/am would yield [#hello/i/am, #hello/i, #hello]. */
-    public static parseSubtags(tag: string): string[] {
-        let result = [tag];
-        while (tag.includes("/")) {
-            tag = tag.substring(0, tag.lastIndexOf("/"));
-            result.push(tag);
-        }
-
-        return result;
+        this.lists = (this.lists || []).map(l => new ListItem(l));
     }
 
     /** The name (based on path) of this file. */
@@ -67,10 +62,9 @@ export class PageMetadata {
 
     /** Return a set of tags AND all of their parent tags (so #hello/yes would become #hello, #hello/yes). */
     public fullTags(): Set<string> {
-        // TODO: Memoize this, probably.
         let result = new Set<string>();
         for (let tag of this.tags) {
-            for (let subtag of PageMetadata.parseSubtags(tag)) result.add(subtag);
+            for (let subtag of extractSubtags(tag)) result.add(subtag);
         }
 
         return result;
@@ -82,9 +76,10 @@ export class PageMetadata {
     }
 
     /** Map this metadata to a full object; uses the index for additional data lookups.  */
-    public toObject(index: FullIndex): Record<string, Literal> {
-        // Static fields first. Note this object should not have any pointers to the original object (so that the
-        // index cannot accidentally be mutated).
+    public serialize(index: FullIndex, cache?: ListSerializationCache): SMarkdownPage {
+        // Convert list items via the canonicalization cache.
+        let realCache = cache ?? new ListSerializationCache(this.lists);
+
         let result: any = {
             file: {
                 path: this.path,
@@ -96,12 +91,14 @@ export class PageMetadata {
                 etags: Array.from(this.tags),
                 tags: Array.from(this.fullTags()),
                 aliases: Array.from(this.aliases),
-                tasks: this.tasks.map(t => t.toObject()),
+                lists: this.lists.map(l => realCache.get(l.line)),
+                tasks: this.lists.filter(l => !!l.task).map(l => realCache.get(l.line)),
                 ctime: this.ctime,
                 cday: stripTime(this.ctime),
                 mtime: this.mtime,
                 mday: stripTime(this.mtime),
                 size: this.size,
+                starred: index.starred.starred(this.path),
                 ext: this.extension(),
             },
         };
@@ -111,10 +108,155 @@ export class PageMetadata {
 
         // Then append the computed fields.
         for (let [key, value] of this.fields) {
-            if (key === "file") continue; // Don't allow fields to override 'file'.
+            if (key in result) continue; // Don't allow fields to override existing keys.
             result[key] = value;
         }
 
         return result;
     }
+}
+
+/** A list item inside of a list. */
+export class ListItem {
+    /** The symbol ('*', '-', '1.') used to define this list item. */
+    symbol: string;
+    /** A link which points to this task, or to the closest block that this task is contained in. */
+    link: Link;
+    /** A link to the section that contains this list element; could be a file if this is not in a section. */
+    section: Link;
+    /** The text of this list item. This may be multiple lines of markdown. */
+    text: string;
+    /** The line that this list item starts on in the file. */
+    line: number;
+    /** The number of lines that define this list item. */
+    lineCount: number;
+    /** The line number for the first list item in the list this item belongs to. */
+    list: number;
+    /** The line number of the parent list item, if present; if this is undefined, this is a root item. */
+    parent?: number;
+    /** The line numbers of children of this list item. */
+    children: number[];
+    /** The block ID for this item, if one is present. */
+    blockId?: string;
+    /** Any fields defined in this list item. For tasks, this includes fields underneath the task. */
+    fields: Map<string, Literal[]>;
+
+    task?: {
+        /** The text in between the brackets of the '[ ]' task indicator ('[X]' would yield 'X', for example.) */
+        status: string;
+        /** Whether or not this task was completed; derived from 'status' by checking if the field is non-empty. */
+        completed: boolean;
+        /** Whether or not this task and all of it's subtasks are completed. */
+        fullyCompleted: boolean;
+    };
+
+    public constructor(init?: Partial<ListItem>) {
+        Object.assign(this, init);
+
+        this.fields = this.fields || {};
+    }
+
+    public id(): string {
+        return `${this.file().path}-${this.line}`;
+    }
+
+    public file(): Link {
+        return this.link.toFile();
+    }
+
+    public markdown(): string {
+        if (this.task) return `${this.symbol} [${this.task.completed ? "x" : " "}] ${this.text}`;
+        else return `${this.symbol} ${this.text}`;
+    }
+
+    public created(): Literal | undefined {
+        return this.fields.get("created") ?? this.fields.get("ctime") ?? this.fields.get("cday");
+    }
+
+    public due(): Literal | undefined {
+        return this.fields.get("due") ?? this.fields.get("duetime") ?? this.fields.get("dueday");
+    }
+
+    public completed(): Literal | undefined {
+        return (
+            this.fields.get("completed") ??
+            this.fields.get("completion") ??
+            this.fields.get("comptime") ??
+            this.fields.get("compday")
+        );
+    }
+
+    /** Create an API-friendly copy of this list item. De-duplication is done via the provided cache. */
+    public serialize(cache: ListSerializationCache): SListItem {
+        // Map children to their serialized/de-duplicated equivalents right away.
+        let children = this.children.map(l => cache.get(l));
+
+        let result: DataObject = {
+            symbol: this.symbol,
+            link: this.link,
+            section: this.section,
+            text: this.text,
+            line: this.line,
+            list: this.list,
+            path: this.link.path,
+            children: children,
+            task: !!this.task,
+            annotated: this.fields.size > 0,
+
+            subtasks: children, // @deprecated, use 'item.children' instead.
+            real: !!this.task, // @deprecated, use 'item.task' instead.
+            header: this.section, // @deprecated, use 'item.section' instead.
+        };
+
+        if (this.parent) result.parent = this.parent;
+        if (this.blockId) result.blockId = this.blockId;
+
+        addFields(this.fields, result);
+
+        if (this.task) {
+            result.status = this.task.status;
+            result.completed = this.task.completed;
+            result.fullyCompleted = this.task.fullyCompleted;
+
+            let created = this.created(),
+                due = this.due(),
+                completed = this.completed();
+
+            if (created) result.created = created;
+            if (due) result.due = due;
+            if (completed) result.completion = completed;
+        }
+
+        return result as SListItem;
+    }
+}
+
+//////////////////////////////////////////
+// Conversion / Serialization Utilities //
+//////////////////////////////////////////
+
+/** De-duplicates list items across section metadata and page metadata. */
+export class ListSerializationCache {
+    public cache: Record<number, SListItem>;
+
+    public constructor(public listItems: Record<number, ListItem>) {
+        this.cache = {};
+    }
+
+    public get(lineno: number): SListItem {
+        if (lineno in this.cache) return this.cache[lineno];
+
+        let result = this.listItems[lineno].serialize(this);
+        this.cache[lineno] = result;
+        return result;
+    }
+}
+
+export function addFields(fields: Map<string, Literal[]>, target: DataObject): DataObject {
+    for (let [key, values] of fields) {
+        if (key in target) continue;
+        target[key] = values.length == 1 ? values[0] : values;
+    }
+
+    return target;
 }

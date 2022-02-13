@@ -4,7 +4,6 @@ export { DvAPIInterface as DataviewAPI } from "./typings/api";
 export type { DateTime, Duration } from "luxon";
 export type {
     Link,
-    Task,
     DataObject,
     LiteralType,
     Literal as LiteralValue,
@@ -12,6 +11,8 @@ export type {
     WrappedLiteral as WrappedLiteralValue,
     LiteralWrapper as LiteralValueWrapper,
 } from "data-model/value";
+
+export type { ListItem } from "data-model/markdown";
 
 // Dataview Index.
 export type { FullIndex, PrefixIndex, IndexMap } from "data-index/index";

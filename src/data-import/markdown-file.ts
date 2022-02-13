@@ -1,24 +1,214 @@
 /** Importer for markdown documents. */
 
-import { extractInlineFields, extractSpecialTaskFields, parseInlineValue } from "data-import/inline-field";
-import { PageMetadata } from "data-model/markdown";
-import { Literal, Link, Values, Task } from "data-model/value";
+import { extractFullLineField, extractInlineFields, InlineField, parseInlineValue } from "data-import/inline-field";
+import { ListItem, PageMetadata } from "data-model/markdown";
+import { Literal, Link, Values } from "data-model/value";
 import { EXPRESSION } from "expression/parse";
 import { DateTime } from "luxon";
 import {
     CachedMetadata,
+    FileStats,
     getAllTags,
     HeadingCache,
-    MetadataCache,
     parseFrontMatterAliases,
     parseFrontMatterTags,
-    TFile,
 } from "obsidian";
 import { canonicalizeVarName, extractDate, getFileTitle } from "util/normalize";
 
-export interface ParsedMarkdown {
-    fields: Map<string, Literal[]>;
-    tasks: Task[];
+/** Extract markdown metadata from the given Obsidian markdown file. */
+export function parsePage(path: string, contents: string, stat: FileStats, metadata: CachedMetadata): PageMetadata {
+    let tags = new Set<string>();
+    let aliases = new Set<string>();
+    let fields = new Map<string, Literal>();
+    let links: Link[] = [];
+
+    // File tags, including front-matter and in-file tags.
+    getAllTags(metadata)?.forEach(t => tags.add(t.toLocaleLowerCase()));
+
+    // Front-matter file tags, aliases, AND frontmatter properties.
+    if (metadata.frontmatter) {
+        for (let tag of parseFrontMatterTags(metadata.frontmatter) || []) {
+            if (!tag.startsWith("#")) tag = "#" + tag;
+            tags.add(tag.toLocaleLowerCase());
+        }
+
+        for (let alias of parseFrontMatterAliases(metadata.frontmatter) || []) aliases.add(alias);
+
+        let frontFields = parseFrontmatter(metadata.frontmatter) as Record<string, Literal>;
+        for (let [key, value] of Object.entries(frontFields)) fields.set(key, value);
+    }
+
+    // Links in metadata.
+    for (let rawLink of metadata.links || []) {
+        let parsed = EXPRESSION.embedLink.parse(rawLink.original);
+        if (parsed.status) links.push(parsed.value);
+    }
+
+    // Merge frontmatter fields with parsed fields.
+    let markdownData = parseMarkdown(path, contents.split("\n"), metadata);
+    for (let [name, values] of markdownData.fields.entries()) {
+        for (let value of values) addInlineField(fields, name, value);
+    }
+
+    return new PageMetadata(path, {
+        fields,
+        tags,
+        aliases,
+        links,
+        lists: markdownData.lists,
+        ctime: DateTime.fromMillis(stat.ctime),
+        mtime: DateTime.fromMillis(stat.mtime),
+        size: stat.size,
+        day: findDate(path, fields),
+    });
+}
+
+/** Parse raw (newline-delimited) markdown, returning inline fields, list items, and other metadata. */
+export function parseMarkdown(
+    path: string,
+    contents: string[],
+    metadata: CachedMetadata
+): { fields: Map<string, Literal[]>; lists: ListItem[] } {
+    let fields: Map<string, Literal[]> = new Map();
+
+    // Only parse heading and paragraph elements for inline fields; we will parse list metadata separately.
+    for (let section of metadata.sections || []) {
+        if (section.type == "list" || section.type == "ruling") continue;
+
+        for (let lineno = section.position.start.line; lineno <= section.position.end.line; lineno++) {
+            let line = contents[lineno];
+
+            // Fast bail-out for lines that are too long or do not contain '::'.
+            if (line.length > 2048 || !line.includes("::")) continue;
+            line = line.trim();
+
+            let inlineFields = extractInlineFields(line);
+            if (inlineFields) {
+                for (let ifield of inlineFields) addRawInlineField(ifield, fields);
+            } else {
+                let fullLine = extractFullLineField(line);
+                if (fullLine) addRawInlineField(fullLine, fields);
+            }
+        }
+    }
+
+    // Extract task data and append the global data extracted from them to our fields.
+    let [lists, extraData] = parseLists(path, contents, metadata);
+    for (let [key, values] of extraData.entries()) {
+        if (!fields.has(key)) fields.set(key, values);
+        else fields.set(key, fields.get(key)!!.concat(values));
+    }
+
+    return { fields, lists };
+}
+
+// TODO: Consider using an actual parser in leiu of a more expensive regex.
+export const LIST_ITEM_REGEX = /^\s*(\d+\.|\*|-|\+)\s*(\[.+\])\s*(.+)$/u;
+
+/**
+ * Parse list items from the page + metadata. This requires some additional parsing above whatever Obsidian provides,
+ * since Obsidian only gives line numbers.
+ */
+export function parseLists(
+    path: string,
+    content: string[],
+    metadata: CachedMetadata
+): [ListItem[], Map<string, Literal[]>] {
+    let cache: Record<number, ListItem> = {};
+
+    // Place all of the values in the cache before resolving children & metadata relationships.
+    for (let rawElement of metadata.listItems || []) {
+        // Match on the first line to get the symbol and first line of text.
+        let rawMatch = LIST_ITEM_REGEX.exec(content[rawElement.position.start.line]);
+        if (!rawMatch) {
+            console.log(
+                `Dataview: Encountered unrecognized list element "${content[rawElement.position.start.line]}" (line ${
+                    rawElement.position.start.line
+                }, file ${path}).`
+            );
+            continue;
+        }
+
+        // And then strip unnecessary spacing from the remaining lines.
+        let textParts = [rawMatch[3]]
+            .concat(content.slice(rawElement.position.start.line + 1, rawElement.position.end.line + 1))
+            .map(t => t.trim());
+        let text = textParts.join(" ");
+
+        // Find the list that we are a part of by line.
+        let containingListId = (metadata.sections || []).findIndex(
+            s =>
+                s.type == "list" &&
+                s.position.start.line <= rawElement.position.start.line &&
+                s.position.end.line >= rawElement.position.start.line
+        );
+
+        // Find the section we belong to as well.
+        let sectionName = findPreviousHeader(rawElement.position.start.line, metadata.headings || []);
+        let sectionLink = sectionName === undefined ? Link.file(path) : Link.header(path, sectionName);
+        let closestLink = rawElement.id === undefined ? sectionLink : Link.block(path, rawElement.id);
+
+        // Construct universal information about this element (before tasks).
+        let item = new ListItem({
+            symbol: rawMatch[1],
+            link: closestLink,
+            section: sectionLink,
+            text: text,
+            line: rawElement.position.start.line,
+            lineCount: rawElement.position.end.line - rawElement.position.start.line + 1,
+            list: containingListId == -1 ? -1 : (metadata.sections || [])[containingListId].position.start.line,
+            children: [],
+            blockId: rawElement.id,
+        });
+
+        if (rawElement.parent >= 0) item.parent = rawElement.parent;
+
+        // Set up the basic task information for now, though we have to recompute `fullyComputed` later.
+        if (rawElement.task) {
+            item.task = {
+                status: rawElement.task,
+                completed: rawElement.task != " ",
+                fullyCompleted: rawElement.task != " ",
+            };
+        }
+
+        // Extract inline fields; extract full-line fields only if we are NOT a task.
+        item.fields = new Map<string, Literal[]>();
+        for (let line of text) {
+            for (let element of extractInlineFields(line, true)) addRawInlineField(element, item.fields);
+        }
+
+        if (!rawElement.task && item.fields.size == 0) {
+            let fullLine = extractFullLineField(text);
+            if (fullLine) addRawInlineField(fullLine, item.fields);
+        }
+    }
+
+    // Tree updating passes. Update child lists. Propogate metadata up to parent tasks. Update task `fullyCompleted`.
+    let literals: Map<string, Literal[]> = new Map();
+    for (let listItem of Object.values(cache).filter(l => l.parent !== undefined)) {
+        // Pass 1: Update child lists.
+        cache[listItem.parent!!].children.push(listItem.line);
+
+        // Pass 2: Propogate metadata up to the parent task or root element.
+        let root: ListItem | undefined = listItem;
+        while (!!root && !root.task) root = cache[root.parent ?? -1];
+
+        // If the root is null, append this metadata to the root; otherwise, append to the task.
+        mergeFieldGroups(root === undefined ? literals : root.fields, listItem.fields);
+
+        // Pass 3: Propogate `fullyCompleted` up the task tree. This is a little less efficient than just doing a simple
+        // DFS using the children IDs, but it's probably fine.
+        if (listItem.task) {
+            let curr: ListItem | undefined = listItem;
+            while (!!curr) {
+                if (curr.task) curr.task.fullyCompleted = curr.task.fullyCompleted && listItem.task.completed;
+                curr = cache[curr.parent ?? -1];
+            }
+        }
+    }
+
+    return [Object.values(cache), literals];
 }
 
 /** Attempt to find a date associated with the given page from metadata or filenames. */
@@ -27,15 +217,12 @@ function findDate(file: string, fields: Map<string, Literal>): DateTime | undefi
         if (!(key.toLocaleLowerCase() == "date" || key.toLocaleLowerCase() == "day")) continue;
 
         let value = fields.get(key) as Literal;
-        if (Values.isDate(value)) return value;
-        else if (Values.isLink(value)) {
-            let date = extractDate(value.path);
-            if (date) return date;
-
-            date = extractDate(value.subpath ?? "");
-            if (date) return date;
-
-            date = extractDate(value.display ?? "");
+        if (Values.isDate(value)) {
+            return value;
+        } else if (Values.isArray(value) && value.length > 0 && Values.isDate(value[0])) {
+            return value[0];
+        } else if (Values.isLink(value)) {
+            let date = extractDate(value.path) ?? extractDate(value.subpath ?? "") ?? extractDate(value.display ?? "");
             if (date) return date;
         }
     }
@@ -85,7 +272,18 @@ export function parseFrontmatter(value: any): Literal {
     return null;
 }
 
-/** Add an inline field to a nexisting field array, converting a single value into an array if it is present multiple times. */
+/** Add a raw inline field to an output map, canonicalizing as needed. */
+export function addRawInlineField(field: InlineField, output: Map<string, Literal[]>) {
+    let value = parseInlineValue(field.value);
+
+    output.set(field.key, (output.get(field.key) ?? []).concat([value]));
+    let simpleName = canonicalizeVarName(field.key);
+    if (simpleName.length > 0 && simpleName != field.key.trim()) {
+        output.set(simpleName, (output.get(simpleName) ?? []).concat([value]));
+    }
+}
+
+/** Add an inline field to an existing field array, converting a single value into an array if it is present multiple times. */
 export function addInlineField(fields: Map<string, Literal>, name: string, value: Literal) {
     if (fields.has(name)) {
         let existing = fields.get(name) as Literal;
@@ -96,22 +294,12 @@ export function addInlineField(fields: Map<string, Literal>, name: string, value
     }
 }
 
-/** Matches lines of the form "- [ ] <task thing>". */
-export const TASK_REGEX = /^(\s*)[-*]\s*(\[[ Xx\.]?\])?\s*([^-*].*)$/iu;
-/** Matches Obsidian block IDs, which are at the end of the line of the form ^blockid. */
-export const TASK_BLOCK_REGEX = /\^([a-zA-Z0-9]+)$/;
-
-/** Return true if the given predicate is true for the task or any subtasks. */
-export function taskAny(t: Task, f: (t: Task) => boolean): boolean {
-    if (f(t)) return true;
-    for (let sub of t.subtasks) if (taskAny(sub, f)) return true;
-
-    return false;
-}
-
-export function alast<T>(arr: Array<T>): T | undefined {
-    if (arr.length > 0) return arr[arr.length - 1];
-    else return undefined;
+/** Copy all fields of 'source' into 'target'. */
+export function mergeFieldGroups(target: Map<string, Literal[]>, source: Map<string, Literal[]>) {
+    for (let key of source.keys()) {
+        if (!target.has(key)) target.set(key, source.get(key)!!);
+        else target.set(key, target.get(key)!!.concat(source.get(key)!!));
+    }
 }
 
 /** Find the header that is most immediately above the given line number. */
@@ -123,208 +311,4 @@ export function findPreviousHeader(line: number, headers: HeadingCache[]): strin
     while (index >= 0 && headers[index].position.start.line > line) index--;
 
     return headers[index].heading;
-}
-
-/**
- * A hacky approach to scanning for all tasks using regex. Does not support multiline
- * tasks yet (though can probably be retro-fitted to do so).
- */
-export function findTasksInFile(path: string, file: string, metadata: CachedMetadata): Task[] {
-    // Dummy top of the stack that we'll just never get rid of.
-    let stack: [Task, number][] = [];
-    stack.push([
-        new Task({ text: "Root", line: -1, path, completed: false, fullyCompleted: false, real: false, subtasks: [] }),
-        -4,
-    ]);
-
-    let lineno = -1;
-    for (let line of file.replace("\r", "").split("\n")) {
-        lineno += 1;
-
-        // Check that we are actually a list element, to skip lines which obviously won't match.
-        if (!line.includes("*") && !line.includes("-")) {
-            while (stack.length > 1) stack.pop();
-            continue;
-        }
-
-        let match = TASK_REGEX.exec(line);
-        if (!match) {
-            if (line.trim().length == 0) continue;
-
-            // Non-empty line that is not a task, reset.
-            while (stack.length > 1) stack.pop();
-            continue;
-        }
-
-        // Look for block IDs on this line; if present, link to that. Otherwise, link to the nearest header
-        // and then to just the page.
-        let link = Link.file(path, false);
-        let blockMatch = TASK_BLOCK_REGEX.exec(line);
-        let lastHeader = findPreviousHeader(lineno, metadata.headings || []);
-        if (blockMatch) {
-            link = Link.block(path, blockMatch[1], false);
-        } else if (lastHeader) {
-            link = Link.header(path, lastHeader, false);
-        }
-
-        // Add all inline field definitions.
-        let annotations: Record<string, Literal> = {};
-        for (let field of extractInlineFields(line)) {
-            let value = parseInlineValue(field.value);
-
-            annotations[field.key] = value;
-            annotations[canonicalizeVarName(field.key)] = value;
-        }
-
-        let special = extractSpecialTaskFields(line, annotations);
-
-        let indent = match[1].replace("\t", "    ").length;
-        let isReal = !!match[2] && match[2].trim().length > 0;
-        let isCompleted = !isReal || match[2] == "[X]" || match[2] == "[x]";
-        let task = new Task({
-            text: match[3],
-            completed: isCompleted,
-            fullyCompleted: isCompleted,
-            real: isReal,
-            path,
-            line: lineno,
-            section: lastHeader ? Link.header(path, lastHeader, false) : Link.file(path, false),
-            link,
-            subtasks: [],
-            annotations,
-            created: special.created,
-            due: special.due,
-            completion: special.completed,
-        });
-
-        while (indent <= (alast(stack)?.[1] ?? -4)) stack.pop();
-
-        for (let [elem, _] of stack) elem.fullyCompleted = elem.fullyCompleted && task.fullyCompleted;
-        alast(stack)?.[0].subtasks.push(task);
-        stack.push([task, indent]);
-    }
-
-    // Return everything under the root, which should be all tasks.
-    // Strip trees of tasks which are purely not real (lol?).
-    return stack[0][0].subtasks.filter(t => taskAny(t, st => st.real));
-}
-
-export function parseMarkdown(
-    path: string,
-    metadata: CachedMetadata,
-    contents: string,
-    inlineRegex: RegExp
-): ParsedMarkdown {
-    let fields: Map<string, Literal[]> = new Map();
-
-    // Trawl through file contents to locate custom inline file content...
-    for (let line of contents.split("\n")) {
-        // Fast bail-out for lines that are too long.
-        if (!line.includes("::")) continue;
-        line = line.trim();
-
-        // Skip real task lines, since they can have their own custom metadata.
-        // TODO: Abstract this check (i.e., improve task parsing to be more encapsulated).
-        let taskParse = TASK_REGEX.exec(line);
-        if (taskParse && (taskParse[2]?.trim()?.length ?? 0) > 0) continue;
-
-        // Handle inline-inline fields (haha...)
-        let hasInlineInline = false;
-        for (let field of extractInlineFields(line)) {
-            let value = parseInlineValue(field.value);
-
-            fields.set(field.key, (fields.get(field.key) ?? []).concat([value]));
-            let simpleName = canonicalizeVarName(field.key);
-            if (simpleName.length > 0 && simpleName != field.key.trim()) {
-                fields.set(simpleName, (fields.get(simpleName) ?? []).concat([value]));
-            }
-
-            hasInlineInline = true;
-        }
-
-        // Handle full-line inline fields if there are no inline-inline fields.
-        if (!hasInlineInline) {
-            let match = inlineRegex.exec(line);
-            if (match) {
-                let name = match[1].trim();
-                let inlineField = parseInlineValue(match[2]);
-
-                fields.set(name, (fields.get(name) ?? []).concat([inlineField]));
-                let simpleName = canonicalizeVarName(match[1].trim());
-                if (simpleName.length > 0 && simpleName != match[1].trim()) {
-                    fields.set(simpleName, (fields.get(simpleName) ?? []).concat([inlineField]));
-                }
-            }
-        }
-    }
-
-    // And extract tasks...
-    let tasks = findTasksInFile(path, contents, metadata);
-
-    return { fields, tasks };
-}
-
-/** Extract markdown metadata from the given Obsidian markdown file. */
-export function parsePage(file: TFile, cache: MetadataCache, markdownData: ParsedMarkdown): PageMetadata {
-    let tags = new Set<string>();
-    let aliases = new Set<string>();
-    let fields = new Map<string, Literal>();
-
-    // Pull out the easy-to-extract information from the cache first...
-    let fileCache = cache.getFileCache(file);
-    if (fileCache) {
-        // File tags, including front-matter and in-file tags.
-        getAllTags(fileCache)?.forEach(t => tags.add(t));
-
-        // Front-matter file tags, aliases, AND frontmatter properties.
-        if (fileCache.frontmatter) {
-            let frontTags = parseFrontMatterTags(fileCache.frontmatter);
-            if (frontTags) {
-                for (let tag of frontTags) {
-                    if (!tag.startsWith("#")) tag = "#" + tag;
-                    tags.add(tag);
-                }
-            }
-
-            let frontAliases = parseFrontMatterAliases(fileCache.frontmatter);
-            if (frontAliases) {
-                for (let alias of frontAliases) aliases.add(alias);
-            }
-
-            let frontFields = parseFrontmatter(fileCache.frontmatter) as Record<string, Literal>;
-            for (let [key, value] of Object.entries(frontFields)) fields.set(key, value);
-        }
-    }
-
-    // Grab links from the frontmatter cache.
-    let links: Link[] = [];
-    if (file.path in cache.resolvedLinks) {
-        for (let resolved in cache.resolvedLinks[file.path]) links.push(Link.file(resolved));
-    }
-    // Also include unresolved links
-    if (file.path in cache.unresolvedLinks) {
-        for (let unresolved in cache.unresolvedLinks[file.path]) links.push(Link.file(unresolved));
-    }
-
-    // Merge frontmatter fields with parsed fields.
-    for (let [name, values] of markdownData.fields.entries()) {
-        for (let value of values) addInlineField(fields, name, value);
-    }
-
-    // Add task defaults; this should probably be done in the task parsing directly
-    // once the parser has access to the common file metadata.
-    let pageCtime = DateTime.fromMillis(file.stat.ctime);
-    let fixedTasks = markdownData.tasks.map(t => t.withDefaultDates(pageCtime, undefined));
-
-    return new PageMetadata(file.path, {
-        fields,
-        tags,
-        aliases,
-        links,
-        tasks: fixedTasks,
-        ctime: pageCtime,
-        mtime: DateTime.fromMillis(file.stat.mtime),
-        size: file.stat.size,
-        day: findDate(file.path, fields),
-    });
 }

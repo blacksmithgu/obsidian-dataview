@@ -1,4 +1,4 @@
-import { Task, Link, Values } from "data-model/value";
+import { Link, Values } from "data-model/value";
 import { DateTime, Duration } from "luxon";
 
 /** Simplifies passing dataview values across the JS web worker barrier. */
@@ -15,9 +15,6 @@ export namespace Transferable {
             for (let val of value) copied.add(transferable(val));
             return copied;
         }
-
-        // Then a few dataview-ish types.
-        if (value instanceof Task) return { "___transfer-type": "task", value: transferable(value.toObject(false)) };
 
         let wrapped = Values.wrapValue(value);
         if (wrapped === undefined) throw Error("Unrecognized transferable value: " + value);
@@ -75,8 +72,6 @@ export namespace Transferable {
                         return Duration.fromObject(value(transferable.value));
                     case "link":
                         return Link.fromObject(value(transferable.value));
-                    case "task":
-                        return Task.fromObject(value(transferable.value));
                     default:
                         throw Error(`Unrecognized transfer type '${transferable["___transfer-type"]}'`);
                 }

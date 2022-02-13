@@ -2,101 +2,6 @@ import { DateTime, Duration } from "luxon";
 import { DEFAULT_QUERY_SETTINGS, QuerySettings } from "settings";
 import { getFileTitle, normalizeHeaderForLink, renderMinimalDuration } from "util/normalize";
 
-/** A specific task. */
-export class Task {
-    /** The text of this task. */
-    text: string;
-    /** The line this task shows up on. */
-    line: number;
-    /** The full path of the file this task is in. */
-    path: string;
-    /** Whether or not this task was completed. */
-    completed: boolean;
-    /** Whether or not this task and all of it's subtasks are completed. */
-    fullyCompleted: boolean;
-    /** If true, this is a real task; otherwise, it is a list element above/below a task. */
-    real: boolean;
-    /** Any subtasks of this task. */
-    subtasks: Task[];
-    /** A link which points to this task, or to the closest block that this task is contained in. */
-    link: Link;
-    /** A link which points to the section that this task is a part of. */
-    section: Link;
-
-    /** Additional metadata like inline annotations */
-    annotations?: Record<string, Literal>;
-    /** Special annotation for when this task was created. */
-    created?: DateTime;
-    /** Special annotation for when this task was due. */
-    due?: DateTime;
-    /** Special annotation for when this task was completed. */
-    completion?: DateTime;
-
-    /** Create a task from a record. */
-    public static fromObject(obj: Record<string, Literal>): Task {
-        return new Task(obj);
-    }
-
-    constructor(init?: Partial<Task>) {
-        Object.assign(this, init);
-        this.subtasks = (this.subtasks || []).map(t => new Task(t));
-    }
-
-    public id(): string {
-        return `${this.path}-${this.line}`;
-    }
-
-    public markdown(): string {
-        let result = `- [${this.completed ? "x" : " "}] ${this.text}`;
-        return result;
-    }
-
-    /** Return a new task where the created and completed fields are assigned to the given defaults if not present. */
-    public withDefaultDates(defaultCreated?: DateTime, defaultCompleted?: DateTime) {
-        let newTask = new Task(this);
-        newTask.created = newTask.created ?? defaultCreated;
-        if (newTask.completed) newTask.completion = newTask.completion ?? defaultCompleted;
-
-        newTask.subtasks = newTask.subtasks.map(t => t.withDefaultDates(defaultCreated, defaultCompleted));
-        return newTask;
-    }
-
-    public toObject(inlineAnnotations: boolean = true): Record<string, Literal> {
-        let result: Record<string, Literal> = {
-            text: this.text,
-            line: this.line,
-            path: this.path,
-            completed: this.completed,
-            fullyCompleted: this.fullyCompleted,
-            real: this.real,
-            link: this.link,
-            section: this.section,
-            header: this.section,
-            subtasks: this.subtasks.map(t => t.toObject(inlineAnnotations)),
-            annotated:
-                !!this.due || !!this.completion || (!!this.annotations && Object.keys(this.annotations).length > 0),
-        };
-
-        if (this.created) result.created = this.created;
-        if (this.due) result.due = this.due;
-        if (this.completion) result.completion = this.completion;
-
-        if (this.annotations) {
-            if (inlineAnnotations) {
-                for (let [key, value] of Object.entries(this.annotations)) {
-                    if (key in result) continue;
-
-                    result[key] = value;
-                }
-            } else {
-                result.annotations = this.annotations;
-            }
-        }
-
-        return result;
-    }
-}
-
 /** Shorthand for a mapping from keys to values. */
 export type DataObject = { [key: string]: Literal };
 /** The literal types supported by the query engine. */
@@ -127,9 +32,8 @@ export type Literal =
     | null;
 
 /** A grouping on a type which supports recursively-nested groups. */
-export type Grouping<T> =
-    | { type: "base"; value: T }
-    | { type: "grouped"; groups: { key: Literal; value: Grouping<T> }[] };
+export type GroupElement<T> = { key: Literal; rows: Grouping<T> };
+export type Grouping<T> = (T | GroupElement<T>)[];
 
 /** Maps the string type to it's external, API-facing representation. */
 export type LiteralRepr<T extends LiteralType> = T extends "boolean"
@@ -434,18 +338,14 @@ export namespace Values {
     }
 }
 
+///////////////
+// Groupings //
+///////////////
+
 export namespace Groupings {
-    export function base<T>(value: T): Grouping<T> {
-        return { type: "base", value };
-    }
-
-    export function grouped<T>(values: { key: Literal; value: Grouping<T> }[]): Grouping<T> {
-        return { type: "grouped", groups: values };
-    }
-
-    export function numElements<T>(value: Grouping<T[]>): number {
-        if (value.type == "base") return value.value.length;
-        else return value.groups.reduce((acc, curr) => acc + numElements(curr.value), 0);
+    /** Determines if the given group entry is a standalone value, or a grouping of sub-entries. */
+    export function isGroup<T>(entry: T | GroupElement<T>): entry is GroupElement<T> {
+        return Values.isObject(entry) && Object.keys(entry).length == 2 && "key" in entry && "rows" in entry;
     }
 }
 

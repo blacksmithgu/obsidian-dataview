@@ -5,13 +5,16 @@ import { FullIndex } from "data-index";
 import { renderValue, renderErrorPre } from "ui/render";
 import { DataviewApi, DataviewIOApi } from "api/plugin-api";
 import { DataviewSettings } from "settings";
-import { DataObject, Link, Values, Task } from "data-model/value";
+import { DataObject, Link, Literal, Values } from "data-model/value";
 import { BoundFunctionImpl, DEFAULT_FUNCTIONS, Functions } from "expression/functions";
 import { Context } from "expression/context";
 import { defaultLinkHandler } from "query/engine";
 import { DateTime, Duration } from "luxon";
 import * as Luxon from "luxon";
 import { DataArray } from "./data-array";
+import { SListItem } from "data-model/serialized/markdown";
+import { parseFrontmatter } from "data-import/markdown-file";
+import { EXPRESSION } from "expression/parse";
 
 /** Asynchronous API calls related to file / system IO. */
 export class DataviewInlineIOApi {
@@ -96,7 +99,7 @@ export class DataviewInlineApi {
         this.io = new DataviewInlineIOApi(this.api.io, this.currentFilePath);
 
         // Set up the evaluation context with variables from the current file.
-        let fileMeta = this.index.pages.get(this.currentFilePath)?.toObject(this.index) ?? {};
+        let fileMeta = this.index.pages.get(this.currentFilePath)?.serialize(this.index) ?? {};
         this.evaluationContext = new Context(defaultLinkHandler(this.index, this.currentFilePath), settings, fileMeta);
 
         this.func = Functions.bindAll(DEFAULT_FUNCTIONS, this.evaluationContext);
@@ -168,6 +171,18 @@ export class DataviewInlineApi {
         return this.api.duration(dur);
     }
 
+    /** Parse a raw textual value into a complex Dataview type, if possible. */
+    public parse(value: string): Literal {
+        let raw = EXPRESSION.inlineField.parse(value);
+        if (raw.status) return raw.value;
+        else return value;
+    }
+
+    /** Convert a basic JS type into a Dataview type by parsing dates, links, durations, and so on. */
+    public literal(value: any): Literal {
+        return DataArray.convert(parseFrontmatter(value), this.settings);
+    }
+
     /**
      * Compare two arbitrary JavaScript values using Dataview's default comparison rules. Returns a negative value if
      * a < b, 0 if a = b, and a positive value if a > b.
@@ -228,6 +243,7 @@ export class DataviewInlineApi {
         let simpleViewFile = this.app.metadataCache.getFirstLinkpathDest(viewName + ".js", this.currentFilePath);
         if (simpleViewFile) {
             let contents = await this.app.vault.read(simpleViewFile);
+            if (contents.contains("await")) contents = "(async () => { " + contents + " })()";
             let func = new Function("dv", "input", contents);
 
             try {
@@ -259,7 +275,9 @@ export class DataviewInlineApi {
         }
 
         let viewContents = await this.app.vault.read(viewFile);
+        if (viewContents.contains("await")) viewContents = "(async () => { " + +" })()";
         let viewFunction = new Function("dv", "input", viewContents);
+
         try {
             let result = await Promise.resolve(viewFunction(this, input));
             if (result)
@@ -294,7 +312,7 @@ export class DataviewInlineApi {
     }
 
     /** Render a dataview task view with the given tasks. */
-    public taskList(tasks: Task[] | DataArray<Task>, groupByFile: boolean = true) {
+    public taskList(tasks: SListItem[] | DataArray<SListItem>, groupByFile: boolean = true) {
         return this.api.taskList(tasks, groupByFile, this.container, this.component, this.currentFilePath);
     }
 }

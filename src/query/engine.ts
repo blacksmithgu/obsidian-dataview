@@ -4,12 +4,13 @@
 import { FullIndex } from "data-index/index";
 import { Context, LinkHandler } from "expression/context";
 import { resolveSource, Datarow, matchingSourcePaths } from "data-index/resolver";
-import { DataObject, Link, Literal, Values, Task, Grouping } from "data-model/value";
+import { DataObject, Link, Literal, Values, Grouping } from "data-model/value";
 import { CalendarQuery, ListQuery, Query, QueryOperation, TableQuery } from "query/query";
 import { Result } from "api/result";
 import { Field } from "expression/field";
 import { QuerySettings } from "settings";
 import { DateTime } from "luxon";
+import { SListItem } from "data-model/serialized/markdown";
 
 function iden<T>(x: T): T {
     return x;
@@ -295,7 +296,7 @@ export async function executeList(
 
     // Extract information about the origin page to add to the root context.
     let rootContext = new Context(defaultLinkHandler(index, origin), settings, {
-        this: index.pages.get(origin)?.toObject(index) ?? {},
+        this: index.pages.get(origin)?.serialize(index) ?? {},
     });
 
     let targetField = (query.header as ListQuery).format;
@@ -334,7 +335,7 @@ export async function executeTable(
 
     // Extract information about the origin page to add to the root context.
     let rootContext = new Context(defaultLinkHandler(index, origin), settings, {
-        this: index.pages.get(origin)?.toObject(index) ?? {},
+        this: index.pages.get(origin)?.serialize(index) ?? {},
     });
 
     let targetFields = (query.header as TableQuery).fields;
@@ -357,25 +358,22 @@ export async function executeTable(
 /** The result of executing a task query. */
 export interface TaskExecution {
     core: CoreExecution;
-    tasks: Grouping<Task[]>;
+    tasks: Grouping<SListItem>;
 }
 
-/** Maps a raw core execution result to a task grouping which is much easier to  */
-function extractTaskGroupings(id: IdentifierMeaning, rows: DataObject[]): Grouping<Task[]> {
+/** Maps a raw core execution result to a task grouping which is much easier to render. */
+function extractTaskGroupings(id: IdentifierMeaning, rows: DataObject[]): Grouping<SListItem> {
     switch (id.type) {
         case "path":
-            return { type: "base", value: rows.map(r => Task.fromObject(r)) };
+            return rows as SListItem[];
         case "group":
             let key = id.name;
-            return {
-                type: "grouped",
-                groups: rows.map(r =>
-                    iden({
-                        key: r[key],
-                        value: extractTaskGroupings(id.on, r.rows as DataObject[]),
-                    })
-                ),
-            };
+            return rows.map(r =>
+                iden({
+                    key: r[key],
+                    rows: extractTaskGroupings(id.on, r.rows as DataObject[]),
+                })
+            );
     }
 }
 
@@ -395,19 +393,15 @@ export async function executeTask(
         let page = index.pages.get(path);
         if (!page) continue;
 
-        let pageData = page.toObject(index);
-        let rpage = page;
-
-        let pageTasks = page.tasks.map(t => {
-            let copy = t.toObject();
-
+        let pageData = page.serialize(index);
+        let pageTasks = pageData.file.tasks.map(t => {
             // Add page data to this copy.
             for (let [key, value] of Object.entries(pageData)) {
-                if (key in copy) continue;
-                copy[key] = value;
+                if (key in t) continue;
+                t[key] = value;
             }
 
-            return { id: `${rpage.path}#${t.line}`, data: copy };
+            return { id: `${pageData.path}#${t.line}`, data: t };
         });
 
         for (let task of pageTasks) incomingTasks.push(task);
@@ -415,7 +409,7 @@ export async function executeTask(
 
     // Extract information about the origin page to add to the root context.
     let rootContext = new Context(defaultLinkHandler(index, origin), settings, {
-        this: index.pages.get(origin)?.toObject(index) ?? {},
+        this: index.pages.get(origin)?.serialize(index) ?? {},
     });
 
     return executeCore(incomingTasks, rootContext, query.operations).map(core => {
@@ -437,7 +431,7 @@ export function executeInline(
     settings: QuerySettings
 ): Result<Literal, string> {
     return new Context(defaultLinkHandler(index, origin), settings, {
-        this: index.pages.get(origin)?.toObject(index) ?? {},
+        this: index.pages.get(origin)?.serialize(index) ?? {},
     }).evaluate(field);
 }
 
@@ -451,7 +445,7 @@ export function defaultLinkHandler(index: FullIndex, origin: string): LinkHandle
             let realPage = index.pages.get(realFile.path);
             if (!realPage) return null;
 
-            return realPage.toObject(index);
+            return realPage.serialize(index);
         },
         normalize: link => {
             let realFile = index.metadataCache.getFirstLinkpathDest(link, origin);
@@ -477,7 +471,7 @@ export async function executeCalendar(
 
     // Extract information about the origin page to add to the root context.
     let rootContext = new Context(defaultLinkHandler(index, origin), settings, {
-        this: index.pages.get(origin)?.toObject(index) ?? {},
+        this: index.pages.get(origin)?.serialize(index) ?? {},
     });
 
     let targetField = (query.header as CalendarQuery).field.field;

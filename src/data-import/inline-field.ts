@@ -1,8 +1,9 @@
 /** Parse inline fields and other embedded metadata in a line. */
 
 import { EXPRESSION } from "expression/parse";
-import { Literal, Values } from "data-model/value";
-import { DateTime } from "luxon";
+import { Literal } from "data-model/value";
+import * as P from "parsimmon";
+import emojiRegex from "emoji-regex";
 
 /** A parsed inline field. */
 export interface InlineField {
@@ -17,7 +18,7 @@ export interface InlineField {
     /** The end column of the field. */
     end: number;
     /** If this inline field was defined via a wrapping ('[' or '('), then the wrapping that was used. */
-    wrapping: string | undefined;
+    wrapping?: string;
 }
 
 /** The wrapper characters that can be used to define an inline field. */
@@ -67,14 +68,9 @@ function findClosing(
 /** Find the '::' separator in an inline field. */
 function findSeparator(line: string, start: number): { key: string; valueIndex: number } | undefined {
     let sep = line.indexOf("::", start);
-    let key = line.substring(start, sep);
+    if (sep < 0) return undefined;
 
-    // Fail the match if we find any separator characters (not allowed in keys).
-    for (let sep of Object.keys(INLINE_FIELD_WRAPPERS).concat(Object.values(INLINE_FIELD_WRAPPERS))) {
-        if (key.includes(sep)) return undefined;
-    }
-
-    return { key: key.trim(), valueIndex: sep + 2 };
+    return { key: line.substring(start, sep).trim(), valueIndex: sep + 2 };
 }
 
 /** Try to completely parse an inline field starting at the given position. Assuems `start` is on a wrapping character. */
@@ -83,6 +79,11 @@ function findSpecificInlineField(line: string, start: number): InlineField | und
 
     let key = findSeparator(line, start + 1);
     if (key === undefined) return undefined;
+
+    // Fail the match if we find any separator characters (not allowed in keys).
+    for (let sep of Object.keys(INLINE_FIELD_WRAPPERS).concat(Object.values(INLINE_FIELD_WRAPPERS))) {
+        if (key.key.includes(sep)) return undefined;
+    }
 
     let value = findClosing(line, key.valueIndex, open, INLINE_FIELD_WRAPPERS[open]);
     if (value === undefined) return undefined;
@@ -107,13 +108,21 @@ export function parseInlineValue(value: string): Literal {
     else return value;
 }
 
+/** Extract full-line or inline fields. */
+export function extractFields(line: string): InlineField[] {
+    let fullLine = extractFullLineField(line);
+    if (fullLine) return [fullLine];
+
+    return extractInlineFields(line);
+}
+
 /** Extracts inline fields of the form '[key:: value]' from a line of text. This is done in a relatively
  * "robust" way to avoid failing due to bad nesting or other interfering Markdown symbols:
  *
  * - Look for any wrappers ('[' and '(') in the line, trying to parse whatever comes after it as an inline key::.
  * - If successful, scan until you find a matching end bracket, and parse whatever remains as an inline value.
  */
-export function extractInlineFields(line: string): InlineField[] {
+export function extractInlineFields(line: string, includeTaskFields: boolean = false): InlineField[] {
     let fields: InlineField[] = [];
     for (let wrapper of Object.keys(INLINE_FIELD_WRAPPERS)) {
         let foundIndex = line.indexOf(wrapper);
@@ -129,8 +138,41 @@ export function extractInlineFields(line: string): InlineField[] {
         }
     }
 
+    if (includeTaskFields) fields = fields.concat(extractSpecialTaskFields(line));
+
     fields.sort((a, b) => a.start - b.start);
     return fields;
+}
+
+/** Validates that a raw field name has a valid form. */
+const FULL_LINE_KEY_PART: P.Parser<string> = P.alt(
+    P.regex(new RegExp(emojiRegex(), "")),
+    P.regex(/[0-9\p{Letter}\w\s_/-]+/u)
+)
+    .many()
+    .map(parts => parts.join(""));
+
+const FULL_LINE_KEY_PARSER: P.Parser<string> = P.regexp(/[^0-9\w\p{Letter}]/u)
+    .then(FULL_LINE_KEY_PART)
+    .skip(P.regexp(/[_\*~`]*/u));
+
+/** Attempt to extract a full-line field (Key:: Value consuming the entire content line). */
+export function extractFullLineField(text: string): InlineField | undefined {
+    let sep = findSeparator(text, 0);
+    if (!sep) return undefined;
+
+    // We need to post-process the key to drop unnecessary opening annotations as well as
+    // drop surrounding Markdown.
+    let realKey = FULL_LINE_KEY_PARSER.parse(sep.key);
+    if (!realKey.status) return undefined;
+
+    return {
+        key: realKey.value,
+        value: text.substring(sep.valueIndex),
+        start: 0,
+        startValue: sep.valueIndex,
+        end: text.length,
+    };
 }
 
 export const CREATED_DATE_REGEX = /\u{2795}\s*(\d{4}-\d{2}-\d{2})/u;
@@ -138,38 +180,43 @@ export const DUE_DATE_REGEX = /[\u{1F4C5}\u{1F4C6}\u{1F5D3}]\s*(\d{4}-\d{2}-\d{2
 export const DONE_DATE_REGEX = /\u{2705}\s*(\d{4}-\d{2}-\d{2})/u;
 
 /** Parse special completed/due/done task fields which are marked via emoji. */
-export function extractSpecialTaskFields(
-    line: string,
-    annotations?: Record<string, Literal>
-): {
-    created?: DateTime;
-    due?: DateTime;
-    completed?: DateTime;
-} {
-    let result: { created?: DateTime; due?: DateTime; completed?: DateTime } = {};
+export function extractSpecialTaskFields(line: string): InlineField[] {
+    let results = [];
 
     let createdMatch = CREATED_DATE_REGEX.exec(line);
-    if (createdMatch) result.created = DateTime.fromISO(createdMatch[1]);
+    if (createdMatch)
+        results.push({
+            key: "created",
+            value: createdMatch[1],
+            start: createdMatch.index,
+            startValue: createdMatch.index + 1,
+            end: createdMatch.index + createdMatch[0].length,
+            wrapping: "emoji-shorthand",
+        });
 
     let dueMatch = DUE_DATE_REGEX.exec(line);
-    if (dueMatch) result.due = DateTime.fromISO(dueMatch[1]);
+    if (dueMatch)
+        results.push({
+            key: "due",
+            value: dueMatch[1],
+            start: dueMatch.index,
+            startValue: dueMatch.index + 1,
+            end: dueMatch.index + dueMatch[0].length,
+            wrapping: "emoji-shorthand",
+        });
 
     let completedMatch = DONE_DATE_REGEX.exec(line);
-    if (completedMatch) result.completed = DateTime.fromISO(completedMatch[1]);
+    if (completedMatch)
+        results.push({
+            key: "due",
+            value: completedMatch[1],
+            start: completedMatch.index,
+            startValue: completedMatch.index + 1,
+            end: completedMatch.index + completedMatch[0].length,
+            wrapping: "emoji-shorthand",
+        });
 
-    // Allow for textual fields to be used instead of the emoji for losers like me.
-    if (annotations) {
-        let anCreated = annotations.created ?? annotations.ctime ?? annotations.cday;
-        if (anCreated && Values.isDate(anCreated)) result.created = result.created ?? anCreated;
-
-        let anCompleted = annotations.completion ?? annotations.comptime ?? annotations.compday;
-        if (anCompleted && Values.isDate(anCompleted)) result.completed = result.completed ?? anCompleted;
-
-        let anDue = annotations.due ?? annotations.duetime ?? annotations.dueday;
-        if (anDue && Values.isDate(anDue)) result.due = result.due ?? anDue;
-    }
-
-    return result;
+    return results;
 }
 
 /** Sets or replaces the value of an inline field; if the value is 'undefined', deletes the key. */

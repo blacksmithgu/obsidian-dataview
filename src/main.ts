@@ -23,10 +23,10 @@ import { DataviewTableRenderer } from "ui/views/table-view";
 import { DataviewCalendarRenderer } from "ui/views/calendar-view";
 import { DataviewInlineRenderer } from "ui/views/inline-view";
 import { DataviewInlineJSRenderer, DataviewJSRenderer } from "ui/views/js-view";
-import { DataviewTaskRenderer } from "ui/views/task-view";
 import { currentLocale } from "util/locale";
 import { DateTime } from "luxon";
 import { DataviewInlineApi } from "api/inline-api";
+import { createTaskView } from "ui/views/task-view";
 
 declare module "obsidian" {
     interface Workspace {
@@ -52,7 +52,7 @@ export default class DataviewPlugin extends Plugin {
         this.settings = Object.assign(DEFAULT_SETTINGS, (await this.loadData()) ?? {});
         this.addSettingTab(new GeneralSettingsTab(this.app, this));
 
-        this.index = FullIndex.create(this.app.vault, this.app.metadataCache, () => {
+        this.index = FullIndex.create(this.app, () => {
             if (this.settings.refreshEnabled) this.debouncedRefresh();
         });
         // Set up view refreshing
@@ -159,17 +159,7 @@ export default class DataviewPlugin extends Plugin {
         let query = maybeQuery.value;
         switch (query.header.type) {
             case "task":
-                component.addChild(
-                    new DataviewTaskRenderer(
-                        query as Query,
-                        el,
-                        this.index,
-                        sourcePath,
-                        this.app.vault,
-                        this.settings,
-                        this.app
-                    )
-                );
+                component.addChild(createTaskView(this.app, this.settings, this.index, el, query as Query, sourcePath));
                 break;
             case "list":
                 component.addChild(

@@ -1,10 +1,9 @@
 /** Stores various indices on all files in the vault to make dataview generation fast. */
 import { Result } from "api/result";
 import { DataObject } from "data-model/value";
-import { Component, MetadataCache, TAbstractFile, TFile, TFolder, Vault } from "obsidian";
+import { App, Component, MetadataCache, TAbstractFile, TFile, TFolder, Vault } from "obsidian";
 import { getParentFolder } from "util/normalize";
 import { PageMetadata } from "data-model/markdown";
-import { ParsedMarkdown, parsePage } from "data-import/markdown-file";
 import { DateTime } from "luxon";
 import { parseCsv } from "data-import/csv";
 import { FileImporter } from "data-import/web-worker/import-manager";
@@ -13,9 +12,14 @@ import { IndexEvtFullName, IndexEvtTriggerArgs } from "../typings/events";
 /** Aggregate index which has several sub-indices and will initialize all of them. */
 export class FullIndex extends Component {
     /** Generate a full index from the given vault. */
-    public static create(vault: Vault, metadata: MetadataCache, onChange: () => void): FullIndex {
-        return new FullIndex(vault, metadata, onChange);
+    public static create(app: App, onChange: () => void): FullIndex {
+        return new FullIndex(app, onChange);
     }
+
+    /** I/O access to the Obsidian vault contents. */
+    public vault: Vault;
+    /** Access to in-memory metadata, useful for parsing and metadata lookups. */
+    public metadataCache: MetadataCache;
 
     /* Maps path -> markdown metadata for all markdown pages. */
     public pages: Map<string, PageMetadata>;
@@ -28,7 +32,10 @@ export class FullIndex extends Component {
     public links: IndexMap;
     /** Search files by path prefix. */
     public prefix: PrefixIndex;
-    /** Caches rows of CSV files. */
+    /** Allows for efficient lookups of whether a file is starred or not. */
+    public starred: StarredCache;
+    /** Caches data in CSV files. */
+    // TODO: CSV parsing should be done by a worker thread asynchronously to avoid frontend stalls.
     public csv: CsvCache;
 
     /**
@@ -41,8 +48,12 @@ export class FullIndex extends Component {
     public importer: FileImporter;
 
     /** Construct a new index over the given vault and metadata cache. */
-    private constructor(public vault: Vault, public metadataCache: MetadataCache, public onChange: () => void) {
+    private constructor(public app: App, public onChange: () => void) {
         super();
+
+        this.vault = app.vault;
+        this.metadataCache = app.metadataCache;
+
         this.pages = new Map();
         this.tags = new IndexMap();
         this.etags = new IndexMap();
@@ -55,6 +66,8 @@ export class FullIndex extends Component {
         this.addChild((this.prefix = PrefixIndex.create(this.vault, () => this.touch())));
         // The CSV cache also needs to listen to filesystem events for cache invalidation.
         this.addChild((this.csv = new CsvCache(this.vault)));
+
+        this.starred = new StarredCache(this.app);
     }
 
     trigger(...args: IndexEvtTriggerArgs): void {
@@ -65,9 +78,8 @@ export class FullIndex extends Component {
     public initialize() {
         // Traverse all markdown files & fill in initial data.
         let start = new Date().getTime();
-        const empty = { fields: new Map(), tasks: [] };
         for (const file of this.vault.getMarkdownFiles()) {
-            this.reloadInternal(file, empty);
+            this.reloadInternal(file, {});
             this.reload(file);
         }
         console.log("Dataview: Task & metadata parsing queued in %.3fs.", (new Date().getTime() - start) / 1000.0);
@@ -119,7 +131,7 @@ export class FullIndex extends Component {
 
     /** Queue a file for reloading; this is done asynchronously in the background and may take a few seconds. */
     public reload(file: TFile) {
-        this.importer.reload<ParsedMarkdown>(file).then(r => this.reloadInternal(file, r));
+        this.importer.reload<Partial<PageMetadata>>(file).then(r => this.reloadInternal(file, r));
     }
 
     /** "Touch" the index, incrementing the revision number and causing downstream views to reload. */
@@ -128,8 +140,8 @@ export class FullIndex extends Component {
         this.onChange();
     }
 
-    private reloadInternal(file: TFile, parsed: ParsedMarkdown) {
-        let meta = parsePage(file, this.metadataCache, parsed);
+    private reloadInternal(file: TFile, parsed: Partial<PageMetadata>) {
+        let meta = new PageMetadata(file.path, parsed);
         this.pages.set(file.path, meta);
         this.tags.set(file.path, meta.fullTags());
         this.etags.set(file.path, meta.tags);
@@ -288,6 +300,30 @@ export class CsvCache extends Component {
     }
 }
 
+export type StarredEntry = { type: "file"; path: string; title: string } | { type: "folder" } | { type: "query" };
+
+/** Optional connector to the Obsidian 'Starred' plugin which allows for efficiently querying if a file is starred or not. */
+export class StarredCache {
+    public constructor(public app: App) {}
+
+    /** Determines if the starred plugin is currently enabled & has data. */
+    public enabled(): boolean {
+        return this.instance() != undefined;
+    }
+
+    /** Determines if the given path is starred. */
+    public starred(path: string): boolean {
+        let instance = this.instance();
+        if (!instance) return false;
+
+        return instance.items.find(t => t.type == "file" && t.path == path) !== undefined;
+    }
+
+    private instance(): { items: StarredEntry[] } | undefined {
+        return (this.app as any)?.internalPlugins?.plugins?.starred?.instance;
+    }
+}
+
 /** A generic index which indexes variables of the form key -> value[], allowing both forward and reverse lookups. */
 export class IndexMap {
     /** Maps key -> values for that key. */
@@ -316,6 +352,7 @@ export class IndexMap {
         return this.invMap.get(value) || IndexMap.EMPTY_SET;
     }
 
+    /** Sets the key to the given values; this will delete the old mapping for the key if one was present. */
     public set(key: string, values: Set<string>): this {
         if (!values.size) {
             // no need to store if no values

@@ -1,10 +1,11 @@
 import { Vault, MarkdownRenderer, Component } from "obsidian";
-import { TASK_REGEX } from "data-import/markdown-file";
-import { Grouping, Task } from "data-model/value";
+import { LIST_ITEM_REGEX } from "data-import/markdown-file";
+import { Grouping, Groupings } from "data-model/value";
 import { renderValue } from "ui/render";
 import { QuerySettings } from "settings";
 import { DateTime } from "luxon";
 import { setInlineField } from "data-import/inline-field";
+import { SListItem } from "data-model/serialized/markdown";
 
 /**
  * Render a task grouping (indenting nested groupings for clarity). This will automatically bind the tasks to be checkable,
@@ -12,31 +13,29 @@ import { setInlineField } from "data-import/inline-field";
  */
 export async function renderTasks(
     container: HTMLElement,
-    tasks: Grouping<Task[]>,
+    tasks: Grouping<SListItem>,
     originFile: string,
     component: Component,
     vault: Vault,
     settings: QuerySettings
 ) {
-    switch (tasks.type) {
-        case "base":
-            await renderTaskList(container, tasks.value, component, vault, settings);
-            break;
-        case "grouped":
-            for (let { key, value } of tasks.groups) {
-                let header = container.createEl("h4");
-                await renderValue(key, header, originFile, component, settings);
-                let div = container.createDiv({ cls: ["dataview", "result-group"] });
-                await renderTasks(div, value, originFile, component, vault, settings);
-            }
-            break;
-    }
+    /*
+    if (Groupings.isGroup(tasks)) {
+        for (let { key, rows } of tasks) {
+            let header = container.createEl("h4");
+            await renderValue(key, header, originFile, component, settings);
+            let div = container.createDiv({ cls: ["dataview", "result-group"] });
+            await renderTasks(div, value, originFile, component, vault, settings);
+        }
+    } else {
+        await renderTaskList(container, tasks, component, vault, settings);
+    }*/
 }
 
 /** Render a list of tasks as a single list. */
 export async function renderTaskList(
     container: HTMLElement,
-    tasks: Task[],
+    tasks: SListItem[],
     component: Component,
     vault: Vault,
     settings: QuerySettings
@@ -165,8 +164,8 @@ export async function setTaskCheckedInFile(
     let splitText = text.replace("\r", "").split("\n");
 
     if (splitText.length < taskLine) return;
-    let match = TASK_REGEX.exec(splitText[taskLine]);
-    if (!match) return;
+    let match = LIST_ITEM_REGEX.exec(splitText[taskLine]);
+    if (!match || match[2].length == 0) return;
 
     let foundText = match[3];
     let checkMarking = match[2]

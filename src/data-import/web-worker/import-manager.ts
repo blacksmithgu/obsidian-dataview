@@ -93,6 +93,7 @@ export class FileImporter extends Component {
             this.workers[workerId].postMessage({
                 path: file.path,
                 contents: c,
+                stat: file.stat,
                 metadata: this.metadataCache.getFileCache(file),
             })
         );

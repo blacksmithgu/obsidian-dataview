@@ -29,6 +29,7 @@ const DEV_PLUGIN_CONFIG = {
         sourcemap: "inline",
         format: "cjs",
         exports: "default",
+        name: "Dataview (Development)",
     },
     plugins: getRollupPlugins(
         undefined,
@@ -49,6 +50,7 @@ const PROD_PLUGIN_CONFIG = {
         sourcemapExcludeSources: true,
         format: "cjs",
         exports: "default",
+        name: "Dataview (Production)",
     },
     plugins: getRollupPlugins(),
 };
@@ -60,6 +62,7 @@ const LIBRARY_CONFIG = {
         dir: "lib",
         sourcemap: true,
         format: "cjs",
+        name: "Dataview (Library)",
     },
     plugins: getRollupPlugins(
         { tsconfig: "tsconfig-lib.json", typescript: ttypescript },

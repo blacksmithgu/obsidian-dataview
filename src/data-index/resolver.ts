@@ -118,7 +118,7 @@ export function resolveMarkdownData(path: string, index: FullIndex): Result<Data
     return Result.success([
         {
             id: Link.file(path),
-            data: page.toObject(index),
+            data: page.serialize(index),
         },
     ]);
 }

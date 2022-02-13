@@ -4,11 +4,9 @@ import { App, Component } from "obsidian";
 import { FullIndex } from "data-index/index";
 import { matchingSourcePaths } from "data-index/resolver";
 import { Sources } from "data-index/source";
-import { DataObject, Link, Literal, Values, Task, Groupings } from "data-model/value";
+import { DataObject, Link, Literal, Values } from "data-model/value";
 import { EXPRESSION } from "expression/parse";
 import { renderList, renderTable, renderValue } from "ui/render";
-import { DataviewSettings } from "settings";
-import { renderTasks } from "ui/tasks";
 import { DataArray } from "./data-array";
 import { BoundFunctionImpl, DEFAULT_FUNCTIONS, Functions } from "expression/functions";
 import { Context } from "expression/context";
@@ -17,6 +15,7 @@ import { DateTime, Duration } from "luxon";
 import * as Luxon from "luxon";
 import { compare, satisfies } from "compare-versions";
 import { DvAPIInterface, DvIOAPIInterface } from "../typings/api";
+import { DataviewSettings } from "settings";
 
 /** Asynchronous API calls related to file / system IO. */
 export class DataviewIOApi implements DvIOAPIInterface {
@@ -118,7 +117,7 @@ export class DataviewApi implements DvAPIInterface {
         let pageObject = this.index.pages.get(normPath.path);
         if (!pageObject) return undefined;
 
-        return DataArray.convert(pageObject.toObject(this.index), this.settings);
+        return DataArray.convert(pageObject.serialize(this.index), this.settings);
     }
 
     /** Return an array of page objects corresponding to pages which match the query. */
@@ -209,7 +208,7 @@ export class DataviewApi implements DvAPIInterface {
 
     /** Render a dataview task view with the given tasks. */
     public async taskList(
-        tasks: Task[] | DataArray<any>,
+        tasks: any[] | DataArray<any>,
         groupByFile: boolean = true,
         container: HTMLElement,
         component: Component,
@@ -217,11 +216,12 @@ export class DataviewApi implements DvAPIInterface {
     ) {
         if (DataArray.isDataArray(tasks)) tasks = tasks.array();
 
+        /*
         let taskComponent = new Component();
         component.addChild(taskComponent);
 
         if (groupByFile) {
-            let byFile = new Map<string, Task[]>();
+            let byFile = new Map<string, []>();
             for (let task of tasks as Task[]) {
                 if (!byFile.has(task.path)) byFile.set(task.path, []);
                 byFile.get(task.path)?.push(task);
@@ -246,6 +246,7 @@ export class DataviewApi implements DvAPIInterface {
                 this.settings
             );
         }
+        */
     }
 
     /** Render an arbitrary value into a container. */
