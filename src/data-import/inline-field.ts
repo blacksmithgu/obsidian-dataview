@@ -146,13 +146,13 @@ export function extractInlineFields(line: string, includeTaskFields: boolean = f
 
 /** Validates that a raw field name has a valid form. */
 const FULL_LINE_KEY_PART: P.Parser<string> = P.alt(
-    P.regex(new RegExp(emojiRegex(), "")),
-    P.regex(/[0-9\p{Letter}\w\s_/-]+/u)
+    P.regexp(new RegExp(emojiRegex(), "u")),
+    P.regexp(/[0-9\p{Letter}\w\s_/-]+/u)
 )
     .many()
     .map(parts => parts.join(""));
 
-const FULL_LINE_KEY_PARSER: P.Parser<string> = P.regexp(/[^0-9\w\p{Letter}]/u)
+const FULL_LINE_KEY_PARSER: P.Parser<string> = P.regexp(/[^0-9\w\p{Letter}]*/u)
     .then(FULL_LINE_KEY_PART)
     .skip(P.regexp(/[_\*~`]*/u));
 
@@ -168,7 +168,7 @@ export function extractFullLineField(text: string): InlineField | undefined {
 
     return {
         key: realKey.value,
-        value: text.substring(sep.valueIndex),
+        value: text.substring(sep.valueIndex).trim(),
         start: 0,
         startValue: sep.valueIndex,
         end: text.length,

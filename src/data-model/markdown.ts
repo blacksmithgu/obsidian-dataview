@@ -1,7 +1,7 @@
 import { extractSubtags, getExtension, getFileTitle, getParentFolder, stripTime } from "util/normalize";
 import { DateTime } from "luxon";
 import type { FullIndex } from "data-index/index";
-import { Literal, Link } from "data-model/value";
+import { Literal, Link, Values } from "data-model/value";
 import { DataObject } from "index";
 import { SListItem, SMarkdownPage } from "data-model/serialized/markdown";
 
@@ -43,6 +43,24 @@ export class PageMetadata {
         Object.assign(this, init);
 
         this.lists = (this.lists || []).map(l => new ListItem(l));
+    }
+
+    /** Canonicalize raw links and other data in partial data with normalizers, returning a completed object. */
+    public static canonicalize(data: Partial<PageMetadata>, linkNormalizer: (link: Link) => Link): PageMetadata {
+        // Mutate the data for now, which is probably a bad idea but... all well.
+        if (data.frontmatter)
+            data.frontmatter = Values.mapLeaves(data.frontmatter, t =>
+                Values.isLink(t) ? linkNormalizer(t) : t
+            ) as DataObject;
+        if (data.fields) {
+            for (let [key, value] of data.fields.entries())
+                data.fields.set(
+                    key,
+                    Values.mapLeaves(value, t => (Values.isLink(t) ? linkNormalizer(t) : t))
+                );
+        }
+
+        return new PageMetadata(data.path!!, data);
     }
 
     /** The name (based on path) of this file. */

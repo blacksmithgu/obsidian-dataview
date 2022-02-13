@@ -142,6 +142,21 @@ export namespace Values {
         else return undefined;
     }
 
+    /** Recursively map complex objects at the leaves. */
+    export function mapLeaves(val: Literal, func: (t: Literal) => Literal): Literal {
+        if (isObject(val)) {
+            let result: DataObject = {};
+            for (let [key, value] of Object.entries(val)) result[key] = mapLeaves(value, func);
+            return result;
+        } else if (isArray(val)) {
+            let result: Literal[] = [];
+            for (let value of val) result.push(mapLeaves(value, func));
+            return result;
+        } else {
+            return func(val);
+        }
+    }
+
     /** Compare two arbitrary JavaScript values. Produces a total ordering over ANY possible dataview value. */
     export function compareValue(val1: Literal, val2: Literal, linkNormalizer?: (link: string) => string): number {
         // Handle undefined/nulls first.
@@ -410,6 +425,8 @@ export class Link {
 
     /** Checks for link equality (i.e., that the links are pointing to the same exact location). */
     public equals(other: Link): boolean {
+        if (other == undefined || other == null) return false;
+
         return this.path == other.path && this.type == other.type && this.subpath == other.subpath;
     }
 
@@ -421,6 +438,11 @@ export class Link {
     /** Convert this link to a raw object which is serialization-friendly. */
     public toObject(): Record<string, any> {
         return { path: this.path, type: this.type, subpath: this.subpath, display: this.display, embed: this.embed };
+    }
+
+    /** Update this link with a new path. */
+    public withPath(path: string) {
+        return new Link(Object.assign({}, this, { path }));
     }
 
     /** Return a new link which points to the same location but with a new display value. */

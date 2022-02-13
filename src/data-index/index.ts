@@ -141,7 +141,12 @@ export class FullIndex extends Component {
     }
 
     private reloadInternal(file: TFile, parsed: Partial<PageMetadata>) {
-        let meta = new PageMetadata(file.path, parsed);
+        let meta = PageMetadata.canonicalize(parsed, link => {
+            let realPath = this.metadataCache.getFirstLinkpathDest(link.path, file.path);
+            if (realPath) return link.withPath(realPath.path);
+            else return link;
+        });
+
         this.pages.set(file.path, meta);
         this.tags.set(file.path, meta.fullTags());
         this.etags.set(file.path, meta.tags);

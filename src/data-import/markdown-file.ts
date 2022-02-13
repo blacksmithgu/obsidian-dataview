@@ -5,14 +5,7 @@ import { ListItem, PageMetadata } from "data-model/markdown";
 import { Literal, Link, Values } from "data-model/value";
 import { EXPRESSION } from "expression/parse";
 import { DateTime } from "luxon";
-import {
-    CachedMetadata,
-    FileStats,
-    getAllTags,
-    HeadingCache,
-    parseFrontMatterAliases,
-    parseFrontMatterTags,
-} from "obsidian";
+import type { CachedMetadata, FileStats, FrontMatterCache, HeadingCache } from "obsidian";
 import { canonicalizeVarName, extractDate, getFileTitle } from "util/normalize";
 
 /** Extract markdown metadata from the given Obsidian markdown file. */
@@ -23,16 +16,16 @@ export function parsePage(path: string, contents: string, stat: FileStats, metad
     let links: Link[] = [];
 
     // File tags, including front-matter and in-file tags.
-    getAllTags(metadata)?.forEach(t => tags.add(t.toLocaleLowerCase()));
+    (metadata.tags || []).forEach(t => tags.add(t.tag.startsWith("#") ? t.tag : "#" + t.tag));
 
     // Front-matter file tags, aliases, AND frontmatter properties.
     if (metadata.frontmatter) {
-        for (let tag of parseFrontMatterTags(metadata.frontmatter) || []) {
+        for (let tag of extractTags(metadata.frontmatter)) {
             if (!tag.startsWith("#")) tag = "#" + tag;
             tags.add(tag.toLocaleLowerCase());
         }
 
-        for (let alias of parseFrontMatterAliases(metadata.frontmatter) || []) aliases.add(alias);
+        for (let alias of extractAliases(metadata.frontmatter) || []) aliases.add(alias);
 
         let frontFields = parseFrontmatter(metadata.frontmatter) as Record<string, Literal>;
         for (let [key, value] of Object.entries(frontFields)) fields.set(key, value);
@@ -63,6 +56,33 @@ export function parsePage(path: string, contents: string, stat: FileStats, metad
     });
 }
 
+/** Extract tags intelligently from frontmatter. Handles arrays, numbers, and strings. */
+export function extractTags(metadata: FrontMatterCache): string[] {
+    let tagKeys = Object.keys(metadata).filter(t => t.toLowerCase() == "tags" || t.toLowerCase() == "tag");
+
+    return tagKeys.map(k => splitFrontmatterTagOrAlias(metadata[k])).reduce((p, c) => p.concat(c), []);
+}
+
+/** Extract tags intelligently from frontmatter. Handles arrays, numbers, and strings.  */
+export function extractAliases(metadata: FrontMatterCache): string[] {
+    let aliasKeys = Object.keys(metadata).filter(t => t.toLowerCase() == "alias" || t.toLowerCase() == "aliases");
+
+    return aliasKeys.map(k => splitFrontmatterTagOrAlias(metadata[k])).reduce((p, c) => p.concat(c), []);
+}
+
+/** Split a frontmatter list into separate elements; handles actual lists, comma separated lists, and single elements. */
+export function splitFrontmatterTagOrAlias(data: any): string[] {
+    if (Array.isArray(data)) return data.filter(s => !!s).map(s => ("" + s).trim());
+
+    // Force to a string to handle numbers and so on.
+    const strData = "" + data;
+    return strData
+        .split(",")
+        .filter(t => !!t)
+        .map(t => t.trim())
+        .filter(t => t.length > 0);
+}
+
 /** Parse raw (newline-delimited) markdown, returning inline fields, list items, and other metadata. */
 export function parseMarkdown(
     path: string,
@@ -83,10 +103,11 @@ export function parseMarkdown(
             line = line.trim();
 
             let inlineFields = extractInlineFields(line);
-            if (inlineFields) {
+            if (inlineFields.length > 0) {
                 for (let ifield of inlineFields) addRawInlineField(ifield, fields);
             } else {
                 let fullLine = extractFullLineField(line);
+                if (path == "dataview-testing/Test.md") console.log(line, fullLine);
                 if (fullLine) addRawInlineField(fullLine, fields);
             }
         }
@@ -103,7 +124,7 @@ export function parseMarkdown(
 }
 
 // TODO: Consider using an actual parser in leiu of a more expensive regex.
-export const LIST_ITEM_REGEX = /^\s*(\d+\.|\*|-|\+)\s*(\[.+\])\s*(.+)$/u;
+export const LIST_ITEM_REGEX = /^\s*(\d+\.|\*|-|\+)\s*(\[.+\])?\s*(.+)$/mu;
 
 /**
  * Parse list items from the page + metadata. This requires some additional parsing above whatever Obsidian provides,
