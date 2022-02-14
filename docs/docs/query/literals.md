@@ -12,6 +12,7 @@ Literal|Description
 `-1337`|A negative number
 `"The quick brown fox jumps over the lazy dog"`|Some text, commonly referred to by programmers as a *string*
 `[[Link]]`|A link to the file named "Link"
+`[[]]`|A link to the current file
 `[1, 2, 3]`|A list of numbers 1, 2, and 3
 `[[1, 2],[3, 4]]`|A list of lists
 `{ a: 1, b: 2 }`|An object|
