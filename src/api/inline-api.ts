@@ -314,7 +314,7 @@ export class DataviewInlineApi {
     }
 
     /** Render a dataview task view with the given tasks. */
-    public taskList(tasks: Grouping<SListItem> | DataArray<SListItem>, groupByFile: boolean = true) {
+    public taskList(tasks: Grouping<SListItem>, groupByFile: boolean = true) {
         return this.api.taskList(tasks, groupByFile, this.container, this.component, this.currentFilePath);
     }
 }
