@@ -99,7 +99,7 @@ export default class DataviewPlugin extends Plugin {
         // Not required anymore, though holding onto it for backwards-compatibility.
         this.app.metadataCache.trigger("dataview:api-ready", this.api);
 
-        console.log(`Dataview: Version ${this.manifest.version} (Obsidian >${this.manifest.minAppVersion})`);
+        console.log(`Dataview: Version ${this.manifest.version} (requires Obsidian ${this.manifest.minAppVersion})`);
     }
 
     private debouncedRefresh: () => void = () => null;
@@ -466,31 +466,6 @@ class GeneralSettingsTab extends PluginSettingTab {
             );
 
         this.containerEl.createEl("h3", { text: "Task Settings" });
-
-        new Setting(this.containerEl)
-            .setName("Task Link Type")
-            .setDesc("'Start' and 'End' place a symbol link in their respective location; 'None' disables linking.")
-            .addDropdown(dropdown =>
-                dropdown
-                    .addOption("start", "Start")
-                    .addOption("end", "End")
-                    .addOption("none", "None")
-                    .setValue(this.plugin.settings.taskLinkLocation)
-                    .onChange(async value => {
-                        await this.plugin.updateSettings({ taskLinkLocation: value as any });
-                        this.plugin.index.touch();
-                    })
-            );
-
-        new Setting(this.containerEl)
-            .setName("Task Link Text")
-            .setDesc("Text used when linking from a task to its source note in the 'Start' and 'End' link types.")
-            .addText(text =>
-                text.setValue(this.plugin.settings.taskLinkText).onChange(async value => {
-                    await this.plugin.updateSettings({ taskLinkText: value.trim() });
-                    this.plugin.index.touch();
-                })
-            );
 
         new Setting(this.containerEl)
             .setName("Automatic Task Completion Tracking")

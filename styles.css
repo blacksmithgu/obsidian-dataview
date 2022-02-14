@@ -28,6 +28,11 @@
     max-width: 100%;
 }
 
+/** Live Preview padding fixes, specifically for DataviewJS custom HTML elements. */
+.is-live-preview .block-language-dataviewjs > p,span {
+    line-height: 1.0;
+}
+
 /** Rendered value styling for any view. */
 .dataview-result-list-root-ul {
     padding: 0em !important;
@@ -39,7 +44,10 @@
     padding-left: 8px;
 }
 
-/** Inline Field Rendering. */
+/*******************/
+/** Inline Fields **/
+/*******************/
+
 .dataview.inline-field-key {
     border-top-left-radius: 250px;
     border-bottom-left-radius: 250px;
@@ -69,12 +77,6 @@
     color: var(--text-nav-selected);
 }
 
-/** Live Preview padding fixes, specifically for DataviewJS custom HTML elements. */
-.is-live-preview .block-language-dataviewjs > p,span {
-    line-height: 1.0;
-}
-
-
 /***************/
 /** Task View **/
 /***************/
@@ -89,4 +91,22 @@
     background-color: var(--text-selection);
     box-shadow: -40px 0 0 var(--text-selection);
     cursor: pointer;
+}
+
+/*****************/
+/** Error Views **/
+/*****************/
+
+div.dataview-error-box {
+    width: 100%;
+    min-height: 150px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 4px dashed var(--background-secondary);
+}
+
+.dataview-error-message {
+    color: var(--text-muted);
+    text-align: center;
 }

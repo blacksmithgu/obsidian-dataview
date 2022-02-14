@@ -2,7 +2,7 @@
 import { Result } from "api/result";
 import { DataObject } from "data-model/value";
 import { App, Component, MetadataCache, TAbstractFile, TFile, TFolder, Vault } from "obsidian";
-import { getParentFolder } from "util/normalize";
+import { getParentFolder, setsEqual } from "util/normalize";
 import { PageMetadata } from "data-model/markdown";
 import { DateTime } from "luxon";
 import { parseCsv } from "data-import/csv";
@@ -66,8 +66,8 @@ export class FullIndex extends Component {
         this.addChild((this.prefix = PrefixIndex.create(this.vault, () => this.touch())));
         // The CSV cache also needs to listen to filesystem events for cache invalidation.
         this.addChild((this.csv = new CsvCache(this.vault)));
-
-        this.starred = new StarredCache(this.app);
+        // The starred cache fetches starred entries semi-regularly via an interval.
+        this.addChild((this.starred = new StarredCache(this.app, () => this.touch())));
     }
 
     trigger(...args: IndexEvtTriggerArgs): void {
@@ -308,24 +308,41 @@ export class CsvCache extends Component {
 export type StarredEntry = { type: "file"; path: string; title: string } | { type: "folder" } | { type: "query" };
 
 /** Optional connector to the Obsidian 'Starred' plugin which allows for efficiently querying if a file is starred or not. */
-export class StarredCache {
-    public constructor(public app: App) {}
+export class StarredCache extends Component {
+    /** How frequently to check for star updates. */
+    public static REFRESH_INTERVAL = 30 * 1_000;
 
-    /** Determines if the starred plugin is currently enabled & has data. */
-    public enabled(): boolean {
-        return this.instance() != undefined;
+    /** Set of all starred file paths. */
+    private stars: Set<string>;
+
+    public constructor(public app: App, public onUpdate: () => void) {
+        super();
+
+        this.stars = StarredCache.fetch(this.app);
+        this.registerInterval(window.setInterval(() => this.reload(), StarredCache.REFRESH_INTERVAL));
     }
 
     /** Determines if the given path is starred. */
     public starred(path: string): boolean {
-        let instance = this.instance();
-        if (!instance) return false;
-
-        return instance.items.find(t => t.type == "file" && t.path == path) !== undefined;
+        return this.stars.has(path);
     }
 
-    private instance(): { items: StarredEntry[] } | undefined {
-        return (this.app as any)?.internalPlugins?.plugins?.starred?.instance;
+    private reload() {
+        let newStars = StarredCache.fetch(this.app);
+        if (!setsEqual(this.stars, newStars)) {
+            this.stars = newStars;
+            this.onUpdate();
+        }
+    }
+
+    /** Fetch all starred files from the stars plugin, if present. */
+    private static fetch(app: App): Set<string> {
+        let items = (app as any)?.internalPlugins?.plugins?.starred?.instance?.items as StarredEntry[];
+        if (items == undefined) return new Set();
+
+        return new Set(
+            items.filter((l): l is { type: "file"; path: string; title: string } => l.type === "file").map(l => l.path)
+        );
     }
 }
 

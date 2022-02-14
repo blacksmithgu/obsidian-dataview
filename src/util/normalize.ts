@@ -158,3 +158,11 @@ export function renderMinimalDuration(dur: Duration): string {
     if (result.endsWith(", ")) result = result.substring(0, result.length - 2);
     return result;
 }
+
+/** Determine if two sets are equal in contents. */
+export function setsEqual<T>(first: Set<T>, second: Set<T>): boolean {
+    if (first.size != second.size) return false;
+    for (let elem of first) if (!second.has(elem)) return false;
+
+    return true;
+}

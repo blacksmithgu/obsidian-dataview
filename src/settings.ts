@@ -5,10 +5,6 @@
 export interface QuerySettings {
     /** What to render 'null' as in tables. Defaults to '-'. */
     renderNullAs: string;
-    /** Where to render task links - the start of the task or the end. **/
-    taskLinkLocation: "start" | "end" | "none";
-    /** How to render task links. If empty, will not render task links. */
-    taskLinkText: string;
     /** If enabled, tasks in Dataview views will automatically have their completion date appended when they are checked. */
     taskCompletionTracking: boolean;
     /** The name of the inline field to be added as a task's completion when checked */
@@ -34,8 +30,6 @@ export interface QuerySettings {
 
 export const DEFAULT_QUERY_SETTINGS: QuerySettings = {
     renderNullAs: "\\-",
-    taskLinkLocation: "end",
-    taskLinkText: "🔗",
     taskCompletionTracking: false,
     taskCompletionText: "completion",
     warnOnEmptyResult: true,
