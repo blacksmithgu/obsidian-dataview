@@ -16,7 +16,7 @@ import { SListItem } from "data-model/serialized/markdown";
 
 /** Asynchronous API calls related to file / system IO. */
 export class DataviewInlineIOApi {
-    public constructor(public api: DataviewIOApi, public currentFile: string) { }
+    public constructor(public api: DataviewIOApi, public currentFile: string) {}
 
     /** Load the contents of a CSV asynchronously, returning a data array of rows (or undefined if it does not exist). */
     public async csv(path: string, originFile?: string): Promise<DataArray<DataObject> | undefined> {
@@ -200,9 +200,11 @@ export class DataviewInlineApi {
     public async el<K extends keyof HTMLElementTagNameMap>(
         el: K,
         text: any,
-        { container = this.container, ...options }: DomElementInfo & { container?: HTMLElement | Promise<HTMLElement> } = {}
+        {
+            container = this.container,
+            ...options
+        }: DomElementInfo & { container?: HTMLElement | Promise<HTMLElement> } = {}
     ): Promise<HTMLElementTagNameMap[K]> {
-
         let wrapped = Values.wrapValue(text);
 
         const parent = await Promise.resolve(container);
@@ -321,7 +323,7 @@ export class DataviewInlineApi {
  * Evaluate a script where 'this' for the script is set to the given context. Allows you to define global variables.
  */
 export function evalInContext(script: string, context: any): any {
-    return function() {
+    return function () {
         return eval(script);
     }.call(context);
 }

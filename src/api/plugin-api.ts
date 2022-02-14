@@ -4,7 +4,7 @@ import { App, Component } from "obsidian";
 import { FullIndex } from "data-index/index";
 import { matchingSourcePaths } from "data-index/resolver";
 import { Sources } from "data-index/source";
-import { DataObject, Grouping, Link, Literal, Values } from "data-model/value";
+import { DataObject, Grouping, Groupings, Link, Literal, Values } from "data-model/value";
 import { EXPRESSION } from "expression/parse";
 import { renderList, renderTable, renderValue } from "ui/render";
 import { DataArray } from "./data-array";
@@ -83,7 +83,7 @@ export class DataviewApi implements DvAPIInterface {
             get current() {
                 return version;
             },
-            compare: (op: CompareOperator , ver: string) => compare(version, ver, op),
+            compare: (op: CompareOperator, ver: string) => compare(version, ver, op),
             satisfies: (range: string) => satisfies(version, range),
         };
     })();
@@ -220,13 +220,14 @@ export class DataviewApi implements DvAPIInterface {
 
     /** Render a dataview task view with the given tasks. */
     public async taskList(
-        tasks: Grouping<SListItem> | DataArray<SListItem>,
+        tasks: Grouping<SListItem>,
         groupByFile: boolean = true,
         container: HTMLElement,
         component: Component,
         filePath: string = ""
     ) {
-        let groupedTasks = groupByFile ? this.array(tasks).groupBy(t => Link.file(t.path)) : tasks;
+        let groupedTasks =
+            !Groupings.isGrouping(tasks) && groupByFile ? this.array(tasks).groupBy(t => Link.file(t.path)) : tasks;
         component.addChild(
             createFixedTaskView(
                 this.app,

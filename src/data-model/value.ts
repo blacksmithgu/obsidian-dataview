@@ -163,16 +163,16 @@ export namespace Values {
         if (val1 === undefined) val1 = null;
         if (val2 === undefined) val2 = null;
         if (val1 === null && val2 === null) return 0;
-        else if (val1 === null) return -1;
-        else if (val2 === null) return 1;
+        else if (val1 === null) return 1;
+        else if (val2 === null) return -1;
 
         // A non-null value now which we can wrap & compare on.
         let wrap1 = wrapValue(val1);
         let wrap2 = wrapValue(val2);
 
         if (wrap1 === undefined && wrap2 === undefined) return 0;
-        else if (wrap1 === undefined) return -1;
-        else if (wrap2 === undefined) return 1;
+        else if (wrap1 === undefined) return 1;
+        else if (wrap2 === undefined) return -1;
 
         if (wrap1.type != wrap2.type) return wrap1.type.localeCompare(wrap2.type);
 

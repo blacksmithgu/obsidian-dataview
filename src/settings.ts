@@ -37,7 +37,7 @@ export const DEFAULT_QUERY_SETTINGS: QuerySettings = {
     refreshInterval: 250,
     defaultDateFormat: "MMMM dd, yyyy",
     defaultDateTimeFormat: "h:mm a - MMMM dd, yyyy",
-    maxRecursiveRenderDepth: 6,
+    maxRecursiveRenderDepth: 4,
 
     tableIdColumnName: "File",
     tableGroupColumnName: "Group",

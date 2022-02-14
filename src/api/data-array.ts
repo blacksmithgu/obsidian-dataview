@@ -141,6 +141,7 @@ class DataArrayImpl<T> implements DataArray<T> {
         "array",
         "defaultComparator",
         "toString",
+        "settings",
     ]);
 
     private static ARRAY_PROXY: ProxyHandler<DataArrayImpl<any>> = {
