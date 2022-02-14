@@ -35,7 +35,7 @@ export class Context {
         public globals: Record<string, Literal> = {},
         public binaryOps: BinaryOpHandler = createBinaryOps(linkHandler.normalize),
         public functions: Record<string, FunctionImpl> = DEFAULT_FUNCTIONS
-    ) {}
+    ) { }
 
     /** Set a global value in this context. */
     public set(name: string, value: Literal): Context {
@@ -230,7 +230,7 @@ export class Context {
                                 return Result.success(object.value.shiftTo("seconds").seconds);
                             case "millisecond":
                             case "milliseconds":
-                                return Result.success(object.value.shiftTo("millisecond").milliseconds);
+                                return Result.success(object.value.shiftTo("milliseconds").milliseconds);
                             default:
                                 return Result.success(null);
                         }

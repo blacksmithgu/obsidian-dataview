@@ -13,7 +13,7 @@ import { Context } from "expression/context";
 import { defaultLinkHandler } from "query/engine";
 import { DateTime, Duration } from "luxon";
 import * as Luxon from "luxon";
-import { compare, satisfies } from "compare-versions";
+import { compare, CompareOperator, satisfies } from "compare-versions";
 import { DvAPIInterface, DvIOAPIInterface } from "../typings/api";
 import { DataviewSettings } from "settings";
 import { parseFrontmatter } from "data-import/markdown-file";
@@ -83,8 +83,8 @@ export class DataviewApi implements DvAPIInterface {
             get current() {
                 return version;
             },
-            compare: (op, ver) => compare(version, ver, op),
-            satisfies: range => satisfies(version, range),
+            compare: (op: CompareOperator , ver: string) => compare(version, ver, op),
+            satisfies: (range: string) => satisfies(version, range),
         };
     })();
 
