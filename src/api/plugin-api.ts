@@ -4,7 +4,7 @@ import { App, Component } from "obsidian";
 import { FullIndex } from "data-index/index";
 import { matchingSourcePaths } from "data-index/resolver";
 import { Sources } from "data-index/source";
-import { DataObject, Link, Literal, Values } from "data-model/value";
+import { DataObject, Grouping, Link, Literal, Values } from "data-model/value";
 import { EXPRESSION } from "expression/parse";
 import { renderList, renderTable, renderValue } from "ui/render";
 import { DataArray } from "./data-array";
@@ -16,6 +16,9 @@ import * as Luxon from "luxon";
 import { compare, satisfies } from "compare-versions";
 import { DvAPIInterface, DvIOAPIInterface } from "../typings/api";
 import { DataviewSettings } from "settings";
+import { parseFrontmatter } from "data-import/markdown-file";
+import { SListItem } from "data-model/serialized/markdown";
+import { createFixedTaskView } from "ui/views/task-view";
 
 /** Asynchronous API calls related to file / system IO. */
 export class DataviewIOApi implements DvIOAPIInterface {
@@ -162,6 +165,18 @@ export class DataviewApi implements DvAPIInterface {
         return this.func.dur(str) as Duration | null;
     }
 
+    /** Parse a raw textual value into a complex Dataview type, if possible. */
+    public parse(value: string): Literal {
+        let raw = EXPRESSION.inlineField.parse(value);
+        if (raw.status) return raw.value;
+        else return value;
+    }
+
+    /** Convert a basic JS type into a Dataview type by parsing dates, links, durations, and so on. */
+    public literal(value: any): Literal {
+        return DataArray.convert(parseFrontmatter(value), this.settings);
+    }
+
     /**
      * Compare two arbitrary JavaScript values using Dataview's default comparison rules. Returns a negative value if
      * a < b, 0 if a = b, and a positive value if a > b.
@@ -187,7 +202,6 @@ export class DataviewApi implements DvAPIInterface {
         filePath: string
     ) {
         if (!values) return;
-        if (DataArray.isDataArray(values)) values = values.array();
 
         await renderList(container, values as any[], component, filePath, this.settings);
     }
@@ -201,52 +215,28 @@ export class DataviewApi implements DvAPIInterface {
         filePath: string
     ) {
         if (!values) values = [];
-        if (DataArray.isDataArray(values)) values = values.array();
-
         await renderTable(container, headers, values as any[][], component, filePath, this.settings);
     }
 
     /** Render a dataview task view with the given tasks. */
     public async taskList(
-        tasks: any[] | DataArray<any>,
+        tasks: Grouping<SListItem> | DataArray<SListItem>,
         groupByFile: boolean = true,
         container: HTMLElement,
         component: Component,
         filePath: string = ""
     ) {
-        if (DataArray.isDataArray(tasks)) tasks = tasks.array();
-
-        /*
-        let taskComponent = new Component();
-        component.addChild(taskComponent);
-
-        if (groupByFile) {
-            let byFile = new Map<string, []>();
-            for (let task of tasks as Task[]) {
-                if (!byFile.has(task.path)) byFile.set(task.path, []);
-                byFile.get(task.path)?.push(task);
-            }
-
-            let groupings = Groupings.grouped(
-                Array.from(byFile.entries()).map(([path, tasks]) => {
-                    return { key: Link.file(path), value: Groupings.base(tasks) };
-                })
-            );
-
-            let subcontainer = container.createDiv();
-            await renderTasks(subcontainer, groupings, filePath, taskComponent, this.app.vault, this.settings);
-        } else {
-            let subcontainer = container.createDiv();
-            await renderTasks(
-                subcontainer,
-                Groupings.base(tasks),
-                filePath,
-                taskComponent,
-                this.app.vault,
-                this.settings
-            );
-        }
-        */
+        let groupedTasks = groupByFile ? this.array(tasks).groupBy(t => Link.file(t.path)) : tasks;
+        component.addChild(
+            createFixedTaskView(
+                this.app,
+                this.settings,
+                this.index,
+                container,
+                groupedTasks as Grouping<SListItem>,
+                filePath
+            )
+        );
     }
 
     /** Render an arbitrary value into a container. */

@@ -147,6 +147,7 @@ class DataArrayImpl<T> implements DataArray<T> {
         get: function (target, prop, reciever) {
             if (typeof prop === "symbol") return (target as any)[prop];
             else if (typeof prop === "number") return target.values[prop];
+            else if (prop === "constructor") return target.values.constructor;
             else if (!isNaN(parseInt(prop))) return target.values[parseInt(prop)];
             else if (DataArrayImpl.ARRAY_FUNCTIONS.has(prop.toString())) return target[prop.toString()];
 
@@ -396,7 +397,7 @@ class DataArrayImpl<T> implements DataArray<T> {
     }
 
     public toString(): string {
-        return this.values.toString();
+        return "[" + this.values.join(", ") + "]";
     }
 }
 
@@ -442,3 +443,9 @@ export namespace DataArray {
         return obj instanceof DataArrayImpl;
     }
 }
+
+// A scary looking polyfill, sure, but it fixes up data array/array interop for us.
+const oldArrayIsArray = Array.isArray;
+Array.isArray = (arg): arg is any[] => {
+    return oldArrayIsArray(arg) || DataArray.isDataArray(arg);
+};

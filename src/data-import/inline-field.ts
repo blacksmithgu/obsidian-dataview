@@ -108,14 +108,6 @@ export function parseInlineValue(value: string): Literal {
     else return value;
 }
 
-/** Extract full-line or inline fields. */
-export function extractFields(line: string): InlineField[] {
-    let fullLine = extractFullLineField(line);
-    if (fullLine) return [fullLine];
-
-    return extractInlineFields(line);
-}
-
 /** Extracts inline fields of the form '[key:: value]' from a line of text. This is done in a relatively
  * "robust" way to avoid failing due to bad nesting or other interfering Markdown symbols:
  *
@@ -180,7 +172,7 @@ export const DUE_DATE_REGEX = /[\u{1F4C5}\u{1F4C6}\u{1F5D3}]\s*(\d{4}-\d{2}-\d{2
 export const DONE_DATE_REGEX = /\u{2705}\s*(\d{4}-\d{2}-\d{2})/u;
 
 /** Parse special completed/due/done task fields which are marked via emoji. */
-export function extractSpecialTaskFields(line: string): InlineField[] {
+function extractSpecialTaskFields(line: string): InlineField[] {
     let results = [];
 
     let createdMatch = CREATED_DATE_REGEX.exec(line);

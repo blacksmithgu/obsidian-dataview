@@ -6,11 +6,15 @@ import { QuerySettings } from "settings";
 
 /** Normalize a duration to all of the proper units. */
 export function normalizeDuration(dur: Duration) {
+    if (dur === undefined || dur === null) return dur;
+
     return dur.shiftTo("years", "months", "weeks", "days", "hours", "minutes", "seconds", "milliseconds").normalize();
 }
 
 /** Strip the time components of a date time object. */
 export function stripTime(dt: DateTime): DateTime {
+    if (dt === null || dt === undefined) return dt;
+
     return DateTime.fromObject({
         year: dt.year,
         month: dt.month,

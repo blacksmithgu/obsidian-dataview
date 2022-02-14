@@ -33,7 +33,7 @@ export type Literal =
 
 /** A grouping on a type which supports recursively-nested groups. */
 export type GroupElement<T> = { key: Literal; rows: Grouping<T> };
-export type Grouping<T> = (T | GroupElement<T>)[];
+export type Grouping<T> = T[] | GroupElement<T>[];
 
 /** Maps the string type to it's external, API-facing representation. */
 export type LiteralRepr<T extends LiteralType> = T extends "boolean"
@@ -359,8 +359,15 @@ export namespace Values {
 
 export namespace Groupings {
     /** Determines if the given group entry is a standalone value, or a grouping of sub-entries. */
-    export function isGroup<T>(entry: T | GroupElement<T>): entry is GroupElement<T> {
+    export function isElementGroup<T>(entry: T | GroupElement<T>): entry is GroupElement<T> {
         return Values.isObject(entry) && Object.keys(entry).length == 2 && "key" in entry && "rows" in entry;
+    }
+
+    /** Determines if the given array is a grouping array. */
+    export function isGrouping<T>(entry: T[] | GroupElement<T>[]): entry is GroupElement<T>[] {
+        for (let element of entry) if (!isElementGroup(element)) return false;
+
+        return true;
     }
 }
 

@@ -73,3 +73,20 @@
 .is-live-preview .block-language-dataviewjs > p,span {
     line-height: 1.0;
 }
+
+
+/***************/
+/** Task View **/
+/***************/
+
+.dataview .task-list-item, .dataview .task-list-basic-item {
+    margin-top: 3px;
+    margin-bottom: 3px;
+    transition: 0.4s;
+}
+
+.dataview .task-list-item:hover, .dataview .task-list-basic-item:hover {
+    background-color: var(--text-selection);
+    box-shadow: -40px 0 0 var(--text-selection);
+    cursor: pointer;
+}

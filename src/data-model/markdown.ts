@@ -215,6 +215,7 @@ export class ListItem {
             section: this.section,
             text: this.text,
             line: this.line,
+            lineCount: this.lineCount,
             list: this.list,
             path: this.link.path,
             children: children,
@@ -240,9 +241,9 @@ export class ListItem {
                 due = this.due(),
                 completed = this.completed();
 
-            if (created) result.created = created;
-            if (due) result.due = due;
-            if (completed) result.completion = completed;
+            if (created) result.created = Values.deepCopy(created);
+            if (due) result.due = Values.deepCopy(due);
+            if (completed) result.completion = Values.deepCopy(completed);
         }
 
         return result as SListItem;
@@ -255,10 +256,14 @@ export class ListItem {
 
 /** De-duplicates list items across section metadata and page metadata. */
 export class ListSerializationCache {
+    public listItems: Record<number, ListItem>;
     public cache: Record<number, SListItem>;
 
-    public constructor(public listItems: Record<number, ListItem>) {
+    public constructor(listItems: ListItem[]) {
+        this.listItems = {};
         this.cache = {};
+
+        for (let item of listItems) this.listItems[item.line] = item;
     }
 
     public get(lineno: number): SListItem {

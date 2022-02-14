@@ -99,7 +99,7 @@ export default class DataviewPlugin extends Plugin {
         // Not required anymore, though holding onto it for backwards-compatibility.
         this.app.metadataCache.trigger("dataview:api-ready", this.api);
 
-        console.log(`Dataview: Version ${this.manifest.version} Loaded`);
+        console.log(`Dataview: Version ${this.manifest.version} (Obsidian >${this.manifest.minAppVersion})`);
     }
 
     private debouncedRefresh: () => void = () => null;

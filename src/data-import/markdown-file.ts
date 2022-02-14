@@ -107,7 +107,6 @@ export function parseMarkdown(
                 for (let ifield of inlineFields) addRawInlineField(ifield, fields);
             } else {
                 let fullLine = extractFullLineField(line);
-                if (path == "dataview-testing/Test.md") console.log(line, fullLine);
                 if (fullLine) addRawInlineField(fullLine, fields);
             }
         }
@@ -124,7 +123,7 @@ export function parseMarkdown(
 }
 
 // TODO: Consider using an actual parser in leiu of a more expensive regex.
-export const LIST_ITEM_REGEX = /^\s*(\d+\.|\*|-|\+)\s*(\[.+\])?\s*(.+)$/mu;
+export const LIST_ITEM_REGEX = /^\s*(\d+\.|\*|-|\+)\s*(\[.{0,1}\])?\s*(.+)$/mu;
 
 /**
  * Parse list items from the page + metadata. This requires some additional parsing above whatever Obsidian provides,
@@ -154,7 +153,8 @@ export function parseLists(
         let textParts = [rawMatch[3]]
             .concat(content.slice(rawElement.position.start.line + 1, rawElement.position.end.line + 1))
             .map(t => t.trim());
-        let text = textParts.join(" ");
+        let textWithNewline = textParts.join("\n");
+        let textNoNewline = textParts.join(" ");
 
         // Find the list that we are a part of by line.
         let containingListId = (metadata.sections || []).findIndex(
@@ -174,7 +174,7 @@ export function parseLists(
             symbol: rawMatch[1],
             link: closestLink,
             section: sectionLink,
-            text: text,
+            text: textWithNewline,
             line: rawElement.position.start.line,
             lineCount: rawElement.position.end.line - rawElement.position.start.line + 1,
             list: containingListId == -1 ? -1 : (metadata.sections || [])[containingListId].position.start.line,
@@ -195,14 +195,14 @@ export function parseLists(
 
         // Extract inline fields; extract full-line fields only if we are NOT a task.
         item.fields = new Map<string, Literal[]>();
-        for (let line of text) {
-            for (let element of extractInlineFields(line, true)) addRawInlineField(element, item.fields);
-        }
+        for (let element of extractInlineFields(textNoNewline, true)) addRawInlineField(element, item.fields);
 
         if (!rawElement.task && item.fields.size == 0) {
-            let fullLine = extractFullLineField(text);
+            let fullLine = extractFullLineField(textNoNewline);
             if (fullLine) addRawInlineField(fullLine, item.fields);
         }
+
+        cache[item.line] = item;
     }
 
     // Tree updating passes. Update child lists. Propogate metadata up to parent tasks. Update task `fullyCompleted`.

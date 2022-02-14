@@ -5,7 +5,7 @@ import { FullIndex } from "data-index";
 import { renderValue, renderErrorPre } from "ui/render";
 import { DataviewApi, DataviewIOApi } from "api/plugin-api";
 import { DataviewSettings } from "settings";
-import { DataObject, Link, Literal, Values } from "data-model/value";
+import { DataObject, Grouping, Link, Literal, Values } from "data-model/value";
 import { BoundFunctionImpl, DEFAULT_FUNCTIONS, Functions } from "expression/functions";
 import { Context } from "expression/context";
 import { defaultLinkHandler } from "query/engine";
@@ -13,8 +13,6 @@ import { DateTime, Duration } from "luxon";
 import * as Luxon from "luxon";
 import { DataArray } from "./data-array";
 import { SListItem } from "data-model/serialized/markdown";
-import { parseFrontmatter } from "data-import/markdown-file";
-import { EXPRESSION } from "expression/parse";
 
 /** Asynchronous API calls related to file / system IO. */
 export class DataviewInlineIOApi {
@@ -173,14 +171,12 @@ export class DataviewInlineApi {
 
     /** Parse a raw textual value into a complex Dataview type, if possible. */
     public parse(value: string): Literal {
-        let raw = EXPRESSION.inlineField.parse(value);
-        if (raw.status) return raw.value;
-        else return value;
+        return this.api.parse(value);
     }
 
     /** Convert a basic JS type into a Dataview type by parsing dates, links, durations, and so on. */
     public literal(value: any): Literal {
-        return DataArray.convert(parseFrontmatter(value), this.settings);
+        return this.api.literal(value);
     }
 
     /**
@@ -312,7 +308,7 @@ export class DataviewInlineApi {
     }
 
     /** Render a dataview task view with the given tasks. */
-    public taskList(tasks: SListItem[] | DataArray<SListItem>, groupByFile: boolean = true) {
+    public taskList(tasks: Grouping<SListItem> | DataArray<SListItem>, groupByFile: boolean = true) {
         return this.api.taskList(tasks, groupByFile, this.container, this.component, this.currentFilePath);
     }
 }

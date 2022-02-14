@@ -79,7 +79,7 @@ export class FullIndex extends Component {
         // Traverse all markdown files & fill in initial data.
         let start = new Date().getTime();
         for (const file of this.vault.getMarkdownFiles()) {
-            this.reloadInternal(file, {});
+            this.reloadInternal(file, { path: file.path });
             this.reload(file);
         }
         console.log("Dataview: Task & metadata parsing queued in %.3fs.", (new Date().getTime() - start) / 1000.0);
