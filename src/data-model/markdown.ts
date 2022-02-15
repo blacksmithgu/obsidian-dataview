@@ -145,7 +145,7 @@ export class PageMetadata {
         if (this.day) result.file.day = this.day;
 
         // Then append the computed fields.
-        for (let [key, value] of this.fields) {
+        for (let [key, value] of this.fields.entries()) {
             if (key in result) continue; // Don't allow fields to override existing keys.
             result[key] = value;
         }
@@ -299,7 +299,7 @@ export class ListSerializationCache {
 }
 
 export function addFields(fields: Map<string, Literal[]>, target: DataObject): DataObject {
-    for (let [key, values] of fields) {
+    for (let [key, values] of fields.entries()) {
         if (key in target) continue;
         target[key] = values.length == 1 ? values[0] : values;
     }

@@ -29,7 +29,7 @@
 }
 
 /** Live Preview padding fixes, specifically for DataviewJS custom HTML elements. */
-.is-live-preview .block-language-dataviewjs > p,span {
+.is-live-preview .block-language-dataviewjs > p, .is-live-preview .block-language-dataviewjs > span {
     line-height: 1.0;
 }
 

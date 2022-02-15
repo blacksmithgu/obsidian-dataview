@@ -123,7 +123,7 @@ export function parseMarkdown(
 }
 
 // TODO: Consider using an actual parser in leiu of a more expensive regex.
-export const LIST_ITEM_REGEX = /^\s*(\d+\.|\d+\)|\*|-|\+)\s*(\[.{0,1}\])?\s*(.+)$/mu;
+export const LIST_ITEM_REGEX = /^\s*(\d+\.|\d+\)|\*|-|\+)\s*(\[.{0,1}\])?\s*(.*)$/mu;
 
 /**
  * Parse list items from the page + metadata. This requires some additional parsing above whatever Obsidian provides,
@@ -208,16 +208,17 @@ export function parseLists(
 
     // Tree updating passes. Update child lists. Propogate metadata up to parent tasks. Update task `fullyCompleted`.
     let literals: Map<string, Literal[]> = new Map();
-    for (let listItem of Object.values(cache).filter(l => l.parent !== undefined)) {
+    for (let listItem of Object.values(cache)) {
         // Pass 1: Update child lists.
-        cache[listItem.parent!!].children.push(listItem.line);
+        if (listItem.parent !== undefined && listItem.parent in cache)
+            cache[listItem.parent!!].children.push(listItem.line);
 
         // Pass 2: Propogate metadata up to the parent task or root element.
         let root: ListItem | undefined = listItem;
         while (!!root && !root.task) root = cache[root.parent ?? -1];
 
         // If the root is null, append this metadata to the root; otherwise, append to the task.
-        mergeFieldGroups(root === undefined ? literals : root.fields, listItem.fields);
+        mergeFieldGroups(root === undefined || root == null ? literals : root.fields, listItem.fields);
 
         // Pass 3: Propogate `fullyCompleted` up the task tree. This is a little less efficient than just doing a simple
         // DFS using the children IDs, but it's probably fine.
