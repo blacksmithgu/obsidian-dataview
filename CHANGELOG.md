@@ -1,3 +1,10 @@
+# 0.4.23c
+
+Bugfix which adds support for '1)' style lists, as well as a very annoying null issue due to JavaScript being a very
+sad, very sad language.
+
+---
+
 # 0.4.23b
 
 Bugfix for bad inlink/outlink computations; links were not being normalized properly so reverse lookups were not
