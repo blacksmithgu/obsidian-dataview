@@ -49,16 +49,34 @@ export class PageMetadata {
     /** Canonicalize raw links and other data in partial data with normalizers, returning a completed object. */
     public static canonicalize(data: Partial<PageMetadata>, linkNormalizer: (link: Link) => Link): PageMetadata {
         // Mutate the data for now, which is probably a bad idea but... all well.
-        if (data.frontmatter)
+        if (data.frontmatter) {
             data.frontmatter = Values.mapLeaves(data.frontmatter, t =>
                 Values.isLink(t) ? linkNormalizer(t) : t
             ) as DataObject;
+        }
+
         if (data.fields) {
-            for (let [key, value] of data.fields.entries())
+            for (let [key, value] of data.fields.entries()) {
                 data.fields.set(
                     key,
                     Values.mapLeaves(value, t => (Values.isLink(t) ? linkNormalizer(t) : t))
                 );
+            }
+        }
+
+        if (data.lists) {
+            for (let item of data.lists) {
+                for (let [key, value] of item.fields.entries()) {
+                    item.fields.set(
+                        key,
+                        value.map(x => Values.mapLeaves(x, t => (Values.isLink(t) ? linkNormalizer(t) : t)))
+                    );
+                }
+            }
+        }
+
+        if (data.links) {
+            data.links = data.links.map(l => linkNormalizer(l));
         }
 
         return new PageMetadata(data.path!!, data);
@@ -91,7 +109,8 @@ export class PageMetadata {
 
     /** Convert all links in this file to file links. */
     public fileLinks(): Link[] {
-        return this.links.map(link => Link.file(link.path));
+        let distinctPaths = new Set<string>(this.links.map(l => l.path));
+        return Array.from(distinctPaths).map(l => Link.file(l));
     }
 
     /** Map this metadata to a full object; uses the index for additional data lookups.  */
@@ -106,7 +125,7 @@ export class PageMetadata {
                 name: this.name(),
                 link: Link.file(this.path),
                 outlinks: this.fileLinks(),
-                inlinks: Array.from(index.links.getInverse(this.path)).map(l => Link.file(l, false)),
+                inlinks: Array.from(index.links.getInverse(this.path)).map(l => Link.file(l)),
                 etags: Array.from(this.tags),
                 tags: Array.from(this.fullTags()),
                 aliases: Array.from(this.aliases),
