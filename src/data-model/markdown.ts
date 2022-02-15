@@ -4,6 +4,7 @@ import type { FullIndex } from "data-index/index";
 import { Literal, Link, Values } from "data-model/value";
 import { DataObject } from "index";
 import { SListItem, SMarkdownPage } from "data-model/serialized/markdown";
+import { Pos } from "obsidian";
 
 /** All extracted markdown file metadata obtained from a file. */
 export class PageMetadata {
@@ -150,6 +151,8 @@ export class ListItem {
     lineCount: number;
     /** The line number for the first list item in the list this item belongs to. */
     list: number;
+    /** The raw Obsidian-provided position for where this task is. */
+    position: Pos;
     /** The line number of the parent list item, if present; if this is undefined, this is a root item. */
     parent?: number;
     /** The line numbers of children of this list item. */
@@ -221,6 +224,7 @@ export class ListItem {
             children: children,
             task: !!this.task,
             annotated: this.fields.size > 0,
+            position: Values.deepCopy(this.position as any),
 
             subtasks: children, // @deprecated, use 'item.children' instead.
             real: !!this.task, // @deprecated, use 'item.task' instead.

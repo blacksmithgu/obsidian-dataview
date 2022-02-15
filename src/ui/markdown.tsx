@@ -27,12 +27,14 @@ export const DataviewContext = createContext<DataviewContexts>(undefined!);
 export function Markdown({
     content,
     sourcePath,
+    inline = false,
     style,
     cls,
     onClick,
 }: {
     content: string;
     sourcePath: string;
+    inline?: boolean;
     style?: string;
     cls?: string;
     onClick?: (e: preact.JSX.TargetedMouseEvent<HTMLElement>) => void;
@@ -45,13 +47,14 @@ export function Markdown({
 
         container.current.innerHTML = "";
         MarkdownRenderer.renderMarkdown(content, container.current, sourcePath, component).then(() => {
-            if (!container.current) return;
+            if (!container.current || !inline) return;
 
-            // Unwrap the paragraph element that is created.
+            // Unwrap any created paragraph elements if we are inline.
             let paragraph = container.current.querySelector("p");
-            if (paragraph) {
-                container.current.innerHTML = paragraph.innerHTML;
-                paragraph.remove();
+            while (paragraph) {
+                let children = paragraph.childNodes;
+                paragraph.replaceWith(...Array.from(children));
+                paragraph = container.current.querySelector("p");
             }
         });
     }, [content, sourcePath, container.current]);

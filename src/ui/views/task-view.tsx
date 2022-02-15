@@ -27,7 +27,14 @@ function TaskItem({ item }: { item: STask }) {
 
     // Navigate to the given task on click.
     const onClicked = (evt: preact.JSX.TargetedMouseEvent<HTMLElement>) => {
-        const selectionState = { eState: { cursor: { from: { line: item.line }, to: { line: item.line } } } };
+        const selectionState = {
+            eState: {
+                cursor: {
+                    from: { line: item.line, ch: item.position.start.col },
+                    to: { line: item.line, ch: item.position.end.col },
+                },
+            },
+        };
         context.app.workspace.openLinkText(item.path, item.path, evt.shiftKey, selectionState as any);
     };
 
@@ -50,7 +57,7 @@ function TaskItem({ item }: { item: STask }) {
                 checked={item.completed}
                 onClick={onChecked}
             />
-            <Markdown onClick={onClicked} content={item.text} sourcePath={item.path} />
+            <Markdown onClick={onClicked} inline={true} content={item.text} sourcePath={item.path} />
             {item.children.length > 0 && <TaskList items={item.children} />}
         </li>
     );
@@ -60,7 +67,7 @@ function TaskItem({ item }: { item: STask }) {
 function ListItem({ item }: { item: SListEntry }) {
     return (
         <li class="dataview task-list-basic-item">
-            <Markdown content={item.text} sourcePath={item.path} />
+            <Markdown inline={true} content={item.text} sourcePath={item.path} />
             {item.children.length > 0 && <TaskList items={item.children} />}
         </li>
     );

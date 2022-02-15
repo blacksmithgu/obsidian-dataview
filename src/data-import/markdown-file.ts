@@ -178,6 +178,7 @@ export function parseLists(
             line: rawElement.position.start.line,
             lineCount: rawElement.position.end.line - rawElement.position.start.line + 1,
             list: containingListId == -1 ? -1 : (metadata.sections || [])[containingListId].position.start.line,
+            position: rawElement.position,
             children: [],
             blockId: rawElement.id,
         });

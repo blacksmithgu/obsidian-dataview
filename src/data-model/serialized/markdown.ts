@@ -2,6 +2,7 @@
 
 import { Link, Literal } from "data-model/value";
 import { DateTime } from "luxon";
+import { Pos } from "obsidian";
 
 export interface SMarkdownPage {
     file: {
@@ -46,6 +47,7 @@ export interface SListItemBase {
     path: string;
 
     line: number;
+    position: Pos;
     lineCount: number;
     list: number;
     blockId?: string;
