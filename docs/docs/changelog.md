@@ -1,3 +1,9 @@
+# 0.4.23d
+
+More inline field list parsing bug fixes. Hopefully we're back to a nice working order!
+
+---
+
 # 0.4.23c
 
 Bugfix which adds support for '1)' style lists, as well as a very annoying null issue due to JavaScript being a very
