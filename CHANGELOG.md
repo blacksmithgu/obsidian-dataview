@@ -1,3 +1,42 @@
+# 0.4.23
+
+The Task Update! This release reworks how dataview handles tasks and list items so that they should be much more
+intuitive to use and interact with:
+
+1. **Subtask Support**: Queries now search over all list items, instead of only over root elements. This should make
+   task filtering much more usable, especially if you tend to put tasks under other list items or care specifically
+   about subtasks.
+2. **Multiline Support**: Dataview now understands multi-line tasks and renders/updates them correctly.
+3. **Immediately Navigate to Task**: The new task view, aside from looking a little cleaner than previous views, now
+   immediately navigates to the task in it's original file on click and selects it.
+4. **Grouping Support**: For DataviewJS users, `dv.taskList` now supports grouping (as produced by `groupBy` and the new
+   `groupIn`) natively.
+
+For DataviewJS users, the task and list representation has changed: `file.tasks` (and the new `file.lists`) contain
+every single task (including subtasks) in the file, instead of only the root elements. You can return to previous
+behavior by filtering out tasks with a non-null parent - i.e., `file.tasks.where(task => !task.parent)`. `dv.taskList`
+will intelligently deal with properly nesting and de-duplicating tasks, so just filter to the tasks you want to render and
+the API will do the rest.
+
+This release also includes general backend improvements as we prepare for live-editing in Dataview views, as well as
+several community-contributed API improvements:
+
+- `DataArray#groupIn`: For grouping already grouped data, you can now use `array.groupIn(v => ...)`, which will group
+  the innermost (original) data in the array instead of the top level groups. This allows for more easily grouping
+  recursively, such as `dv.pages().groupBy(page => page.file.folder).groupIn(page => page.title)` producing a grouping
+  of folders, then page titles.
+- `substring(string, start[, end])`: The last major missing string function is now available! Take slices of strings.
+- Improved `dv.el()` and other HTML functions - thanks @vitaly.
+- null and undefined entries sort at the end instead of the beginning by default; sorry to those whose code sorts wrong
+  because of this, but it is a better default for most people's use cases.
+- All links are now properly normalized to their full paths, fixing many link comparison edge cases in DataviewJS.
+
+Documentation additions for the new task functionality will be coming out in the next few days. The next release 0.4.24
+is currently targeting expanded `FROM` query support, basic table view improvements, and general exporting functionality
+for Dataview. See you then!
+
+---
+
 # 0.4.22
 
 The @pjeby update! This includes several performance improvements suggested by @pjeby to dramatically improve background
