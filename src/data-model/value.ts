@@ -344,7 +344,14 @@ export namespace Values {
 
     export function isObject(val: any): val is Record<string, any> {
         return (
-            typeof val == "object" && !isHtml(val) && !isArray(val) && !isDuration(val) && !isDate(val) && !isLink(val)
+            typeof val == "object" &&
+            !isHtml(val) &&
+            !isArray(val) &&
+            !isDuration(val) &&
+            !isDate(val) &&
+            !isLink(val) &&
+            val !== undefined &&
+            !isNull(val)
         );
     }
 
