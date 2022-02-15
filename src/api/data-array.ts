@@ -1,4 +1,4 @@
-import { Values } from "data-model/value";
+import { Groupings, Values } from "data-model/value";
 import { QuerySettings } from "settings";
 
 /** A function which maps an array element to some value. */
@@ -6,6 +6,14 @@ export type ArrayFunc<T, O> = (elem: T, index: number, arr: T[]) => O;
 
 /** A function which compares two types. */
 export type ArrayComparator<T> = (a: T, b: T) => number;
+
+/** Finds the value of the lowest value type in a grouping. */
+export type LowestKey<T> = T extends { key: any; rows: any } ? LowestKey<T["rows"][0]> : T;
+
+/** A ridiculous type which properly types the result of the 'groupIn' command. */
+export type Ingrouped<U, T> = T extends { key: any; rows: any }
+    ? { key: T["key"]; rows: Ingrouped<U, T["rows"][0]> }
+    : { key: U; rows: T[] };
 
 /**
  * Proxied interface which allows manipulating array-based data. All functions on a data array produce a NEW array
@@ -63,6 +71,12 @@ export interface DataArray<T> {
      * { key: <key value>, rows: DataArray }.
      */
     groupBy<U>(key: ArrayFunc<T, U>, comparator?: ArrayComparator<U>): DataArray<{ key: U; rows: DataArray<T> }>;
+
+    /**
+     * If the array is not grouped, groups it as `groupBy` does; otherwise, groups the elements inside each current
+     * group. This allows for top-down recursive grouping which may be easier than bottom-up grouping.
+     */
+    groupIn<U>(key: ArrayFunc<LowestKey<T>, U>, comparator?: ArrayComparator<U>): DataArray<Ingrouped<U, T>>;
 
     /**
      * Return distinct entries. If a key is provided, then rows with distinct keys are returned.
@@ -125,6 +139,7 @@ class DataArrayImpl<T> implements DataArray<T> {
         "join",
         "sort",
         "groupBy",
+        "groupIn",
         "distinct",
         "every",
         "some",
@@ -161,7 +176,10 @@ class DataArrayImpl<T> implements DataArray<T> {
         settings: QuerySettings,
         defaultComparator: ArrayComparator<any> = Values.compareValue
     ): DataArray<T> {
-        return new Proxy(new DataArrayImpl(arr, settings, defaultComparator), DataArrayImpl.ARRAY_PROXY);
+        return new Proxy<DataArrayImpl<T>>(
+            new DataArrayImpl<T>(arr, settings, defaultComparator),
+            DataArrayImpl.ARRAY_PROXY
+        );
     }
 
     public length: number;
@@ -300,6 +318,19 @@ class DataArrayImpl<T> implements DataArray<T> {
         return this.lwrap(result);
     }
 
+    public groupIn<U>(key: ArrayFunc<LowestKey<T>, U>, comparator?: ArrayComparator<U>): DataArray<Ingrouped<U, T>> {
+        if (Groupings.isGrouping(this.values)) {
+            return this.map(v => {
+                return {
+                    key: (v as any).key,
+                    rows: DataArray.wrap((v as any).rows, this.settings).groupIn(key as any, comparator as any),
+                } as any;
+            });
+        } else {
+            return this.groupBy(key as any, comparator) as any;
+        }
+    }
+
     public distinct<U>(key?: ArrayFunc<T, U>, comparator?: ArrayComparator<U>): DataArray<T> {
         if (this.values.length == 0) return this;
         let realKey = key ?? (x => x as any as U);
@@ -405,12 +436,15 @@ class DataArrayImpl<T> implements DataArray<T> {
 /** Provides utility functions for generating data arrays. */
 export namespace DataArray {
     /** Create a new Dataview data array. */
-    export function wrap<T>(raw: T[], settings: QuerySettings): DataArray<T> {
+    export function wrap<T>(raw: T[] | DataArray<T>, settings: QuerySettings): DataArray<T> {
+        if (isDataArray(raw)) return raw;
         return DataArrayImpl.wrap(raw, settings);
     }
 
     /** Create a new DataArray from an iterable object. */
     export function from<T>(raw: Iterable<T>, settings: QuerySettings): DataArray<T> {
+        if (isDataArray(raw)) return raw;
+
         let data = [];
         for (let elem of raw) data.push(elem);
         return DataArrayImpl.wrap(data, settings);
