@@ -1,3 +1,10 @@
+# 0.4.23b
+
+Bugfix for bad inlink/outlink computations; links were not being normalized properly so reverse lookups were not
+working.
+
+---
+
 # 0.4.23
 
 The Task Update! This release reworks how dataview handles tasks and list items so that they should be much more
