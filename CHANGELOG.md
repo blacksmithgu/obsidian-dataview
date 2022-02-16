@@ -1,3 +1,10 @@
+# 0.4.23f
+
+Remove some code which attempted to make tag queries case-insensitive; I'll reimplement this more generally later (it
+conflicts with existing queries which check tags via `contains(file.tags, "#Tag")` and similar).
+
+---
+
 # 0.4.23e
 
 More task bugfixes / improvements, and a fix that caused task metadata to be duplicated.
