@@ -228,12 +228,15 @@ export class DataviewApi implements DvAPIInterface {
     ) {
         let groupedTasks =
             !Groupings.isGrouping(tasks) && groupByFile ? this.array(tasks).groupBy(t => Link.file(t.path)) : tasks;
+
+        // Append a child div, since React will override several task lists otherwise.
+        let taskContainer = container.createEl("div");
         component.addChild(
             createFixedTaskView(
                 this.app,
                 this.settings,
                 this.index,
-                container,
+                taskContainer,
                 groupedTasks as Grouping<SListItem>,
                 filePath
             )

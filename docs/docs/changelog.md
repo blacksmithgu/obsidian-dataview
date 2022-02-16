@@ -1,3 +1,9 @@
+# 0.4.25
+
+Fix #867: Create a container div per taskList to allow for multiple task views.
+
+---
+
 # 0.4.24
 
 Re-release of 0.4.23f since Obsidian does not automatically update between non-semver versions.
