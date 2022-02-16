@@ -1,3 +1,9 @@
+# 0.4.23e
+
+More task bugfixes / improvements, and a fix that caused task metadata to be duplicated.
+
+---
+
 # 0.4.23d
 
 More inline field list parsing bug fixes. Hopefully we're back to a nice working order!
