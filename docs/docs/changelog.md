@@ -1,3 +1,9 @@
+# 0.4.24
+
+Re-release of 0.4.23f since Obsidian does not automatically update between non-semver versions.
+
+---
+
 # 0.4.23f
 
 Remove some code which attempted to make tag queries case-insensitive; I'll reimplement this more generally later (it
