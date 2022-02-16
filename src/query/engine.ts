@@ -395,13 +395,15 @@ export async function executeTask(
 
         let pageData = page.serialize(index);
         let pageTasks = pageData.file.tasks.map(t => {
+            const tcopy = Values.deepCopy(t);
+
             // Add page data to this copy.
             for (let [key, value] of Object.entries(pageData)) {
-                if (key in t) continue;
-                t[key] = value;
+                if (key in tcopy) continue;
+                tcopy[key] = value;
             }
 
-            return { id: `${pageData.path}#${t.line}`, data: t };
+            return { id: `${pageData.path}#${t.line}`, data: tcopy };
         });
 
         for (let task of pageTasks) incomingTasks.push(task);

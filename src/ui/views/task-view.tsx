@@ -35,11 +35,13 @@ function TaskItem({ item }: { item: STask }) {
                 },
             },
         };
-        context.app.workspace.openLinkText(item.path, item.path, evt.shiftKey, selectionState as any);
+        context.app.workspace.openLinkText(item.link.obsidianLink(), item.path, evt.shiftKey, selectionState as any);
     };
 
     // Check/uncheck trhe task in the original file.
     const onChecked = (evt: preact.JSX.TargetedEvent<HTMLInputElement>) => {
+        evt.stopPropagation();
+
         const completed = evt.currentTarget.checked;
         let updatedText = undefined;
         if (context.settings.taskCompletionTracking)
@@ -49,7 +51,7 @@ function TaskItem({ item }: { item: STask }) {
     };
 
     return (
-        <li class={"dataview task-list-item" + (item.completed ? " is-checked" : "")}>
+        <li class={"dataview task-list-item" + (item.completed ? " is-checked" : "")} onClick={onClicked}>
             <input
                 style="margin-right: 6px;"
                 class="task-list-item-checkbox"
@@ -57,7 +59,7 @@ function TaskItem({ item }: { item: STask }) {
                 checked={item.completed}
                 onClick={onChecked}
             />
-            <Markdown onClick={onClicked} inline={true} content={item.text} sourcePath={item.path} />
+            <Markdown inline={true} content={item.text} sourcePath={item.path} />
             {item.children.length > 0 && <TaskList items={item.children} />}
         </li>
     );

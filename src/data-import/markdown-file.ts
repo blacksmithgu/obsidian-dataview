@@ -140,14 +140,7 @@ export function parseLists(
     for (let rawElement of metadata.listItems || []) {
         // Match on the first line to get the symbol and first line of text.
         let rawMatch = LIST_ITEM_REGEX.exec(content[rawElement.position.start.line]);
-        if (!rawMatch) {
-            console.log(
-                `Dataview: Encountered unrecognized list element "${content[rawElement.position.start.line]}" (line ${
-                    rawElement.position.start.line
-                }, file ${path}).`
-            );
-            continue;
-        }
+        if (!rawMatch) continue;
 
         // And then strip unnecessary spacing from the remaining lines.
         let textParts = [rawMatch[3]]
@@ -210,15 +203,19 @@ export function parseLists(
     let literals: Map<string, Literal[]> = new Map();
     for (let listItem of Object.values(cache)) {
         // Pass 1: Update child lists.
-        if (listItem.parent !== undefined && listItem.parent in cache)
-            cache[listItem.parent!!].children.push(listItem.line);
+        if (listItem.parent !== undefined && listItem.parent in cache) {
+            let parent = cache[listItem.parent!!];
+            parent.children.push(listItem.line);
+        }
 
         // Pass 2: Propogate metadata up to the parent task or root element.
-        let root: ListItem | undefined = listItem;
-        while (!!root && !root.task) root = cache[root.parent ?? -1];
+        if (!listItem.task) {
+            let root: ListItem | undefined = listItem;
+            while (!!root && !root.task) root = cache[root.parent ?? -1];
 
-        // If the root is null, append this metadata to the root; otherwise, append to the task.
-        mergeFieldGroups(root === undefined || root == null ? literals : root.fields, listItem.fields);
+            // If the root is null, append this metadata to the root; otherwise, append to the task.
+            mergeFieldGroups(root === undefined || root == null ? literals : root.fields, listItem.fields);
+        }
 
         // Pass 3: Propogate `fullyCompleted` up the task tree. This is a little less efficient than just doing a simple
         // DFS using the children IDs, but it's probably fine.
@@ -301,7 +298,7 @@ export function addRawInlineField(field: InlineField, output: Map<string, Litera
 
     output.set(field.key, (output.get(field.key) ?? []).concat([value]));
     let simpleName = canonicalizeVarName(field.key);
-    if (simpleName.length > 0 && simpleName != field.key.trim()) {
+    if (simpleName.length > 0 && simpleName != field.key) {
         output.set(simpleName, (output.get(simpleName) ?? []).concat([value]));
     }
 }

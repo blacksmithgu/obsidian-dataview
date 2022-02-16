@@ -203,7 +203,7 @@ export class DataviewApi implements DvAPIInterface {
     ) {
         if (!values) return;
 
-        await renderList(container, values as any[], component, filePath, this.settings);
+        return renderList(container, values as any[], component, filePath, this.settings);
     }
 
     /** Render a dataview table with the given headers, and the 2D array of values. */
@@ -215,7 +215,7 @@ export class DataviewApi implements DvAPIInterface {
         filePath: string
     ) {
         if (!values) values = [];
-        await renderTable(container, headers, values as any[][], component, filePath, this.settings);
+        return renderTable(container, headers, values as any[][], component, filePath, this.settings);
     }
 
     /** Render a dataview task view with the given tasks. */
@@ -248,6 +248,6 @@ export class DataviewApi implements DvAPIInterface {
         filePath: string,
         inline: boolean = false
     ) {
-        await renderValue(value as Literal, container, filePath, component, this.settings, inline);
+        return renderValue(value as Literal, container, filePath, component, this.settings, inline);
     }
 }

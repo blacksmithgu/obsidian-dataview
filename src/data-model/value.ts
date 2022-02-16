@@ -174,7 +174,9 @@ export namespace Values {
         else if (wrap1 === undefined) return 1;
         else if (wrap2 === undefined) return -1;
 
+        // Short-circuit on different types or on reference equality.
         if (wrap1.type != wrap2.type) return wrap1.type.localeCompare(wrap2.type);
+        if (wrap1.value === wrap2.value) return 0;
 
         switch (wrap1.type) {
             case "string":
@@ -487,10 +489,7 @@ export class Link {
 
     /** Convert this link to markdown so it can be rendered. */
     public markdown(): string {
-        let result = (this.embed ? "!" : "") + "[[" + this.path;
-
-        if (this.type == "header") result += "#" + this.subpath;
-        else if (this.type == "block") result += "#^" + this.subpath;
+        let result = (this.embed ? "!" : "") + "[[" + this.obsidianLink();
 
         if (this.display) {
             result += "|" + this.display;
@@ -501,6 +500,13 @@ export class Link {
 
         result += "]]";
         return result;
+    }
+
+    /** Convert the inner part of the link to something that Obsidian can open / understand. */
+    public obsidianLink(): string {
+        if (this.type == "header") return this.path + "#" + this.subpath;
+        if (this.type == "block") return this.path + "#^" + this.subpath;
+        else return this.path;
     }
 
     /** The stripped name of the file this link points to. */
