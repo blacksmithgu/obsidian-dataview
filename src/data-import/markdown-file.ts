@@ -22,7 +22,7 @@ export function parsePage(path: string, contents: string, stat: FileStats, metad
     if (metadata.frontmatter) {
         for (let tag of extractTags(metadata.frontmatter)) {
             if (!tag.startsWith("#")) tag = "#" + tag;
-            tags.add(tag.toLocaleLowerCase());
+            tags.add(tag);
         }
 
         for (let alias of extractAliases(metadata.frontmatter) || []) aliases.add(alias);
