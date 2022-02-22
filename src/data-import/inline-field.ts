@@ -144,7 +144,7 @@ const FULL_LINE_KEY_PART: P.Parser<string> = P.alt(
     .many()
     .map(parts => parts.join(""));
 
-const FULL_LINE_KEY_PARSER: P.Parser<string> = P.regexp(/[^0-9\w\p{Letter}]*/u)
+const FULL_LINE_KEY_PARSER: P.Parser<string> = P.regexp(/[^0-9\w\p{Letter}\p{Emoji_Presentation}\p{Emoji}]*/u)
     .then(FULL_LINE_KEY_PART)
     .skip(P.regexp(/[_\*~`]*/u));
 

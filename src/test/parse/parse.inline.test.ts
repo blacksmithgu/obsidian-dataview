@@ -1,6 +1,6 @@
 import { EXPRESSION } from "expression/parse";
 import { Link } from "data-model/value";
-import { extractInlineFields, setInlineField } from "data-import/inline-field";
+import { extractFullLineField, extractInlineFields, setInlineField } from "data-import/inline-field";
 
 // <-- Inline field wierd edge cases -->
 
@@ -81,9 +81,33 @@ describe("Simple Inline Inline", () => {
             wrapping: "[",
         });
     });
+
+    test("Simple FullLine Key", () => {
+        let result = extractFullLineField("key:: value");
+        expect(result).not.toBeUndefined;
+        if (result !== undefined) {
+            expect(result.key).toEqual("key");
+            expect(result.value).toEqual("value");
+        }
+    });
 });
 
 describe("Inline Inline Edge Cases", () => {
+    test("Emoji Key in FullLine Field", () => {
+        let result = extractFullLineField("☘️:: value");
+        expect(result).not.toBeUndefined;
+        if (result !== undefined) {
+            expect(result.key).toEqual("☘️");
+            expect(result.value).toEqual("value");
+        }
+    });
+
+    test("Emoji Key", () => {
+        let result = extractInlineFields("[🍿:: value]");
+        expect(result[0].key).toEqual("🍿");
+        expect(result[0].value).toEqual("value");
+    });
+
     test("Nested Brackets", () => {
         let result = extractInlineFields("[[[[hello:: 16]]");
         expect(result[0].key).toEqual("hello");
