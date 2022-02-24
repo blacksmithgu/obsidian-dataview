@@ -76,16 +76,8 @@ export class FullIndex extends Component {
 
     /** Runs through the whole vault to set up initial file */
     public initialize() {
-        // Traverse all markdown files & fill in initial data.
-        let start = new Date().getTime();
-        for (const file of this.vault.getMarkdownFiles()) {
-            this.reloadInternal(file, { path: file.path });
-            this.reload(file);
-        }
-        console.log("Dataview: Task & metadata parsing queued in %.3fs.", (new Date().getTime() - start) / 1000.0);
-
         // The metadata cache is updated on file changes.
-        this.registerEvent(this.metadataCache.on("changed", file => this.reload(file)));
+        this.registerEvent(this.metadataCache.on("resolve", file => this.reload(file)));
 
         // Renames do not set off the metadata cache; catch these explicitly.
         this.registerEvent(this.vault.on("rename", this.rename, this));
