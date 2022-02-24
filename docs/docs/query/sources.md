@@ -11,6 +11,7 @@ Dataview, so they are fast to query. Dataview currently supports three source ty
 3. **Links**: You can either select links TO a file, or all links FROM a file.
   - To obtain all pages which link TO `[[note]]`, use `[[note]]`; you can use `[[]]` to reference the current file.
   - To obtain all pages which link FROM `[[note]]` (i.e., all the links in that file), use `outgoing([[note]])`.
+  - You can implicitly reference the current file via `[[#]]` or `[[]]`.
 
 You can compose these filters in order to get more advanced sources using `and` and `or`.
 
@@ -18,4 +19,4 @@ You can compose these filters in order to get more advanced sources using `and` 
 - Querying from `#food and !#fastfood` will only return pages that contain `#food` but does not contain `#fastfood`.
 - `[[Food]] or [[Exercise]]` will give any pages which link to `[[Food]]` OR `[[Exercise]]`.
 
-Sources are used in both the [FROM query statement](../queries#from), as well as various JavaScript API query calls.
+Sources are used in both the [FROM query statement](../queries#from), as well as various JavaScript API query calls. 
