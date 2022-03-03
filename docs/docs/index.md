@@ -48,7 +48,7 @@ and *task* level, where you can either use:
 
 You can combine both methods if desired. Dataview also adds a significant number
 of "implicit" fields, like `file.name` for the file name, `file.size` for the
-size, and so on; you can find more details in the [data annotation documentation](data-annotation).
+size, and so on; you can find more details in the [data annotation documentation](data-annotation.md).
 
 #### Querying
 
