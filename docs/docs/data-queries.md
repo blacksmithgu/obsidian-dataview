@@ -6,7 +6,7 @@ when your vault changes.
 
 ## Dataview Query Language (DQL)
 
-The dataview [query language](../query/queries) is a simplistic, SQL-like language for quickly creating views. It
+The dataview [query language](../query/queries.md) is a simplistic, SQL-like language for quickly creating views. It
 supports basic arithmetic and comparison operations, and is good for basic applications. You create dataview queries
 using `dataview`-annotated codeblocks:
 
@@ -17,8 +17,8 @@ SORT rating DESC
 ```
 ~~~
 
-The details of how to write a query are explained in the [query language documentation](../query/queries); if you learn
-better by example, take a look at the [query examples](../query/examples).
+The details of how to write a query are explained in the [query language documentation](../query/queries.md); if you learn
+better by example, take a look at the [query examples](../query/examples.md).
 
 ## Inline DQL
 
@@ -30,12 +30,12 @@ directly inside a page - for example, todays date via `= date(today)`, or a fiel
 `= this.file.name`
 ~~~
 
-Inline DQL expressions are written using the [query language expression language](../query/expressions). You can
+Inline DQL expressions are written using the [query language expression language](../query/expressions.md). You can
 configure inline queries to use a different prefix (like `dv:` or `~`) in the Dataview settings.
 
 ## Dataview JS
 
-The dataview [JavaScript API](../api/intro) gives you the full power of JavaScript and provides a DSL for pulling
+The dataview [JavaScript API](../api/intro.md) gives you the full power of JavaScript and provides a DSL for pulling
 Dataview data and executing queries, allowing you to create arbitrarily complex queries and views. Similar to the query
 language, you create Dataview JS blocks via a `dataviewjs`-annotated codeblock:
 
@@ -50,7 +50,7 @@ for (let group of pages.groupBy(b => b.genre)) {
 ~~~
 
 Inside of a JS dataview block, you have access to the full dataview API via the `dv` variable. For an explanation of
-what you can do with it, see the [API documentation](../api/code-reference), or the [API
+what you can do with it, see the [API documentation](../api/code-reference.md), or the [API
 examples](../api/code-examples).
 
 ## Inline Dataview JS

@@ -19,4 +19,4 @@ You can compose these filters in order to get more advanced sources using `and` 
 - Querying from `#food and !#fastfood` will only return pages that contain `#food` but does not contain `#fastfood`.
 - `[[Food]] or [[Exercise]]` will give any pages which link to `[[Food]]` OR `[[Exercise]]`.
 
-Sources are used in both the [FROM query statement](../queries#from), as well as various JavaScript API query calls. 
+Sources are used in both the [FROM query statement](../queries.md#from), as well as various JavaScript API query calls. 

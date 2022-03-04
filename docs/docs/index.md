@@ -12,8 +12,8 @@ is a simple but powerful idea:
 - Create dynamic views which show upcoming birthdays or events, annotated with notes.
 
 Dataview is highly generic and high performance, scaling up to hundreds of thousands of annotated notes without
-issue. If the built in [query language](query/queries/) is insufficient for your purpose, you can run arbitrary
-JavaScript against the [dataview API](api/intro/).
+issue. If the built in [query language](query/queries.md) is insufficient for your purpose, you can run arbitrary
+JavaScript against the [dataview API](api/intro.md).
 
 ## Basic Usage
 

@@ -19,7 +19,7 @@ Literal|Description
 
 ### Dates
 
-Note that `date()` is also a [function](query/functions/#dateany)
+Note that `date()` is also a [function](query/functions.md/#dateany)
 
 Literal|Description
 -|-

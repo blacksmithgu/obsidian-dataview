@@ -32,9 +32,9 @@ present, they are run in the order they are written. Duplicate statements are al
 
 - For the different view types, only the first line (the 'select' section, where you specify the view type and fields to
 display) differs. You can apply *data commands* like *WHERE* and *SORT* to any query, and you can select from any
-[source](../sources) using *FROM*.
+[source](../sources.md) using *FROM*.
 
-See [expressions](../expressions) for context on what expressions are, and [sources](../sources) for context on what sources are.
+See [expressions](../expressions.md) for context on what expressions are, and [sources](../sources.md) for context on what sources are.
 
 ## Query Types
 
@@ -229,7 +229,7 @@ blocks or multiple `GROUP BY` blocks, for example).
 ### FROM
 
 The `FROM` statement determines what pages will initially be collected and passed onto the other commands for further
-filtering. You can select from any [source](../sources), which currently means by folder, by tag, or by incoming/outgoing links.
+filtering. You can select from any [source](../sources.md), which currently means by folder, by tag, or by incoming/outgoing links.
 
 - **Tags**: To select from a tag (and all its subtags), use `FROM #tag`.
 - **Folders**: To select from a folder (and all its subfolders), use `FROM "folder"`.
