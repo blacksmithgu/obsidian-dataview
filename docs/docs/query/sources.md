@@ -6,12 +6,12 @@ Dataview, so they are fast to query. Dataview currently supports three source ty
 1. **Tags**: Sources of the form `#tag`.
 2. **Folders**: Sources of the form `"folder"`.
 3. **Specific Files**: You can select from a specific file by specifying it's full path: `"folder/File"`.
-  - If you have both a file and a folder with the exact same path, Dataview will prefer the folder. You can force
+    - If you have both a file and a folder with the exact same path, Dataview will prefer the folder. You can force
     it to read from the file by specifying markdown: `folder/File.md`.
 3. **Links**: You can either select links TO a file, or all links FROM a file.
-  - To obtain all pages which link TO `[[note]]`, use `[[note]]`.
-  - To obtain all pages which link FROM `[[note]]` (i.e., all the links in that file), use `outgoing([[note]])`.
-  - You can implicitly reference the current file via `[[#]]` or `[[]]`.
+    - To obtain all pages which link TO `[[note]]`, use `[[note]]`.
+    - To obtain all pages which link FROM `[[note]]` (i.e., all the links in that file), use `outgoing([[note]])`.
+    - You can implicitly reference the current file via `[[#]]` or `[[]]`.
 
 You can compose these filters in order to get more advanced sources using `and` and `or`.
 
