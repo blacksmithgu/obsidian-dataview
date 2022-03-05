@@ -19,7 +19,7 @@ Literal|Description
 
 ### Dates
 
-Note that `date()` is also a [function](query/functions/#dateany)
+Note that `date()` is also a [function](../functions/#dateany)
 
 Literal|Description
 -|-
@@ -49,22 +49,22 @@ Literal|Description
 #### Minutes
 Literal|Description
 -|-
-`dur(1 m)`|one minute|
-`dur(3 m)`|three minutes|
-`dur(1 min)`|one minute|
-`dur(3 mins)`|three minutes|
-`dur(1 minute)`|one minute|
-`dur(3 minutes)`|three minutes|
+`dur(1 m)`|one minute
+`dur(3 m)`|three minutes
+`dur(1 min)`|one minute
+`dur(3 mins)`|three minutes
+`dur(1 minute)`|one minute
+`dur(3 minutes)`|three minutes
 
 #### Hours
 Literal|Description
 -|-
-`dur(1 h)`|one hour|
-`dur(3 h)`|three hours|
-`dur(1 hr)`|one hour|
-`dur(3 hrs)`|three hours|
-`dur(1 hour)`|one hour|
-`dur(3 hours)`|three hours|
+`dur(1 h)`|one hour
+`dur(3 h)`|three hours
+`dur(1 hr)`|one hour
+`dur(3 hrs)`|three hours
+`dur(1 hour)`|one hour
+`dur(3 hours)`|three hours
 
 #### Days
 Literal|Description

@@ -1,3 +1,9 @@
+# 0.4.26
+
+Reverts Dataview to version 0.4.22
+
+---
+
 # 0.4.25
 
 Fix #867: Create a container div per taskList to allow for multiple task views.

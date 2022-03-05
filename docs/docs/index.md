@@ -56,7 +56,7 @@ Once you have some pages that you've annotated, all that's left to do is query t
 JavaScript views. There are four ways to do this:
 
 1. **Dataview Query Language (DQL)**: A pipeline-based, vaguely SQL-looking expression language which can support basic
-   use cases. See the [documentation](https://blacksmithgu.github.io/obsidian-dataview/query/queries/) for details.
+   use cases. See the [documentation](query/queries/) for details.
 
     ~~~markdown
     ```dataview
@@ -65,7 +65,7 @@ JavaScript views. There are four ways to do this:
     ~~~
 
 2. **Inline Expressions**: DQL expressions which you can embed directly inside markdown and which will be evaluated in
-   preview mode. See the [documentation](https://blacksmithgu.github.io/obsidian-dataview/query/expressions/) for
+   preview mode. See the [documentation](query/expressions/) for
    allowable queries.
 
     ```markdown
@@ -74,7 +74,7 @@ JavaScript views. There are four ways to do this:
 
 3. **DataviewJS**: A high-powered JavaScript API which gives full access to the Dataview index and some convienent
    rendering utilities. Highly recommended if you know JavaScript, since this is far more powerful than the query
-   language. Check the [documentation](https://blacksmithgu.github.io/obsidian-dataview/api/intro/) for more details.
+   language. Check the [documentation](api/intro/) for more details.
 
     ~~~markdown
     ```dataviewjs

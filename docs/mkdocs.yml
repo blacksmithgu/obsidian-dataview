@@ -33,6 +33,7 @@ nav:
     - Codeblock Examples: 'api/code-examples.md'
   - Plugin Developers:
     - Developing Against Dataview: 'plugin/develop-against-dataview.md'
+  - Friends of Dataview: 'friends.md'
   - Changelog: 'changelog.md'
 plugins:
   - search
