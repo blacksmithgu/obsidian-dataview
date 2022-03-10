@@ -14,7 +14,7 @@ information, render HTML, and configure the view.
 Asynchronous API calls are marked with `⌛`.
 
 ## Query
-These are methods for obtaining an array of pages matching a given source. TO render the result use with the render methods below. For example, `dv.list(dv.pages().file.link)`.
+Query methods allow you to query the Dataview index for page metadata; to render this data, use the methods in the [render section](#render).
 
 ### `dv.current()`
 
