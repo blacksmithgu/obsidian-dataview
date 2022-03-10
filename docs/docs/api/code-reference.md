@@ -14,6 +14,7 @@ information, render HTML, and configure the view.
 Asynchronous API calls are marked with `⌛`.
 
 ## Query
+Query methods allow you to query the Dataview index for page metadata; to render this data, use the methods in the [render section](#render).
 
 ### `dv.current()`
 
