@@ -22,8 +22,8 @@ Get page information (via `dv.page()`) for the page the script is currently exec
 
 ### `dv.pages(source)`
 
-Takes a single string argument, `source`, which is the same form as a [query language source](../../query/sources).
-Returns a [data array](../data-array) of page objects, which are plain objects with all of the page fields as
+Take a single string argument, `source`, which is the same form as a [query language source](../../query/sources).
+Return a [data array](../data-array) of page objects, which are plain objects with all of the page fields as
 values.
 
 ```js
@@ -43,7 +43,7 @@ dv.pagePaths("#books") => the paths of pages with tag 'books'
 
 ### `dv.page(path)`
 
-Maps a simple path to the full page object, which includes all of the pages fields. Automatically does link resolution,
+Map a simple path to the full page object, which includes all of the pages fields. Automatically does link resolution,
 and will figure out the extension automatically if not present.
 
 ```js
@@ -55,14 +55,14 @@ dv.page("books/The Raisin.md") => The page object for /books/The Raisin.md
 
 ### `dv.el(text)`
 
-Renders arbitrary text in the given html element.
+Render arbitrary text in the given html element.
 ```js
 dv.el("b", "This is some bold text");
 ```
 
 ### `dv.header(level, text)`
 
-Renders a header of level 1 - 6 with the given text.
+Render a header of level 1 - 6 with the given text.
 
 ```js
 dv.header(1, "Big!");
@@ -71,7 +71,7 @@ dv.header(6, "Tiny");
 
 ### `dv.paragraph(text)`
 
-Renders arbitrary text in a paragraph.
+Render arbitrary text in a paragraph.
 
 ```js
 dv.paragraph("This is some text");
@@ -79,7 +79,7 @@ dv.paragraph("This is some text");
 
 ### `dv.span(text)`
 
-Renders arbitrary text in a span (no padding above/below, unlike a paragraph).
+Render arbitrary text in a span (no padding above/below, unlike a paragraph).
 
 ```js
 dv.span("This is some text");
@@ -110,7 +110,7 @@ argument of `dv.view()` was.
 
 ### `dv.list(elements)`
 
-Render a dataview list of elements; accepts both vanilla arrays and data arrays.
+Render a dataview list of elements; accept both vanilla arrays and data arrays.
 
 ```js
 dv.list([1, 2, 3]) => list of 1, 2, 3
@@ -180,7 +180,7 @@ dv.fileLink()
 
 ### `dv.date(text)`
 
-Coerces text and links to luxon `DateTime`; if provided with a `DateTime`, returns it unchanged.
+Coerce text and links to luxon `DateTime`; if provided with a `DateTime`, return it unchanged.
 
 ```js
 dv.date("2021-08-08") => DateTime for August 8th, 2021
@@ -215,9 +215,7 @@ These utility methods are all contained in the `dv.io` sub-API, and are all *asy
 
 ### ⌛ `dv.io.csv(path, [origin-file])`
 
-Load a CSV from the given path (a link or string). Relative paths will be resolved relative to the optional origin file (defaulting
-to the current file if not provided). Returns a dataview array, each element containing an object of the CSV values; if
-the file does not exist, returns `undefined`.
+Load a CSV from the given path (a link or string). Relative paths will be resolved relative to the optional origin file (defaulting to the current file if not provided). Return a dataview array, each element containing an object of the CSV values; if the file does not exist, return `undefined`.
 
 ```js
 await dv.io.csv("hello.csv") => [{ column1: ..., column2: ...}, ...]
@@ -225,8 +223,8 @@ await dv.io.csv("hello.csv") => [{ column1: ..., column2: ...}, ...]
 
 ### ⌛ `dv.io.load(path, [origin-file])`
 
-Load the contents of the given path (a link or string) asynchronously. Relative paths will bre resolved relative to the
-optional origi nfile (defaulting to the current file if not provided). Returns the string contents of the file, or
+Load the contents of the given path (a link or string) asynchronously. Relative paths will be resolved relative to the
+optional original file (defaulting to the current file if not provided). Returns the string contents of the file, or
 `undefined` if the file does not exist.
 
 ```js
@@ -235,7 +233,7 @@ await dv.io.load("File") => "# File\nThis is an example file..."
 
 ### `dv.io.normalize(path, [origin-file])`
 
-Converts a relative link or path into an absolute path. If `origin-file` is provided, then the resolution is doing as if
+Convert a relative link or path into an absolute path. If `origin-file` is provided, then the resolution is doing as if
 you were resolving the link from that file; if not, the path is resolved relative to the current file.
 
 ```js
