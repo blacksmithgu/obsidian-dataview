@@ -272,7 +272,7 @@ export class DataviewInlineApi {
         }
 
         let viewContents = await this.app.vault.read(viewFile);
-        if (viewContents.contains("await")) viewContents = "(async () => { " + +" })()";
+        if (viewContents.contains("await")) viewContents = "(async () => { " + viewContents + " })()";
         let viewFunction = new Function("dv", "input", viewContents);
 
         try {
