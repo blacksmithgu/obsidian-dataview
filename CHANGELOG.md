@@ -1,3 +1,12 @@
+# 0.5.0 (Beta)
+
+Re-release of broken release 0.4.23, now hopefully with fixes that make it work on (most) machines. I'll be doing beta
+releases for a little while until I can confirm the new version is stable; use BRAT
+(https://github.com/TfTHacker/obsidian42-brat) to easily track Dataview beta versions if you are interested in cutting
+edge features.
+
+---
+
 # 0.4.25
 
 Fix #867: Create a container div per taskList to allow for multiple task views.
