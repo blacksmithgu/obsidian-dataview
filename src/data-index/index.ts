@@ -76,7 +76,7 @@ export class FullIndex extends Component {
 
     /** Runs through the whole vault to set up initial file */
     public initialize() {
-        // The metadata cache is updated on file changes.
+        // The metadata cache is updated on initial file index and file loads.
         this.registerEvent(this.metadataCache.on("resolve", file => this.reload(file)));
 
         // Renames do not set off the metadata cache; catch these explicitly.
@@ -98,8 +98,22 @@ export class FullIndex extends Component {
             })
         );
 
-        // Initialize sub-indices.
-        this.prefix.initialize();
+        let queued = 0;
+        let initialMarkdown = this.vault.getMarkdownFiles();
+        for (let file of initialMarkdown) {
+            // Files which have no active file cache registered will be caught by the 'resolve' event.
+            let fileCache = this.metadataCache.getFileCache(file);
+            if (fileCache === undefined || fileCache === null) continue;
+
+            this.reload(file);
+            queued += 1;
+        }
+
+        console.log(
+            `Dataview: queued ${queued} total files; waiting for ${
+                initialMarkdown.length - queued
+            } files to be resolved.`
+        );
     }
 
     public rename(file: TAbstractFile, oldPath: string) {
@@ -158,9 +172,6 @@ export class PrefixIndex extends Component {
     constructor(public vault: Vault, public updateRevision: () => void) {
         super();
     }
-
-    /** Run through the whole vault to set up the initial prefix index. */
-    public initialize() {}
 
     private *walk(folder: TFolder, filter?: (path: string) => boolean): Generator<string> {
         for (const file of folder.children) {

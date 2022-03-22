@@ -144,6 +144,11 @@ export class DataviewInlineApi {
         return this.api.isArray(raw);
     }
 
+    /** Return true if the given value is a dataview data array; this returns FALSE for plain JS arrays. */
+    public isDataArray(raw: unknown): raw is DataArray<any> {
+        return DataArray.isDataArray(raw);
+    }
+
     /** Create a dataview file link to the given path. */
     public fileLink(path: string, embed: boolean = false, display?: string): Link {
         return Link.file(path, embed, display);

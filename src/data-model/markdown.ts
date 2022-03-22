@@ -79,6 +79,9 @@ export class PageMetadata {
             data.links = data.links.map(l => linkNormalizer(l));
         }
 
+        // This is pretty ugly, but it's not possible to normalize on the worker thread that does parsing.
+        // The best way to improve this is to instead just canonicalize the entire data object; I can try to
+        // optimize `Values.mapLeaves` to only mutate if it actually changes things.
         return new PageMetadata(data.path!!, data);
     }
 
@@ -137,6 +140,7 @@ export class PageMetadata {
                 mday: stripTime(this.mtime),
                 size: this.size,
                 starred: index.starred.starred(this.path),
+                frontmatter: Values.deepCopy(this.frontmatter),
                 ext: this.extension(),
             },
         };

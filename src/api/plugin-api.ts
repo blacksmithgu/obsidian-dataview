@@ -145,9 +145,14 @@ export class DataviewApi implements DvAPIInterface {
         return DataArray.wrap([raw], this.settings);
     }
 
-    /** Return true if theg given value is a javascript array OR a dataview data array. */
+    /** Return true if the given value is a javascript array OR a dataview data array. */
     public isArray(raw: unknown): raw is DataArray<any> | Array<any> {
         return DataArray.isDataArray(raw) || Array.isArray(raw);
+    }
+
+    /** Return true if the given value is a dataview data array; this returns FALSE for plain JS arrays. */
+    public isDataArray(raw: unknown): raw is DataArray<any> {
+        return DataArray.isDataArray(raw);
     }
 
     /** Create a dataview file link to the given path. */

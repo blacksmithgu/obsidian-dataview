@@ -1,6 +1,6 @@
 /** Importer for markdown documents. */
 
-import { extractFullLineField, extractInlineFields, InlineField, parseInlineValue } from "data-import/inline-field";
+import { extractFullLineField, extractInlineFields, parseInlineValue, InlineField } from "data-import/inline-field";
 import { ListItem, PageMetadata } from "data-model/markdown";
 import { Literal, Link, Values } from "data-model/value";
 import { EXPRESSION } from "expression/parse";
@@ -12,7 +12,7 @@ import { canonicalizeVarName, extractDate, getFileTitle } from "util/normalize";
 export function parsePage(path: string, contents: string, stat: FileStats, metadata: CachedMetadata): PageMetadata {
     let tags = new Set<string>();
     let aliases = new Set<string>();
-    let fields = new Map<string, Literal>();
+    let fields = new Map<string, Literal[]>();
     let links: Link[] = [];
 
     // File tags, including front-matter and in-file tags.
@@ -28,7 +28,7 @@ export function parsePage(path: string, contents: string, stat: FileStats, metad
         for (let alias of extractAliases(metadata.frontmatter) || []) aliases.add(alias);
 
         let frontFields = parseFrontmatter(metadata.frontmatter) as Record<string, Literal>;
-        for (let [key, value] of Object.entries(frontFields)) fields.set(key, value);
+        for (let [key, value] of Object.entries(frontFields)) addInlineField(key, value, fields);
     }
 
     // Links in metadata.
@@ -39,16 +39,15 @@ export function parsePage(path: string, contents: string, stat: FileStats, metad
 
     // Merge frontmatter fields with parsed fields.
     let markdownData = parseMarkdown(path, contents.split("\n"), metadata);
-    for (let [name, values] of markdownData.fields.entries()) {
-        for (let value of values) addInlineField(fields, name, value);
-    }
+    mergeFieldGroups(fields, markdownData.fields);
 
     return new PageMetadata(path, {
-        fields,
         tags,
         aliases,
         links,
         lists: markdownData.lists,
+        fields: finalizeInlineFields(fields),
+        frontmatter: metadata.frontmatter,
         ctime: DateTime.fromMillis(stat.ctime),
         mtime: DateTime.fromMillis(stat.mtime),
         size: stat.size,
@@ -292,26 +291,42 @@ export function parseFrontmatter(value: any): Literal {
     return null;
 }
 
-/** Add a raw inline field to an output map, canonicalizing as needed. */
+/** Add a parsed inline field to the output map. */
 export function addRawInlineField(field: InlineField, output: Map<string, Literal[]>) {
-    let value = parseInlineValue(field.value);
-
-    output.set(field.key, (output.get(field.key) ?? []).concat([value]));
-    let simpleName = canonicalizeVarName(field.key);
-    if (simpleName.length > 0 && simpleName != field.key) {
-        output.set(simpleName, (output.get(simpleName) ?? []).concat([value]));
-    }
+    addInlineField(field.key, parseInlineValue(field.value), output);
 }
 
-/** Add an inline field to an existing field array, converting a single value into an array if it is present multiple times. */
-export function addInlineField(fields: Map<string, Literal>, name: string, value: Literal) {
-    if (fields.has(name)) {
-        let existing = fields.get(name) as Literal;
-        if (Values.isArray(existing)) fields.set(name, existing.concat([value]));
-        else fields.set(name, [existing, value]);
-    } else {
-        fields.set(name, value);
+/** Add a raw inline field to an output map, canonicalizing as needed. */
+export function addInlineField(key: string, value: Literal, output: Map<string, Literal[]>) {
+    if (!output.has(key)) output.set(key, [value]);
+    else output.get(key)?.push(value);
+}
+
+/** Given a raw list of inline field values, add normalized keys and squash them. */
+export function finalizeInlineFields(fields: Map<string, Literal[]>): Map<string, Literal> {
+    // Compute unique normalized keys (that do not overlap w/ the fields).
+    let normalized = new Map<string, Literal[]>();
+    for (let [key, values] of fields.entries()) {
+        let normKey = canonicalizeVarName(key);
+        if (normKey == "" || fields.has(normKey)) continue;
+
+        if (!normalized.has(normKey)) normalized.set(normKey, values);
+        else normalized.set(normKey, normalized.get(normKey)!!.concat(values));
     }
+
+    // Combine normalized + normal keys.
+    let interim = new Map<string, Literal[]>();
+    mergeFieldGroups(interim, fields);
+    mergeFieldGroups(interim, normalized);
+
+    // And then flatten them.
+    let result = new Map<string, Literal>();
+    for (let [key, value] of interim.entries()) {
+        if (value.length == 1) result.set(key, value[0]);
+        else result.set(key, value);
+    }
+
+    return result;
 }
 
 /** Copy all fields of 'source' into 'target'. */
