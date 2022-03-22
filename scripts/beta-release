@@ -4,14 +4,15 @@
 NEW_VERSION=$1
 
 if [ -z "$NEW_VERSION" ]; then
-    echo "Provide the version number for this release."
-    exit 1
+    NEW_VERSION=$(jq -r ".version" manifest-beta.json | awk -F. -v OFS=. '{$NF += 1 ; print}')
 fi
+
+echo "Releasing beta version '${NEW_VERSION}'"
 
 # Let users edit release-notes.txt for release notes.
 rm -f release-notes.md
 touch release-notes.md
-echo -e "# ${NEW_VERSION}\n\n" >> release-notes.md
+echo -e "# ${NEW_VERSION} (Beta)\n\n" >> release-notes.md
 $EDITOR release-notes.md
 
 # Append release notes to CHANGELOG.md.
@@ -26,18 +27,16 @@ cp -f CHANGELOG.md docs/docs/changelog.md
 
 # Delete old files if they exist
 rm -f package.tmp.json
-rm -f manifest.tmp.json
 rm -f manifest-beta.tmp.json
 rm -f versions.tmp.json
 
 # Rewrite versions in relevant files.
 jq ".version=\"${NEW_VERSION}\"" package.json > package.tmp.json && mv package.tmp.json package.json
-jq ".version=\"${NEW_VERSION}\"" manifest.json > manifest.tmp.json && mv manifest.tmp.json manifest.json
 jq ".version=\"${NEW_VERSION}\"" manifest-beta.json > manifest-beta.tmp.json && mv manifest-beta.tmp.json manifest-beta.json
-jq ". + {\"${NEW_VERSION}\": \"0.12.0\"}" versions.json > versions.tmp.json && mv versions.tmp.json versions.json
+jq ". + {\"${NEW_VERSION}\": \"0.13.11\"}" versions.json > versions.tmp.json && mv versions.tmp.json versions.json
 
 # Create commit & commit.
-git commit -a -m "Auto-release ${NEW_VERSION}"
+git commit -a -m "Auto-release beta ${NEW_VERSION}"
 git push
 
 # Rebuild the project to prepare for a release.
