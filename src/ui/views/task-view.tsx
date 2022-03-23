@@ -58,6 +58,7 @@ function TaskItem({ item }: { item: STask }) {
                 type="checkbox"
                 checked={item.completed}
                 onClick={onChecked}
+                data-task={item.status}
             />
             <Markdown inline={true} content={item.text} sourcePath={item.path} />
             {item.children.length > 0 && <TaskList items={item.children} />}
