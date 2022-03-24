@@ -33,7 +33,7 @@ export interface DataArray<T> {
     /** Map elements in the data array by applying a function to each, then flatten the results to produce a new array. */
     flatMap<U>(f: ArrayFunc<T, U[]>): DataArray<U>;
     /** Mutably change each value in the array, returning the same array which you can further chain off of. */
-    mutate<U>(f: ArrayFunc<T, U>): DataArray<U>;
+    mutate(f: ArrayFunc<T, void>): DataArray<T>;
 
     /** Limit the total number of entries in the array to the given value. */
     limit(count: number): DataArray<T>;
@@ -221,9 +221,9 @@ class DataArrayImpl<T> implements DataArray<T> {
         return this.lwrap(result);
     }
 
-    public mutate<U>(f: ArrayFunc<T, U>): DataArray<U> {
+    public mutate(f: ArrayFunc<T, void>): DataArray<T> {
         for (let index = 0; index < this.values.length; index++) {
-            this.values[index] = f(this.values[index], index, this.values) as any;
+            f(this.values[index], index, this.values);
         }
 
         return this as any;
