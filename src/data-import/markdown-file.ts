@@ -209,11 +209,17 @@ export function parseLists(
 
         // Pass 2: Propogate metadata up to the parent task or root element.
         if (!listItem.task) {
+            mergeFieldGroups(literals, listItem.fields);
+
+            // TODO (blacksmithgu): The below code properly propogates metadata up to the nearest task, which is the
+            // more intuitive behavior. For now, though, we will keep the existing logic.
+            /*
             let root: ListItem | undefined = listItem;
             while (!!root && !root.task) root = cache[root.parent ?? -1];
 
             // If the root is null, append this metadata to the root; otherwise, append to the task.
             mergeFieldGroups(root === undefined || root == null ? literals : root.fields, listItem.fields);
+            */
         }
 
         // Pass 3: Propogate `fullyCompleted` up the task tree. This is a little less efficient than just doing a simple
