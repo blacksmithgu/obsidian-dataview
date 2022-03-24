@@ -60,7 +60,7 @@ function TaskItem({ item }: { item: STask }) {
                 onClick={onChecked}
                 data-task={item.status}
             />
-            <Markdown inline={true} content={item.text} sourcePath={item.path} />
+            <Markdown inline={true} content={item.visual ?? item.text} sourcePath={item.path} />
             {item.children.length > 0 && <TaskList items={item.children} />}
         </li>
     );
