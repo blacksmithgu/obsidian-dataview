@@ -55,6 +55,7 @@ export interface SListItemBase {
     children: SListItem[];
 
     text: string;
+    visual?: string; // The visual text actually rendered in the task view. If not present, default to 'text'.
     annotated?: boolean;
 
     /** @deprecated use 'children' instead. */

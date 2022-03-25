@@ -60,7 +60,7 @@ function TaskItem({ item }: { item: STask }) {
                 onClick={onChecked}
                 data-task={item.status}
             />
-            <Markdown inline={true} content={item.text} sourcePath={item.path} />
+            <Markdown inline={true} content={item.visual ?? item.text} sourcePath={item.path} />
             {item.children.length > 0 && <TaskList items={item.children} />}
         </li>
     );
@@ -70,7 +70,7 @@ function TaskItem({ item }: { item: STask }) {
 function ListItem({ item }: { item: SListEntry }) {
     return (
         <li class="dataview task-list-basic-item">
-            <Markdown inline={true} content={item.text} sourcePath={item.path} />
+            <Markdown inline={true} content={item.visual ?? item.text} sourcePath={item.path} />
             {item.children.length > 0 && <TaskList items={item.children} />}
         </li>
     );
@@ -185,28 +185,40 @@ function listId(item: SListItem): string {
     return item.path + ":" + item.line;
 }
 
-/** Compute the line numbers of all children of the given list item. */
-function listChildren(item: SListItem, output?: Set<string>): Set<string> {
-    if (!output) output = new Set();
+function parentListId(item: SListItem): string {
+    return item.path + ":" + item.parent;
+}
 
-    for (let child of item.children) {
-        output.add(listId(child));
-        listChildren(child, output);
-    }
+/** Compute a map of all task IDs -> tasks. */
+function enumerateChildren(item: SListItem, output: Map<string, SListItem>): Map<string, SListItem> {
+    if (!output.has(listId(item))) output.set(listId(item), item);
+    for (let child of item.children) enumerateChildren(child, output);
 
     return output;
 }
 
-/** Removes tasks from a list if they are already present by being a child of another task. */
+/** Removes tasks from a list if they are already present by being a child of another task. Fixes child pointers. */
 export function nestItems(raw: SListItem[]): [SListItem[], Set<string>] {
-    let seen: Set<string> = new Set();
+    let elements: Map<string, SListItem> = new Map();
     let mask: Set<string> = new Set();
-    for (let item of raw) {
-        listChildren(item, seen);
-        mask.add(listId(item));
+
+    for (let elem of raw) {
+        let id = listId(elem);
+        elements.set(id, elem);
+        mask.add(id);
     }
 
-    return [raw.filter(t => !seen.has(listId(t))), mask];
+    for (let elem of raw) enumerateChildren(elem, elements);
+
+    // Recompute all child -> parent pointers.
+    let roots: SListItem[] = [];
+    for (let value of elements.values()) value.children = [];
+    for (let value of elements.values()) {
+        if (value.parent && elements.has(parentListId(value))) elements.get(parentListId(value))!!.children.push(value);
+        else roots.push(value);
+    }
+
+    return [roots, mask];
 }
 
 ///////////////////////

@@ -1,3 +1,20 @@
+# 0.5.2 (Beta)
+
+- Fix #971: Objects now work properly inside DataviewQL evaluation.
+
+---
+
+# 0.5.1 (Beta)
+
+- Temporarily revert the new task metadata behavior: inline fields in sublists of tasks are added to the page, instead
+  of the task. This behavior is not good, but is compatible with legacy usages of task metadata, which should uinbreak
+  some existing queries.
+    - This behavior will be removed in the future behind a flag.
+- Added the 'visual' field to tasks - if set, tasks render 'visual' instead of their regular text.
+- Fixed `DataArray#mutate()`.
+
+---
+
 # 0.5.0 (Beta)
 
 Re-release of broken release 0.4.23, now hopefully with fixes that make it work on (most) machines. I'll be doing beta

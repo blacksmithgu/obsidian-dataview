@@ -78,7 +78,7 @@ export class Context {
                 return Result.success(result);
             case "object":
                 let objResult: DataObject = {};
-                for (let [key, child] of Object.entries(field)) {
+                for (let [key, child] of Object.entries(field.values)) {
                     let subeval = this.evaluate(child, data);
                     if (!subeval.successful) return subeval;
                     objResult[key] = subeval.value;

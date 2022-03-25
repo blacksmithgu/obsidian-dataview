@@ -226,6 +226,7 @@ export default class DataviewPlugin extends Plugin {
                 );
             } else if (text.startsWith(this.settings.inlineQueryPrefix)) {
                 let potentialField = text.substring(this.settings.inlineQueryPrefix.length).trim();
+                if (potentialField.length == 0) continue;
 
                 let field = tryOrPropogate(() => parseField(potentialField));
                 if (!field.successful) {
