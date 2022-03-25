@@ -1,3 +1,9 @@
+# 0.5.2 (Beta)
+
+- Fix #971: Objects now work properly inside DataviewQL evaluation.
+
+---
+
 # 0.5.1 (Beta)
 
 - Temporarily revert the new task metadata behavior: inline fields in sublists of tasks are added to the page, instead
