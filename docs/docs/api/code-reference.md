@@ -224,7 +224,7 @@ await dv.io.csv("hello.csv") => [{ column1: ..., column2: ...}, ...]
 ### ⌛ `dv.io.load(path, [origin-file])`
 
 Load the contents of the given path (a link or string) asynchronously. Relative paths will be resolved relative to the
-optional original file (defaulting to the current file if not provided). Returns the string contents of the file, or
+optional origin file (defaulting to the current file if not provided). Returns the string contents of the file, or
 `undefined` if the file does not exist.
 
 ```js
