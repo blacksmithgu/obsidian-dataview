@@ -6,7 +6,7 @@ import { matchingSourcePaths } from "data-index/resolver";
 import { Sources } from "data-index/source";
 import { DataObject, Grouping, Groupings, Link, Literal, Values } from "data-model/value";
 import { EXPRESSION } from "expression/parse";
-import { renderList, renderTable, renderValue } from "ui/render";
+import { renderValue } from "ui/render";
 import { DataArray } from "./data-array";
 import { BoundFunctionImpl, DEFAULT_FUNCTIONS, Functions } from "expression/functions";
 import { Context } from "expression/context";
@@ -19,6 +19,9 @@ import { DataviewSettings } from "settings";
 import { parseFrontmatter } from "data-import/markdown-file";
 import { SListItem } from "data-model/serialized/markdown";
 import { createFixedTaskView } from "ui/views/task-view";
+import { createFixedListView } from "ui/views/list-view";
+import { LiteralValue } from "index";
+import { createFixedTableView } from "ui/views/table-view";
 
 /** Asynchronous API calls related to file / system IO. */
 export class DataviewIOApi implements DvIOAPIInterface {
@@ -208,7 +211,15 @@ export class DataviewApi implements DvAPIInterface {
     ) {
         if (!values) return;
 
-        return renderList(container, values as any[], component, filePath, this.settings);
+        // Append a child div, since React will keep re-rendering otherwise.
+        let subcontainer = container.createEl("div");
+        component.addChild(
+            createFixedListView(
+                { app: this.app, settings: this.settings, index: this.index, container: subcontainer },
+                values as LiteralValue[],
+                filePath
+            )
+        );
     }
 
     /** Render a dataview table with the given headers, and the 2D array of values. */
@@ -220,7 +231,17 @@ export class DataviewApi implements DvAPIInterface {
         filePath: string
     ) {
         if (!values) values = [];
-        return renderTable(container, headers, values as any[][], component, filePath, this.settings);
+
+        // Append a child div, since React will keep re-rendering otherwise.
+        let subcontainer = container.createEl("div");
+        component.addChild(
+            createFixedTableView(
+                { app: this.app, settings: this.settings, index: this.index, container: subcontainer },
+                headers,
+                values as Literal[][],
+                filePath
+            )
+        );
     }
 
     /** Render a dataview task view with the given tasks. */
@@ -238,10 +259,7 @@ export class DataviewApi implements DvAPIInterface {
         let taskContainer = container.createEl("div");
         component.addChild(
             createFixedTaskView(
-                this.app,
-                this.settings,
-                this.index,
-                taskContainer,
+                { app: this.app, settings: this.settings, index: this.index, container: taskContainer },
                 groupedTasks as Grouping<SListItem>,
                 filePath
             )
