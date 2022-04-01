@@ -18,8 +18,6 @@ import { DataviewApi } from "api/plugin-api";
 import { DataviewSettings, DEFAULT_QUERY_SETTINGS, DEFAULT_SETTINGS, QuerySettings } from "settings";
 import { extractInlineFields, parseInlineValue } from "data-import/inline-field";
 import { API_NAME, DvAPIInterface } from "./typings/api";
-import { DataviewListRenderer } from "ui/views/list-view";
-import { DataviewTableRenderer } from "ui/views/table-view";
 import { DataviewCalendarRenderer } from "ui/views/calendar-view";
 import { DataviewInlineRenderer } from "ui/views/inline-view";
 import { DataviewInlineJSRenderer, DataviewJSRenderer } from "ui/views/js-view";
@@ -27,6 +25,8 @@ import { currentLocale } from "util/locale";
 import { DateTime } from "luxon";
 import { DataviewInlineApi } from "api/inline-api";
 import { createTaskView } from "ui/views/task-view";
+import { createListView } from "ui/views/list-view";
+import { createTableView } from "ui/views/table-view";
 
 declare module "obsidian" {
     interface Workspace {
@@ -157,19 +157,16 @@ export default class DataviewPlugin extends Plugin {
         }
 
         let query = maybeQuery.value;
+        let init = { app: this.app, settings: this.settings, index: this.index, container: el };
         switch (query.header.type) {
             case "task":
-                component.addChild(createTaskView(this.app, this.settings, this.index, el, query as Query, sourcePath));
+                component.addChild(createTaskView(init, query as Query, sourcePath));
                 break;
             case "list":
-                component.addChild(
-                    new DataviewListRenderer(query as Query, el, this.index, sourcePath, this.settings, this.app)
-                );
+                component.addChild(createListView(init, query as Query, sourcePath));
                 break;
             case "table":
-                component.addChild(
-                    new DataviewTableRenderer(query as Query, el, this.index, sourcePath, this.settings, this.app)
-                );
+                component.addChild(createTableView(init, query as Query, sourcePath));
                 break;
             case "calendar":
                 component.addChild(

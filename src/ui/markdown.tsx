@@ -6,7 +6,7 @@ import { Component } from "obsidian";
 import { DataviewSettings } from "settings";
 import { FullIndex } from "data-index";
 import { Literal, Values } from "data-model/value";
-import { unmountComponentAtNode } from "preact/compat";
+import React, { unmountComponentAtNode } from "preact/compat";
 import { renderMinimalDate, renderMinimalDuration } from "util/normalize";
 import { currentLocale } from "util/locale";
 import { DataArray } from "api/data-array";
@@ -14,22 +14,26 @@ import { DataArray } from "api/data-array";
 export type MarkdownProps = { contents: string; sourcePath: string };
 export type MarkdownContext = { component: Component };
 
-/** Shared context for dataview views and objects. */
-export type DataviewContexts = {
+/** Context need to create dataviews. */
+export type DataviewInit = {
     app: App;
-    component: Component;
     index: FullIndex;
     settings: DataviewSettings;
     container: HTMLElement;
 };
 
+/** Shared context for dataview views and objects. */
+export type DataviewContexts = DataviewInit & {
+    component: Component;
+};
+
 export const DataviewContext = createContext<DataviewContexts>(undefined!);
 
 /** Hacky preact component which wraps Obsidian's markdown renderer into a neat component. */
-export function Markdown({
+export function RawMarkdown({
     content,
     sourcePath,
-    inline = false,
+    inline = true,
     style,
     cls,
     onClick,
@@ -64,8 +68,11 @@ export function Markdown({
     return <span ref={container} style={style} class={cls} onClick={onClick}></span>;
 }
 
+/** Hacky preact component which wraps Obsidian's markdown renderer into a neat component. */
+export const Markdown = React.memo(RawMarkdown);
+
 /** Embeds an HTML element in the react DOM. */
-export function EmbedHtml({ element }: { element: HTMLElement }) {
+export function RawEmbedHtml({ element }: { element: HTMLElement }) {
     const container = useRef<HTMLElement | null>(null);
 
     useEffect(() => {
@@ -77,14 +84,17 @@ export function EmbedHtml({ element }: { element: HTMLElement }) {
     return <span ref={container}></span>;
 }
 
+/** Embeds an HTML element in the react DOM. */
+export const EmbedHtml = React.memo(RawEmbedHtml);
+
 /** Intelligently render an arbitrary literal value. */
-export function Lit({
+export function RawLit({
     value,
     sourcePath,
     inline = false,
     depth = 0,
 }: {
-    value: Literal;
+    value: Literal | undefined;
     sourcePath: string;
     inline?: boolean;
     depth?: number;
@@ -94,18 +104,18 @@ export function Lit({
     // Short-circuit if beyond the maximum render depth.
     if (depth >= context.settings.maxRecursiveRenderDepth) return <Fragment>...</Fragment>;
 
-    if (Values.isNull(value)) {
+    if (Values.isNull(value) || value === undefined) {
         return <Markdown content={context.settings.renderNullAs} sourcePath={sourcePath} />;
     } else if (Values.isString(value)) {
         return <Markdown content={value} sourcePath={sourcePath} />;
     } else if (Values.isNumber(value)) {
-        return <Fragment>${"" + value}</Fragment>;
+        return <Fragment>{"" + value}</Fragment>;
     } else if (Values.isBoolean(value)) {
-        return <Fragment>${"" + value}</Fragment>;
+        return <Fragment>{"" + value}</Fragment>;
     } else if (Values.isDate(value)) {
-        return <Fragment>${renderMinimalDate(value, context.settings, currentLocale())}</Fragment>;
+        return <Fragment>{renderMinimalDate(value, context.settings, currentLocale())}</Fragment>;
     } else if (Values.isDuration(value)) {
-        return <Fragment>${renderMinimalDuration(value)}</Fragment>;
+        return <Fragment>{renderMinimalDuration(value)}</Fragment>;
     } else if (Values.isLink(value)) {
         // TODO: Implement special image embed handling here.
         return <Markdown content={value.markdown()} sourcePath={sourcePath} />;
@@ -131,7 +141,7 @@ export function Lit({
                 <span class="dataview dataview-result-list-span">
                     {value.map((subvalue, index) => (
                         <Fragment>
-                            ${index == 0 ? "" : ", "}
+                            {index == 0 ? "" : ", "}
                             <Lit value={subvalue} sourcePath={sourcePath} inline={inline} depth={depth + 1} />
                         </Fragment>
                     ))}
@@ -141,7 +151,7 @@ export function Lit({
     } else if (Values.isObject(value)) {
         // Don't render classes in case they have recursive references; spoopy.
         if (value?.constructor?.name && value?.constructor?.name != "Object") {
-            return <Fragment>&lt;${value.constructor.name}&gt;</Fragment>;
+            return <Fragment>&lt;{value.constructor.name}&gt;</Fragment>;
         }
 
         if (inline) {
@@ -149,7 +159,7 @@ export function Lit({
                 <ul class="dataview dataview-ul dataview-result-object-ul">
                     {Object.entries(value).map(entry => (
                         <li class="dataview dataview-li dataview-result-object-li">
-                            ${entry.key}:{" "}
+                            {entry.key}:{" "}
                             <Lit value={entry.value} sourcePath={sourcePath} inline={inline} depth={depth + 1} />
                         </li>
                     ))}
@@ -162,7 +172,8 @@ export function Lit({
                 <span class="dataview dataview-result-object-span">
                     {Object.entries(value).map((entry, index) => (
                         <Fragment>
-                            ${index == 0 ? "" : ", "}${entry.key}:{" "}
+                            {index == 0 ? "" : ", "}
+                            {entry.key}:{" "}
                             <Lit value={entry.value} sourcePath={sourcePath} inline={inline} depth={depth + 1} />
                         </Fragment>
                     ))}
@@ -171,8 +182,11 @@ export function Lit({
         }
     }
 
-    return <Fragment>&lt;Unrecognized: ${JSON.stringify(value)}&gt;</Fragment>;
+    return <Fragment>&lt;Unrecognized: {JSON.stringify(value)}&gt;</Fragment>;
 }
+
+/** Intelligently render an arbitrary literal value. */
+export const Lit = React.memo(RawLit);
 
 /** Render a simple nice looking error box in a code style. */
 export function ErrorPre(props: { children: ComponentChildren }, {}) {
@@ -234,26 +248,14 @@ export function useIndexBackedState<T>(
     return state;
 }
 
-/** A trivial wrapper which  */
+/** A trivial wrapper which allows a react component to live for the duration of a `MarkdownRenderChild`. */
 export class ReactRenderer extends MarkdownRenderChild {
-    public constructor(
-        public app: App,
-        public settings: DataviewSettings,
-        public index: FullIndex,
-        container: HTMLElement,
-        public element: h.JSX.Element
-    ) {
-        super(container);
+    public constructor(public init: DataviewInit, public element: h.JSX.Element) {
+        super(init.container);
     }
 
     public onload(): void {
-        const context = {
-            app: this.app,
-            settings: this.settings,
-            index: this.index,
-            component: this,
-            container: this.containerEl,
-        };
+        const context = Object.assign({}, { component: this }, this.init);
         render(<DataviewContext.Provider value={context}>{this.element}</DataviewContext.Provider>, this.containerEl);
     }
 

@@ -5,19 +5,6 @@ import { currentLocale } from "util/locale";
 import { renderMinimalDate, renderMinimalDuration } from "util/normalize";
 import { Literal, Values } from "data-model/value";
 
-/** Make an Obsidian-friendly internal link. */
-export function createAnchor(text: string, target: string, internal: boolean): HTMLAnchorElement {
-    let a = document.createElement("a");
-    a.dataset.href = target;
-    a.href = target;
-    a.text = text;
-    a.target = "_blank";
-    a.rel = "noopener";
-    if (internal) a.addClass("internal-link");
-
-    return a;
-}
-
 /** Render simple fields compactly, removing wrapping content like paragraph and span. */
 export async function renderCompactMarkdown(
     markdown: string,
@@ -37,48 +24,6 @@ export async function renderCompactMarkdown(
     }
 }
 
-/** Create a list inside the given container, with the given data. */
-export async function renderList(
-    container: HTMLElement,
-    elements: Literal[],
-    component: Component,
-    originFile: string,
-    settings: QuerySettings
-) {
-    let listEl = container.createEl("ul", { cls: ["dataview", "list-view-ul"] });
-    for (let elem of elements) {
-        let li = listEl.createEl("li");
-        await renderValue(elem, li, originFile, component, settings, true, "list");
-    }
-}
-
-/** Create a table inside the given container, with the given data. */
-export async function renderTable(
-    container: HTMLElement,
-    headers: string[],
-    values: Literal[][],
-    component: Component,
-    originFile: string,
-    settings: QuerySettings
-) {
-    let tableEl = container.createEl("table", { cls: ["dataview", "table-view-table"] });
-
-    let theadEl = tableEl.createEl("thead", { cls: "table-view-thead" });
-    let headerEl = theadEl.createEl("tr", { cls: "table-view-tr-header" });
-    for (let header of headers) {
-        headerEl.createEl("th", { text: header, cls: "table-view-th" });
-    }
-
-    let tbodyEl = tableEl.createEl("tbody", { cls: "table-view-tbody" });
-    for (let row of values) {
-        let rowEl = tbodyEl.createEl("tr");
-        for (let value of row) {
-            let td = rowEl.createEl("td");
-            await renderValue(value, td, originFile, component, settings, true);
-        }
-    }
-}
-
 /** Render a pre block with an error in it; returns the element to allow for dynamic updating. */
 export function renderErrorPre(container: HTMLElement, error: string): HTMLElement {
     let pre = container.createEl("pre", { cls: ["dataview", "dataview-error"] });
@@ -92,13 +37,6 @@ export function renderCodeBlock(container: HTMLElement, source: string, language
     if (language) code.classList.add("language-" + language);
     code.appendText(source);
     return code;
-}
-
-/** Render a span block with an error in it; returns the element to allow for dynamic updating. */
-export function renderErrorSpan(container: HTMLElement, error: string): HTMLElement {
-    let pre = container.createEl("span", { cls: ["dataview", "dataview-error"] });
-    pre.appendText(error);
-    return pre;
 }
 
 export type ValueRenderContext = "root" | "list";

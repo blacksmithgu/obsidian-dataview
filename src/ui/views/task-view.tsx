@@ -1,15 +1,13 @@
 import { setInlineField } from "data-import/inline-field";
 import { LIST_ITEM_REGEX } from "data-import/markdown-file";
-import { FullIndex } from "data-index";
 import { SListEntry, SListItem, STask } from "data-model/serialized/markdown";
 import { Grouping, Groupings } from "data-model/value";
 import { DateTime } from "luxon";
-import { App, MarkdownRenderChild, Vault } from "obsidian";
+import { MarkdownRenderChild, Vault } from "obsidian";
 import { Fragment, h } from "preact";
 import { useContext } from "preact/hooks";
 import { executeTask } from "query/engine";
 import { Query } from "query/query";
-import { DataviewSettings } from "settings";
 import {
     DataviewContext,
     ErrorPre,
@@ -18,6 +16,7 @@ import {
     Markdown,
     ReactRenderer,
     useIndexBackedState,
+    DataviewInit,
 } from "ui/markdown";
 import { asyncTryOrPropogate } from "util/normalize";
 
@@ -155,26 +154,16 @@ export function TaskView({ query, sourcePath }: { query: Query; sourcePath: stri
     return <TaskGrouping items={items.items} sourcePath={sourcePath} />;
 }
 
-export function createTaskView(
-    app: App,
-    settings: DataviewSettings,
-    index: FullIndex,
-    container: HTMLElement,
-    query: Query,
-    sourcePath: string
-): MarkdownRenderChild {
-    return new ReactRenderer(app, settings, index, container, <TaskView query={query} sourcePath={sourcePath} />);
+export function createTaskView(init: DataviewInit, query: Query, sourcePath: string): MarkdownRenderChild {
+    return new ReactRenderer(init, <TaskView query={query} sourcePath={sourcePath} />);
 }
 
 export function createFixedTaskView(
-    app: App,
-    settings: DataviewSettings,
-    index: FullIndex,
-    container: HTMLElement,
+    init: DataviewInit,
     items: Grouping<SListItem>,
     sourcePath: string
 ): MarkdownRenderChild {
-    return new ReactRenderer(app, settings, index, container, <TaskGrouping items={items} sourcePath={sourcePath} />);
+    return new ReactRenderer(init, <TaskGrouping items={items} sourcePath={sourcePath} />);
 }
 
 /////////////////////////
