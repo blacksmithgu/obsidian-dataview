@@ -487,6 +487,17 @@ export class Link {
         }
     }
 
+    /** Convert this link into a non-embedded link. */
+    public fromEmbed(): Link {
+        if (!this.embed) {
+            return this;
+        } else {
+            let link = new Link(this);
+            link.embed = false;
+            return link;
+        }
+    }
+
     /** Convert this link to markdown so it can be rendered. */
     public markdown(): string {
         let result = (this.embed ? "!" : "") + "[[" + this.obsidianLink();

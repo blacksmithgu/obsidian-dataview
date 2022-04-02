@@ -1,5 +1,5 @@
 /** Provides core preact / rendering utilities for all view types. */
-import { App, MarkdownRenderChild, MarkdownRenderer, TFile } from "obsidian";
+import { App, MarkdownRenderChild, MarkdownRenderer } from "obsidian";
 import { h, createContext, ComponentChildren, render, Fragment } from "preact";
 import { useContext, useEffect, useRef, useState } from "preact/hooks";
 import { Component } from "obsidian";
@@ -120,10 +120,8 @@ export function RawLit({
     } else if (Values.isLink(value)) {
         // Special case handling of image/video/etc embeddings to bypass the Obsidian API not working.
         if (isImageEmbed(value)) {
-            let realFile = context.app.vault.getAbstractFileByPath(value.path);
-            if (!realFile || !(realFile instanceof TFile)) {
-                return <Markdown content={value.markdown()} sourcePath={sourcePath} />;
-            }
+            let realFile = context.app.metadataCache.getFirstLinkpathDest(value.path, sourcePath);
+            if (!realFile) return <Markdown content={value.markdown()} sourcePath={sourcePath} />;
 
             let resourcePath = context.app.vault.getResourcePath(realFile);
             return <img alt={value.path} src={resourcePath} />;

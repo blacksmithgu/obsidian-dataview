@@ -205,9 +205,21 @@ export namespace DefaultFunctions {
         .add1("null", _a => null)
         .vectorize(1, [0])
         .add2("string", "string", (t, d, c) => Link.file(c.linkHandler.normalize(t), false, d))
+        .add3("string", "string", "boolean", (t, d, e, c) => Link.file(c.linkHandler.normalize(t), e, d))
         .add2("link", "string", (t, d) => t.withDisplay(d))
         .add2("null", "*", () => null)
         .add2("*", "null", (t, _n, c) => link(c, t))
+        .vectorize(2, [0, 1])
+        .build();
+
+    /** Embed and un-embed a link. */
+    export const embed: FunctionImpl = new FunctionBuilder("embed")
+        .add1("link", l => l.toEmbed())
+        .vectorize(1, [0])
+        .add2("link", "boolean", (l, e, c) => (e ? l.toEmbed() : l.fromEmbed()))
+        .add1("null", () => null)
+        .add2("null", "*", () => null)
+        .add2("*", "null", () => null)
         .vectorize(2, [0, 1])
         .build();
 
@@ -712,6 +724,7 @@ export const DEFAULT_FUNCTIONS: Record<string, FunctionImpl> = {
     list: DefaultFunctions.list,
     array: DefaultFunctions.list,
     link: DefaultFunctions.link,
+    embed: DefaultFunctions.embed,
     elink: DefaultFunctions.elink,
     date: DefaultFunctions.date,
     dur: DefaultFunctions.dur,
