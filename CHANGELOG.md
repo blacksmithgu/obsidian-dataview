@@ -1,3 +1,19 @@
+# 0.5.3 (Beta)
+
+Iterative beta which adds a few nice QoL features and fixes some more bugs:
+
+- Internally swapped to a React-based renderer; this should not have a noticable perf or usability impact, but makes it
+  easier for me to implement complex table/list behaviors.
+- Naming your fields with `AS "Name"` is now optional; Dataview will infer the name from the expression automatically.
+  For example, `TABLE 8 + 4, 3 + 6 FROM ...` is now a valid table expression, and the columns will be named `8 + 4` and
+  `3 + 6` respectively.
+- Some issues with array and object rendering were corrected.
+- Error messages on empty dataview results were improved and now show up for all views.
+
+Inline images are now rendered correctly in Dataview tables and lists - no more hacky `app://local/` schenanigans!
+
+---
+
 # 0.5.2 (Beta)
 
 - Fix #971: Objects now work properly inside DataviewQL evaluation.
