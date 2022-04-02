@@ -3,7 +3,15 @@ import { executeList } from "query/engine";
 import { ListQuery, Query } from "query/query";
 import { asyncTryOrPropogate } from "util/normalize";
 import { useContext } from "preact/hooks";
-import { DataviewContext, DataviewInit, ErrorPre, Lit, ReactRenderer, useIndexBackedState } from "ui/markdown";
+import {
+    DataviewContext,
+    DataviewInit,
+    ErrorMessage,
+    ErrorPre,
+    Lit,
+    ReactRenderer,
+    useIndexBackedState,
+} from "ui/markdown";
 import { h, Fragment } from "preact";
 import { Literal } from "data-model/value";
 
@@ -78,8 +86,6 @@ export function ListView({ query, sourcePath }: { query: Query; sourcePath: stri
                 executeList(query, context.index, sourcePath, context.settings)
             );
             if (!result.successful) return { state: "error", error: result.error, sourcePath };
-            else if (result.value.data.length == 0 && context.settings.warnOnEmptyResult)
-                return { state: "error", error: "Dataview: Query returned 0 results.", sourcePath };
 
             let showId = (query.header as ListQuery).showId;
             let showValue = !!(query.header as ListQuery).format;
@@ -102,6 +108,9 @@ export function ListView({ query, sourcePath }: { query: Query; sourcePath: stri
                 <ErrorPre>Dataview: {items.error}</ErrorPre>{" "}
             </Fragment>
         );
+
+    if (items.items.length == 0 && context.settings.warnOnEmptyResult)
+        return <ErrorMessage message="Dataview: No results to show for list query." />;
 
     return <ListGrouping items={items.items} sourcePath={sourcePath} mode={items.mode} />;
 }
