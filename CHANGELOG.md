@@ -1,3 +1,10 @@
+# 0.5.4 (Beta)
+
+Improved image rendering for some link types, and adds the `embed(link)` and `embed(link, false)` options to convert
+links to/from their embedded equivalents.
+
+---
+
 # 0.5.3 (Beta)
 
 Iterative beta which adds a few nice QoL features and fixes some more bugs:
