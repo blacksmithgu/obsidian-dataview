@@ -305,6 +305,10 @@ test("Parse link with header and display", () => {
     );
 });
 
+test("Parse embedded link", () => {
+    expect(EXPRESSION.field.tryParse("![[hello]]")).toEqual(Fields.literal(Link.file("hello", true)));
+});
+
 // <-- Null ->
 
 test("Parse Null", () => {

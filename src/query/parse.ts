@@ -15,7 +15,6 @@ import {
     WhereStep,
 } from "./query";
 import { Source, Sources } from "data-index/source";
-import { Fields } from "expression/field";
 import { DEFAULT_QUERY_SETTINGS } from "settings";
 import { Result } from "api/result";
 
@@ -43,6 +42,26 @@ interface QueryLanguageTypes {
     query: Query;
 }
 
+/** Return a new parser which executes the underlying parser and returns it's raw string representation. */
+export function captureRaw<T>(base: P.Parser<T>): P.Parser<[T, string]> {
+    return P.custom((success, failure) => {
+        return (input, i) => {
+            let result = (base as any)._(input, i);
+            if (!result.status) return result;
+
+            return Object.assign({}, result, { value: [result.value, input.substring(i, result.index)] });
+        };
+    });
+}
+
+/** Strip newlines and excess whitespace out of text. */
+function stripNewlines(text: string): string {
+    return text
+        .split(/[\r\n]+/)
+        .map(t => t.trim())
+        .join("");
+}
+
 /** A parsimmon-powered parser-combinator implementation of the query language. */
 export const QUERY_LANGUAGE = P.createLanguage<QueryLanguageTypes>({
     // Simple atom parsing, like words, identifiers, numbers.
@@ -60,7 +79,7 @@ export const QUERY_LANGUAGE = P.createLanguage<QueryLanguageTypes>({
     namedField: q =>
         P.alt<NamedField>(
             q.explicitNamedField,
-            EXPRESSION.identifierDot.map(ident => QueryFields.named(ident, Fields.indexVariable(ident)))
+            captureRaw(EXPRESSION.field).map(([value, text]) => QueryFields.named(stripNewlines(text), value))
         ),
     sortField: q =>
         P.seqMap(

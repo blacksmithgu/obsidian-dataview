@@ -1,5 +1,5 @@
 /** Provides core preact / rendering utilities for all view types. */
-import { App, MarkdownRenderChild, MarkdownRenderer } from "obsidian";
+import { App, MarkdownRenderChild, MarkdownRenderer, TFile } from "obsidian";
 import { h, createContext, ComponentChildren, render, Fragment } from "preact";
 import { useContext, useEffect, useRef, useState } from "preact/hooks";
 import { Component } from "obsidian";
@@ -10,6 +10,7 @@ import React, { unmountComponentAtNode } from "preact/compat";
 import { renderMinimalDate, renderMinimalDuration } from "util/normalize";
 import { currentLocale } from "util/locale";
 import { DataArray } from "api/data-array";
+import { isImageEmbed } from "util/media";
 
 export type MarkdownProps = { contents: string; sourcePath: string };
 export type MarkdownContext = { component: Component };
@@ -117,7 +118,17 @@ export function RawLit({
     } else if (Values.isDuration(value)) {
         return <Fragment>{renderMinimalDuration(value)}</Fragment>;
     } else if (Values.isLink(value)) {
-        // TODO: Implement special image embed handling here.
+        // Special case handling of image/video/etc embeddings to bypass the Obsidian API not working.
+        if (isImageEmbed(value)) {
+            let realFile = context.app.vault.getAbstractFileByPath(value.path);
+            if (!realFile || !(realFile instanceof TFile)) {
+                return <Markdown content={value.markdown()} sourcePath={sourcePath} />;
+            }
+
+            let resourcePath = context.app.vault.getResourcePath(realFile);
+            return <img alt={value.path} src={resourcePath} />;
+        }
+
         return <Markdown content={value.markdown()} sourcePath={sourcePath} />;
     } else if (Values.isHtml(value)) {
         return <EmbedHtml element={value} />;
@@ -157,10 +168,9 @@ export function RawLit({
         if (inline) {
             return (
                 <ul class="dataview dataview-ul dataview-result-object-ul">
-                    {Object.entries(value).map(entry => (
+                    {Object.entries(value).map(([key, value]) => (
                         <li class="dataview dataview-li dataview-result-object-li">
-                            {entry.key}:{" "}
-                            <Lit value={entry.value} sourcePath={sourcePath} inline={inline} depth={depth + 1} />
+                            {key}: <Lit value={value} sourcePath={sourcePath} inline={inline} depth={depth + 1} />
                         </li>
                     ))}
                 </ul>
@@ -170,11 +180,10 @@ export function RawLit({
 
             return (
                 <span class="dataview dataview-result-object-span">
-                    {Object.entries(value).map((entry, index) => (
+                    {Object.entries(value).map(([key, value], index) => (
                         <Fragment>
                             {index == 0 ? "" : ", "}
-                            {entry.key}:{" "}
-                            <Lit value={entry.value} sourcePath={sourcePath} inline={inline} depth={depth + 1} />
+                            {key}: <Lit value={value} sourcePath={sourcePath} inline={inline} depth={depth + 1} />
                         </Fragment>
                     ))}
                 </span>

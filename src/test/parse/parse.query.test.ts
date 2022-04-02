@@ -27,14 +27,21 @@ test("Link Source", () => {
 
 // <-- Fields -->
 
-test("Named Fields", () => {
-    let simple = QUERY_LANGUAGE.namedField.tryParse("time-played");
-    expect(simple).toEqual(QueryFields.named("time-played", Fields.variable("time-played")));
+describe("Named Fields", () => {
+    test("Explicit", () => {
+        let simple = QUERY_LANGUAGE.namedField.tryParse("time-played");
+        expect(simple).toEqual(QueryFields.named("time-played", Fields.variable("time-played")));
 
-    let complex = QUERY_LANGUAGE.namedField.tryParse("(time-played + 4) as something");
-    expect(complex).toEqual(
-        QueryFields.named("something", Fields.binaryOp(Fields.variable("time-played"), "+", Fields.literal(4)))
-    );
+        let complex = QUERY_LANGUAGE.namedField.tryParse("(time-played + 4) as something");
+        expect(complex).toEqual(
+            QueryFields.named("something", Fields.binaryOp(Fields.variable("time-played"), "+", Fields.literal(4)))
+        );
+    });
+
+    test("Implicit", () => {
+        let simple = QUERY_LANGUAGE.namedField.tryParse("8 + 4");
+        expect(simple).toEqual(QueryFields.named("8 + 4", Fields.binaryOp(Fields.literal(8), "+", Fields.literal(4))));
+    });
 });
 
 test("Sort Fields", () => {

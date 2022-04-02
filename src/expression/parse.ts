@@ -158,7 +158,6 @@ interface ExpressionLanguage {
     bool: boolean;
     tag: string;
     identifier: string;
-    identifierDot: string;
     link: Link;
     embedLink: Link;
     rootDate: DateTime;
@@ -270,14 +269,6 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
         P.seqMap(
             P.alt(P.regexp(/\p{Letter}/u), P.regexp(EMOJI_REGEX)),
             P.alt(P.regexp(/[0-9\p{Letter}_-]/u), P.regexp(EMOJI_REGEX)).many(),
-            (first, rest) => first + rest.join("")
-        ).desc("variable identifier"),
-
-    // A variable identifier, which is alphanumeric and must start with a letter. Can include dots.
-    identifierDot: _ =>
-        P.seqMap(
-            P.alt(P.regexp(/\p{Letter}/u), P.regexp(EMOJI_REGEX)),
-            P.alt(P.regexp(/[0-9\p{Letter}\._-]/u), P.regexp(EMOJI_REGEX)).many(),
             (first, rest) => first + rest.join("")
         ).desc("variable identifier"),
 
@@ -503,6 +494,8 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
 
     atomField: q =>
         P.alt(
+            // Place embed links above negated fields as they are the special parser case '![[thing]]' and are generally unambigious.
+            q.embedLink.map(l => Fields.literal(l)),
             q.negatedField,
             q.linkField,
             q.listField,
