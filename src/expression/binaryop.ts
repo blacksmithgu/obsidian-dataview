@@ -121,6 +121,8 @@ export function createBinaryOps(linkNormalizer: (x: string) => string): BinaryOp
             // Duration Operations.
             .register("duration", "+", "duration", (a, b) => normalizeDuration(a.plus(b)))
             .register("duration", "-", "duration", (a, b) => normalizeDuration(a.minus(b)))
+            .register("duration", "/", "number", (a, b) => normalizeDuration(a.mapUnits(x => x / b)))
+            .registerComm("duration", "*", "number", (a, b) => normalizeDuration(a.mapUnits(x => x * b)))
             // Array operations.
             .register("array", "+", "array", (a, b) => ([] as Literal[]).concat(a).concat(b))
             // Object operations.
