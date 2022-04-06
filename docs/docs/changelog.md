@@ -1,3 +1,14 @@
+# 0.5.5 (Beta)
+
+More small features:
+
+- Fix issues with task sorting not doing anything. Sort away!
+- Table headers can now be arbitrary markdown. So you can put things like links in your headers: `TABLE (1 + 2) AS
+  "[[File]]".
+- You can now specify the size of an image embed by providing WxH in it's display property: `![[image.png|50x50]]`.
+
+---
+
 # 0.5.4 (Beta)
 
 Improved image rendering for some link types, and adds the `embed(link)` and `embed(link, false)` options to convert
