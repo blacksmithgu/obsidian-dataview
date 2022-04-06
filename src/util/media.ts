@@ -28,3 +28,19 @@ export function isImageEmbed(link: Link): boolean {
     let extension = link.path.substring(link.path.lastIndexOf("."));
     return link.type == "file" && link.embed && IMAGE_EXTENSIONS.has(extension);
 }
+
+/** Extract text of the form 'WxH' or 'W' from the display of a link. */
+export function extractImageDimensions(link: Link): [number, number] | undefined {
+    if (!link.display) return undefined;
+
+    console.log(link.display);
+    let match = /^(\d+)x(\d+)$/iu.exec(link.display);
+    console.log(match);
+    if (match) return [parseInt(match[1]), parseInt(match[2])];
+
+    let match2 = /^(\d+)x(\d+)/.exec(link.display);
+    if (match2) return [parseInt(match2[1]), parseInt(match2[1])];
+
+    // No match.
+    return undefined;
+}

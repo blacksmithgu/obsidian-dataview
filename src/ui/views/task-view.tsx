@@ -186,7 +186,23 @@ function enumerateChildren(item: SListItem, output: Map<string, SListItem>): Map
     return output;
 }
 
-/** Removes tasks from a list if they are already present by being a child of another task. Fixes child pointers. */
+/** Replace basic tasks with tasks from a lookup map. Retains the original order of the list. */
+function replaceChildren(elements: SListItem[], lookup: Map<string, SListItem>): SListItem[] {
+    return elements.map(element => {
+        element.children = replaceChildren(element.children, lookup);
+
+        const id = listId(element);
+        const map = lookup.get(id);
+
+        if (map) return map;
+        else return element;
+    });
+}
+
+/**
+ * Removes tasks from a list if they are already present by being a child of another task. Fixes child pointers.
+ * Retains original order of input list.
+ */
 export function nestItems(raw: SListItem[]): [SListItem[], Set<string>] {
     let elements: Map<string, SListItem> = new Map();
     let mask: Set<string> = new Set();
@@ -197,17 +213,13 @@ export function nestItems(raw: SListItem[]): [SListItem[], Set<string>] {
         mask.add(id);
     }
 
+    // List all elements & their children in the lookup map.
     for (let elem of raw) enumerateChildren(elem, elements);
 
-    // Recompute all child -> parent pointers.
-    let roots: SListItem[] = [];
-    for (let value of elements.values()) value.children = [];
-    for (let value of elements.values()) {
-        if (value.parent && elements.has(parentListId(value))) elements.get(parentListId(value))!!.children.push(value);
-        else roots.push(value);
-    }
-
-    return [roots, mask];
+    let roots = raw.filter(
+        elem => elem.parent == undefined || elem.parent == null || !elements.has(parentListId(elem))
+    );
+    return [replaceChildren(roots, elements), mask];
 }
 
 ///////////////////////

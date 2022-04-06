@@ -10,7 +10,7 @@ import React, { unmountComponentAtNode } from "preact/compat";
 import { renderMinimalDate, renderMinimalDuration } from "util/normalize";
 import { currentLocale } from "util/locale";
 import { DataArray } from "api/data-array";
-import { isImageEmbed } from "util/media";
+import { extractImageDimensions, isImageEmbed } from "util/media";
 
 export type MarkdownProps = { contents: string; sourcePath: string };
 export type MarkdownContext = { component: Component };
@@ -123,8 +123,12 @@ export function RawLit({
             let realFile = context.app.metadataCache.getFirstLinkpathDest(value.path, sourcePath);
             if (!realFile) return <Markdown content={value.markdown()} sourcePath={sourcePath} />;
 
+            let dimensions = extractImageDimensions(value);
             let resourcePath = context.app.vault.getResourcePath(realFile);
-            return <img alt={value.path} src={resourcePath} />;
+
+            if (dimensions)
+                return <img alt={value.path} src={resourcePath} width={dimensions[0]} height={dimensions[1]} />;
+            else return <img alt={value.path} src={resourcePath} />;
         }
 
         return <Markdown content={value.markdown()} sourcePath={sourcePath} />;

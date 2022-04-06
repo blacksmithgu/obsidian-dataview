@@ -8,6 +8,7 @@ import {
     ErrorMessage,
     ErrorPre,
     Lit,
+    Markdown,
     ReactRenderer,
     useIndexBackedState,
 } from "ui/markdown";
@@ -33,7 +34,9 @@ export function TableGrouping({
                 <thead class="table-view-thead">
                     <tr class="table-view-tr-header">
                         {headings.map(heading => (
-                            <th class="table-view-th">{heading}</th>
+                            <th class="table-view-th">
+                                <Markdown sourcePath={sourcePath} content={heading} />
+                            </th>
                         ))}
                     </tr>
                 </thead>
