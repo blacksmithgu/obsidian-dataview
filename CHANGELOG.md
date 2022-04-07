@@ -1,3 +1,11 @@
+# 0.5.6 (Beta)
+
+Proper release of 0.5.5 plus one additional small improvement:
+
+- Add `duration * number` and `duration / number` operations for manipulation durations numerically.
+
+---
+
 # 0.5.5 (Beta)
 
 More small features:
