@@ -112,7 +112,7 @@ index operator.
 ### Dates
 
 You can retrieve various components of a date via indexing: `date.year`, `date.month`, `date.day`, `date.hour`,
-`date.minute`, `date.second`, `date.week`. You can also add durations to dates to get new dates.
+`date.minute`, `date.second`, `date.week`, `date.weekyear`. You can also add durations to dates to get new dates.
 
 ### Durations
 
