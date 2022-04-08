@@ -168,7 +168,7 @@ export function extractFullLineField(text: string): InlineField | undefined {
 }
 
 export const CREATED_DATE_REGEX = /\u{2795}\s*(\d{4}-\d{2}-\d{2})/u;
-export const DUE_DATE_REGEX = /[\u{1F4C5}\u{1F4C6}\u{1F5D3}]\s*(\d{4}-\d{2}-\d{2})/u;
+export const DUE_DATE_REGEX = /[\u{1F4C5}\u{1F4C6}\u{1F5D3}\u{FE0F}]{2,}\s*(\d{4}-\d{2}-\d{2})/u;
 export const DONE_DATE_REGEX = /\u{2705}\s*(\d{4}-\d{2}-\d{2})/u;
 
 /** Parse special completed/due/done task fields which are marked via emoji. */

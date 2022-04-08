@@ -214,20 +214,18 @@ export class ListItem {
     }
 
     public created(): Literal | undefined {
-        return this.fields.get("created") ?? this.fields.get("ctime") ?? this.fields.get("cday");
+        return (this.fields.get("created") ?? this.fields.get("ctime") ?? this.fields.get("cday"))?.[0];
     }
 
     public due(): Literal | undefined {
-        return this.fields.get("due") ?? this.fields.get("duetime") ?? this.fields.get("dueday");
+        return (this.fields.get("due") ?? this.fields.get("duetime") ?? this.fields.get("dueday"))?.[0];
     }
 
     public completed(): Literal | undefined {
-        return (
-            this.fields.get("completed") ??
+        return (this.fields.get("completed") ??
             this.fields.get("completion") ??
             this.fields.get("comptime") ??
-            this.fields.get("compday")
-        );
+            this.fields.get("compday"))?.[0];
     }
 
     /** Create an API-friendly copy of this list item. De-duplication is done via the provided cache. */
