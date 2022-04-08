@@ -175,7 +175,7 @@ export function parseLists(
             blockId: rawElement.id,
         });
 
-        if (rawElement.parent >= 0) item.parent = rawElement.parent;
+        if (rawElement.parent >= 0 && rawElement.parent != item.line) item.parent = rawElement.parent;
 
         // Set up the basic task information for now, though we have to recompute `fullyComputed` later.
         if (rawElement.task) {

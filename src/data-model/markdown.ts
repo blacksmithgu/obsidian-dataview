@@ -231,7 +231,7 @@ export class ListItem {
     /** Create an API-friendly copy of this list item. De-duplication is done via the provided cache. */
     public serialize(cache: ListSerializationCache): SListItem {
         // Map children to their serialized/de-duplicated equivalents right away.
-        let children = this.children.map(l => cache.get(l));
+        let children = this.children.map(l => cache.get(l)).filter((l): l is SListItem => l !== undefined);
 
         let result: DataObject = {
             symbol: this.symbol,
@@ -283,17 +283,28 @@ export class ListItem {
 export class ListSerializationCache {
     public listItems: Record<number, ListItem>;
     public cache: Record<number, SListItem>;
+    public seen: Set<number>;
 
     public constructor(listItems: ListItem[]) {
         this.listItems = {};
         this.cache = {};
+        this.seen = new Set();
 
         for (let item of listItems) this.listItems[item.line] = item;
     }
 
-    public get(lineno: number): SListItem {
+    public get(lineno: number): SListItem | undefined {
         if (lineno in this.cache) return this.cache[lineno];
+        else if (this.seen.has(lineno)) {
+            console.log(
+                `Dataview: Encountered a circular list (line number ${lineno}; children ${this.listItems[
+                    lineno
+                ].children.join(", ")})`
+            );
+            return undefined;
+        }
 
+        this.seen.add(lineno);
         let result = this.listItems[lineno].serialize(this);
         this.cache[lineno] = result;
         return result;
