@@ -1,3 +1,9 @@
+# 0.5.9 (Beta)
+
+Another fix for due-date related emoji in tasks. I hate emoji.
+
+---
+
 # 0.5.8 (Beta)
 
 Fix some issues with infinite loops of tasks due to bad Obsidian metadata (potentially due to being out of date?).
