@@ -1,3 +1,9 @@
+# 0.5.8 (Beta)
+
+Fix some issues with infinite loops of tasks due to bad Obsidian metadata (potentially due to being out of date?).
+
+---
+
 # 0.5.7 (Beta)
 
 Fix issues with parsing '🗓️2021-08-29' due-date annotations on tasks, as well as an issue with properly extracting
