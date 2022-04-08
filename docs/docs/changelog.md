@@ -1,3 +1,10 @@
+# 0.5.7 (Beta)
+
+Fix issues with parsing '🗓️2021-08-29' due-date annotations on tasks, as well as an issue with properly extracting
+due/completed/completed times for use in queries.
+
+---
+
 # 0.5.6 (Beta)
 
 Proper release of 0.5.5 plus one additional small improvement:
