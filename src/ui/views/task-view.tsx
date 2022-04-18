@@ -53,7 +53,7 @@ function TaskItem({ item }: { item: STask }) {
         <li class={"dataview task-list-item" + (item.completed ? " is-checked" : "")} onClick={onClicked}>
             <input
                 style="margin-right: 6px;"
-                class="task-list-item-checkbox"
+                class="dataview task-list-item-checkbox"
                 type="checkbox"
                 checked={item.completed}
                 onClick={onChecked}

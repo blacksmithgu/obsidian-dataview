@@ -55,11 +55,12 @@ export default class DataviewPlugin extends Plugin {
         this.index = FullIndex.create(this.app, () => {
             if (this.settings.refreshEnabled) this.debouncedRefresh();
         });
-        // Set up view refreshing
-        this.updateRefreshSettings();
-        this.addChild(this.index);
 
         this.api = new DataviewApi(this.app, this.index, this.settings, this.manifest.version);
+
+        // Set up automatic (intelligent) view refreshing that debounces.
+        this.updateRefreshSettings();
+        this.addChild(this.index);
 
         // Register API to global window object.
         (window[API_NAME] = this.api) && this.register(() => delete window[API_NAME]);
@@ -87,6 +88,16 @@ export default class DataviewPlugin extends Plugin {
             // Handle p, header elements explicitly (opt-in rather than opt-out for now).
             for (let p of el.findAllSelf("p,h1,h2,h3,h4,h5,h6,li,span,th,td"))
                 await replaceInlineFields(ctx, p, ctx.sourcePath, this.settings);
+        });
+
+        // Dataview "force refresh" operation.
+        this.addCommand({
+            id: "dataview-force-refresh-views",
+            name: "Force Refresh Views",
+            callback: () => {
+                this.index.touch();
+                this.app.workspace.trigger("dataview:refresh-views");
+            },
         });
 
         // Run index initialization, which actually traverses the vault to index files.
