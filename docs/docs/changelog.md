@@ -1,3 +1,10 @@
+# 0.5.11 (Beta)
+
+Add detection of tasks inside of block quotes, as well as correctly implement automatic checking and unchecking of these
+tasks.
+
+---
+
 # 0.5.10 (Beta)
 
 Adds the `Dataview: Force Refresh Views` Command (accessible via the Ctrl+P command view) to force current views to
