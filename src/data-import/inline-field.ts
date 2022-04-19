@@ -200,7 +200,7 @@ function extractSpecialTaskFields(line: string): InlineField[] {
     let completedMatch = DONE_DATE_REGEX.exec(line);
     if (completedMatch)
         results.push({
-            key: "due",
+            key: "completion",
             value: completedMatch[1],
             start: completedMatch.index,
             startValue: completedMatch.index + 1,

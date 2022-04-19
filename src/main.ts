@@ -220,7 +220,7 @@ export default class DataviewPlugin extends Plugin {
             let codeblock = codeblocks.item(index);
 
             let text = codeblock.innerText.trim();
-            if (text.startsWith(this.settings.inlineJsQueryPrefix)) {
+            if (this.settings.inlineJsQueryPrefix.length > 0 && text.startsWith(this.settings.inlineJsQueryPrefix)) {
                 let code = text.substring(this.settings.inlineJsQueryPrefix.length).trim();
                 component.addChild(
                     new DataviewInlineJSRenderer(
@@ -234,7 +234,7 @@ export default class DataviewPlugin extends Plugin {
                         this.manifest.version
                     )
                 );
-            } else if (text.startsWith(this.settings.inlineQueryPrefix)) {
+            } else if (this.settings.inlineQueryPrefix.length > 0 && text.startsWith(this.settings.inlineQueryPrefix)) {
                 let potentialField = text.substring(this.settings.inlineQueryPrefix.length).trim();
                 if (potentialField.length == 0) continue;
 
@@ -330,7 +330,11 @@ class GeneralSettingsTab extends PluginSettingTab {
                 text
                     .setPlaceholder("=")
                     .setValue(this.plugin.settings.inlineQueryPrefix)
-                    .onChange(async value => await this.plugin.updateSettings({ inlineQueryPrefix: value }))
+                    .onChange(async value => {
+                        if (value.length == 0) return;
+
+                        await this.plugin.updateSettings({ inlineQueryPrefix: value });
+                    })
             );
 
         new Setting(this.containerEl)
@@ -340,7 +344,11 @@ class GeneralSettingsTab extends PluginSettingTab {
                 text
                     .setPlaceholder("$=")
                     .setValue(this.plugin.settings.inlineJsQueryPrefix)
-                    .onChange(async value => await this.plugin.updateSettings({ inlineJsQueryPrefix: value }))
+                    .onChange(async value => {
+                        if (value.length == 0) return;
+
+                        await this.plugin.updateSettings({ inlineJsQueryPrefix: value });
+                    })
             );
 
         this.containerEl.createEl("h2", { text: "View Settings" });
