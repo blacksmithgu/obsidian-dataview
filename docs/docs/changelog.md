@@ -1,3 +1,12 @@
+# 0.5.13 (Beta)
+
+Several smaller bugfixes!
+
+- Fix #997: Use the group by field name in the table name.
+- Prevent tons of errors if you incorrectly set the inline query prefix.
+
+---
+
 # 0.5.12 (Beta)
 
 Improve error messages for queries somewhat and get rid of some ugly output.
