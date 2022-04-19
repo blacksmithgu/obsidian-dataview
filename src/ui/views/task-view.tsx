@@ -261,7 +261,7 @@ export async function rewriteTask(vault: Vault, task: STask, desiredStatus: stri
     if (taskTextParts[0].trim() != match[3].trim()) return;
 
     // We have a positive match here at this point, so go ahead and do the rewrite of the status.
-    let initialSpacing = /^\s*/u.exec(filetext[task.line])!![0];
+    let initialSpacing = /^[\s>]*/u.exec(filetext[task.line])!![0];
     if (desiredText) {
         let desiredParts = desiredText.split("\n");
 
