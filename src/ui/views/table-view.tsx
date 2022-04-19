@@ -87,7 +87,7 @@ export function TableView({ query, sourcePath }: { query: Query; sourcePath: str
 
                 let name =
                     result.value.idMeaning.type === "group"
-                        ? context.settings.tableGroupColumnName
+                        ? result.value.idMeaning.name
                         : context.settings.tableIdColumnName;
 
                 return { state: "ready", headings: [name].concat(result.value.names), values: dataWithNames };
