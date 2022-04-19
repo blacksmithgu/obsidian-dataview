@@ -97,72 +97,75 @@ export const QUERY_LANGUAGE = P.createLanguage<QueryLanguageTypes>({
         ),
 
     headerClause: q =>
-        q.queryType.skip(P.whitespace).chain(qtype => {
-            switch (qtype) {
-                case "table":
-                    return P.seqMap(
-                        P.regexp(/WITHOUT\s+ID/i)
-                            .skip(P.optWhitespace)
-                            .atMost(1),
-                        P.sepBy(q.namedField, P.string(",").trim(P.optWhitespace)),
-                        (withoutId, fields) => {
-                            return { type: "table", fields, showId: withoutId.length == 0 } as QueryHeader;
-                        }
-                    );
-                case "list":
-                    return P.seqMap(
-                        P.regexp(/WITHOUT\s+ID/i)
-                            .skip(P.optWhitespace)
-                            .atMost(1),
-                        EXPRESSION.field.atMost(1),
-                        (withoutId, format) => {
+        q.queryType
+            .skip(P.whitespace)
+            .chain(qtype => {
+                switch (qtype) {
+                    case "table":
+                        return P.seqMap(
+                            P.regexp(/WITHOUT\s+ID/i)
+                                .skip(P.optWhitespace)
+                                .atMost(1),
+                            P.sepBy(q.namedField, P.string(",").trim(P.optWhitespace)),
+                            (withoutId, fields) => {
+                                return { type: "table", fields, showId: withoutId.length == 0 } as QueryHeader;
+                            }
+                        );
+                    case "list":
+                        return P.seqMap(
+                            P.regexp(/WITHOUT\s+ID/i)
+                                .skip(P.optWhitespace)
+                                .atMost(1),
+                            EXPRESSION.field.atMost(1),
+                            (withoutId, format) => {
+                                return {
+                                    type: "list",
+                                    format: format.length == 1 ? format[0] : undefined,
+                                    showId: withoutId.length == 0,
+                                } as QueryHeader;
+                            }
+                        );
+                    case "task":
+                        return P.succeed({ type: "task" } as QueryHeader);
+                    case "calendar":
+                        return P.seqMap(q.namedField, field => {
                             return {
-                                type: "list",
-                                format: format.length == 1 ? format[0] : undefined,
-                                showId: withoutId.length == 0,
-                            };
-                        }
-                    );
-                case "task":
-                    return P.succeed({ type: "task" });
-                case "calendar":
-                    return P.seqMap(q.namedField, field => {
-                        return {
-                            type: "calendar",
-                            showId: true,
-                            field,
-                        };
-                    });
-                default:
-                    return P.fail(`Unrecognized query type '${qtype}'`);
-            }
-        }),
+                                type: "calendar",
+                                showId: true,
+                                field,
+                            } as QueryHeader;
+                        });
+                    default:
+                        return P.fail(`Unrecognized query type '${qtype}'`);
+                }
+            })
+            .desc("TABLE or LIST or TASK or CALENDAR"),
     fromClause: q => P.seqMap(P.regexp(/FROM/i), P.whitespace, EXPRESSION.source, (_1, _2, source) => source),
     whereClause: q =>
         P.seqMap(P.regexp(/WHERE/i), P.whitespace, EXPRESSION.field, (where, _, field) => {
-            return { type: "where", clause: field };
-        }),
+            return { type: "where", clause: field } as WhereStep;
+        }).desc("WHERE <expression>"),
     sortByClause: q =>
         P.seqMap(
             P.regexp(/SORT/i),
             P.whitespace,
             q.sortField.sepBy1(P.string(",").trim(P.optWhitespace)),
             (sort, _1, fields) => {
-                return { type: "sort", fields };
+                return { type: "sort", fields } as SortByStep;
             }
-        ),
+        ).desc("SORT field [ASC/DESC]"),
     limitClause: q =>
         P.seqMap(P.regexp(/LIMIT/i), P.whitespace, EXPRESSION.field, (limit, _1, field) => {
-            return { type: "limit", amount: field };
-        }),
+            return { type: "limit", amount: field } as LimitStep;
+        }).desc("LIMIT <value>"),
     flattenClause: q =>
         P.seqMap(P.regexp(/FLATTEN/i).skip(P.whitespace), q.namedField, (_, field) => {
-            return { type: "flatten", field };
-        }),
+            return { type: "flatten", field } as FlattenStep;
+        }).desc("FLATTEN <value> [AS <name>]"),
     groupByClause: q =>
         P.seqMap(P.regexp(/GROUP BY/i).skip(P.whitespace), q.namedField, (_, field) => {
-            return { type: "group", field };
-        }),
+            return { type: "group", field } as GroupStep;
+        }).desc("GROUP BY <value> [AS <name>]"),
     // Full query parsing.
     clause: q => P.alt(q.fromClause, q.whereClause, q.sortByClause, q.limitClause, q.groupByClause, q.flattenClause),
     query: q =>

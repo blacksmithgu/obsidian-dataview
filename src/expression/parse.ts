@@ -260,15 +260,15 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
     tag: _ =>
         P.seqMap(
             P.string("#"),
-            P.alt(P.regexp(/[\p{Letter}0-9_/-]/u), P.regexp(EMOJI_REGEX)).many(),
+            P.alt(P.regexp(/[\p{Letter}0-9_/-]/u).desc("text"), P.regexp(EMOJI_REGEX).desc("text")).many(),
             (start, rest) => start + rest.join("")
         ).desc("tag ('#hello/stuff')"),
 
     // A variable identifier, which is alphanumeric and must start with a letter or... emoji.
     identifier: _ =>
         P.seqMap(
-            P.alt(P.regexp(/\p{Letter}/u), P.regexp(EMOJI_REGEX)),
-            P.alt(P.regexp(/[0-9\p{Letter}_-]/u), P.regexp(EMOJI_REGEX)).many(),
+            P.alt(P.regexp(/\p{Letter}/u), P.regexp(EMOJI_REGEX).desc("text")),
+            P.alt(P.regexp(/[0-9\p{Letter}_-]/u), P.regexp(EMOJI_REGEX).desc("text")).many(),
             (first, rest) => first + rest.join("")
         ).desc("variable identifier"),
 
@@ -284,7 +284,7 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
         P.seqMap(P.string("!").atMost(1), q.link, (p, l) => {
             if (p.length > 0) l.embed = true;
             return l;
-        }),
+        }).desc("file link"),
 
     // Binary plus or minus operator.
     binaryPlusMinus: _ =>
@@ -357,14 +357,16 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
                         dt.setZone(zone, { keepLocalTime: true })
                     )
                 )
-        ).assert((dt: DateTime) => dt.isValid, "valid date"),
+        )
+            .assert((dt: DateTime) => dt.isValid, "valid date")
+            .desc("date in format YYYY-MM[-DDTHH-MM-SS.MS]"),
 
     // A date, plus various shorthand times of day it could be.
     datePlus: q =>
         P.alt<DateTime>(
             q.dateShorthand.map(d => DATE_SHORTHANDS[d]()),
             q.date
-        ),
+        ).desc("date in format YYYY-MM[-DDTHH-MM-SS.MS] or in shorthand"),
 
     // A duration of time.
     durationType: _ =>
@@ -376,7 +378,8 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
     duration: q =>
         P.seqMap(q.number, P.optWhitespace, q.durationType, (count, _, t) => DURATION_TYPES[t].mapUnits(x => x * count))
             .sepBy1(P.string(",").trim(P.optWhitespace).or(P.optWhitespace))
-            .map(durations => durations.reduce((p, c) => p.plus(c))),
+            .map(durations => durations.reduce((p, c) => p.plus(c)))
+            .desc("duration like 4hr2min"),
 
     // A raw null value.
     rawNull: _ => P.string("null"),
