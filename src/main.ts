@@ -52,15 +52,17 @@ export default class DataviewPlugin extends Plugin {
         this.settings = Object.assign(DEFAULT_SETTINGS, (await this.loadData()) ?? {});
         this.addSettingTab(new GeneralSettingsTab(this.app, this));
 
-        this.index = FullIndex.create(this.app, () => {
-            if (this.settings.refreshEnabled) this.debouncedRefresh();
-        });
-
-        this.api = new DataviewApi(this.app, this.index, this.settings, this.manifest.version);
+        this.index = this.addChild(
+            FullIndex.create(this.app, () => {
+                if (this.settings.refreshEnabled) this.debouncedRefresh();
+            })
+        );
 
         // Set up automatic (intelligent) view refreshing that debounces.
         this.updateRefreshSettings();
-        this.addChild(this.index);
+
+        // From this point onwards the dataview API is fully functional (even if the index needs to do some background indexing).
+        this.api = new DataviewApi(this.app, this.index, this.settings, this.manifest.version);
 
         // Register API to global window object.
         (window[API_NAME] = this.api) && this.register(() => delete window[API_NAME]);
