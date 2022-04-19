@@ -31,7 +31,11 @@ dv.pages() => all pages in your vault
 dv.pages("#books") => all pages with tag 'books'
 dv.pages('"folder"') => all pages from folder "folder"
 dv.pages("#yes or -#no") => all pages with tag #yes, or which DON'T have tag #no
+dv.pages('"folder" or #tag') => all pages with tag #tag, or from folder "folder"
 ```
+
+Note that folders need to be double-quoted inside the string (i.e., `dv.pages("folder")` does not work, but
+`dv.pages('"folder"')` does) - this is to exactly match how sources are written in the query language.
 
 ### `dv.pagePaths(source)`
 
@@ -239,4 +243,28 @@ you were resolving the link from that file; if not, the path is resolved relativ
 ```js
 dv.io.normalize("Test") => "dataview/test/Test.md", if inside "dataview/test"
 dv.io.normalize("Test", "dataview/test2/Index.md") => "dataview/test2/Test.md", irrespective of the current file
+```
+
+## Query Evaluation
+
+### `dv.tryEvaluate(expression, [context])`
+
+Evaluate an arbitrary dataview expression (like `2 + 2` or `link("text")` or `x * 9`); throws an `Error` on parse or
+evaluation failure. `this` is an always-available implicit variable which refers to the current file.
+
+```js
+dv.tryEvaluate("2 + 2") => 4
+dv.tryEvaluate("x + 2", {x: 3}) => 5
+dv.tryEvaluate("length(this.file.tasks)") => number of tasks in the current file
+```
+
+### `dv.evaluate(expression, [context])`
+
+Evaluate an arbitrary dataview expression (like `2 + 2` or `link("text")` or `x * 9`), returning a `Result` object of
+the result. You can unwrap the result type by checking `result.successful` (and then fetching either `result.value`
+or `result.error`). If you want a simpler API that throws an error on a failed evaluation, use `dv.tryEvaluate`.
+
+```js
+dv.evaluate("2 + 2") => Successful { value: 4 }
+dv.evaluate("2 +") => Failure { error: "Failed to parse ... " }
 ```
