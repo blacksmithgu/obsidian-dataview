@@ -1,3 +1,9 @@
+# 0.5.12 (Beta)
+
+Improve error messages for queries somewhat and get rid of some ugly output.
+
+---
+
 # 0.5.11 (Beta)
 
 Add detection of tasks inside of block quotes, as well as correctly implement automatic checking and unchecking of these
