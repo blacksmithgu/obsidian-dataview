@@ -1,6 +1,6 @@
-/** The general, externally accessible plugin API (available at `app.plugins.plugins.dataview.api`). */
+/** The general, externally accessible plugin API (available at `app.plugins.plugins.dataview.api` or as global `DataviewAPI`). */
 
-import { App, Component } from "obsidian";
+import { App, Component, TFile } from "obsidian";
 import { FullIndex } from "data-index/index";
 import { matchingSourcePaths } from "data-index/resolver";
 import { Sources } from "data-index/source";
@@ -22,6 +22,7 @@ import { createFixedTaskView } from "ui/views/task-view";
 import { createFixedListView } from "ui/views/list-view";
 import { LiteralValue } from "index";
 import { createFixedTableView } from "ui/views/table-view";
+import { Result } from "api/result";
 
 /** Asynchronous API calls related to file / system IO. */
 export class DataviewIOApi implements DvIOAPIInterface {
@@ -44,7 +45,10 @@ export class DataviewIOApi implements DvIOAPIInterface {
             throw Error(`dv.io.load only handles string or link paths; was provided type '${typeof path}'.`);
         }
 
-        return this.api.index.vault.adapter.read(this.normalize(path, originFile));
+        let existingFile = this.api.index.vault.getAbstractFileByPath(this.normalize(path, originFile));
+        if (!existingFile || !(existingFile instanceof TFile)) return undefined;
+
+        return this.api.index.vault.cachedRead(existingFile);
     }
 
     /** Normalize a link or path relative to an optional origin file. Returns a textual fully-qualified-path. */
@@ -196,6 +200,35 @@ export class DataviewApi implements DvAPIInterface {
     /** Return true if the two given JavaScript values are equal using Dataview's default comparison rules. */
     public equal(a: any, b: any): boolean {
         return this.compare(a, b) == 0;
+    }
+
+    ///////////////////////////////
+    // Dataview Query Evaluation //
+    ///////////////////////////////
+
+    /**
+     * Evaluate a dataview expression (like '2 + 2' or 'link("hello")'), returning the evaluated result.
+     * This takes an optional second argument which provides definitions for variables, such as:
+     *
+     * ```
+     * dv.evaluate("x + 6", { x: 2 }) = 8
+     * dv.evaluate('link(target)', { target: "Okay" }) = [[Okay]]
+     * ```
+     *
+     * This method returns a Result type instead of throwing an error; you can check the result of the
+     * execution via `result.successful` and obtain `result.value` or `result.error` resultingly. If
+     * you'd rather this method throw on an error, use `dv.tryEvaluate`.
+     */
+    public evaluate(expression: string, context?: DataObject): Result<Literal, string> {
+        let field = EXPRESSION.field.parse(expression);
+        if (!field.status) return Result.failure(`Failed to parse expression "${expression}"`);
+
+        return this.evaluationContext.evaluate(field.value, context);
+    }
+
+    /** Error-throwing version of `dv.evaluate`. */
+    public tryEvaluate(expression: string, context?: DataObject): Literal {
+        return this.evaluate(expression, context).orElseThrow();
     }
 
     ///////////////

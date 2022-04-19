@@ -122,7 +122,7 @@ export function parseMarkdown(
 }
 
 // TODO: Consider using an actual parser in leiu of a more expensive regex.
-export const LIST_ITEM_REGEX = /^\s*(\d+\.|\d+\)|\*|-|\+)\s*(\[.{0,1}\])?\s*(.*)$/mu;
+export const LIST_ITEM_REGEX = /^[\s>]*(\d+\.|\d+\)|\*|-|\+)\s*(\[.{0,1}\])?\s*(.*)$/mu;
 
 /**
  * Parse list items from the page + metadata. This requires some additional parsing above whatever Obsidian provides,

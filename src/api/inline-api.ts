@@ -13,6 +13,8 @@ import { DateTime, Duration } from "luxon";
 import * as Luxon from "luxon";
 import { DataArray } from "./data-array";
 import { SListItem } from "data-model/serialized/markdown";
+import { EXPRESSION } from "expression/parse";
+import { Result } from "api/result";
 
 /** Asynchronous API calls related to file / system IO. */
 export class DataviewInlineIOApi {
@@ -98,7 +100,9 @@ export class DataviewInlineApi {
 
         // Set up the evaluation context with variables from the current file.
         let fileMeta = this.index.pages.get(this.currentFilePath)?.serialize(this.index) ?? {};
-        this.evaluationContext = new Context(defaultLinkHandler(this.index, this.currentFilePath), settings, fileMeta);
+        this.evaluationContext = new Context(defaultLinkHandler(this.index, this.currentFilePath), settings, {
+            this: fileMeta,
+        });
 
         this.func = Functions.bindAll(DEFAULT_FUNCTIONS, this.evaluationContext);
     }
@@ -125,6 +129,37 @@ export class DataviewInlineApi {
     /** Return the information about the current page. */
     public current(): Record<string, any> | undefined {
         return this.page(this.currentFilePath);
+    }
+
+    ///////////////////////////////
+    // Dataview Query Evaluation //
+    ///////////////////////////////
+
+    /**
+     * Evaluate a dataview expression (like '2 + 2' or 'link("hello")'), returning the evaluated result.
+     * This takes an optional second argument which provides definitions for variables, such as:
+     *
+     * ```
+     * dv.evaluate("x + 6", { x: 2 }) = 8
+     * dv.evaluate('link(target)', { target: "Okay" }) = [[Okay]]
+     * ```
+     *
+     * Note that `this` is implicitly available and refers to the current file.
+     *
+     * This method returns a Result type instead of throwing an error; you can check the result of the
+     * execution via `result.successful` and obtain `result.value` or `result.error` resultingly. If
+     * you'd rather this method throw on an error, use `dv.tryEvaluate`.
+     */
+    public evaluate(expression: string, context?: DataObject): Result<Literal, string> {
+        let field = EXPRESSION.field.parse(expression);
+        if (!field.status) return Result.failure(`Failed to parse expression "${expression}"`);
+
+        return this.evaluationContext.evaluate(field.value, context);
+    }
+
+    /** Error-throwing version of `dv.evaluate`. */
+    public tryEvaluate(expression: string, context?: DataObject): Literal {
+        return this.evaluate(expression, context).orElseThrow();
     }
 
     /////////////
