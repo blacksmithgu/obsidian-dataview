@@ -1,3 +1,10 @@
+# 0.5.10 (Beta)
+
+Adds the `Dataview: Force Refresh Views` Command (accessible via the Ctrl+P command view) to force current views to
+refresh immediately.
+
+---
+
 # 0.5.9 (Beta)
 
 Another fix for due-date related emoji in tasks. I hate emoji.
