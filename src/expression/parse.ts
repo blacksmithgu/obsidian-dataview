@@ -481,6 +481,7 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
             q.date,
             q.duration.map(d => normalizeDuration(d)),
             q.string,
+            q.tag,
             q.embedLink,
             q.bool,
             q.number,
