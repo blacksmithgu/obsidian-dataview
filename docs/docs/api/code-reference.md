@@ -179,7 +179,9 @@ Converts a textual path into a Dataview `Link` object; you can optionally also s
 as it's display name.
 
 ```
-dv.fileLink()
+dv.fileLink("2021-08-08") => link to file named "2021-08-08"
+dv.fileLink("book/The Raisin", true) => embed link to "The Raisin"
+dv.fileLink("Test", false, "Test File") => link to file "Test" with display name "Test File"
 ```
 
 ### `dv.date(text)`

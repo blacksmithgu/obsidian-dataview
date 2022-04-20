@@ -30,10 +30,11 @@ function TaskItem({ item }: { item: STask }) {
             eState: {
                 cursor: {
                     from: { line: item.line, ch: item.position.start.col },
-                    to: { line: item.line, ch: item.position.end.col },
+                    to: { line: item.line + item.lineCount - 1, ch: item.position.end.col },
                 },
             },
         };
+
         context.app.workspace.openLinkText(item.link.obsidianLink(), item.path, evt.shiftKey, selectionState as any);
     };
 

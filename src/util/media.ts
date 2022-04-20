@@ -33,9 +33,7 @@ export function isImageEmbed(link: Link): boolean {
 export function extractImageDimensions(link: Link): [number, number] | undefined {
     if (!link.display) return undefined;
 
-    console.log(link.display);
     let match = /^(\d+)x(\d+)$/iu.exec(link.display);
-    console.log(match);
     if (match) return [parseInt(match[1]), parseInt(match[2])];
 
     let match2 = /^(\d+)x(\d+)/.exec(link.display);
