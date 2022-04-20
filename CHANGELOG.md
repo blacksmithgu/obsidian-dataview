@@ -1,3 +1,11 @@
+# 0.5.14 (Beta)
+
+- Fix task highlighting when not grouping.
+- Remove some spurious console logging.
+- Slightly improve task highlighting behavior when clicking on a task.
+
+---
+
 # 0.5.13 (Beta)
 
 Several smaller bugfixes!
