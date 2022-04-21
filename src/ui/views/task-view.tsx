@@ -35,7 +35,12 @@ function TaskItem({ item }: { item: STask }) {
             },
         };
 
-        context.app.workspace.openLinkText(item.link.obsidianLink(), item.path, evt.shiftKey, selectionState as any);
+        context.app.workspace.openLinkText(
+            item.link.toFile().obsidianLink(),
+            item.path,
+            evt.shiftKey,
+            selectionState as any
+        );
     };
 
     // Check/uncheck trhe task in the original file.
@@ -101,6 +106,7 @@ function TaskGrouping({ items, sourcePath }: { items: Grouping<SListItem>; sourc
                     <Fragment>
                         <h4>
                             <Lit value={item.key} sourcePath={sourcePath} />
+                            <span class="dataview small-text">&nbsp;({Groupings.count(items)})</span>
                         </h4>
                         <div class="dataview result-group">
                             <TaskGrouping items={item.rows} sourcePath={sourcePath} />
@@ -152,7 +158,11 @@ export function TaskView({ query, sourcePath }: { query: Query; sourcePath: stri
             </Fragment>
         );
 
-    return <TaskGrouping items={items.items} sourcePath={sourcePath} />;
+    return (
+        <div class="dataview dataview-container">
+            <TaskGrouping items={items.items} sourcePath={sourcePath} />
+        </div>
+    );
 }
 
 export function createTaskView(init: DataviewInit, query: Query, sourcePath: string): MarkdownRenderChild {

@@ -33,9 +33,10 @@ export function TableGrouping({
             <table class="dataview table-view-table">
                 <thead class="table-view-thead">
                     <tr class="table-view-tr-header">
-                        {headings.map(heading => (
+                        {headings.map((heading, index) => (
                             <th class="table-view-th">
                                 <Markdown sourcePath={sourcePath} content={heading} />
+                                {index == 0 && <span class="dataview small-text">&nbsp;({values.length})</span>}
                             </th>
                         ))}
                     </tr>
