@@ -1,3 +1,11 @@
+# 0.5.15 (Beta)
+
+- Add hover highlights to tables to make seeing rows a little easier.
+- Tables and task lists now include counts of the number of results in the headers.
+- Further improved task selection in the task view.
+
+---
+
 # 0.5.14 (Beta)
 
 - Fix task highlighting when not grouping.
