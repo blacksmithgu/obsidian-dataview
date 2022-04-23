@@ -26,10 +26,10 @@ import { DvEventFullName, IndexEvtFullName } from "./typings/events";
 
 declare module "obsidian" {
     interface MetadataCache {
-        /**
-         * @deprecated Not required anymore, though holding onto it for backwards-compatibility.
-         */
+        /** @deprecated Not required anymore, though holding onto it for backwards-compatibility.  */
         on(name: DvEventFullName<"api-ready">, callback: (api: DvAPIInterface) => void): EventRef;
+        /** Called when all files in the vault have been indexed by dataview. */
+        on(name: DvEventFullName<"index-ready">, callback: () => any): EventRef;
         /** Index events: Called when dataview metadata for a file changes. */
         on(name: IndexEvtFullName, callback: (type: "rename", file: TAbstractFile, oldPath: string) => void): EventRef;
         /** Index events: Called when a file is deleted from the dataview index. */

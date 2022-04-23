@@ -16,6 +16,13 @@ export class FullIndex extends Component {
         return new FullIndex(app, onChange);
     }
 
+    /** Whether all files in the vault have been indexed at least once. */
+    public initialized: boolean;
+    /** The number of files found during initialization which must be initialized. */
+    private initialFileCount: number;
+    /** The time that initialization started. */
+    private initializeStart: DateTime;
+
     /** I/O access to the Obsidian vault contents. */
     public vault: Vault;
     /** Access to in-memory metadata, useful for parsing and metadata lookups. */
@@ -50,6 +57,9 @@ export class FullIndex extends Component {
     /** Construct a new index over the given vault and metadata cache. */
     private constructor(public app: App, public onChange: () => void) {
         super();
+
+        this.initialized = false;
+        this.initialFileCount = 0;
 
         this.vault = app.vault;
         this.metadataCache = app.metadataCache;
@@ -109,6 +119,10 @@ export class FullIndex extends Component {
             queued += 1;
         }
 
+        // Used for tracking vault initialization; once we pass this we have indexed all files.
+        this.initialFileCount = initialMarkdown.length;
+        this.initializeStart = DateTime.now();
+
         console.log(
             `Dataview: queued ${queued} total files; waiting for ${
                 initialMarkdown.length - queued
@@ -160,6 +174,16 @@ export class FullIndex extends Component {
 
         this.touch();
         this.trigger("update", file);
+
+        if (!this.initialized && this.pages.size >= this.initialFileCount) {
+            this.initialized = true;
+            this.metadataCache.trigger("dataview:index-ready");
+            console.log(
+                `Dataview: all files have been indexed in ${
+                    DateTime.now().diff(this.initializeStart).toMillis() / 1000.0
+                }s.`
+            );
+        }
     }
 }
 
