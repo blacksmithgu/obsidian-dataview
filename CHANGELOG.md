@@ -1,3 +1,10 @@
+# 0.5.16 (Beta)
+
+Dataview now tracks initialization and will report when all files have been indexed in the console; you can
+programmatically see this via `dataview:index-ready`, or by checking `api.index.initialized`.
+
+---
+
 # 0.5.15 (Beta)
 
 - Add hover highlights to tables to make seeing rows a little easier.
