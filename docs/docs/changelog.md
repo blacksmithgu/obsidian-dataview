@@ -1,3 +1,12 @@
+# 0.5.17 (Beta)
+
+- Improved behavior when clicking on tasks in the task view; will now properly scroll to the relevant line in long
+  files!
+- Fixed a bug with incorrect counts being displayed in task views.
+- Added `tags` as a field available on task items, so you can now do things like `TASK WHERE contains(tags, "#tag")`.
+
+---
+
 # 0.5.16 (Beta)
 
 Dataview now tracks initialization and will report when all files have been indexed in the console; you can
