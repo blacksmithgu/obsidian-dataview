@@ -137,7 +137,7 @@ export function RawLit({
     } else if (Values.isFunction(value)) {
         return <Fragment>&lt;function&gt;</Fragment>;
     } else if (Values.isArray(value) || DataArray.isDataArray(value)) {
-        if (inline) {
+        if (!inline) {
             return (
                 <ul class={"dataview dataview-ul dataview-result-list-ul"}>
                     {value.map(subvalue => (
@@ -167,7 +167,7 @@ export function RawLit({
             return <Fragment>&lt;{value.constructor.name}&gt;</Fragment>;
         }
 
-        if (inline) {
+        if (!inline) {
             return (
                 <ul class="dataview dataview-ul dataview-result-object-ul">
                     {Object.entries(value).map(([key, value]) => (

@@ -7,6 +7,7 @@ import { EXPRESSION } from "expression/parse";
 import { DateTime } from "luxon";
 import type { CachedMetadata, FileStats, FrontMatterCache, HeadingCache } from "obsidian";
 import { canonicalizeVarName, extractDate, getFileTitle } from "util/normalize";
+import * as common from "data-import/common";
 
 /** Extract markdown metadata from the given Obsidian markdown file. */
 export function parsePage(path: string, contents: string, stat: FileStats, metadata: CachedMetadata): PageMetadata {
@@ -167,6 +168,7 @@ export function parseLists(
             link: closestLink,
             section: sectionLink,
             text: textWithNewline,
+            tags: common.extractTags(textNoNewline),
             line: rawElement.position.start.line,
             lineCount: rawElement.position.end.line - rawElement.position.start.line + 1,
             list: containingListId == -1 ? -1 : (metadata.sections || [])[containingListId].position.start.line,
@@ -181,8 +183,9 @@ export function parseLists(
         if (rawElement.task) {
             item.task = {
                 status: rawElement.task,
-                completed: rawElement.task != " ",
-                fullyCompleted: rawElement.task != " ",
+                checked: rawElement.task != "" && rawElement.task != " ",
+                completed: rawElement.task == "X" || rawElement.task == "x",
+                fullyCompleted: rawElement.task == "X" || rawElement.task == "x",
             };
         }
 

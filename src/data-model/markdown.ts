@@ -174,6 +174,8 @@ export class ListItem {
     lineCount: number;
     /** The line number for the first list item in the list this item belongs to. */
     list: number;
+    /** The tags contained within this list item. */
+    tags: Set<string>;
     /** The raw Obsidian-provided position for where this task is. */
     position: Pos;
     /** The line number of the parent list item, if present; if this is undefined, this is a root item. */
@@ -188,7 +190,9 @@ export class ListItem {
     task?: {
         /** The text in between the brackets of the '[ ]' task indicator ('[X]' would yield 'X', for example.) */
         status: string;
-        /** Whether or not this task was completed; derived from 'status' by checking if the field is non-empty. */
+        /** Whether or not this task has been checked in any way (it's status is not empty/space). */
+        checked: boolean;
+        /** Whether or not this task was completed; derived from 'status' by checking if the field 'X' or 'x'. */
         completed: boolean;
         /** Whether or not this task and all of it's subtasks are completed. */
         fullyCompleted: boolean;
@@ -238,6 +242,7 @@ export class ListItem {
             link: this.link,
             section: this.section,
             text: this.text,
+            tags: Array.from(this.tags),
             line: this.line,
             lineCount: this.lineCount,
             list: this.list,
@@ -259,6 +264,7 @@ export class ListItem {
 
         if (this.task) {
             result.status = this.task.status;
+            result.checked = this.task.checked;
             result.completed = this.task.completed;
             result.fullyCompleted = this.task.fullyCompleted;
 

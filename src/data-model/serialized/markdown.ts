@@ -41,22 +41,42 @@ export type SListItem = SListEntry | STask;
 
 /** Shared data between list items. */
 export interface SListItemBase {
+    /** The symbo used to start this list item, like '1.' or '1)' or '*'. */
     symbol: string;
+    /** A link to the closest thing to this list item (a block, a section, or a file). */
     link: Link;
+    /** The section that contains this list item. */
     section: Link;
+    /** The path of the file that contains this item. */
     path: string;
 
+    /** The line this item starts on. */
     line: number;
-    position: Pos;
+    /** The number of lines this item spans. */
     lineCount: number;
+    /** The internal Obsidian tracker of the exact position of this line. */
+    position: Pos;
+    /** The line number of the list that this item is part of. */
     list: number;
+    /** If present, the block ID for this item. */
     blockId?: string;
+    /** The line number of the parent item to this list, if relevant. */
     parent?: number;
+    /** The children elements of this list item. */
     children: SListItem[];
 
+    /** The raw text of this item. */
     text: string;
-    visual?: string; // The visual text actually rendered in the task view. If not present, default to 'text'.
+    /**
+     * If present, overrides 'text' when rendered in task views. You should not mutate 'text' since it is used to
+     * validate a list item when editing it.
+     */
+    visual?: string;
+    /** Whether this item has any metadata annotations on it. */
     annotated?: boolean;
+
+    /** Any tags present in this task. */
+    tags: string[];
 
     /** @deprecated use 'children' instead. */
     subtasks: SListItem[];
@@ -78,10 +98,17 @@ export interface SListEntry extends SListItemBase {
 export interface STask extends SListItemBase {
     task: true;
     status: string;
+    /** Indicates whether the task has any value other than empty space. */
+    checked: boolean;
+    /** Indicates whether the task explicitly has been marked "completed" ('x' or 'X'). */
     completed: boolean;
+    /** Indicates whether the task and ALL subtasks have been completed. */
     fullyCompleted: boolean;
 
+    /** If present, then the time that this task was created. */
     created?: Literal;
+    /** If present, then the time that this task was due. */
     due?: Literal;
+    /** If present, then the time that this task was completed. */
     completion?: Literal;
 }
