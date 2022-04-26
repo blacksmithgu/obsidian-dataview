@@ -55,13 +55,24 @@ function TaskItem({ item }: { item: STask }) {
         );
     };
 
-    // Check/uncheck the task in the original file.
-    const onChecked = (evt: preact.JSX.TargetedEvent<HTMLInputElement>) => {
+    const getStatus = async (previous: boolean): Promise<string> => {
+        const tcPlugin = context.app.plugins.plugins["obsidian-task-collector"];
+        if ( tcPlugin?.api ) {
+            return tcPlugin.api.getMark();
+        }
+        return previous ? "X" : " ";
+    }
+
+    // Check/uncheck trhe task in the original file.
+    const onChecked = async (evt: preact.JSX.TargetedEvent<HTMLInputElement>) => {
         evt.stopPropagation();
+
+        const target = evt.currentTarget;
         const completed = evt.currentTarget.checked;
-        const status = completed ? "x" : " ";
+        const status = await getStatus(completed);
+
         // Update data-task on the parent element (css style)
-        const parent = evt.currentTarget.parentElement;
+        const parent = target.parentElement;
         parent?.setAttribute("data-task", status);
 
         let flatted: STask[] = [item];

@@ -14,6 +14,15 @@ declare module "obsidian" {
             plugins: {
                 dataview?: {
                     api: DataviewApi;
+                },
+                "obsidian-task-collector"?: {
+                    api?: {
+                        getCompletedTaskValues(): string;
+                        getIncompleteTaskValues(): string;
+                        isComplete(value: string): boolean;
+                        isCanceled(value: string): boolean;
+                        getMark(): Promise<string>;
+                    };
                 };
             };
         };
