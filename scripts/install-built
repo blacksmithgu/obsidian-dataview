@@ -5,5 +5,6 @@
 VAULT="$1"
 TARGET="$VAULT/.obsidian/plugins/dataview/"
 mkdir -p "$TARGET"
-cp -f build/main.js styles.css manifest.json "$TARGET"
+cp -f build/main.js styles.css "$TARGET"
+cp -f manifest-beta.json "$TARGET/manifest.json"
 echo Installed plugin files to "$TARGET"

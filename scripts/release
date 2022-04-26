@@ -4,8 +4,7 @@
 NEW_VERSION=$1
 
 if [ -z "$NEW_VERSION" ]; then
-    echo "Provide the version number for this release."
-    exit 1
+    NEW_VERSION=$(jq -r ".version" manifest-beta.json | awk -F. -v OFS=. '{$NF += 1 ; print}')
 fi
 
 # Let users edit release-notes.txt for release notes.
@@ -35,6 +34,9 @@ jq ".version=\"${NEW_VERSION}\"" package.json > package.tmp.json && mv package.t
 jq ".version=\"${NEW_VERSION}\"" manifest.json > manifest.tmp.json && mv manifest.tmp.json manifest.json
 jq ".version=\"${NEW_VERSION}\"" manifest-beta.json > manifest-beta.tmp.json && mv manifest-beta.tmp.json manifest-beta.json
 jq ". + {\"${NEW_VERSION}\": \"0.12.0\"}" versions.json > versions.tmp.json && mv versions.tmp.json versions.json
+
+# Overwrite the beta manifest as well.
+mv manifest.json manifest-beta.json
 
 # Create commit & commit.
 git commit -a -m "Auto-release ${NEW_VERSION}"
