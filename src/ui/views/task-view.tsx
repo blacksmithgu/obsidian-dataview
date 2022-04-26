@@ -49,22 +49,27 @@ function TaskItem({ item }: { item: STask }) {
         evt.stopPropagation();
 
         const completed = evt.currentTarget.checked;
+        const status = completed ? "X" : " ";
+
+        // Update data-task on the parent element (css style)
+        const parent = evt.currentTarget.parentElement;
+        parent?.setAttribute("data-task", status);
+
         let updatedText = undefined;
         if (context.settings.taskCompletionTracking)
             updatedText = setTaskCompletion(item.text, context.settings.taskCompletionText, completed);
 
-        rewriteTask(context.app.vault, item, completed ? "X" : " ", updatedText);
+        rewriteTask(context.app.vault, item, status, updatedText);
     };
 
+    const checked = item.status !== ' ';
     return (
-        <li class={"dataview task-list-item" + (item.completed ? " is-checked" : "")} onClick={onClicked}>
+        <li class={"dataview task-list-item" + (checked ? " is-checked" : "")} onClick={onClicked} data-task={item.status}>
             <input
-                style="margin-right: 6px;"
                 class="dataview task-list-item-checkbox"
                 type="checkbox"
-                checked={item.completed}
+                checked={checked}
                 onClick={onChecked}
-                data-task={item.status}
             />
             <Markdown inline={true} content={item.visual ?? item.text} sourcePath={item.path} />
             {item.children.length > 0 && <TaskList items={item.children} />}
