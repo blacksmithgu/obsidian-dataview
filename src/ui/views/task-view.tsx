@@ -32,6 +32,7 @@ function TaskItem({ item }: { item: STask }) {
                     from: { line: item.line, ch: item.position.start.col },
                     to: { line: item.line + item.lineCount - 1, ch: item.position.end.col },
                 },
+                line: item.line,
             },
         };
 
