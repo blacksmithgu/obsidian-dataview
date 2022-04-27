@@ -162,7 +162,7 @@ If you want to dogfood dataview in your real vault, you can build and install ma
 
 ```console
 foo@bar:~/obsidian-dataview$ npm run build
-foo@bar:~/obsidian-dataview$ ./install-built.sh path/to/your/vault
+foo@bar:~/obsidian-dataview$ ./scripts/install-built path/to/your/vault
 ```
 
 #### Building Documentation
