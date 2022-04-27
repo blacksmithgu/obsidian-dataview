@@ -62,15 +62,14 @@ function TaskItem({ item }: { item: STask }) {
         rewriteTask(context.app.vault, item, status, updatedText);
     };
 
-    const checked = item.status !== ' ';
+    const checked = item.status !== " ";
     return (
-        <li class={"dataview task-list-item" + (checked ? " is-checked" : "")} onClick={onClicked} data-task={item.status}>
-            <input
-                class="dataview task-list-item-checkbox"
-                type="checkbox"
-                checked={checked}
-                onClick={onChecked}
-            />
+        <li
+            class={"dataview task-list-item" + (checked ? " is-checked" : "")}
+            onClick={onClicked}
+            data-task={item.status}
+        >
+            <input class="dataview task-list-item-checkbox" type="checkbox" checked={checked} onClick={onChecked} />
             <Markdown inline={true} content={item.visual ?? item.text} sourcePath={item.path} />
             {item.children.length > 0 && <TaskList items={item.children} />}
         </li>

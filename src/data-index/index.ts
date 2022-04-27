@@ -95,7 +95,7 @@ export class FullIndex extends Component {
         // File creation does cause a metadata change, but deletes do not. Clear the caches for this.
         this.registerEvent(
             this.vault.on("delete", af => {
-                if (!(af instanceof TFile)) return;
+                if (!(af instanceof TFile) || !PathFilters.markdown(af.path)) return;
                 let file = af as TFile;
 
                 this.pages.delete(file.path);
@@ -131,19 +131,20 @@ export class FullIndex extends Component {
     }
 
     public rename(file: TAbstractFile, oldPath: string) {
-        if (file instanceof TFile) {
-            if (this.pages.has(oldPath)) {
-                const oldMeta = this.pages.get(oldPath);
-                this.pages.delete(oldPath);
-                if (oldMeta) {
-                    oldMeta.path = file.path;
-                    this.pages.set(file.path, oldMeta);
-                }
+        if (!(file instanceof TFile) || !PathFilters.markdown(file.path)) return;
+
+        if (this.pages.has(oldPath)) {
+            const oldMeta = this.pages.get(oldPath);
+            this.pages.delete(oldPath);
+            if (oldMeta) {
+                oldMeta.path = file.path;
+                this.pages.set(file.path, oldMeta);
             }
-            this.tags.rename(oldPath, file.path);
-            this.links.rename(oldPath, file.path);
-            this.etags.rename(oldPath, file.path);
         }
+
+        this.tags.rename(oldPath, file.path);
+        this.links.rename(oldPath, file.path);
+        this.etags.rename(oldPath, file.path);
 
         this.touch();
         this.trigger("rename", file, oldPath);
@@ -151,6 +152,8 @@ export class FullIndex extends Component {
 
     /** Queue a file for reloading; this is done asynchronously in the background and may take a few seconds. */
     public reload(file: TFile) {
+        if (!PathFilters.markdown(file.path)) return;
+
         this.importer.reload<Partial<PageMetadata>>(file).then(r => this.reloadInternal(file, r));
     }
 
