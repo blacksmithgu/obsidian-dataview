@@ -222,6 +222,8 @@ export default class DataviewPlugin extends Plugin {
             let text = codeblock.innerText.trim();
             if (this.settings.inlineJsQueryPrefix.length > 0 && text.startsWith(this.settings.inlineJsQueryPrefix)) {
                 let code = text.substring(this.settings.inlineJsQueryPrefix.length).trim();
+                if (code.length == 0) continue;
+
                 component.addChild(
                     new DataviewInlineJSRenderer(
                         code,

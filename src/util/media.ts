@@ -36,7 +36,7 @@ export function extractImageDimensions(link: Link): [number, number] | undefined
     let match = /^(\d+)x(\d+)$/iu.exec(link.display);
     if (match) return [parseInt(match[1]), parseInt(match[2])];
 
-    let match2 = /^(\d+)x(\d+)/.exec(link.display);
+    let match2 = /^(\d+)/.exec(link.display);
     if (match2) return [parseInt(match2[1]), parseInt(match2[1])];
 
     // No match.
