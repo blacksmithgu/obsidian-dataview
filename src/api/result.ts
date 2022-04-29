@@ -14,6 +14,14 @@ export class Success<T, E> {
         return f(this.value);
     }
 
+    public mapErr<U>(f: (e: E) => U): Result<T, U> {
+        return this as any as Result<T, U>;
+    }
+
+    public bimap<T2, E2>(succ: (a: T) => T2, _fail: (b: E) => E2): Result<T2, E2> {
+        return this.map(succ) as any;
+    }
+
     public orElse(_value: T): T {
         return this.value;
     }
@@ -37,6 +45,14 @@ export class Failure<T, E> {
 
     public flatMap<U>(_f: (a: T) => Result<U, E>): Result<U, E> {
         return this as any as Failure<U, E>;
+    }
+
+    public mapErr<U>(f: (e: E) => U): Result<T, U> {
+        return new Failure(f(this.error));
+    }
+
+    public bimap<T2, E2>(_succ: (a: T) => T2, fail: (b: E) => E2): Result<T2, E2> {
+        return this.mapErr(fail) as any;
     }
 
     public orElse(value: T): T {

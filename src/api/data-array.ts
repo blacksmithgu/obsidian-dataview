@@ -67,6 +67,12 @@ export interface DataArray<T> {
     sort<U>(key: ArrayFunc<T, U>, direction?: "asc" | "desc", comparator?: ArrayComparator<U>): DataArray<T>;
 
     /**
+     * Mutably modify the current array with an in place sort; this is less flexible than a regular sort in exchange
+     * for being a little more performant. Only use this is performance is a serious consideration.
+     */
+    sortInPlace<U>(key: (v: T) => U, direction?: "asc" | "desc", comparator?: ArrayComparator<U>): DataArray<T>;
+
+    /**
      * Return an array where elements are grouped by the given key; the resulting array will have objects of the form
      * { key: <key value>, rows: DataArray }.
      */
@@ -138,6 +144,7 @@ class DataArrayImpl<T> implements DataArray<T> {
         "includes",
         "join",
         "sort",
+        "sortInPlace",
         "groupBy",
         "groupIn",
         "distinct",
@@ -287,6 +294,25 @@ class DataArrayImpl<T> implements DataArray<T> {
         });
 
         return this.lwrap(copy.map(e => e.value));
+    }
+
+    public sortInPlace<U>(
+        key?: (value: T) => U,
+        direction?: "asc" | "desc",
+        comparator?: ArrayComparator<U>
+    ): DataArray<T> {
+        if (this.values.length == 0) return this;
+        let realComparator = comparator ?? this.defaultComparator;
+        let realKey = key ?? ((l: T) => l as any as U);
+
+        this.values.sort((a, b) => {
+            let aKey = realKey(a);
+            let bKey = realKey(b);
+
+            return direction == "desc" ? -realComparator(aKey, bKey) : realComparator(aKey, bKey);
+        });
+
+        return this;
     }
 
     public groupBy<U>(
