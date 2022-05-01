@@ -1,3 +1,11 @@
+# 0.5.18 (Beta)
+
+- Tasks in task views now support alternative task status characters like '!' and '/'; thanks @ebullient.
+- A few documentation nit fixes.
+- Added `DataArray#sortInPlace` for a more efficient mutable sort for niche use cases.
+
+---
+
 # 0.5.17 (Beta)
 
 - Improved behavior when clicking on tasks in the task view; will now properly scroll to the relevant line in long
