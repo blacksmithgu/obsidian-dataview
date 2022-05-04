@@ -28,14 +28,6 @@ import { createTaskView } from "ui/views/task-view";
 import { createListView } from "ui/views/list-view";
 import { createTableView } from "ui/views/table-view";
 
-declare module "obsidian" {
-    interface Workspace {
-        /** Sent to rendered dataview components to tell them to possibly refresh */
-        on(name: "dataview:refresh-views", callback: () => void, ctx?: any): EventRef;
-    }
-    interface MarkdownRenderChild extends Component {}
-}
-
 const API_NAME: API_NAME extends keyof typeof window ? API_NAME : never = "DataviewAPI" as const; // this line will throw error if name out of sync
 
 export default class DataviewPlugin extends Plugin {
@@ -78,9 +70,9 @@ export default class DataviewPlugin extends Plugin {
         );
 
         // Dataview inline queries.
-        this.registerPriorityMarkdownPostProcessor(-100, async (el, ctx) =>
-            this.dataviewInline(el, ctx, ctx.sourcePath)
-        );
+        this.registerPriorityMarkdownPostProcessor(-100, async (el, ctx) => {
+            this.dataviewInline(el, ctx, ctx.sourcePath);
+        });
 
         // Dataview inline-inline query fancy rendering. Runs at a low priority; should apply to Dataview views.
         this.registerPriorityMarkdownPostProcessor(100, async (el, ctx) => {

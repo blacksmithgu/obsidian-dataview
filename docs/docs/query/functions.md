@@ -93,6 +93,15 @@ link("Hello") => link to page named 'Hello'
 link("Hello", "Goodbye") => link to page named 'Hello', displays as 'Goodbye'
 ```
 
+### `embed(link, [embed?])`
+
+Convert a link object into an embedded link; support for embedded links is somewhat spotty in Dataview views, though
+embedding of images should work.
+
+```
+embed(link("Hello.png")) => embedded link to the "Hello.png" image, which will render as an actual image.
+```
+
 ### `elink(url, [display])`
 
 Construct a link to an external url (like `www.google.com`). If provided with two arguments, the second

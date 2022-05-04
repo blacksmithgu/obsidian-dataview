@@ -33,6 +33,7 @@ export class DataviewInlineRenderer extends DataviewRefreshableRenderer {
             renderErrorPre(this.errorbox, "Dataview (for inline query '" + this.fieldText + "'): " + result.error);
         } else {
             let temp = document.createElement("span");
+            temp.addClasses(["dataview", "dataview-inline-query"]);
             await renderValue(result.value, temp, this.origin, this, this.settings, false);
 
             this.target.replaceWith(temp);
