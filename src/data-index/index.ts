@@ -8,6 +8,7 @@ import { DateTime } from "luxon";
 import { parseCsv } from "data-import/csv";
 import { FileImporter } from "data-import/web-worker/import-manager";
 import { IndexEvtFullName, IndexEvtTriggerArgs } from "../typings/events";
+import { FileBackedMetadataCache } from "data-import/persister";
 
 /** Aggregate index which has several sub-indices and will initialize all of them. */
 export class FullIndex extends Component {
@@ -27,6 +28,8 @@ export class FullIndex extends Component {
     public vault: Vault;
     /** Access to in-memory metadata, useful for parsing and metadata lookups. */
     public metadataCache: MetadataCache;
+    /** Persistent IndexedDB backing store, used for faster startup. */
+    public persister: FileBackedMetadataCache;
 
     /* Maps path -> markdown metadata for all markdown pages. */
     public pages: Map<string, PageMetadata>;
@@ -63,6 +66,7 @@ export class FullIndex extends Component {
 
         this.vault = app.vault;
         this.metadataCache = app.metadataCache;
+        this.persister = new FileBackedMetadataCache(app.appId || "shared");
 
         this.pages = new Map();
         this.tags = new IndexMap();
@@ -119,6 +123,14 @@ export class FullIndex extends Component {
             queued += 1;
         }
 
+        // Once queued, also make outstanding requests for files from local storage.
+        for (let file of initialMarkdown) {
+            this.persister.loadFile(file.path).then(res => {
+                if (res == null || res == undefined) return;
+                this.reloadInternal(file, res);
+            });
+        }
+
         // Used for tracking vault initialization; once we pass this we have indexed all files.
         this.initialFileCount = initialMarkdown.length;
         this.initializeStart = DateTime.now();
@@ -154,7 +166,10 @@ export class FullIndex extends Component {
     public reload(file: TFile) {
         if (!PathFilters.markdown(file.path)) return;
 
-        this.importer.reload<Partial<PageMetadata>>(file).then(r => this.reloadInternal(file, r));
+        this.importer.reload<Partial<PageMetadata>>(file).then(r => {
+            this.reloadInternal(file, r);
+            this.persister.storeFile(file.path, r);
+        });
     }
 
     /** "Touch" the index, incrementing the revision number and causing downstream views to reload. */

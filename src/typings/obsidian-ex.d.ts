@@ -9,6 +9,7 @@ declare module "obsidian" {
     }
 
     interface App {
+        appId?: string;
         plugins: {
             enabledPlugins: Set<string>;
             plugins: {
