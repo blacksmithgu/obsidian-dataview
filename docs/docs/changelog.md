@@ -1,3 +1,14 @@
+# 0.5.19 (Beta)
+
+Dataview now uses IndexedDB to cache file metadata, reducing startup time to virtually nothing if you've opened the
+vault before; if you have a small vault (<1000 notes), you may notice a slight improvement, but large vaults and mobile
+devices will notice a very significant performance improvement to "first valid paint". Some other performance parameters
+have been tuned to hopefully make the default experience better.
+
+A few small bugs related to rendering have also been squashed, including an issue with images being scaled wrongly.
+
+---
+
 # 0.5.18 (Beta)
 
 - Tasks in task views now support alternative task status characters like '!' and '/'; thanks @ebullient.
