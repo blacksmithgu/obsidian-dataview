@@ -34,7 +34,7 @@ export const DEFAULT_QUERY_SETTINGS: QuerySettings = {
     taskCompletionText: "completion",
     warnOnEmptyResult: true,
     refreshEnabled: true,
-    refreshInterval: 250,
+    refreshInterval: 2500,
     defaultDateFormat: "MMMM dd, yyyy",
     defaultDateTimeFormat: "h:mm a - MMMM dd, yyyy",
     maxRecursiveRenderDepth: 4,
@@ -58,11 +58,6 @@ export interface DataviewSettings extends QuerySettings {
     enableInlineDataviewJs: boolean;
     /** Enable or disable rendering inline fields prettily. */
     prettyRenderInlineFields: boolean;
-
-    // Internal properties //
-
-    /** A monotonically increasing version which tracks what schema we are on, used for migrations. */
-    schemaVersion: number;
 }
 
 /** Default settings for dataview on install. */
@@ -74,6 +69,5 @@ export const DEFAULT_SETTINGS: DataviewSettings = {
         enableDataviewJs: false,
         enableInlineDataviewJs: false,
         prettyRenderInlineFields: true,
-        schemaVersion: 1,
     },
 };

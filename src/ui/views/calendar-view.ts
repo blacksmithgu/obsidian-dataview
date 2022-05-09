@@ -94,9 +94,8 @@ export class DataviewCalendarRenderer extends DataviewRefreshableRenderer {
                     if (file == null) {
                         return;
                     }
-                    const mode = (this.app.vault as any).getConfig("defaultViewMode");
                     const leaf = renderer.app.workspace.getUnpinnedLeaf();
-                    await leaf.openFile(file, { active: true, mode });
+                    await leaf.openFile(file, { active: true });
                 },
                 showWeekNums: false,
                 sources,

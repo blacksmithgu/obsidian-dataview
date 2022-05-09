@@ -1,35 +1,31 @@
 /** Stores various indices on all files in the vault to make dataview generation fast. */
 import { Result } from "api/result";
+import { parseCsv } from "data-import/csv";
+import { LocalStorageCache } from "data-import/persister";
+import { FileImporter } from "data-import/web-worker/import-manager";
+import { PageMetadata } from "data-model/markdown";
 import { DataObject } from "data-model/value";
+import { DateTime } from "luxon";
 import { App, Component, MetadataCache, TAbstractFile, TFile, TFolder, Vault } from "obsidian";
 import { getParentFolder, setsEqual } from "util/normalize";
-import { PageMetadata } from "data-model/markdown";
-import { DateTime } from "luxon";
-import { parseCsv } from "data-import/csv";
-import { FileImporter } from "data-import/web-worker/import-manager";
 import { IndexEvtFullName, IndexEvtTriggerArgs } from "../typings/events";
-import { FileBackedMetadataCache } from "data-import/persister";
 
 /** Aggregate index which has several sub-indices and will initialize all of them. */
 export class FullIndex extends Component {
     /** Generate a full index from the given vault. */
-    public static create(app: App, onChange: () => void): FullIndex {
-        return new FullIndex(app, onChange);
+    public static create(app: App, indexVersion: string, onChange: () => void): FullIndex {
+        return new FullIndex(app, indexVersion, onChange);
     }
 
     /** Whether all files in the vault have been indexed at least once. */
     public initialized: boolean;
-    /** The number of files found during initialization which must be initialized. */
-    private initialFileCount: number;
-    /** The time that initialization started. */
-    private initializeStart: DateTime;
 
     /** I/O access to the Obsidian vault contents. */
     public vault: Vault;
     /** Access to in-memory metadata, useful for parsing and metadata lookups. */
     public metadataCache: MetadataCache;
     /** Persistent IndexedDB backing store, used for faster startup. */
-    public persister: FileBackedMetadataCache;
+    public persister: LocalStorageCache;
 
     /* Maps path -> markdown metadata for all markdown pages. */
     public pages: Map<string, PageMetadata>;
@@ -57,16 +53,15 @@ export class FullIndex extends Component {
     /** Asynchronously parses files in the background using web workers. */
     public importer: FileImporter;
 
-    /** Construct a new index over the given vault and metadata cache. */
-    private constructor(public app: App, public onChange: () => void) {
+    /** Construct a new index using the app data and a current data version. */
+    private constructor(public app: App, public indexVersion: string, public onChange: () => void) {
         super();
 
         this.initialized = false;
-        this.initialFileCount = 0;
 
         this.vault = app.vault;
         this.metadataCache = app.metadataCache;
-        this.persister = new FileBackedMetadataCache(app.appId || "shared");
+        this.persister = new LocalStorageCache(app.appId || "shared", indexVersion);
 
         this.pages = new Map();
         this.tags = new IndexMap();
@@ -88,7 +83,13 @@ export class FullIndex extends Component {
         this.metadataCache.trigger("dataview:metadata-change" as IndexEvtFullName, ...args);
     }
 
-    /** Runs through the whole vault to set up initial file */
+    /** "Touch" the index, incrementing the revision number and causing downstream views to reload. */
+    public touch() {
+        this.revision += 1;
+        this.onChange();
+    }
+
+    /** Runs through the whole vault to set up initial file metadata. */
     public initialize() {
         // The metadata cache is updated on initial file index and file loads.
         this.registerEvent(this.metadataCache.on("resolve", file => this.reload(file)));
@@ -112,34 +113,39 @@ export class FullIndex extends Component {
             })
         );
 
-        let queued = 0;
-        let initialMarkdown = this.vault.getMarkdownFiles();
-        for (let file of initialMarkdown) {
-            // Files which have no active file cache registered will be caught by the 'resolve' event.
-            let fileCache = this.metadataCache.getFileCache(file);
-            if (fileCache === undefined || fileCache === null) continue;
+        // Asynchronously initialize actual content in the background.
+        this._initialize(this.vault.getMarkdownFiles());
+    }
 
-            this.reload(file);
-            queued += 1;
+    /** Internal asynchronous initializer. */
+    private async _initialize(files: TFile[]) {
+        let reloadStart = Date.now();
+        let promises = files.map(l => this.reload(l));
+        let results = await Promise.all(promises);
+
+        let cached = 0, skipped = 0;
+        for (let item of results) {
+            if (item.skipped) {
+                skipped += 1;
+                continue;
+            }
+
+            if (item.cached) cached += 1;
         }
 
-        // Once queued, also make outstanding requests for files from local storage.
-        for (let file of initialMarkdown) {
-            this.persister.loadFile(file.path).then(res => {
-                if (res == null || res == undefined) return;
-                this.reloadInternal(file, res);
-            });
-        }
-
-        // Used for tracking vault initialization; once we pass this we have indexed all files.
-        this.initialFileCount = initialMarkdown.length;
-        this.initializeStart = DateTime.now();
-
+        this.initialized = true;
+        this.metadataCache.trigger("dataview:index-ready");
         console.log(
-            `Dataview: queued ${queued} total files; waiting for ${
-                initialMarkdown.length - queued
-            } files to be resolved.`
+            `Dataview: all ${files.length} files have been indexed in ${
+                (Date.now() - reloadStart) / 1000.0
+            }s (${cached} cached, ${skipped} skipped).`
         );
+
+        // Drop keys for files which do not exist anymore.
+        let remaining = await this.persister.synchronize(files.map(l => l.path));
+        if (remaining.size > 0) {
+            console.log(`Dataview: Dropped cache entries for ${remaining.size} deleted files.`);
+        }
     }
 
     public rename(file: TAbstractFile, oldPath: string) {
@@ -163,22 +169,45 @@ export class FullIndex extends Component {
     }
 
     /** Queue a file for reloading; this is done asynchronously in the background and may take a few seconds. */
-    public reload(file: TFile) {
-        if (!PathFilters.markdown(file.path)) return;
+    public async reload(file: TFile): Promise<{ cached: boolean, skipped: boolean }> {
+        if (!PathFilters.markdown(file.path)) return { cached: false, skipped: true };
 
-        this.importer.reload<Partial<PageMetadata>>(file).then(r => {
-            this.reloadInternal(file, r);
+        // The first load of a file is attempted from persisted cache; subsequent loads just use the importer.
+        let exists = this.pages.has(file.path);
+        if (exists) {
+            await this.import(file);
+            return { cached: false, skipped: false };
+        } else {
+            // Check the cache for the latest data; if it is out of date or non-existent, then reload.
+            return this.persister.loadFile(file.path).then(async (cached) => {
+                if (!cached || cached.time < file.stat.mtime || cached.version != this.indexVersion) {
+                    // This cache value is out of data, reload via the importer and update the cache.
+                    // We will skip files with no active file metadata - they will be caught by a later reload
+                    // via the 'resolve' metadata event.
+                    let fileCache = this.metadataCache.getFileCache(file);
+                    if (fileCache === undefined || fileCache === null) return { cached: false, skipped: true };
+
+                    await this.import(file);
+                    return { cached: false, skipped: false };
+                } else {
+                    // Use the cached data since it is up to date and on the same version.
+                    this.finish(file, cached.data);
+                    return { cached: true, skipped: false };
+                }
+            });
+        }
+    }
+
+    /** Import a file directly from disk, skipping the cache. */
+    private async import(file: TFile): Promise<void> {
+        return this.importer.reload<Partial<PageMetadata>>(file).then(r => {
+            this.finish(file, r);
             this.persister.storeFile(file.path, r);
         });
     }
 
-    /** "Touch" the index, incrementing the revision number and causing downstream views to reload. */
-    public touch() {
-        this.revision += 1;
-        this.onChange();
-    }
-
-    private reloadInternal(file: TFile, parsed: Partial<PageMetadata>) {
+    /** Finish the reloading of file metadata by adding it to in memory indexes. */
+    private finish(file: TFile, parsed: Partial<PageMetadata>) {
         let meta = PageMetadata.canonicalize(parsed, link => {
             let realPath = this.metadataCache.getFirstLinkpathDest(link.path, file.path);
             if (realPath) return link.withPath(realPath.path);
@@ -192,16 +221,6 @@ export class FullIndex extends Component {
 
         this.touch();
         this.trigger("update", file);
-
-        if (!this.initialized && this.pages.size >= this.initialFileCount) {
-            this.initialized = true;
-            this.metadataCache.trigger("dataview:index-ready");
-            console.log(
-                `Dataview: all files have been indexed in ${
-                    DateTime.now().diff(this.initializeStart).toMillis() / 1000.0
-                }s.`
-            );
-        }
     }
 }
 
