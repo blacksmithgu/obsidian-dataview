@@ -123,7 +123,8 @@ export class FullIndex extends Component {
         let promises = files.map(l => this.reload(l));
         let results = await Promise.all(promises);
 
-        let cached = 0, skipped = 0;
+        let cached = 0,
+            skipped = 0;
         for (let item of results) {
             if (item.skipped) {
                 skipped += 1;
@@ -169,7 +170,7 @@ export class FullIndex extends Component {
     }
 
     /** Queue a file for reloading; this is done asynchronously in the background and may take a few seconds. */
-    public async reload(file: TFile): Promise<{ cached: boolean, skipped: boolean }> {
+    public async reload(file: TFile): Promise<{ cached: boolean; skipped: boolean }> {
         if (!PathFilters.markdown(file.path)) return { cached: false, skipped: true };
 
         // The first load of a file is attempted from persisted cache; subsequent loads just use the importer.
@@ -179,7 +180,7 @@ export class FullIndex extends Component {
             return { cached: false, skipped: false };
         } else {
             // Check the cache for the latest data; if it is out of date or non-existent, then reload.
-            return this.persister.loadFile(file.path).then(async (cached) => {
+            return this.persister.loadFile(file.path).then(async cached => {
                 if (!cached || cached.time < file.stat.mtime || cached.version != this.indexVersion) {
                     // This cache value is out of data, reload via the importer and update the cache.
                     // We will skip files with no active file metadata - they will be caught by a later reload

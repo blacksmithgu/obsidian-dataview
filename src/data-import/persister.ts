@@ -20,14 +20,14 @@ export class LocalStorageCache {
         this.persister = localforage.createInstance({
             name: "dataview/cache/" + appId,
             driver: [localforage.INDEXEDDB],
-            description: "Cache metadata about files and sections in the dataview index."
-        })
+            description: "Cache metadata about files and sections in the dataview index.",
+        });
     }
 
     /** Load file metadata by path. */
     public async loadFile(path: string): Promise<Cached<Partial<PageMetadata>> | null | undefined> {
         return this.persister.getItem(this.fileKey(path)).then(raw => {
-            let result = (raw as any as Cached<Partial<PageMetadata>>);
+            let result = raw as any as Cached<Partial<PageMetadata>>;
             if (result) result.data = Transferable.value(result.data);
             return result;
         });
@@ -38,7 +38,7 @@ export class LocalStorageCache {
         await this.persister.setItem(this.fileKey(path), {
             version: this.version,
             time: Date.now(),
-            data: Transferable.transferable(data)
+            data: Transferable.transferable(data),
         });
     }
 
