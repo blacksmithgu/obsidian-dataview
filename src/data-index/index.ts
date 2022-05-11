@@ -174,8 +174,7 @@ export class FullIndex extends Component {
         if (!PathFilters.markdown(file.path)) return { cached: false, skipped: true };
 
         // The first load of a file is attempted from persisted cache; subsequent loads just use the importer.
-        let exists = this.pages.has(file.path);
-        if (exists) {
+        if (this.pages.has(file.path) || this.initialized) {
             await this.import(file);
             return { cached: false, skipped: false };
         } else {
