@@ -1,3 +1,9 @@
+# 0.5.20 (Beta)
+
+Slight fix to hopefully improve some strange reported cases of bad indexing at startup.
+
+---
+
 # 0.5.19 (Beta)
 
 Dataview now uses IndexedDB to cache file metadata, reducing startup time to virtually nothing if you've opened the
