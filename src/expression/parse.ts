@@ -87,14 +87,20 @@ export const KEYWORDS = ["FROM", "WHERE", "LIMIT", "GROUP", "FLATTEN"];
 // Utilities //
 ///////////////
 
-/** Attempt to parse the inside of a link to pull out display name, subpath, etc. */
-export function parseInnerLink(link: string): Link {
-    let display: string | undefined = undefined;
-    if (link.includes("|")) {
-        let split = link.split("|");
-        link = split[0];
-        display = split[1];
+/** Split on unescaped pipes in an inner link. */
+function splitOnUnescapedPipe(link: string): [string, string | undefined] {
+    let pipe = -1;
+    while ((pipe = link.indexOf("|", pipe + 1)) >= 0) {
+        if (pipe > 0 && link[pipe - 1] == '\\') continue;
+        return [link.substring(0, pipe).replace(/\\\|/g, "|"), link.substring(pipe + 1)];
     }
+
+    return [link.replace(/\\\|/g, "|"), undefined];
+}
+
+/** Attempt to parse the inside of a link to pull out display name, subpath, etc. */
+export function parseInnerLink(rawlink: string): Link {
+    let [link, display] = splitOnUnescapedPipe(rawlink);
 
     if (link.includes("#^")) {
         let split = link.split("#^");

@@ -270,14 +270,17 @@ describe("Durations", () => {
 
 // <-- Links -->
 
-test("Parse Link", () => {
-    expect(EXPRESSION.field.tryParse("[[test/Main]]")).toEqual(Fields.literal(Link.file("test/Main", false)));
-    expect(EXPRESSION.field.tryParse("[[test/Main.md]]")).toEqual(Fields.literal(Link.file("test/Main.md", false)));
-    expect(EXPRESSION.field.tryParse("[[simple0]]")).toEqual(Fields.literal(Link.file("simple0", false)));
-    expect(EXPRESSION.field.tryParse("[[2020-08-15]]")).toEqual(Fields.literal(Link.file("2020-08-15", false)));
-    expect(EXPRESSION.field.tryParse("[[%Man & Machine + Mind%]]")).toEqual(
+describe("Parse Link", () => {
+    test("simple", () => expect(EXPRESSION.field.tryParse("[[test/Main]]")).toEqual(Fields.literal(Link.file("test/Main", false))));
+    test("extension", () => expect(EXPRESSION.field.tryParse("[[test/Main.md]]")).toEqual(Fields.literal(Link.file("test/Main.md", false))));
+    test("number", () => expect(EXPRESSION.field.tryParse("[[simple0]]")).toEqual(Fields.literal(Link.file("simple0", false))));
+    test("date", () => expect(EXPRESSION.field.tryParse("[[2020-08-15]]")).toEqual(Fields.literal(Link.file("2020-08-15", false))));
+    test("glyphs", () => expect(EXPRESSION.field.tryParse("[[%Man & Machine + Mind%]]")).toEqual(
         Fields.literal(Link.file("%Man & Machine + Mind%", false))
-    );
+    ));
+
+    test("escaped pipe", () => expect(EXPRESSION.link.tryParse("[[Hello \\| There]]")).toEqual(Link.file("Hello | There")));
+    test("escaped pipe with display", () => expect(EXPRESSION.link.tryParse("[[\\||Yes]]")).toEqual(Link.file("|", false, "Yes")));
 });
 
 test("Parse link with display", () => {
