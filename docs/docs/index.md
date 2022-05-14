@@ -39,6 +39,8 @@ and *task* level, where you can either use:
     ```markdown
     # Markdown Page
 
+    Some text, and then [Inline Field:: Value] [Another Inline Field On The Same Line:: With A New Value!]
+
     Basic Field:: Value
     **Bold Field**:: Nice!
 

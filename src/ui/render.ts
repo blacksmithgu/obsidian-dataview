@@ -15,7 +15,7 @@ export async function renderCompactMarkdown(
     let subcontainer = container.createSpan();
     await MarkdownRenderer.renderMarkdown(markdown, subcontainer, sourcePath, component);
 
-    let paragraph = subcontainer.querySelector("p");
+    let paragraph = subcontainer.querySelector(":scope > p");
     if (subcontainer.children.length == 1 && paragraph) {
         while (paragraph.firstChild) {
             subcontainer.appendChild(paragraph.firstChild);
