@@ -79,9 +79,7 @@ export default class DataviewPlugin extends Plugin {
             // Allow for lame people to disable the pretty rendering.
             if (!this.settings.prettyRenderInlineFields || isDataviewDisabled(ctx.sourcePath)) return;
 
-            // Handle p, header elements explicitly (opt-in rather than opt-out for now).
-            for (let p of el.findAllSelf("p,h1,h2,h3,h4,h5,h6,li,span,th,td"))
-                await replaceInlineFields(ctx, p, ctx.sourcePath, this.settings);
+            await replaceInlineFields(ctx, el, this.settings);
         });
 
         // Dataview "force refresh" operation.
@@ -503,48 +501,101 @@ class GeneralSettingsTab extends PluginSettingTab {
     }
 }
 
+const acceptNode = (node: Node): number => {
+    switch (node.nodeName) {
+        // skip code and math equations
+        case "CODE":
+        case "MJX-CONTAINER":
+            return NodeFilter.FILTER_REJECT;
+        case "#text": {
+            if (node.nodeValue && extractInlineFields(node.nodeValue).length > 0) {
+                return NodeFilter.FILTER_ACCEPT;
+            } else return NodeFilter.FILTER_REJECT;
+        }
+        default:
+            return NodeFilter.FILTER_SKIP;
+    }
+};
 /** Replaces raw textual inline fields in text containers with pretty HTML equivalents. */
 async function replaceInlineFields(
     ctx: MarkdownPostProcessorContext,
     container: HTMLElement,
-    originFile: string,
     settings: QuerySettings
-): Promise<Component | undefined> {
-    let inlineFields = extractInlineFields(container.innerHTML);
-    if (inlineFields.length == 0) return undefined;
-
-    let component = new MarkdownRenderChild(container);
-    ctx.addChild(component);
-
-    let result = container.innerHTML;
-    for (let x = inlineFields.length - 1; x >= 0; x--) {
-        let field = inlineFields[x];
-        let renderContainer = document.createElement("span");
-        renderContainer.addClasses(["dataview", "inline-field"]);
-
-        // Block inline fields render the key, parenthesis ones do not.
-        if (field.wrapping == "[") {
-            renderContainer.createSpan({
-                text: field.key,
-                cls: ["dataview", "inline-field-key"],
-                attr: {
-                    "data-dv-key": field.key,
-                    "data-dv-norm-key": canonicalizeVarName(field.key),
-                },
-            });
-
-            let valueContainer = renderContainer.createSpan({ cls: ["dataview", "inline-field-value"] });
-            await renderValue(parseInlineValue(field.value), valueContainer, originFile, component, settings, false);
-        } else {
-            let valueContainer = renderContainer.createSpan({ cls: ["dataview", "inline-field-standalone-value"] });
-            await renderValue(parseInlineValue(field.value), valueContainer, originFile, component, settings, false);
+): Promise<void> {
+    const originFile = ctx.sourcePath;
+    const walker = document.createTreeWalker(container, NodeFilter.SHOW_ALL, {
+        acceptNode,
+    });
+    let currentNode: Node | null = walker.currentNode;
+    while (currentNode) {
+        // if being a text node, replace inline fields
+        if (currentNode.nodeType === 3) {
+            const text = currentNode as Text & { __PENDING__?: Promise<any> };
+            // don't wait for new node to be inserted
+            (async () => {
+                let textNodes = [text];
+                if (text.__PENDING__) {
+                    // wait for prevous post processor to finish
+                    await text.__PENDING__;
+                    // rescan for new text nodes
+                    textNodes = [...text.parentElement!.childNodes].filter((n): n is Text => n instanceof Text);
+                }
+                const pending = Promise.all(textNodes.map(insertInlineFieldsToText));
+                // save promise to __PENDING__ to notify other async post processor
+                text.__PENDING__ = pending;
+                await pending;
+                delete text.__PENDING__;
+            })();
         }
-
-        result = result.slice(0, field.start) + renderContainer.outerHTML + result.slice(field.end);
+        currentNode = walker.nextNode();
     }
 
-    container.innerHTML = result;
-    return component;
+    async function insertInlineFieldsToText(text: Text) {
+        const inlineFields = extractInlineFields(text.wholeText);
+
+        for (let i = inlineFields.length - 1; i >= 0; i--) {
+            const field = inlineFields[i];
+            let component = new MarkdownRenderChild(container);
+            ctx.addChild(component);
+            let renderContainer = document.createElement("span");
+            renderContainer.addClasses(["dataview", "inline-field"]);
+
+            // Block inline fields render the key, parenthesis ones do not.
+            if (field.wrapping == "[") {
+                renderContainer.createSpan({
+                    text: field.key,
+                    cls: ["dataview", "inline-field-key"],
+                    attr: {
+                        "data-dv-key": field.key,
+                        "data-dv-norm-key": canonicalizeVarName(field.key),
+                    },
+                });
+
+                let valueContainer = renderContainer.createSpan({ cls: ["dataview", "inline-field-value"] });
+                await renderValue(
+                    parseInlineValue(field.value),
+                    valueContainer,
+                    originFile,
+                    component,
+                    settings,
+                    false
+                );
+            } else {
+                let valueContainer = renderContainer.createSpan({ cls: ["dataview", "inline-field-standalone-value"] });
+                await renderValue(
+                    parseInlineValue(field.value),
+                    valueContainer,
+                    originFile,
+                    component,
+                    settings,
+                    false
+                );
+            }
+            const toReplace = text.splitText(field.start);
+            toReplace.parentElement?.insertBefore(renderContainer, toReplace);
+            toReplace.textContent = toReplace.wholeText.substring(field.end - field.start);
+        }
+    }
 }
 
 /** Determines if source-path has a `?no-dataview` annotation that disables dataview. */
