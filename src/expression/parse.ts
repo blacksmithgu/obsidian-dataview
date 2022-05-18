@@ -91,7 +91,7 @@ export const KEYWORDS = ["FROM", "WHERE", "LIMIT", "GROUP", "FLATTEN"];
 function splitOnUnescapedPipe(link: string): [string, string | undefined] {
     let pipe = -1;
     while ((pipe = link.indexOf("|", pipe + 1)) >= 0) {
-        if (pipe > 0 && link[pipe - 1] == '\\') continue;
+        if (pipe > 0 && link[pipe - 1] == "\\") continue;
         return [link.substring(0, pipe).replace(/\\\|/g, "|"), link.substring(pipe + 1)];
     }
 
