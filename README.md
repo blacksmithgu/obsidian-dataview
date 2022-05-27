@@ -93,6 +93,8 @@ thoughts:
 
 Basic Field:: Value
 **Bold Field**:: Nice!
+You can also write [field:: inline fields]; multiple [field2:: on the same line].
+If you want to hide the (field3:: key), you can do that too.
 ```
 
 #### **Querying**
@@ -158,7 +160,8 @@ reload itself.
 
 #### Installing to Other Vaults
 
-If you want to dogfood dataview in your real vault, you can build and install manually:
+If you want to dogfood dataview in your real vault, you can build and install manually. Dataview is predominantly a
+read-only store, so this should be safe, but watch out if you are adjusting functionality that performs file edits!
 
 ```console
 foo@bar:~/obsidian-dataview$ npm run build
