@@ -28,7 +28,7 @@ SORT <expression> [ASC/DESC] (like 'field ASC')
 
 Only the 'select' statement (describing what view and what fields) is required. If the `FROM` statement is omitted, the
 query runs automatically over all markdown pages in your vault. If other statements (like `WHERE` or `SORT`) are
-present, they are run in the order they are written. Duplicate statements are allowed (multiple `WHERE` statement, for eaxmple).
+present, they are run in the order they are written. Duplicate statements are allowed (multiple `WHERE` statement, for example).
 
 - For the different view types, only the first line (the 'select' section, where you specify the view type and fields to
 display) differs. You can apply *data commands* like *WHERE* and *SORT* to any query, and you can select from any
