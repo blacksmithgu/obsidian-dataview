@@ -23,6 +23,12 @@ import { createFixedListView } from "ui/views/list-view";
 import { LiteralValue } from "index";
 import { createFixedTableView } from "ui/views/table-view";
 import { Result } from "api/result";
+import { tryOrPropogate } from "util/normalize";
+import { parseQuery } from "query/parse";
+import { createTaskView } from "ui/views/task-view";
+import { createListView } from "ui/views/list-view";
+import { createTableView } from "ui/views/table-view";
+import { Query } from "query/query";
 
 /** Asynchronous API calls related to file / system IO. */
 export class DataviewIOApi implements DvIOAPIInterface {
@@ -309,4 +315,50 @@ export class DataviewApi implements DvAPIInterface {
     ) {
         return renderValue(value as Literal, container, filePath, component, this.settings, inline);
     }
+
+    /** Render an dataview code and return as a result. */
+    public renderDataview(
+        source: string, filePath: string,
+    ): HTMLElement | undefined {
+        if (isDataviewDisabled(filePath)) {
+            console.error(`Dataview error: disabled on path ${filePath}`);
+            return;
+        }
+
+        let maybeQuery = tryOrPropogate(() => parseQuery(source));
+
+        // In case of parse error, just render the error.
+        if (!maybeQuery.successful) {
+            console.error(`Dataview error: ${maybeQuery.error}`);
+            return;
+        }
+
+        let el = window.createDiv();
+        let query = maybeQuery.value;
+        let init = { app: this.app, settings: this.settings, index: this.index, container: el };
+        let renderer = null;
+        switch (query.header.type) {
+            case "task":
+                renderer = createTaskView(init, query as Query, filePath);
+                break;
+            case "list":
+                renderer = createListView(init, query as Query, filePath);
+                break;
+            case "table":
+                renderer = createTableView(init, query as Query, filePath);
+                break;
+        }
+        if(renderer) {
+            renderer.onload();
+        }
+        return el;
+    }
+}
+
+/** Determines if source-path has a `?no-dataview` annotation that disables dataview. */
+function isDataviewDisabled(sourcePath: string): boolean {
+    let questionLocation = sourcePath.lastIndexOf("?");
+    if (questionLocation == -1) return false;
+
+    return sourcePath.substring(questionLocation).contains("no-dataview");
 }

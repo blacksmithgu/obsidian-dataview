@@ -128,6 +128,11 @@ export interface DvAPIInterface {
         filePath: string,
         inline?: boolean
     ): Promise<void>;
+
+    /** Render an dataview code and return as a result. */
+    renderDataview(
+        source: string, filePath: string,
+    ): HTMLElement | undefined;
 }
 
 // Global API helpers
