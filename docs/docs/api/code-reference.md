@@ -64,6 +64,12 @@ Render arbitrary text in the given html element.
 dv.el("b", "This is some bold text");
 ```
 
+You can specify custom classes to add to the element via `cls`, and additional attributes via `attr`:
+
+```js
+dv.el("b", "This is some text", { cls: "dataview dataview-class", attr: { alt: "Nice!" } });
+```
+
 ### `dv.header(level, text)`
 
 Render a header of level 1 - 6 with the given text.
@@ -92,10 +98,12 @@ dv.span("This is some text");
 ### `dv.view(path, input)`
 
 Complex function which allows for custom views. Will attempt to load a JavaScript file at the given path, passing it
-`dv` and `input` and allowing it to execute. This allows for you to re-use custom view code across multiple pages.
+`dv` and `input` and allowing it to execute. This allows for you to re-use custom view code across multiple pages. Note
+that this is an asynchronous function since it involves file I/O - make sure to `await` the result!
+
 
 ```js
-dv.view("views/custom", { arg1: ..., arg2: ... });
+await dv.view("views/custom", { arg1: ..., arg2: ... });
 ```
 
 If you want to also include custom CSS in your view, you can instead pass a path to a folder containing `view.js` and

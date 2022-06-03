@@ -19,14 +19,14 @@ nav:
   - Overview: 'index.md'
   - Data Annotation: 'data-annotation.md'
   - Data Querying: 'data-queries.md'
-  - Query Language:
+  - Query Language Reference:
     - Queries: 'query/queries.md'
     - Expressions: 'query/expressions.md'
     - Literals: 'query/literals.md'
     - Sources: 'query/sources.md'
     - Functions: 'query/functions.md'
     - Examples: 'query/examples.md'
-  - JavaScript API:
+  - JavaScript Reference:
     - Overview: 'api/intro.md'
     - Data Arrays: 'api/data-array.md'
     - Codeblock Reference: 'api/code-reference.md'

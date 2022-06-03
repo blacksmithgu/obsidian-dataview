@@ -26,6 +26,12 @@ function TaskItem({ item }: { item: STask }) {
 
     // Navigate to the given task on click.
     const onClicked = (evt: preact.JSX.TargetedMouseEvent<HTMLElement>) => {
+        // Skip this event if a link was pressed.
+        if (evt.target != null && evt.target != undefined && (evt.target as HTMLElement).tagName == "A") {
+            return;
+        }
+
+        evt.stopPropagation();
         const selectionState = {
             eState: {
                 cursor: {

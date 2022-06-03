@@ -19,7 +19,7 @@ Literal|Description
 
 ### Dates
 
-Note that `date()` is also a [function](../functions/#dateany)
+Note that `date()` is also a [function](../functions/#dateany), which can be called on text to extract dates.
 
 Literal|Description
 -|-

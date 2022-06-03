@@ -58,7 +58,7 @@ Once you have some pages that you've annotated, all that's left to do is query t
 JavaScript views. There are four ways to do this:
 
 1. **Dataview Query Language (DQL)**: A pipeline-based, vaguely SQL-looking expression language which can support basic
-   use cases. See the [documentation](query/queries/) for details.
+   use cases. See the [guide](writing-dql) for an overview of how to use DQL, or check out the [reference material](query/queries/) for details.
 
     ~~~markdown
     ```dataview

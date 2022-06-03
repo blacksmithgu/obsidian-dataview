@@ -50,6 +50,8 @@ reviewed: false
 
 **Thoughts**:: It was decent.
 **Rating**:: 6
+
+[mood:: okay] | [length:: 2 hours]
 ```
 
 #### Implicit Fields
@@ -59,6 +61,7 @@ Dataview automatically adds a large amount of metadata to each page:
 - `file.name`: The file title (a string).
 - `file.folder`: The path of the folder this file belongs to.
 - `file.path`: The full file path (a string).
+- `file.ext`: The extension of the file type; generally '.md' (a string).
 - `file.link`: A link to the file (a link).
 - `file.size`: The size (in bytes) of the file (a number).
 - `file.ctime`: The date that the file was created (a date + time).
@@ -72,17 +75,23 @@ Dataview automatically adds a large amount of metadata to each page:
 - `file.outlinks`: An array of all outgoing links from this file.
 - `file.aliases`: An array of all aliases for the note.
 - `file.tasks`: An array of all tasks (I.e., `- [ ] blah blah blah`) in this file.
+- `file.lists`: An array of all list elements in the file (including tasks); these elements are effectively tasks and can be rendered in task views.
+- `file.frontmatter`: Contains the raw values of all frontmatter; mainly useful for checking raw frontmatter values or
+  for dynamically listing frontmatter keys.
 
 If the file has a date inside its title (of form `yyyy-mm-dd` or `yyyymmdd`), or has a `Date` field/inline field, it also has the following attributes:
 
 - `file.day`: An explicit date associated with the file.
 
+If you use the Obsidian default "Starred Files" plugin, the following metadata is also available:
+
+- `file.starred`: If this file has been starred by the "stars" Obsidian plugin.
+
 ---
 
 ## Tasks
 
-You can also annotate your *tasks* (I.e., lines of the form `- [ ] blah blah blah`) with metadata using inline field
-syntax:
+You can also annotate your *tasks* (I.e., lines of the form `- [ ] blah blah blah`) with metadata using inline field syntax:
 
 ```markdown
 - [ ] Hello, this is some [metadata:: value]!
@@ -112,20 +121,29 @@ As with pages, Dataview adds a number of implicit fields to each task:
 
 - Tasks inherit *all fields* from their parent page - so if you have a `rating` field in your page, you can also access
   it on your task.
+- `status`: The completion status of this task, as determined by the character inside the `[ ]` brackets. Generally a
+  space `" "` for incomplete tasks and an X `"X"` for complete tasks, but allows for plugins which support alternative
+  task statuses.
+- `checked`: Whether or not this task has been checked in any way (i.e., it's status is not incomplete/empty).
 - `completed`: Whether or not this *specific* task has been completed; this does not consider the
-  completion/non-completion of any child tasks.
+  completion/non-completion of any child tasks. A task is explicitly considered "completed" if it has been marked with
+  an 'X'.
 - `fullyCompleted`: Whether or not this task and **all** of its subtasks are completed.
 - `text`: The text of this task.
 - `line`: The line this task shows up on.
+- `lineCount`: The number of Markdown lines that this task takes up.
 - `path`: The full path of the file this task is in.
 - `section`: A link to the section this task is contained in.
+- `tags`: Any tags inside of the text task.
 - `link`: A link to the closest linkable block near this task; useful for making links which go to the task.
-- `subtasks`: Any subtasks of this task.
-- `real`: If true, this is a real task; otherwise, it is a list element above/below a task.
-- `completion`: The date a task was completed. If not annotated, will default to file modified time.
-- `due`: The date a task is due, if it has one.
-- `created`: The date a task was created. If not annotated, defaults to file creation time.
+- `children`: Any subtasks or sublists of this task.
+- `task`: If true, this is a task; otherwise, it is a regular list element.
+- `completion`: The date a task was completed; set by `[completion:: ...]` or shorthand syntax.
+- `due`: The date a task is due, if it has one. Set by `[due:: ...]` or shorthand syntax.
+- `created`: The date a task was created; set by `[created:: ...]` or shorthand syntax.
 - `annotated`: True if the task has any custom annotations, and false otherwise.
+- `parent`: The line number of the task above this task, if present; will be null if this is a root-level task.
+- `blockId`: The block ID of this task / list element, if one has been defined with the `^blockId` syntax; otherwise null.
 
 ---
 

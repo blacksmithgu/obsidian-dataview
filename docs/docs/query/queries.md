@@ -19,22 +19,15 @@ The general format for queries is:
 
 ~~~
 ```dataview
-TABLE|LIST|TASK <field> [AS "Column Name"], <field>, ..., <field> FROM <source> (like #tag or "folder")
-WHERE <expression> (like 'field = value')
-SORT <expression> [ASC/DESC] (like 'field ASC')
+TABLE|LIST|TASK <field> [AS "Column Name"], <field>, ..., <field> FROM <source>
+WHERE <expression>
+SORT <expression> [ASC/DESC]
 ... other data commands
 ```
 ~~~
 
-Only the 'select' statement (describing what view and what fields) is required. If the `FROM` statement is omitted, the
-query runs automatically over all markdown pages in your vault. If other statements (like `WHERE` or `SORT`) are
-present, they are run in the order they are written. Duplicate statements are allowed (multiple `WHERE` statement, for example).
-
-- For the different view types, only the first line (the 'select' section, where you specify the view type and fields to
-display) differs. You can apply *data commands* like *WHERE* and *SORT* to any query, and you can select from any
-[source](../sources) using *FROM*.
-
-See [expressions](../expressions) for context on what expressions are, and [sources](../sources) for context on what sources are.
+Only the table/list/task statement is required - if the "from" statement is omitted, the query runs for all files in
+your vault. You can specify data commands like `WHERE` multiple times; they will simply run in the order they are written.
 
 ## Query Types
 
@@ -233,6 +226,7 @@ filtering. You can select from any [source](../sources), which currently means b
 
 - **Tags**: To select from a tag (and all its subtags), use `FROM #tag`.
 - **Folders**: To select from a folder (and all its subfolders), use `FROM "folder"`.
+- **Single Files**: To select from a single file, use `FROM "path/to/file"`.
 - **Links**: You can either select links TO a file, or all links FROM a file.
   - To obtain all pages which link TO `[[note]]`, use `FROM [[note]]`.
   - To obtain all pages which link FROM `[[note]]` (i.e., all the links in that file), use `FROM outgoing([[note]])`.

@@ -10,10 +10,10 @@ in the list. For example:
 
 ```
 lower("YES") = "yes"
-lower(list("YES", "NO")) = list("yes", "no")
+lower(["YES", "NO"]) = ["yes", "no"]
 
 replace("yes", "e", "a") = "yas"
-replace(list("yes", "ree"), "e", "a") = list("yas", "raa")
+replace(["yes", "ree"], "e", "a") = ["yas", "raa"]
 ```
 
 ## Constructors

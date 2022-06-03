@@ -1,27 +1,48 @@
 # Developing Against Dataview
 
-Dataview includes a high-level plugin-facing API as well as TypeScript definitions and a utility library; to set it up
-for your plugin, follow these steps:
+Dataview includes a high-level plugin-facing API as well as TypeScript definitions and a utility library; to install it,
+simply use:
 
-1. Install the utility library and types via `npm install -D obsidian-dataview` in your plugin directory.
-2. import utils to use Dataview API: `import { getAPI } from "obsidian-dataview";`
+```bash
+npm install -D obsidian-dataview
+```
 
-Following these steps will allow you to access Dataview in a typed way, including doing things such as:
+##### Accessing the Dataview API
 
-- **Checking if Dataview is enabled**: `!!getAPI(plugin.app)` or `!!getAPI()` (require version 0.4.22+).
-- **Accessing the Dataview API**: `getAPI(plugin.app)` or just `getAPI()` (require version 0.4.22+), will return undefined if Dataview API is not available.
-- **Check and compare Dataview API version**: use utils provided in [`api.version`](https://github.com/blacksmithgu/obsidian-dataview/blob/master/src/typings/api.d.ts) (require version 0.4.22+)
-- **Bind to Dataview events**: `plugin.registerEvent(plugin.app.metadataCache.on("dataview:...", (...) => ...))`.
+You can use the `getAPI()` function to obtain the Dataview Plugin API; this returns a `DataviewApi` object which
+provides various utilities, including rendering dataviews, checking dataview's version, hooking into the dataview event
+life cycle, and querying dataview metadata.
 
-> - For full API definitions available, check [api.ts](https://github.com/blacksmithgu/obsidian-dataview/blob/master/src/typings/api.d.ts)
-> - For all events hooked on MetadataCache, check [index.ts](https://github.com/blacksmithgu/obsidian-dataview/blob/master/src/index.ts)
+```ts
+import { getAPI } from "obsidian-dataview";
 
-## Value Utilities
+const api = getAPI();
+```
+
+For full API definitions available, check [api.ts](https://github.com/blacksmithgu/obsidian-dataview/blob/master/src/typings/api.d.ts).
+
+##### Binding to Dataview Events
+
+You can bind to dataview metadata events, which fire on all file updates and changes, via:
+
+
+```ts
+plugin.registerEvent(plugin.app.metadataCache.on("dataview:index-ready", () => {
+    ...
+});
+
+plugin.registerEvent(plugin.app.metadataCache.on("dataview:metadata-change",
+    (type, file, oldPath?) => { ... }));
+```
+
+For all events hooked on MetadataCache, check [index.ts](https://github.com/blacksmithgu/obsidian-dataview/blob/master/src/index.ts).
+
+##### Value Utilities
 
 You can access various type utilities which let you check the types of objects and compare them via `Values`:
 
 ~~~ts
-import { getAPI, Values } from "obsidian-dataview"
+import { getAPI, Values } from "obsidian-dataview";
 
 const field = getAPI(plugin.app)?.page('sample.md').field;
 if (!field) return;
