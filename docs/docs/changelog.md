@@ -1,3 +1,9 @@
+# 0.5.22
+
+- Fix #1135: Use 'x' instead of 'X' for checkboxes.
+
+---
+
 # 0.5.21
 
 A long-overdue swap from the beta branch to the stable branch. The beta branch should not include any (intended) breaking
