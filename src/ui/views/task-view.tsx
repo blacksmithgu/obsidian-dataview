@@ -55,7 +55,7 @@ function TaskItem({ item }: { item: STask }) {
         evt.stopPropagation();
 
         const completed = evt.currentTarget.checked;
-        const status = completed ? "X" : " ";
+        const status = completed ? "x" : " ";
 
         // Update data-task on the parent element (css style)
         const parent = evt.currentTarget.parentElement;
