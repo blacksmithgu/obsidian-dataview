@@ -1,3 +1,25 @@
+# 0.5.21
+
+A long-overdue swap from the beta branch to the stable branch. The beta branch should not include any (intended) breaking
+changes, and has some nice performance improvements that come along with it! Here are the major changes:
+
+- Most views now use React and no longer flicker when updating; this is not the case yet for DataviewJS, which will be
+  getting equivalent treament in the future.
+- Dataview now caches metadata, so Dataview loads are very fast after the first time you open your vault. Dataview still
+  needs to visit every file when you update the plugin version, so that should be the only times you experience slower
+  load times.
+- A brand new task view backend and query which allows you to filter per-task, rather than per-page! Check the
+  documentation for details, but this broadly means `WHERE` statements now use task properties instead of page
+  properties.
+- Some additional metadata is now available for use - `file.starred`, `file.lists`, and more metadata in
+  `file.tasks`.
+
+There have been some moderate documentation touch-ups to keep things up to date; I'm still working on a walkthrough for
+common Dataview usecases. This review also includes about ~30-40 bugfixes; some new bugs may arise due to internal
+changes, so please flag them if you encounter them.
+
+---
+
 # 0.5.20 (Beta)
 
 Slight fix to hopefully improve some strange reported cases of bad indexing at startup.
