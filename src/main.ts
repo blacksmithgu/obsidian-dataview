@@ -97,7 +97,7 @@ export default class DataviewPlugin extends Plugin {
             name: "Drop All Cached File Metadata",
             callback: () => {
                 this.index.reinitialize();
-            }
+            },
         });
 
         // Run index initialization, which actually traverses the vault to index files.
