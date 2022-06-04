@@ -1,3 +1,9 @@
+# 0.5.23
+
+- Fix #1140: Force API objects to be arrays if they are iterables.
+
+---
+
 # 0.5.22
 
 - Fix #1135: Use 'x' instead of 'X' for checkboxes.
