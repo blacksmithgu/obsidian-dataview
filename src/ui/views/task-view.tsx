@@ -45,7 +45,7 @@ function TaskItem({ item }: { item: STask }) {
         context.app.workspace.openLinkText(
             item.link.toFile().obsidianLink(),
             item.path,
-            evt.shiftKey,
+            evt.ctrlKey,
             selectionState as any
         );
     };
