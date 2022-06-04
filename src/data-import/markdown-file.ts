@@ -38,6 +38,12 @@ export function parsePage(path: string, contents: string, stat: FileStats, metad
         if (parsed.status) links.push(parsed.value);
     }
 
+    // Embed Links in metadata.
+    for (let rawEmbed of metadata.embeds || []) {
+        let parsed = EXPRESSION.embedLink.parse(rawEmbed.original);
+        if (parsed.status) links.push(parsed.value);
+    }
+
     // Merge frontmatter fields with parsed fields.
     let markdownData = parseMarkdown(path, contents.split("\n"), metadata);
     mergeFieldGroups(fields, markdownData.fields);
@@ -60,24 +66,26 @@ export function parsePage(path: string, contents: string, stat: FileStats, metad
 export function extractTags(metadata: FrontMatterCache): string[] {
     let tagKeys = Object.keys(metadata).filter(t => t.toLowerCase() == "tags" || t.toLowerCase() == "tag");
 
-    return tagKeys.map(k => splitFrontmatterTagOrAlias(metadata[k])).reduce((p, c) => p.concat(c), []);
+    return tagKeys.map(k => splitFrontmatterTagOrAlias(metadata[k], /[,\s]+/))
+        .reduce((p, c) => p.concat(c), [])
+        .map(str => str.startsWith("#") ? str : "#" + str);
 }
 
 /** Extract tags intelligently from frontmatter. Handles arrays, numbers, and strings.  */
 export function extractAliases(metadata: FrontMatterCache): string[] {
     let aliasKeys = Object.keys(metadata).filter(t => t.toLowerCase() == "alias" || t.toLowerCase() == "aliases");
 
-    return aliasKeys.map(k => splitFrontmatterTagOrAlias(metadata[k])).reduce((p, c) => p.concat(c), []);
+    return aliasKeys.map(k => splitFrontmatterTagOrAlias(metadata[k], /,/)).reduce((p, c) => p.concat(c), []);
 }
 
 /** Split a frontmatter list into separate elements; handles actual lists, comma separated lists, and single elements. */
-export function splitFrontmatterTagOrAlias(data: any): string[] {
+export function splitFrontmatterTagOrAlias(data: any, on: RegExp): string[] {
     if (Array.isArray(data)) return data.filter(s => !!s).map(s => ("" + s).trim());
 
     // Force to a string to handle numbers and so on.
     const strData = "" + data;
     return strData
-        .split(",")
+        .split(on)
         .filter(t => !!t)
         .map(t => t.trim())
         .filter(t => t.length > 0);

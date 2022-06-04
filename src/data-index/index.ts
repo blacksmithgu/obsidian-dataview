@@ -117,6 +117,18 @@ export class FullIndex extends Component {
         this._initialize(this.vault.getMarkdownFiles());
     }
 
+    /** Drops the local storage cache and re-indexes all files; this should generally be used if you expect cache issues. */
+    public async reinitialize() {
+        await this.persister.recreate();
+
+        const files = this.vault.getMarkdownFiles();
+        const start = Date.now();
+        let promises = files.map(file => this.reload(file));
+
+        await Promise.all(promises);
+        console.log(`Dataview: re-initialized index with ${files.length} files (${(Date.now() - start) / 1000.0}s)`);
+    }
+
     /** Internal asynchronous initializer. */
     private async _initialize(files: TFile[]) {
         let reloadStart = Date.now();

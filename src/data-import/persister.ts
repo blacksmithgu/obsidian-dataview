@@ -24,6 +24,17 @@ export class LocalStorageCache {
         });
     }
 
+    /** Drop the entire cache instance and re-create a new fresh instance. */
+    public async recreate() {
+        await localforage.dropInstance({ name: "dataview/cache/" + this.appId });
+
+        this.persister = localforage.createInstance({
+            name: "dataview/cache/" + this.appId,
+            driver: [localforage.INDEXEDDB],
+            description: "Cache metadata about files and sections in the dataview index.",
+        });
+    }
+
     /** Load file metadata by path. */
     public async loadFile(path: string): Promise<Cached<Partial<PageMetadata>> | null | undefined> {
         return this.persister.getItem(this.fileKey(path)).then(raw => {
