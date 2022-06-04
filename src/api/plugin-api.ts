@@ -243,7 +243,8 @@ export class DataviewApi implements DvAPIInterface {
         filePath: string
     ) {
         if (!values) return;
-        if (values !== undefined && values !== null && !Array.isArray(values) && !DataArray.isDataArray(values)) values = Array.from(values);
+        if (values !== undefined && values !== null && !Array.isArray(values) && !DataArray.isDataArray(values))
+            values = Array.from(values);
 
         // Append a child div, since React will keep re-rendering otherwise.
         let subcontainer = container.createEl("div");
