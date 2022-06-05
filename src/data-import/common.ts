@@ -2,7 +2,7 @@
 
 import { EXPRESSION } from "expression/parse";
 
-const POTENTIAL_TAG_MATCHER = /#[^\s]+/giu;
+const POTENTIAL_TAG_MATCHER = /#[^\s,;\.:!\?'"`()\[\]\{\}]+/giu;
 
 /** Extract all tags from the given source string. */
 export function extractTags(source: string): Set<string> {
