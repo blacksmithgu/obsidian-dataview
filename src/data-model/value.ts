@@ -526,9 +526,10 @@ export class Link {
 
     /** Convert the inner part of the link to something that Obsidian can open / understand. */
     public obsidianLink(): string {
-        if (this.type == "header") return this.path + "#" + this.subpath;
-        if (this.type == "block") return this.path + "#^" + this.subpath;
-        else return this.path;
+        const escaped = this.path.replace("|", "\\|");
+        if (this.type == "header") return escaped + "#" + this.subpath?.replace("|", "\\|");
+        if (this.type == "block") return escaped + "#^" + this.subpath?.replace("|", "\\|");
+        else return escaped;
     }
 
     /** The stripped name of the file this link points to. */
