@@ -1,3 +1,14 @@
+# 0.5.24
+
+Several bugfixes:
+
+- Nulls are now sorted first rather than last; it's generally good practice to explicitly check for nulls in your
+  queries to avoid strange behavior.
+- Dataview now properly parses space-delimited tags (like `tags: abc def ghi`).
+- Dataview now supports dropping the entire file cache in case of bugs.
+
+---
+
 # 0.5.23
 
 - Fix #1140: Force API objects to be arrays if they are iterables.
