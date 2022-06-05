@@ -1,3 +1,13 @@
+# 0.5.26
+
+More small bugfixes:
+
+- Fix a few small link rendering issues.
+- Tag extraction from tasks now handles punctuation properly.
+- Upgrade luxon (which is embedded in DataviewJS) to 2.4.0.
+
+---
+
 # 0.5.25
 
 - Fix #1147: Fix there being a `#null` tag for files with an empty `tag` or `tags` frontmatter.
