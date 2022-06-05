@@ -1,3 +1,9 @@
+# 0.5.25
+
+- Fix #1147: Fix there being a `#null` tag for files with an empty `tag` or `tags` frontmatter.
+
+---
+
 # 0.5.24
 
 Several bugfixes:
