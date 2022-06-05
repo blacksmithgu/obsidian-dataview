@@ -17,8 +17,14 @@ describe("Frontmatter Tags", () => {
 describe("Task Tags", () => {
     test("Empty", () => expect(common.extractTags("hello")).toEqual(new Set([])));
     test("One Tag", () => expect(common.extractTags("and text #hello")).toEqual(new Set(["#hello"])));
-    test("Two Tags", () => expect(common.extractTags("#and/thing text #hello")).toEqual(new Set(["#and/thing", "#hello"])));
-    test("Comma Delimited", () => expect(common.extractTags("#one,#two, #three")).toEqual(new Set(["#one", "#two", "#three"])));
-    test("Semicolon Delimited", () => expect(common.extractTags("#one;;;#two; #three")).toEqual(new Set(["#one", "#two", "#three"])));
-    test("Parenthesis", () => expect(common.extractTags("[#one]]#two;;#four()() #three")).toEqual(new Set(["#one", "#two", "#four", "#three"])));
+    test("Two Tags", () =>
+        expect(common.extractTags("#and/thing text #hello")).toEqual(new Set(["#and/thing", "#hello"])));
+    test("Comma Delimited", () =>
+        expect(common.extractTags("#one,#two, #three")).toEqual(new Set(["#one", "#two", "#three"])));
+    test("Semicolon Delimited", () =>
+        expect(common.extractTags("#one;;;#two; #three")).toEqual(new Set(["#one", "#two", "#three"])));
+    test("Parenthesis", () =>
+        expect(common.extractTags("[#one]]#two;;#four()() #three")).toEqual(
+            new Set(["#one", "#two", "#four", "#three"])
+        ));
 });
