@@ -87,7 +87,11 @@ export function extractAliases(metadata: FrontMatterCache): string[] {
 /** Split a frontmatter list into separate elements; handles actual lists, comma separated lists, and single elements. */
 export function splitFrontmatterTagOrAlias(data: any, on: RegExp): string[] {
     if (data == null || data == undefined) return [];
-    if (Array.isArray(data)) return data.filter(s => !!s).map(s => ("" + s).trim());
+    if (Array.isArray(data)) {
+        return data.filter(s => !!s)
+            .map(s => splitFrontmatterTagOrAlias(s, on))
+            .reduce((p, c) => p.concat(c), []);
+    }
 
     // Force to a string to handle numbers and so on.
     return ("" + data)
