@@ -1,3 +1,13 @@
+# 0.5.29
+
+Fix another subtle incompatibility between 0.4.26 and 0.5.29 - if you frequently used empty inline fields (like
+`Key::` with no value), the 0.5+ behavior is now the same as 0.4 behavior and will map such fields to null instead of an
+empty string.
+
+This may fix a broad variety of "subtly wrong" queries that you may have seen after the upgrade.
+
+---
+
 # 0.5.28
 
 - Fix a bug with some more string concatenations and null handling.
