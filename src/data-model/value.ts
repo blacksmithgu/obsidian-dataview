@@ -90,13 +90,14 @@ export namespace Values {
         if (!wrapped) return setting.renderNullAs;
 
         switch (wrapped.type) {
+            case "null":
+                return "" + setting.renderNullAs;
             case "string":
                 return wrapped.value;
             case "number":
             case "boolean":
             case "html":
-            case "null":
-                return "" + setting.renderNullAs;
+                return "" + wrapped.value;
             case "link":
                 return wrapped.value.markdown();
             case "function":
