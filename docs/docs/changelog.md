@@ -1,3 +1,9 @@
+# 0.5.28
+
+- Fix a bug with some more string concatenations and null handling.
+
+---
+
 # 0.5.27
 
 More performance + correctness bugfixes.
