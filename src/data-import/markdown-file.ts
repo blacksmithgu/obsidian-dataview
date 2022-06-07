@@ -88,7 +88,8 @@ export function extractAliases(metadata: FrontMatterCache): string[] {
 export function splitFrontmatterTagOrAlias(data: any, on: RegExp): string[] {
     if (data == null || data == undefined) return [];
     if (Array.isArray(data)) {
-        return data.filter(s => !!s)
+        return data
+            .filter(s => !!s)
             .map(s => splitFrontmatterTagOrAlias(s, on))
             .reduce((p, c) => p.concat(c), []);
     }
