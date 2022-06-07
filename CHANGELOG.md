@@ -1,3 +1,19 @@
+# 0.5.27
+
+More performance + correctness bugfixes.
+
+- The parser has been made a little more robust to prevent major indexing issues (or at least recover from them
+  quickly).
+- Several new strange tag variants are now supported.
+- Markdown links are now properly indexed again.
+
+Some DataviewJS performance issues should be resolved now, especially for external plugins using Dataview. This fix
+does involve a slight API break w.r.t. what types are wrapped into Dataview Arrays (which provide functions like
+`.where()`). Generally, only Dataview-provided implicits are wrapped in data arrays now; frontmatter and inline fields
+are always now regular JS arrays - use `dv.array()` to explicitly make a data array if you want the advanced querying.
+
+---
+
 # 0.5.26
 
 More small bugfixes:
