@@ -19,7 +19,7 @@ export class FileImporter extends Component {
     /** Fast-access set which holds the list of files queued to be reloaded; used for debouncing. */
     reloadSet: Set<string>;
     /** Paths -> promises for file reloads which have not yet been queued. */
-    callbacks: Map<string, FileCallback[]>;
+    callbacks: Map<string, [FileCallback, FileCallback][]>;
 
     public constructor(public numWorkers: number, public vault: Vault, public metadataCache: MetadataCache) {
         super();
@@ -45,9 +45,9 @@ export class FileImporter extends Component {
      * and all be resolved by a single actual file reload.
      */
     public reload<T>(file: TFile): Promise<T> {
-        let promise: Promise<T> = new Promise((resolve, _reject) => {
-            if (this.callbacks.has(file.path)) this.callbacks.get(file.path)?.push(resolve);
-            else this.callbacks.set(file.path, [resolve]);
+        let promise: Promise<T> = new Promise((resolve, reject) => {
+            if (this.callbacks.has(file.path)) this.callbacks.get(file.path)?.push([resolve, reject]);
+            else this.callbacks.set(file.path, [[resolve, reject]]);
         });
 
         // De-bounce repeated requests for the same file.
@@ -68,7 +68,7 @@ export class FileImporter extends Component {
     /** Finish the parsing of a file, potentially queueing a new file. */
     private finish(path: string, data: any, index: number) {
         // Cache the callbacks before we do book-keeping.
-        let calls = ([] as FileCallback[]).concat(this.callbacks.get(path) ?? []);
+        let calls = ([] as [FileCallback, FileCallback][]).concat(this.callbacks.get(path) ?? []);
 
         // Book-keeping to clear metadata & allow the file to be re-loaded again.
         this.reloadSet.delete(path);
@@ -82,7 +82,11 @@ export class FileImporter extends Component {
         if (job !== undefined) this.send(job, index);
 
         // Resolve promises to let users know this file has finished.
-        for (let callback of calls) callback(data);
+        if ("$error" in data) {
+            for (let [_, reject] of calls) reject(data["$error"]);
+        } else {
+            for (let [callback, _] of calls) callback(data);
+        }
     }
 
     /** Send a new task to the given worker ID. */

@@ -419,6 +419,16 @@ export class Link {
         });
     }
 
+    public static infer(linkpath: string, embed: boolean = false, display?: string) {
+        if (linkpath.includes("#^")) {
+            let split = linkpath.split("#^");
+            return Link.block(split[0], split[1], embed, display);
+        } else if (linkpath.includes("#")) {
+            let split = linkpath.split("#");
+            return Link.header(split[0], split[1], embed, display);
+        } else return Link.file(linkpath, embed, display);
+    }
+
     /** Create a link to a specific file and header in that file. */
     public static header(path: string, header: string, embed?: boolean, display?: string) {
         // Headers need to be normalized to alpha-numeric & with extra spacing removed.

@@ -101,16 +101,7 @@ function splitOnUnescapedPipe(link: string): [string, string | undefined] {
 /** Attempt to parse the inside of a link to pull out display name, subpath, etc. */
 export function parseInnerLink(rawlink: string): Link {
     let [link, display] = splitOnUnescapedPipe(rawlink);
-
-    if (link.includes("#^")) {
-        let split = link.split("#^");
-        return Link.block(split[0], split[1], false, display);
-    } else if (link.includes("#")) {
-        let split = link.split("#");
-        return Link.header(split[0], split[1], false, display);
-    }
-
-    return Link.file(link, false, display);
+    return Link.infer(link, false, display);
 }
 
 /** Create a left-associative binary parser which parses the given sub-element and separator. Handles whitespace. */

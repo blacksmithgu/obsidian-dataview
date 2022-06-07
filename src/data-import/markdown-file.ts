@@ -29,24 +29,29 @@ export function parsePage(path: string, contents: string, stat: FileStats, metad
         for (let alias of extractAliases(metadata.frontmatter) || []) aliases.add(alias);
 
         let frontFields = parseFrontmatter(metadata.frontmatter) as Record<string, Literal>;
-        for (let [key, value] of Object.entries(frontFields)) addInlineField(key, value, fields);
+        for (let [key, value] of Object.entries(frontFields)) {
+            if (key == "position") continue;
+            addInlineField(key, value, fields);
+        }
     }
 
     // Links in metadata.
     for (let rawLink of metadata.links || []) {
-        let parsed = EXPRESSION.embedLink.parse(rawLink.original);
-        if (parsed.status) links.push(parsed.value);
+        links.push(Link.infer(rawLink.link, false, rawLink.displayText));
     }
 
     // Embed Links in metadata.
     for (let rawEmbed of metadata.embeds || []) {
-        let parsed = EXPRESSION.embedLink.parse(rawEmbed.original);
-        if (parsed.status) links.push(parsed.value);
+        links.push(Link.infer(rawEmbed.link, true, rawEmbed.displayText));
     }
 
     // Merge frontmatter fields with parsed fields.
     let markdownData = parseMarkdown(path, contents.split("\n"), metadata);
     mergeFieldGroups(fields, markdownData.fields);
+
+    // Strip "position" from frontmatter since it is Obsidian determined.
+    const frontmatter = metadata.frontmatter || ({} as Record<string, any>);
+    if (frontmatter && "position" in frontmatter) delete frontmatter["position"];
 
     return new PageMetadata(path, {
         tags,
@@ -54,7 +59,7 @@ export function parsePage(path: string, contents: string, stat: FileStats, metad
         links,
         lists: markdownData.lists,
         fields: finalizeInlineFields(fields),
-        frontmatter: metadata.frontmatter,
+        frontmatter: frontmatter,
         ctime: DateTime.fromMillis(stat.ctime),
         mtime: DateTime.fromMillis(stat.mtime),
         size: stat.size,
@@ -85,8 +90,7 @@ export function splitFrontmatterTagOrAlias(data: any, on: RegExp): string[] {
     if (Array.isArray(data)) return data.filter(s => !!s).map(s => ("" + s).trim());
 
     // Force to a string to handle numbers and so on.
-    const strData = "" + data;
-    return strData
+    return ("" + data)
         .split(on)
         .filter(t => !!t)
         .map(t => t.trim())
@@ -101,12 +105,28 @@ export function parseMarkdown(
 ): { fields: Map<string, Literal[]>; lists: ListItem[] } {
     let fields: Map<string, Literal[]> = new Map();
 
+    // Extract task data and append the global data extracted from them to our fields.
+    let [lists, extraData] = parseLists(path, contents, metadata);
+    for (let [key, values] of extraData.entries()) {
+        if (!fields.has(key)) fields.set(key, values);
+        else fields.set(key, fields.get(key)!!.concat(values));
+    }
+
+    // The Obsidian metadata cache will track list elements inside of other element groups (like annotations and
+    // callouts)... this means we might see metadata twice, so skip them now. Very annoying.
+    const listLinesToSkip = new Set<number>();
+    for (const line of lists) {
+        for (let i = 0; i < line.lineCount; i++) listLinesToSkip.add(line.line + i);
+    }
+
     // Only parse heading and paragraph elements for inline fields; we will parse list metadata separately.
     for (let section of metadata.sections || []) {
         if (section.type == "list" || section.type == "ruling") continue;
 
         for (let lineno = section.position.start.line; lineno <= section.position.end.line; lineno++) {
             let line = contents[lineno];
+            if (line == undefined || line == null) continue;
+            if (listLinesToSkip.has(lineno)) continue;
 
             // Fast bail-out for lines that are too long or do not contain '::'.
             if (line.length > 2048 || !line.includes("::")) continue;
@@ -120,13 +140,6 @@ export function parseMarkdown(
                 if (fullLine) addRawInlineField(fullLine, fields);
             }
         }
-    }
-
-    // Extract task data and append the global data extracted from them to our fields.
-    let [lists, extraData] = parseLists(path, contents, metadata);
-    for (let [key, values] of extraData.entries()) {
-        if (!fields.has(key)) fields.set(key, values);
-        else fields.set(key, fields.get(key)!!.concat(values));
     }
 
     return { fields, lists };
