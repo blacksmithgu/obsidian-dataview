@@ -476,29 +476,6 @@ export namespace DataArray {
         return DataArrayImpl.wrap(data, settings);
     }
 
-    /** Convert all arrays in a deep object into data arrays. */
-    // TODO: Can instead pass settings to the toObject() functions; will probably refactor this soon.
-    export function convert(object: any, settings: QuerySettings): any {
-        let type = Values.wrapValue(object);
-        if (!type) return object;
-
-        switch (type.type) {
-            case "array":
-                return DataArray.wrap(
-                    type.value.map(v => convert(v, settings)),
-                    settings
-                );
-            case "object":
-                let result: Record<string, any> = {};
-                for (let [key, value] of Object.entries(type.value)) {
-                    result[key] = convert(value, settings);
-                }
-                return result;
-            default:
-                return object;
-        }
-    }
-
     /** Return true if the given object is a data array. */
     export function isDataArray(obj: any): obj is DataArray<any> {
         return obj instanceof DataArrayImpl;

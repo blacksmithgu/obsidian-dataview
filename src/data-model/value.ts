@@ -87,7 +87,7 @@ export namespace Values {
         recursive: boolean = false
     ): string {
         let wrapped = wrapValue(field);
-        if (!wrapped) return "null";
+        if (!wrapped) return setting.renderNullAs;
 
         switch (wrapped.type) {
             case "string":
@@ -96,7 +96,7 @@ export namespace Values {
             case "boolean":
             case "html":
             case "null":
-                return "" + wrapped.value;
+                return "" + setting.renderNullAs;
             case "link":
                 return wrapped.value.markdown();
             case "function":

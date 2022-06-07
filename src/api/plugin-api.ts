@@ -17,7 +17,7 @@ import { compare, CompareOperator, satisfies } from "compare-versions";
 import { DvAPIInterface, DvIOAPIInterface } from "../typings/api";
 import { DataviewSettings } from "settings";
 import { parseFrontmatter } from "data-import/markdown-file";
-import { SListItem } from "data-model/serialized/markdown";
+import { SListItem, SMarkdownPage } from "data-model/serialized/markdown";
 import { createFixedTaskView } from "ui/views/task-view";
 import { createFixedListView } from "ui/views/list-view";
 import { LiteralValue } from "index";
@@ -127,7 +127,7 @@ export class DataviewApi implements DvAPIInterface {
         let pageObject = this.index.pages.get(normPath.path);
         if (!pageObject) return undefined;
 
-        return DataArray.convert(pageObject.serialize(this.index), this.settings);
+        return this._addDataArrays(pageObject.serialize(this.index));
     }
 
     /** Return an array of page objects corresponding to pages which match the query. */
@@ -136,6 +136,16 @@ export class DataviewApi implements DvAPIInterface {
             let res = this.page(p, originFile);
             return res ? [res] : [];
         });
+    }
+
+    /** Remaps important metadata to add data arrays.  */
+    private _addDataArrays(pageObject: SMarkdownPage): SMarkdownPage {
+        // Remap the "file" metadata entries to be data arrays.
+        for (let [key, value] of Object.entries(pageObject.file)) {
+            if (Array.isArray(value)) (pageObject.file as any)[key] = DataArray.wrap(value, this.settings);
+        }
+
+        return pageObject;
     }
 
     /////////////
@@ -186,7 +196,7 @@ export class DataviewApi implements DvAPIInterface {
 
     /** Convert a basic JS type into a Dataview type by parsing dates, links, durations, and so on. */
     public literal(value: any): Literal {
-        return DataArray.convert(parseFrontmatter(value), this.settings);
+        return parseFrontmatter(value);
     }
 
     /**
