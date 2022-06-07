@@ -100,6 +100,10 @@ function findSpecificInlineField(line: string, start: number): InlineField | und
 
 /** Parse a textual inline field value into something we can work with. */
 export function parseInlineValue(value: string): Literal {
+    // Empty inline values (i.e., no text) should map to null to match long-term Dataview semantics.
+    // Null is also a more universal type to deal with than strings, since all functions accept nulls.
+    if (value.trim() == "") return null;
+
     // The stripped literal field parser understands all of the non-array/non-object fields and can parse them for us.
     // Inline field objects are not currently supported; inline array objects have to be handled by the parser
     // separately.
