@@ -43,6 +43,11 @@
     margin: 0em !important;
 }
 
+.dataview-result-list-ul {
+    margin-block-start: 0.2em !important;
+    margin-block-end: 0.2em !important;
+}
+
 /** Generic grouping styling. */
 .dataview.result-group {
     padding-left: 8px;
