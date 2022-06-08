@@ -1,6 +1,6 @@
 import { EXPRESSION } from "expression/parse";
 import { Link } from "data-model/value";
-import { extractFullLineField, extractInlineFields, setInlineField } from "data-import/inline-field";
+import { extractInlineFields, setInlineField } from "data-import/inline-field";
 
 // <-- Inline field wierd edge cases -->
 
