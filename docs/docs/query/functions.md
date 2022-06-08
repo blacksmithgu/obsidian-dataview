@@ -112,6 +112,19 @@ elink("www.google.com") => link element to google.com
 elink("www.google.com", "Google") => link element to google.com, displays as "Google"
 ```
 
+### `typeof(any)`
+
+Get the type of any object for inspection. Can be used in conjunction with other operators to change behavior based on type.
+
+```
+typeof(8) => "number"
+typeof("text") => "string"
+typeof([1, 2, 3]) => "array"
+typeof({ a: 1, b: 2 }) => "object"
+typeof(date(2020-01-01)) => "date"
+typeof(dur(8 minutes)) => "duration"
+```
+
 ---
 
 ## Numeric Operations

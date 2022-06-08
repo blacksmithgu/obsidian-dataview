@@ -29,6 +29,7 @@ a + b               (addition)
 a - b               (subtraction)
 a * b               (multiplication)
 a / b               (division)
+a % b               (modulo / remainder of division)
 
 # Comparison
 a > b               (check if a is greater than b)
