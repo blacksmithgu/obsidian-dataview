@@ -1,3 +1,17 @@
+# 0.5.30
+
+- Added the `typeof(any)` function in Dataview, which obtains the type of any value for comparison:
+```javascript
+typeof("text") = "string"
+typeof(1) = "number"
+typeof([1, 2, 3]) = "array"
+```
+
+- Added the modulo operator (`%`) for doing integer division remainder. I.e., `14 % 2 = 0` and `14 % 3 = 2`.
+- Fixed some minor spacing issues with lists in tables.
+
+---
+
 # 0.5.29
 
 Fix another subtle incompatibility between 0.4.26 and 0.5.29 - if you frequently used empty inline fields (like
