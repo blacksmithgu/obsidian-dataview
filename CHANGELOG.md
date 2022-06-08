@@ -1,3 +1,10 @@
+# 0.5.31
+
+Tasks now have an `outlinks` list field which includes all links in the task; this can be used for finding tasks with
+links in them.
+
+---
+
 # 0.5.30
 
 - Added the `typeof(any)` function in Dataview, which obtains the type of any value for comparison:
