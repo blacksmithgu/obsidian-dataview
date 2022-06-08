@@ -36,17 +36,28 @@ export function parsePage(path: string, contents: string, stat: FileStats, metad
     }
 
     // Links in metadata.
+    const linksByLine: Record<number, Link[]> = {};
     for (let rawLink of metadata.links || []) {
-        links.push(Link.infer(rawLink.link, false, rawLink.displayText));
+        const link = Link.infer(rawLink.link, false, rawLink.displayText);
+        const line = rawLink.position.start.line;
+
+        links.push(link);
+        if (!(line in linksByLine)) linksByLine[line] = [link];
+        else linksByLine[line].push(link);
     }
 
     // Embed Links in metadata.
     for (let rawEmbed of metadata.embeds || []) {
-        links.push(Link.infer(rawEmbed.link, true, rawEmbed.displayText));
+        const link = Link.infer(rawEmbed.link, true, rawEmbed.displayText);
+        const line = rawEmbed.position.start.line;
+
+        links.push(link);
+        if (!(line in linksByLine)) linksByLine[line] = [link];
+        else linksByLine[line].push(link);
     }
 
     // Merge frontmatter fields with parsed fields.
-    let markdownData = parseMarkdown(path, contents.split("\n"), metadata);
+    let markdownData = parseMarkdown(path, contents.split("\n"), metadata, linksByLine);
     mergeFieldGroups(fields, markdownData.fields);
 
     // Strip "position" from frontmatter since it is Obsidian determined.
@@ -106,12 +117,13 @@ export function splitFrontmatterTagOrAlias(data: any, on: RegExp): string[] {
 export function parseMarkdown(
     path: string,
     contents: string[],
-    metadata: CachedMetadata
+    metadata: CachedMetadata,
+    linksByLine: Record<number, Link[]>
 ): { fields: Map<string, Literal[]>; lists: ListItem[] } {
     let fields: Map<string, Literal[]> = new Map();
 
     // Extract task data and append the global data extracted from them to our fields.
-    let [lists, extraData] = parseLists(path, contents, metadata);
+    let [lists, extraData] = parseLists(path, contents, metadata, linksByLine);
     for (let [key, values] of extraData.entries()) {
         if (!fields.has(key)) fields.set(key, values);
         else fields.set(key, fields.get(key)!!.concat(values));
@@ -160,7 +172,8 @@ export const LIST_ITEM_REGEX = /^[\s>]*(\d+\.|\d+\)|\*|-|\+)\s*(\[.{0,1}\])?\s*(
 export function parseLists(
     path: string,
     content: string[],
-    metadata: CachedMetadata
+    metadata: CachedMetadata,
+    linksByLine: Record<number, Link[]>
 ): [ListItem[], Map<string, Literal[]>] {
     let cache: Record<number, ListItem> = {};
 
@@ -190,10 +203,17 @@ export function parseLists(
         let sectionLink = sectionName === undefined ? Link.file(path) : Link.header(path, sectionName);
         let closestLink = rawElement.id === undefined ? sectionLink : Link.block(path, rawElement.id);
 
+        // Gather any links that occur on the same lines as the task.
+        const links = [];
+        for (let line = rawElement.position.start.line; line <= rawElement.position.end.line; line++) {
+            if (linksByLine[line]) links.push(...linksByLine[line]);
+        }
+
         // Construct universal information about this element (before tasks).
         let item = new ListItem({
             symbol: rawMatch[1],
             link: closestLink,
+            links: links,
             section: sectionLink,
             text: textWithNewline,
             tags: common.extractTags(textNoNewline),

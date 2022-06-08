@@ -135,6 +135,7 @@ As with pages, Dataview adds a number of implicit fields to each task:
 - `path`: The full path of the file this task is in.
 - `section`: A link to the section this task is contained in.
 - `tags`: Any tags inside of the text task.
+- `outlinks`: Any links defined in this task.
 - `link`: A link to the closest linkable block near this task; useful for making links which go to the task.
 - `children`: Any subtasks or sublists of this task.
 - `task`: If true, this is a task; otherwise, it is a regular list element.

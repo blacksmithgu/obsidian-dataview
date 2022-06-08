@@ -174,6 +174,8 @@ export class ListItem {
     lineCount: number;
     /** The line number for the first list item in the list this item belongs to. */
     list: number;
+    /** Any links contained within this list item. */
+    links: Link[];
     /** The tags contained within this list item. */
     tags: Set<string>;
     /** The raw Obsidian-provided position for where this task is. */
@@ -201,7 +203,10 @@ export class ListItem {
     public constructor(init?: Partial<ListItem>) {
         Object.assign(this, init);
 
-        this.fields = this.fields || {};
+        this.fields = this.fields || new Map();
+        this.tags = this.tags || new Set();
+        this.children = this.children || [];
+        this.links = this.links || [];
     }
 
     public id(): string {
@@ -246,6 +251,7 @@ export class ListItem {
             line: this.line,
             lineCount: this.lineCount,
             list: this.list,
+            outlinks: Array.from(this.links),
             path: this.link.path,
             children: children,
             task: !!this.task,
