@@ -26,6 +26,7 @@ nav:
     - Sources: 'query/sources.md'
     - Functions: 'query/functions.md'
     - Examples: 'query/examples.md'
+    - Frequently Asked Questions: 'query/faq.md'
   - JavaScript Reference:
     - Overview: 'api/intro.md'
     - Data Arrays: 'api/data-array.md'
