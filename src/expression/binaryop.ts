@@ -106,6 +106,7 @@ export function createBinaryOps(linkNormalizer: (x: string) => string): BinaryOp
             .register("number", "-", "number", (a, b) => a - b)
             .register("number", "*", "number", (a, b) => a * b)
             .register("number", "/", "number", (a, b) => a / b)
+            .register("number", "%", "number", (a, b) => a % b)
             // String implementations.
             .register("string", "+", "*", (a, b, ctx) => a + Values.toString(b, ctx.settings))
             .register("*", "+", "string", (a, b, ctx) => Values.toString(a, ctx.settings) + b)
@@ -127,5 +128,11 @@ export function createBinaryOps(linkNormalizer: (x: string) => string): BinaryOp
             .register("array", "+", "array", (a, b) => ([] as Literal[]).concat(a).concat(b))
             // Object operations.
             .register("object", "+", "object", (a, b) => Object.assign({}, a, b))
+            // Null handling operators.
+            .register("null", "+", "null", (_a, _b) => null)
+            .register("null", "-", "null", (_a, _b) => null)
+            .register("null", "*", "null", (_a, _b) => null)
+            .register("null", "/", "null", (_a, _b) => null)
+            .register("null", "%", "null", (_a, _b) => null)
     );
 }

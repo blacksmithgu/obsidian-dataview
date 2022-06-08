@@ -291,9 +291,9 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
 
     // Binary times or divide operator.
     binaryMulDiv: _ =>
-        P.regexp(/\*|\//)
+        P.regexp(/\*|\/|%/)
             .map(str => str as BinaryOp)
-            .desc("'*' or '/'"),
+            .desc("'*' or '/' or '%'"),
 
     // Binary comparison operator.
     binaryCompareOp: _ =>

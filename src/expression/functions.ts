@@ -174,6 +174,21 @@ export namespace Functions {
  * and test code.
  */
 export namespace DefaultFunctions {
+    export const typeOf = new FunctionBuilder("type")
+        .add1("array", _ => "array")
+        .add1("boolean", _ => "boolean")
+        .add1("date", _ => "date")
+        .add1("duration", _ => "duration")
+        .add1("function", _ => "function")
+        .add1("html", _ => "html")
+        .add1("link", _ => "link")
+        .add1("null", _ => "null")
+        .add1("number", _ => "number")
+        .add1("object", _ => "object")
+        .add1("string", _ => "string")
+        .add1("*", _ => "unknown")
+        .build();
+
     /** Compute the length of a data type. */
     export const length = new FunctionBuilder("length")
         .add1("array", a => a.length)
@@ -733,6 +748,7 @@ export const DEFAULT_FUNCTIONS: Record<string, FunctionImpl> = {
     number: DefaultFunctions.number,
     string: DefaultFunctions.string,
     object: DefaultFunctions.object,
+    "typeof": DefaultFunctions.typeOf,
 
     // Math Operations.
     round: DefaultFunctions.round,

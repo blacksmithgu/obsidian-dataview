@@ -477,6 +477,15 @@ describe("Binary Operators", () => {
         );
     });
 
+    test("Simple Modulo", () => {
+        expect(EXPRESSION.field.tryParse("14 % 2")).toEqual(
+            Fields.binaryOp(Fields.literal(14), "%", Fields.literal(2))
+        )
+        expect(EXPRESSION.field.tryParse("31 % 9.0")).toEqual(
+            Fields.binaryOp(Fields.literal(31), "%", Fields.literal(9.0))
+        );
+    });
+
     test("Multiplication (No Spaces)", () => {
         expect(EXPRESSION.field.tryParse("3*a")).toEqual(Fields.binaryOp(Fields.literal(3), "*", Fields.variable("a")));
     });
