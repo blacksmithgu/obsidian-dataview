@@ -62,10 +62,7 @@ for (let group of dv.pages("#book").where(p => p["time-read"].year == 2021).grou
 
 ## Usage
 
-For a full description of all features, instructions, and examples, see the
-[reference](https://blacksmithgu.github.io/obsidian-dataview/). For a more brief outline, let us examine the two major
-aspects of Dataview: *data* and
-*querying*.
+For a full description of all features, instructions, and examples, see the [reference](https://blacksmithgu.github.io/obsidian-dataview/). For a more brief outline, let us examine the two major aspects of Dataview: *data* and *querying*.
 
 #### **Data**
 
