@@ -1,6 +1,6 @@
 import { EXPRESSION } from "expression/parse";
 import { Link } from "data-model/value";
-import { extractInlineFields, setInlineField } from "data-import/inline-field";
+import { extractFullLineField, extractInlineFields, setInlineField } from "data-import/inline-field";
 
 // <-- Inline field wierd edge cases -->
 
@@ -10,21 +10,23 @@ test("Parse commas inside inline field", () => {
 
 // <-- Inline Field Lists -->
 
-test("Parse basic inline fields", () => {
-    expect(EXPRESSION.inlineField.tryParse("14")).toEqual(14);
-    expect(EXPRESSION.inlineField.tryParse('"yes,"')).toEqual("yes,");
-    expect(EXPRESSION.inlineField.tryParse("[[test]]")).toEqual(Link.file("test"));
-});
+describe("Inline Field Values", () => {
+    test("Parse basic inline fields", () => {
+        expect(EXPRESSION.inlineField.tryParse("14")).toEqual(14);
+        expect(EXPRESSION.inlineField.tryParse('"yes,"')).toEqual("yes,");
+        expect(EXPRESSION.inlineField.tryParse("[[test]]")).toEqual(Link.file("test"));
+    });
 
-test("Parse inline field lists", () => {
-    expect(EXPRESSION.inlineField.tryParse("[[test]],")).toEqual([Link.file("test")]);
-    expect(EXPRESSION.inlineField.tryParse("[[test]], [[test2]]")).toEqual([Link.file("test"), Link.file("test2")]);
-    expect(EXPRESSION.inlineField.tryParse('1, 2, 3, "hello"')).toEqual([1, 2, 3, "hello"]);
-});
+    test("Parse inline field lists", () => {
+        expect(EXPRESSION.inlineField.tryParse("[[test]],")).toEqual([Link.file("test")]);
+        expect(EXPRESSION.inlineField.tryParse("[[test]], [[test2]]")).toEqual([Link.file("test"), Link.file("test2")]);
+        expect(EXPRESSION.inlineField.tryParse('1, 2, 3, "hello"')).toEqual([1, 2, 3, "hello"]);
+    });
 
-test("Parse inline booleans", () => {
-    expect(EXPRESSION.inlineField.tryParse("true")).toEqual(true);
-    expect(EXPRESSION.inlineField.tryParse("False")).toEqual(false);
+    test("Parse inline booleans", () => {
+        expect(EXPRESSION.inlineField.tryParse("true")).toEqual(true);
+        expect(EXPRESSION.inlineField.tryParse("False")).toEqual(false);
+    });
 });
 
 // "Inline Inline" Fields

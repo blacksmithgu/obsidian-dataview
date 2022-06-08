@@ -748,7 +748,7 @@ export const DEFAULT_FUNCTIONS: Record<string, FunctionImpl> = {
     number: DefaultFunctions.number,
     string: DefaultFunctions.string,
     object: DefaultFunctions.object,
-    "typeof": DefaultFunctions.typeOf,
+    typeof: DefaultFunctions.typeOf,
 
     // Math Operations.
     round: DefaultFunctions.round,
