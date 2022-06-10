@@ -1,3 +1,25 @@
+# 0.5.32
+
+The Dataview API has been noticably revamped - there are now approximately twice as many functions available on the
+plugin API as there were before, and some additional utilities have been added to both the plugin and inline API. I
+will be finishing up the associated new "extension" functionality shortly, which will allow:
+
+1. For custom Dataview + DataviewJS functions to be added via plugins.
+2. For custom renderable objects (progress bars, embedded task lists, embedded tables) to be added to any Dataview view via plugins.
+3. For plugins to provide alternative behavior for some dataview functionality (such as integrating task plugins with
+   the dataview task query).
+   
+As part of the API revamp, it is now possible to programmatically execute Dataview and DataviewJS queries - either for
+using the existing Dataview query language in your own plugin, or for embedding dataview. The Dataview npm library also
+now exposes many useful internal Dataview types, including the AST structure for all dataview queries.
+
+I am hoping that cleaning up the Dataview API and making it much more extensible will allow for Dataview [to](to) integrate
+much better with existing plugins, and to provide the full power of the in-memory index for plugins. I have been very
+carefully watching index performance in recent weeks to ensure smooth frontend performance for anyone using the API
+(with a goal of <10ms for most queries).
+
+---
+
 # 0.5.31
 
 Tasks now have an `outlinks` list field which includes all links in the task; this can be used for finding tasks with
