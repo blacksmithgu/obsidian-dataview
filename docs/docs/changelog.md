@@ -1,3 +1,9 @@
+# 0.5.33
+
+- Fix a bug with inline views that was introduced in 0.5.32.
+
+---
+
 # 0.5.32
 
 The Dataview API has been noticably revamped - there are now approximately twice as many functions available on the
