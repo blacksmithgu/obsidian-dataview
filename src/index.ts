@@ -11,7 +11,7 @@ export type {
     LiteralRepr,
     WrappedLiteral,
     LiteralWrapper,
-    Widget
+    Widget,
 } from "data-model/value";
 
 export type { Result, Success, Failure } from "api/result";

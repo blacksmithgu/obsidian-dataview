@@ -10,7 +10,14 @@ import { renderCodeBlock, renderErrorPre, renderValue } from "ui/render";
 import { DataArray } from "./data-array";
 import { BoundFunctionImpl, DEFAULT_FUNCTIONS, Functions } from "expression/functions";
 import { Context } from "expression/context";
-import { defaultLinkHandler, executeCalendar, executeList, executeTable, executeTask, IdentifierMeaning } from "query/engine";
+import {
+    defaultLinkHandler,
+    executeCalendar,
+    executeList,
+    executeTable,
+    executeTask,
+    IdentifierMeaning,
+} from "query/engine";
 import { DateTime, Duration } from "luxon";
 import * as Luxon from "luxon";
 import { compare, CompareOperator, satisfies } from "compare-versions";
@@ -91,7 +98,11 @@ export class DataviewApi {
     }
 
     /** Utilities to check the current Dataview version and comapre it to SemVer version ranges. */
-    public version: { current: string; compare: (op: CompareOperator, ver: string) => boolean; satisfies: (range: string) => boolean } = (() => {
+    public version: {
+        current: string;
+        compare: (op: CompareOperator, ver: string) => boolean;
+        satisfies: (range: string) => boolean;
+    } = (() => {
         const { verNum: version } = this;
         return {
             get current() {
@@ -249,7 +260,11 @@ export class DataviewApi {
      * and a 2D array of values; and task arrays return a Grouping<Task> type which allows for recursive
      * task nesting.
      */
-    public async query(source: string, originFile?: string, settings?: QueryApiSettings): Promise<Result<QueryResult, string>> {
+    public async query(
+        source: string,
+        originFile?: string,
+        settings?: QueryApiSettings
+    ): Promise<Result<QueryResult, string>> {
         const query = parseQuery(source);
         if (!query.successful) return query.cast();
 
@@ -272,12 +287,21 @@ export class DataviewApi {
                 // TODO: WITHOUT ID probably shouldn't exist, or should be moved to the engine itself.
                 // For now, until I fix it up in an upcoming refactor, we re-implement the behavior here.
 
-                return Result.success({ type: "list", values: lres.value.data, primaryMeaning: lres.value.primaryMeaning });
+                return Result.success({
+                    type: "list",
+                    values: lres.value.data,
+                    primaryMeaning: lres.value.primaryMeaning,
+                });
             case "table":
                 const tres = await executeTable(query.value, this.index, originFile ?? "", this.settings);
                 if (!tres.successful) return tres.cast();
 
-                return Result.success({ type: "table", values: tres.value.data, headers: tres.value.names, idMeaning: tres.value.idMeaning });
+                return Result.success({
+                    type: "table",
+                    values: tres.value.data,
+                    headers: tres.value.names,
+                    idMeaning: tres.value.idMeaning,
+                });
         }
     }
 
@@ -323,7 +347,12 @@ export class DataviewApi {
      * Note that views made in this way are live updating and will automatically clean themselves up when
      * the component is unloaded or the container is removed.
      */
-    public async execute(source: string, container: HTMLElement, component: Component | MarkdownPostProcessorContext, filePath: string) {
+    public async execute(
+        source: string,
+        container: HTMLElement,
+        component: Component | MarkdownPostProcessorContext,
+        filePath: string
+    ) {
         if (isDataviewDisabled(filePath)) {
             renderCodeBlock(container, source);
             return;
@@ -351,7 +380,14 @@ export class DataviewApi {
                 break;
             case "calendar":
                 component.addChild(
-                    new DataviewCalendarRenderer(query as Query, container, this.index, filePath, this.settings, this.app)
+                    new DataviewCalendarRenderer(
+                        query as Query,
+                        container,
+                        this.index,
+                        filePath,
+                        this.settings,
+                        this.app
+                    )
                 );
                 break;
         }
@@ -361,7 +397,12 @@ export class DataviewApi {
      * Execute the given DataviewJS query, rendering results into the given container using the components lifecycle.
      * See {@link execute} for general rendering semantics.
      */
-    public async executeJs(code: string, container: HTMLElement, component: Component | MarkdownPostProcessorContext, filePath: string) {
+    public async executeJs(
+        code: string,
+        container: HTMLElement,
+        component: Component | MarkdownPostProcessorContext,
+        filePath: string
+    ) {
         if (isDataviewDisabled(filePath)) {
             renderCodeBlock(container, code, "javascript");
             return;
@@ -455,13 +496,16 @@ export type TableResult = { type: "table"; headers: string[]; values: Literal[][
 /** The result of executing a list query. */
 export type ListResult = { type: "list"; values: Literal[]; primaryMeaning: IdentifierMeaning };
 /** The result of executing a task query. */
-export type TaskResult = { type: "task"; values: Grouping<SListItem>; };
+export type TaskResult = { type: "task"; values: Grouping<SListItem> };
 /** The result of executing a calendar query. */
-export type CalendarResult = { type: "calendar"; values: {
-    date: DateTime;
-    link: Link;
-    value?: Literal[]
-}[] };
+export type CalendarResult = {
+    type: "calendar";
+    values: {
+        date: DateTime;
+        link: Link;
+        value?: Literal[];
+    }[];
+};
 
 /** The result of executing a query of some sort. */
 export type QueryResult = TableResult | ListResult | TaskResult | CalendarResult;
@@ -469,8 +513,8 @@ export type QueryResult = TableResult | ListResult | TaskResult | CalendarResult
 /** Settings when querying the dataview API. */
 export type QueryApiSettings = {
     /** If present, then this forces queries to include/exclude the implicit id field (such as with `WITHOUT ID`). */
-    forceId?: boolean
-}
+    forceId?: boolean;
+};
 
 /** Determines if source-path has a `?no-dataview` annotation that disables dataview. */
 export function isDataviewDisabled(sourcePath: string): boolean {

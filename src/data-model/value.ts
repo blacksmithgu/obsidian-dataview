@@ -554,9 +554,9 @@ export class Link {
  * A trivial base class which just defines the '$widget' identifier type. Subtypes of
  * widget are responsible for adding whatever metadata is relevant. If you want your widget
  * to have rendering functionality (which you probably do), you should extend `RenderWidget`.
-*/
+ */
 export abstract class Widget {
-    public constructor(public $widget: string) { }
+    public constructor(public $widget: string) {}
 
     /**
      * Attempt to render this widget in markdown, if possible; if markdown is not possible,

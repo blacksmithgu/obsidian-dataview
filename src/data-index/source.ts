@@ -86,13 +86,13 @@ export namespace Sources {
     }
 
     /** Create a source which takes the intersection of two sources. */
-    export function and(left:Source, right: Source): Source {
-        return { type: "binaryop", left, op: '&', right };
+    export function and(left: Source, right: Source): Source {
+        return { type: "binaryop", left, op: "&", right };
     }
 
     /** Create a source which takes the union of two sources. */
-    export function or(left:Source, right: Source): Source {
-        return { type: "binaryop", left, op: '|', right };
+    export function or(left: Source, right: Source): Source {
+        return { type: "binaryop", left, op: "|", right };
     }
 
     /** Create a source which negates the underlying source. */

@@ -10,7 +10,7 @@ export abstract class DataviewRefreshableRenderer extends MarkdownRenderChild {
         public container: HTMLElement,
         public index: FullIndex,
         public app: App,
-        public settings: DataviewSettings,
+        public settings: DataviewSettings
     ) {
         super(container);
         this.lastReload = 0;

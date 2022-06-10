@@ -136,12 +136,18 @@ export function RawLit({
         return <Markdown content={value.markdown()} sourcePath={sourcePath} />;
     } else if (Values.isWidget(value)) {
         if (Widgets.isListPair(value)) {
-            return <Fragment>
-                        <Lit value={value.key} sourcePath={sourcePath} />:{" "}
-                        <Lit value={value.value} sourcePath={sourcePath} />
-                    </Fragment>;
+            return (
+                <Fragment>
+                    <Lit value={value.key} sourcePath={sourcePath} />:{" "}
+                    <Lit value={value.value} sourcePath={sourcePath} />
+                </Fragment>
+            );
         } else if (Widgets.isExternalLink(value)) {
-            return <a href={value.url} rel="noopener" target="_blank" class="external-link">{value.display ?? value.url}</a>;
+            return (
+                <a href={value.url} rel="noopener" target="_blank" class="external-link">
+                    {value.display ?? value.url}
+                </a>
+            );
         } else {
             return <b>&lt;unknown widget '{value.$widget}'&gt;</b>;
         }

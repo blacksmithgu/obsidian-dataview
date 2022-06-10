@@ -82,12 +82,7 @@ export class DataviewInlineApi {
     /** Dataview functions which can be called from DataviewJS. */
     public func: Record<string, BoundFunctionImpl>;
 
-    constructor(
-        api: DataviewApi,
-        component: Component,
-        container: HTMLElement,
-        currentFilePath: string
-    ) {
+    constructor(api: DataviewApi, component: Component, container: HTMLElement, currentFilePath: string) {
         this.index = api.index;
         this.app = api.app;
         this.settings = api.settings;
@@ -137,7 +132,11 @@ export class DataviewInlineApi {
     ///////////////////////////////
 
     /** Execute a Dataview query, returning the results in programmatic form. */
-    public async query(source: string, originFile?: string, settings?: QueryApiSettings): Promise<Result<QueryResult, string>> {
+    public async query(
+        source: string,
+        originFile?: string,
+        settings?: QueryApiSettings
+    ): Promise<Result<QueryResult, string>> {
         return this.api.query(source, originFile, settings);
     }
 
