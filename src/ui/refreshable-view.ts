@@ -4,11 +4,17 @@ import { DataviewSettings } from "settings";
 
 /** Generic code for embedded Dataviews. */
 export abstract class DataviewRefreshableRenderer extends MarkdownRenderChild {
-    public container: HTMLElement;
-    public index: FullIndex;
-    public app: App;
-    public settings: DataviewSettings;
     private lastReload: number;
+
+    public constructor(
+        public container: HTMLElement,
+        public index: FullIndex,
+        public app: App,
+        public settings: DataviewSettings,
+    ) {
+        super(container);
+        this.lastReload = 0;
+    }
 
     abstract render(): Promise<void>;
 

@@ -64,6 +64,7 @@ export interface SListItemBase {
     parent?: number;
     /** The children elements of this list item. */
     children: SListItem[];
+    outlinks: Link[];
 
     /** The raw text of this item. */
     text: string;

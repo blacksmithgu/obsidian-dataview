@@ -4,10 +4,10 @@
 import { FullIndex } from "data-index/index";
 import { Context, LinkHandler } from "expression/context";
 import { resolveSource, Datarow, matchingSourcePaths } from "data-index/resolver";
-import { DataObject, Link, Literal, Values, Grouping } from "data-model/value";
+import { DataObject, Link, Literal, Values, Grouping, Widgets } from "data-model/value";
 import { CalendarQuery, ListQuery, Query, QueryOperation, TableQuery } from "query/query";
 import { Result } from "api/result";
-import { Field } from "expression/field";
+import { Field, Fields } from "expression/field";
 import { QuerySettings } from "settings";
 import { DateTime } from "luxon";
 import { SListItem } from "data-model/serialized/markdown";
@@ -45,10 +45,10 @@ export interface CoreExecution {
 export function executeCore(rows: Pagerow[], context: Context, ops: QueryOperation[]): Result<CoreExecution, string> {
     let diagnostics = [];
     let identMeaning: IdentifierMeaning = { type: "path" };
-    let startTime = new Date().getTime();
+    let startTime = Date.now();
 
     for (let op of ops) {
-        let opStartTime = new Date().getTime();
+        let opStartTime = Date.now();
         let incomingRows = rows.length;
         let errors: { index: number; message: string }[] = [];
 
@@ -207,7 +207,7 @@ export function executeCore(rows: Pagerow[], context: Context, ops: QueryOperati
             incomingRows,
             errors,
             outgoingRows: rows.length,
-            timeMs: new Date().getTime() - opStartTime,
+            timeMs: Date.now() - opStartTime,
         });
     }
 
@@ -216,7 +216,7 @@ export function executeCore(rows: Pagerow[], context: Context, ops: QueryOperati
         idMeaning: identMeaning,
         ops,
         diagnostics,
-        timeMs: new Date().getTime() - startTime,
+        timeMs: Date.now() - startTime,
     });
 }
 
@@ -231,7 +231,7 @@ export function executeCoreExtract(
     if (!internal.successful) return internal;
 
     let core = internal.value;
-    let startTime = new Date().getTime();
+    let startTime = Date.now();
     let errors: ExecutionError[] = [];
     let res: Pagerow[] = [];
 
@@ -260,7 +260,7 @@ export function executeCoreExtract(
                 .join("\n")}`);
     }
 
-    let execTime = new Date().getTime() - startTime;
+    let execTime = Date.now() - startTime;
     return Result.success({
         data: res,
         idMeaning: core.idMeaning,
@@ -279,7 +279,7 @@ export function executeCoreExtract(
 
 export interface ListExecution {
     core: CoreExecution;
-    data: { primary: Literal; value?: Literal }[];
+    data: Literal[];
     primaryMeaning: IdentifierMeaning;
 }
 
@@ -300,15 +300,18 @@ export async function executeList(
     });
 
     let targetField = (query.header as ListQuery).format;
+    let showId = (query.header as ListQuery).showId;
     let fields: Record<string, Field> = targetField ? { target: targetField } : {};
 
     return executeCoreExtract(fileset.value, rootContext, query.operations, fields).map(core => {
-        let data = core.data.map(p =>
-            iden({
-                primary: p.id,
-                value: p.data["target"] ?? undefined,
-            })
-        );
+        let data: Literal[];
+        if (showId && targetField) {
+            data = core.data.map(p => Widgets.listPair(p.id, p.data["target"] ?? null));
+        } else if (targetField) {
+            data = core.data.map(p => p.data["target"] ?? null);
+        } else {
+            data = core.data.map(p => p.id);
+        }
 
         return { primaryMeaning: core.idMeaning, core, data };
     });
@@ -318,7 +321,7 @@ export async function executeList(
 export interface TableExecution {
     core: CoreExecution;
     names: string[];
-    data: { id: Literal; values: Literal[] }[];
+    data: Literal[][];
     idMeaning: IdentifierMeaning;
 }
 
@@ -339,19 +342,23 @@ export async function executeTable(
     });
 
     let targetFields = (query.header as TableQuery).fields;
+    let showId = (query.header as TableQuery).showId;
     let fields: Record<string, Field> = {};
     for (let field of targetFields) fields[field.name] = field.field;
 
     return executeCoreExtract(fileset.value, rootContext, query.operations, fields).map(core => {
-        let names = targetFields.map(f => f.name);
-        let data = core.data.map(p =>
-            iden({
-                id: p.id,
-                values: targetFields.map(f => p.data[f.name]),
-            })
-        );
+        if (showId) {
+            const idName = core.idMeaning.type === "group" ? settings.tableGroupColumnName : settings.tableIdColumnName;
+            let names = [idName].concat(targetFields.map(f => f.name));
 
-        return { core, names, data, idMeaning: core.idMeaning };
+            let data = core.data.map(p => ([p.id] as Literal[]).concat(targetFields.map(f => p.data[f.name])));
+            return { core, names, data, idMeaning: core.idMeaning };
+        } else {
+            let names = targetFields.map(f => f.name);
+
+            let data = core.data.map(p => targetFields.map(f => p.data[f.name]));
+            return { core, names, data, idMeaning: core.idMeaning };
+        }
     });
 }
 
@@ -479,7 +486,7 @@ export async function executeCalendar(
     let targetField = (query.header as CalendarQuery).field.field;
     let fields: Record<string, Field> = {
         target: targetField,
-        link: { type: "index", object: { type: "variable", name: "file" }, index: { type: "variable", name: "link" } },
+        link: Fields.indexVariable("file.link"),
     };
 
     return executeCoreExtract(fileset.value, rootContext, query.operations, fields).map(core => {

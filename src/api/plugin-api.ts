@@ -1,31 +1,34 @@
 /** The general, externally accessible plugin API (available at `app.plugins.plugins.dataview.api` or as global `DataviewAPI`). */
 
-import { App, Component, TFile } from "obsidian";
+import { App, Component, MarkdownPostProcessorContext, TFile } from "obsidian";
 import { FullIndex } from "data-index/index";
 import { matchingSourcePaths } from "data-index/resolver";
 import { Sources } from "data-index/source";
-import { DataObject, Grouping, Groupings, Link, Literal, Values } from "data-model/value";
+import { DataObject, Grouping, Groupings, Link, Literal, Values, Widgets } from "data-model/value";
 import { EXPRESSION } from "expression/parse";
-import { renderValue } from "ui/render";
+import { renderCodeBlock, renderErrorPre, renderValue } from "ui/render";
 import { DataArray } from "./data-array";
 import { BoundFunctionImpl, DEFAULT_FUNCTIONS, Functions } from "expression/functions";
 import { Context } from "expression/context";
-import { defaultLinkHandler } from "query/engine";
+import { defaultLinkHandler, executeCalendar, executeList, executeTable, executeTask, IdentifierMeaning } from "query/engine";
 import { DateTime, Duration } from "luxon";
 import * as Luxon from "luxon";
 import { compare, CompareOperator, satisfies } from "compare-versions";
-import { DvAPIInterface, DvIOAPIInterface } from "../typings/api";
 import { DataviewSettings } from "settings";
 import { parseFrontmatter } from "data-import/markdown-file";
 import { SListItem, SMarkdownPage } from "data-model/serialized/markdown";
-import { createFixedTaskView } from "ui/views/task-view";
-import { createFixedListView } from "ui/views/list-view";
-import { LiteralValue } from "index";
-import { createFixedTableView } from "ui/views/table-view";
+import { createFixedTaskView, createTaskView } from "ui/views/task-view";
+import { createFixedListView, createListView } from "ui/views/list-view";
+import { createFixedTableView, createTableView } from "ui/views/table-view";
 import { Result } from "api/result";
+import { parseQuery } from "query/parse";
+import { tryOrPropogate } from "util/normalize";
+import { Query } from "query/query";
+import { DataviewCalendarRenderer } from "ui/views/calendar-view";
+import { DataviewJSRenderer } from "ui/views/js-view";
 
 /** Asynchronous API calls related to file / system IO. */
-export class DataviewIOApi implements DvIOAPIInterface {
+export class DataviewIOApi {
     public constructor(public api: DataviewApi) {}
 
     /** Load the contents of a CSV asynchronously, returning a data array of rows (or undefined if it does not exist). */
@@ -61,14 +64,18 @@ export class DataviewIOApi implements DvIOAPIInterface {
     }
 }
 
-export class DataviewApi implements DvAPIInterface {
+/** Global API for accessing the Dataview API, executing dataview queries, and  */
+export class DataviewApi {
     /** Evaluation context which expressions can be evaluated in. */
     public evaluationContext: Context;
+    /** IO API which supports asynchronous loading of data directly. */
     public io: DataviewIOApi;
     /** Dataview functions which can be called from DataviewJS. */
     public func: Record<string, BoundFunctionImpl>;
     /** Value utility functions for comparisons and type-checking. */
     public value = Values;
+    /** Widget utility functions for creating built-in widgets. */
+    public widget = Widgets;
     /** Re-exporting of luxon for people who can't easily require it. Sorry! */
     public luxon = Luxon;
 
@@ -83,8 +90,8 @@ export class DataviewApi implements DvAPIInterface {
         this.io = new DataviewIOApi(this);
     }
 
-    /** utils to check api version */
-    public version: DvAPIInterface["version"] = (() => {
+    /** Utilities to check the current Dataview version and comapre it to SemVer version ranges. */
+    public version: { current: string; compare: (op: CompareOperator, ver: string) => boolean; satisfies: (range: string) => boolean } = (() => {
         const { verNum: version } = this;
         return {
             get current() {
@@ -130,7 +137,7 @@ export class DataviewApi implements DvAPIInterface {
         return this._addDataArrays(pageObject.serialize(this.index));
     }
 
-    /** Return an array of page objects corresponding to pages which match the query. */
+    /** Return an array of page objects corresponding to pages which match the source query. */
     public pages(query?: string, originFile?: string): DataArray<Record<string, Literal>> {
         return this.pagePaths(query, originFile).flatMap(p => {
             let res = this.page(p, originFile);
@@ -177,6 +184,16 @@ export class DataviewApi implements DvAPIInterface {
         return Link.file(path, embed, display);
     }
 
+    /** Create a dataview section link to the given path. */
+    public sectionLink(path: string, section: string, embed: boolean = false, display?: string): Link {
+        return Link.header(path, section, embed, display);
+    }
+
+    /** Create a dataview block link to the given path. */
+    public blockLink(path: string, blockId: string, embed: boolean = false, display?: string): Link {
+        return Link.block(path, blockId, embed, display);
+    }
+
     /** Attempt to extract a date from a string, link or date. */
     public date(pathlike: string | Link | DateTime): DateTime | null {
         return this.func.date(pathlike) as DateTime | null;
@@ -199,12 +216,17 @@ export class DataviewApi implements DvAPIInterface {
         return parseFrontmatter(value);
     }
 
+    /** Deep clone the given literal, returning a new literal which is independent of the original. */
+    public clone(value: Literal): Literal {
+        return Values.deepCopy(value);
+    }
+
     /**
      * Compare two arbitrary JavaScript values using Dataview's default comparison rules. Returns a negative value if
      * a < b, 0 if a = b, and a positive value if a > b.
      */
     public compare(a: any, b: any): number {
-        return Values.compareValue(a, b);
+        return Values.compareValue(a, b, this.evaluationContext.linkHandler.normalize);
     }
 
     /** Return true if the two given JavaScript values are equal using Dataview's default comparison rules. */
@@ -215,6 +237,54 @@ export class DataviewApi implements DvAPIInterface {
     ///////////////////////////////
     // Dataview Query Evaluation //
     ///////////////////////////////
+
+    /**
+     * Execute an arbitrary Dataview query, returning a query result which:
+     *
+     * 1. Indicates the type of query,
+     * 2. Includes the raw AST of the parsed query.
+     * 3. Includes the output in the form relevant to that query type.
+     *
+     * List queries will return a list of objects ({ id, value }); table queries return a header array
+     * and a 2D array of values; and task arrays return a Grouping<Task> type which allows for recursive
+     * task nesting.
+     */
+    public async query(source: string, originFile?: string, settings?: QueryApiSettings): Promise<Result<QueryResult, string>> {
+        const query = parseQuery(source);
+        if (!query.successful) return query.cast();
+
+        const header = query.value.header;
+        switch (header.type) {
+            case "calendar":
+                const cres = await executeCalendar(query.value, this.index, originFile ?? "", this.settings);
+                if (!cres.successful) return cres.cast();
+
+                return Result.success({ type: "calendar", values: cres.value.data });
+            case "task":
+                const tasks = await executeTask(query.value, originFile ?? "", this.index, this.settings);
+                if (!tasks.successful) return tasks.cast();
+
+                return Result.success({ type: "task", values: tasks.value.tasks });
+            case "list":
+                const lres = await executeList(query.value, this.index, originFile ?? "", this.settings);
+                if (!lres.successful) return lres.cast();
+
+                // TODO: WITHOUT ID probably shouldn't exist, or should be moved to the engine itself.
+                // For now, until I fix it up in an upcoming refactor, we re-implement the behavior here.
+
+                return Result.success({ type: "list", values: lres.value.data, primaryMeaning: lres.value.primaryMeaning });
+            case "table":
+                const tres = await executeTable(query.value, this.index, originFile ?? "", this.settings);
+                if (!tres.successful) return tres.cast();
+
+                return Result.success({ type: "table", values: tres.value.data, headers: tres.value.names, idMeaning: tres.value.idMeaning });
+        }
+    }
+
+    /** Error-throwing version of {@link query}. */
+    public async tryQuery(source: string, originFile?: string, settings?: QueryApiSettings): Promise<QueryResult> {
+        return (await this.query(source, originFile, settings)).orElseThrow();
+    }
 
     /**
      * Evaluate a dataview expression (like '2 + 2' or 'link("hello")'), returning the evaluated result.
@@ -245,6 +315,61 @@ export class DataviewApi implements DvAPIInterface {
     // Rendering //
     ///////////////
 
+    /**
+     * Execute the given query, rendering results into the given container using the components lifecycle.
+     * Your component should be a *real* component which calls onload() on it's child components at some point,
+     * or a MarkdownPostProcessorContext!
+     *
+     * Note that views made in this way are live updating and will automatically clean themselves up when
+     * the component is unloaded or the container is removed.
+     */
+    public async execute(source: string, container: HTMLElement, component: Component | MarkdownPostProcessorContext, filePath: string) {
+        if (isDataviewDisabled(filePath)) {
+            renderCodeBlock(container, source);
+            return;
+        }
+
+        let maybeQuery = tryOrPropogate(() => parseQuery(source));
+
+        // In case of parse error, just render the error.
+        if (!maybeQuery.successful) {
+            renderErrorPre(container, "Dataview: " + maybeQuery.error);
+            return;
+        }
+
+        let query = maybeQuery.value;
+        let init = { app: this.app, settings: this.settings, index: this.index, container };
+        switch (query.header.type) {
+            case "task":
+                component.addChild(createTaskView(init, query as Query, filePath));
+                break;
+            case "list":
+                component.addChild(createListView(init, query as Query, filePath));
+                break;
+            case "table":
+                component.addChild(createTableView(init, query as Query, filePath));
+                break;
+            case "calendar":
+                component.addChild(
+                    new DataviewCalendarRenderer(query as Query, container, this.index, filePath, this.settings, this.app)
+                );
+                break;
+        }
+    }
+
+    /**
+     * Execute the given DataviewJS query, rendering results into the given container using the components lifecycle.
+     * See {@link execute} for general rendering semantics.
+     */
+    public async executeJs(code: string, container: HTMLElement, component: Component | MarkdownPostProcessorContext, filePath: string) {
+        if (isDataviewDisabled(filePath)) {
+            renderCodeBlock(container, code, "javascript");
+            return;
+        }
+
+        component.addChild(new DataviewJSRenderer(this, code, container, filePath));
+    }
+
     /** Render a dataview list of the given values. */
     public async list(
         values: any[] | DataArray<any> | undefined,
@@ -261,7 +386,7 @@ export class DataviewApi implements DvAPIInterface {
         component.addChild(
             createFixedListView(
                 { app: this.app, settings: this.settings, index: this.index, container: subcontainer },
-                values as LiteralValue[],
+                values as Literal[],
                 filePath
             )
         );
@@ -323,4 +448,34 @@ export class DataviewApi implements DvAPIInterface {
     ) {
         return renderValue(value as Literal, container, filePath, component, this.settings, inline);
     }
+}
+
+/** The result of executing a table query. */
+export type TableResult = { type: "table"; headers: string[]; values: Literal[][]; idMeaning: IdentifierMeaning };
+/** The result of executing a list query. */
+export type ListResult = { type: "list"; values: Literal[]; primaryMeaning: IdentifierMeaning };
+/** The result of executing a task query. */
+export type TaskResult = { type: "task"; values: Grouping<SListItem>; };
+/** The result of executing a calendar query. */
+export type CalendarResult = { type: "calendar"; values: {
+    date: DateTime;
+    link: Link;
+    value?: Literal[]
+}[] };
+
+/** The result of executing a query of some sort. */
+export type QueryResult = TableResult | ListResult | TaskResult | CalendarResult;
+
+/** Settings when querying the dataview API. */
+export type QueryApiSettings = {
+    /** If present, then this forces queries to include/exclude the implicit id field (such as with `WITHOUT ID`). */
+    forceId?: boolean
+}
+
+/** Determines if source-path has a `?no-dataview` annotation that disables dataview. */
+export function isDataviewDisabled(sourcePath: string): boolean {
+    let questionLocation = sourcePath.lastIndexOf("?");
+    if (questionLocation == -1) return false;
+
+    return sourcePath.substring(questionLocation).contains("no-dataview");
 }

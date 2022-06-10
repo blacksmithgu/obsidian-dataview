@@ -3,9 +3,9 @@
 import { App, Component } from "obsidian";
 import { FullIndex } from "data-index";
 import { renderValue, renderErrorPre } from "ui/render";
-import { DataviewApi, DataviewIOApi } from "api/plugin-api";
+import type { DataviewApi, DataviewIOApi } from "api/plugin-api";
 import { DataviewSettings } from "settings";
-import { DataObject, Grouping, Link, Literal, Values } from "data-model/value";
+import { DataObject, Grouping, Link, Literal, Values, Widgets } from "data-model/value";
 import { BoundFunctionImpl, DEFAULT_FUNCTIONS, Functions } from "expression/functions";
 import { Context } from "expression/context";
 import { defaultLinkHandler } from "query/engine";
@@ -70,6 +70,9 @@ export class DataviewInlineApi {
     /** Value utilities which allow for type-checking and comparisons. */
     public value = Values;
 
+    /** Widget utility functions for creating built-in widgets. */
+    public widget = Widgets;
+
     /** IO utilities which are largely asynchronous. */
     public io: DataviewInlineIOApi;
 
@@ -80,27 +83,25 @@ export class DataviewInlineApi {
     public func: Record<string, BoundFunctionImpl>;
 
     constructor(
-        index: FullIndex,
+        api: DataviewApi,
         component: Component,
         container: HTMLElement,
-        app: App,
-        settings: DataviewSettings,
-        verNum: string,
         currentFilePath: string
     ) {
-        this.index = index;
+        this.index = api.index;
+        this.app = api.app;
+        this.settings = api.settings;
+
         this.component = component;
         this.container = container;
-        this.app = app;
         this.currentFilePath = currentFilePath;
-        this.settings = settings;
 
-        this.api = new DataviewApi(this.app, this.index, this.settings, verNum);
+        this.api = api;
         this.io = new DataviewInlineIOApi(this.api.io, this.currentFilePath);
 
         // Set up the evaluation context with variables from the current file.
         let fileMeta = this.index.pages.get(this.currentFilePath)?.serialize(this.index) ?? {};
-        this.evaluationContext = new Context(defaultLinkHandler(this.index, this.currentFilePath), settings, {
+        this.evaluationContext = new Context(defaultLinkHandler(this.index, this.currentFilePath), this.settings, {
             this: fileMeta,
         });
 
@@ -217,6 +218,11 @@ export class DataviewInlineApi {
     /** Convert a basic JS type into a Dataview type by parsing dates, links, durations, and so on. */
     public literal(value: any): Literal {
         return this.api.literal(value);
+    }
+
+    /** Deep clone the given literal, returning a new literal which is independent of the original. */
+    public clone(value: Literal): Literal {
+        return Values.deepCopy(value);
     }
 
     /**
@@ -372,17 +378,4 @@ export async function asyncEvalInContext(script: string, context: any): Promise<
     } else {
         return Promise.resolve(evalInContext(script, context));
     }
-}
-
-/** Make a full API context which a script can be evaluted in. */
-export function makeApiContext(
-    index: FullIndex,
-    component: Component,
-    app: App,
-    settings: DataviewSettings,
-    verNum: string,
-    container: HTMLElement,
-    originFile: string
-): DataviewInlineApi {
-    return new DataviewInlineApi(index, component, container, app, settings, verNum, originFile);
 }

@@ -8,7 +8,6 @@ import { DataObject } from "data-model/value";
 import { DateTime } from "luxon";
 import { App, Component, MetadataCache, TAbstractFile, TFile, TFolder, Vault } from "obsidian";
 import { getParentFolder, setsEqual } from "util/normalize";
-import { IndexEvtFullName, IndexEvtTriggerArgs } from "../typings/events";
 
 /** Aggregate index which has several sub-indices and will initialize all of them. */
 export class FullIndex extends Component {
@@ -79,8 +78,9 @@ export class FullIndex extends Component {
         this.addChild((this.starred = new StarredCache(this.app, () => this.touch())));
     }
 
-    trigger(...args: IndexEvtTriggerArgs): void {
-        this.metadataCache.trigger("dataview:metadata-change" as IndexEvtFullName, ...args);
+    /** Trigger a metadata event on the metadata cache. */
+    private trigger(...args: any[]): void {
+        this.metadataCache.trigger("dataview:metadata-change", ...args);
     }
 
     /** "Touch" the index, incrementing the revision number and causing downstream views to reload. */

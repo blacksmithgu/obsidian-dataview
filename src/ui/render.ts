@@ -3,7 +3,7 @@ import { DataArray } from "api/data-array";
 import { QuerySettings } from "settings";
 import { currentLocale } from "util/locale";
 import { renderMinimalDate, renderMinimalDuration } from "util/normalize";
-import { Literal, Values } from "data-model/value";
+import { Literal, Values, Widgets } from "data-model/value";
 
 /** Render simple fields compactly, removing wrapping content like paragraph and span. */
 export async function renderCompactMarkdown(
@@ -68,8 +68,22 @@ export async function renderValue(
         await renderCompactMarkdown("" + field, container, originFile, component);
     } else if (Values.isLink(field)) {
         await renderCompactMarkdown(field.markdown(), container, originFile, component);
-    } else if (Values.isHtml(field)) {
-        container.appendChild(field);
+    } else if (Values.isWidget(field)) {
+        if (Widgets.isListPair(field)) {
+            await renderValue(field.key, container, originFile, component, settings, expandList, context, depth);
+            container.appendText(": ");
+            await renderValue(field.value, container, originFile, component, settings, expandList, context, depth);
+        } else if (Widgets.isExternalLink(field)) {
+            let elem = document.createElement("a");
+            elem.textContent = field.display ?? field.url;
+            elem.rel = "noopener";
+            elem.target = "_blank";
+            elem.classList.add("external-link");
+            elem.href = field.url;
+            container.appendChild(elem);
+        } else {
+            container.appendText(`<unknown widget '${field.$widget}>`);
+        }
     } else if (Values.isFunction(field)) {
         container.appendText("<function>");
     } else if (Values.isArray(field) || DataArray.isDataArray(field)) {

@@ -14,9 +14,9 @@ export type LiteralType =
     | "link"
     | "array"
     | "object"
-    | "html"
     | "function"
-    | "null";
+    | "null"
+    | "widget";
 /** The raw values that a literal can take on. */
 export type Literal =
     | boolean
@@ -27,9 +27,9 @@ export type Literal =
     | Link
     | Array<Literal>
     | DataObject
-    | HTMLElement
     | Function
-    | null;
+    | null
+    | Widget;
 
 /** A grouping on a type which supports recursively-nested groups. */
 export type GroupElement<T> = { key: Literal; rows: Grouping<T> };
@@ -54,10 +54,10 @@ export type LiteralRepr<T extends LiteralType> = T extends "boolean"
     ? Array<Literal>
     : T extends "object"
     ? Record<string, Literal>
-    : T extends "html"
-    ? HTMLElement
     : T extends "function"
     ? Function
+    : T extends "widget"
+    ? Widget
     : any;
 
 /** A wrapped literal value which can be switched on. */
@@ -70,7 +70,7 @@ export type WrappedLiteral =
     | LiteralWrapper<"link">
     | LiteralWrapper<"array">
     | LiteralWrapper<"object">
-    | LiteralWrapper<"html">
+    | LiteralWrapper<"widget">
     | LiteralWrapper<"function">
     | LiteralWrapper<"null">;
 
@@ -96,8 +96,9 @@ export namespace Values {
                 return wrapped.value;
             case "number":
             case "boolean":
-            case "html":
                 return "" + wrapped.value;
+            case "widget":
+                return wrapped.value.markdown();
             case "link":
                 return wrapped.value.markdown();
             case "function":
@@ -135,7 +136,7 @@ export namespace Values {
         else if (isBoolean(val)) return { type: "boolean", value: val };
         else if (isDuration(val)) return { type: "duration", value: val };
         else if (isDate(val)) return { type: "date", value: val };
-        else if (isHtml(val)) return { type: "html", value: val };
+        else if (isWidget(val)) return { type: "widget", value: val };
         else if (isArray(val)) return { type: "array", value: val };
         else if (isLink(val)) return { type: "link", value: val };
         else if (isFunction(val)) return { type: "function", value: val };
@@ -247,7 +248,7 @@ export namespace Values {
                     if (comp != 0) return comp;
                 }
                 return 0;
-            case "html":
+            case "widget":
                 return 0;
             case "function":
                 return 0;
@@ -283,7 +284,7 @@ export namespace Values {
                 return wrapped.value.length > 0;
             case "null":
                 return false;
-            case "html":
+            case "widget":
                 return true;
             case "function":
                 return true;
@@ -337,18 +338,14 @@ export namespace Values {
         return val instanceof Link;
     }
 
-    export function isHtml(val: any): val is HTMLElement {
-        if (typeof HTMLElement !== "undefined") {
-            return val instanceof HTMLElement;
-        } else {
-            return false;
-        }
+    export function isWidget(val: any): val is Widget {
+        return val instanceof Widget;
     }
 
     export function isObject(val: any): val is Record<string, any> {
         return (
             typeof val == "object" &&
-            !isHtml(val) &&
+            !isWidget(val) &&
             !isArray(val) &&
             !isDuration(val) &&
             !isDate(val) &&
@@ -546,5 +543,74 @@ export class Link {
     /** The stripped name of the file this link points to. */
     public fileName(): string {
         return getFileTitle(this.path).replace(".md", "");
+    }
+}
+
+/////////////////
+// WIDGET BASE //
+/////////////////
+
+/**
+ * A trivial base class which just defines the '$widget' identifier type. Subtypes of
+ * widget are responsible for adding whatever metadata is relevant. If you want your widget
+ * to have rendering functionality (which you probably do), you should extend `RenderWidget`.
+*/
+export abstract class Widget {
+    public constructor(public $widget: string) { }
+
+    /**
+     * Attempt to render this widget in markdown, if possible; if markdown is not possible,
+     * then this will attempt to render as HTML. Note that many widgets have interactive
+     * components or difficult functional components and the `markdown` function can simply
+     * return a placeholder in this case (such as `<function>` or `<task-list>`).
+     */
+    public abstract markdown(): string;
+}
+
+/** A trivial widget which renders a (key, value) pair, and allows accessing the key and value. */
+export class ListPairWidget extends Widget {
+    public constructor(public key: Literal, public value: Literal) {
+        super("dataview:list-pair");
+    }
+
+    public override markdown(): string {
+        return `${Values.toString(this.key)}: ${Values.toString(this.value)}`;
+    }
+}
+
+/** A simple widget which renders an external link. */
+export class ExternalLinkWidget extends Widget {
+    public constructor(public url: string, public display?: string) {
+        super("dataview:external-link");
+    }
+
+    public override markdown(): string {
+        return `[${this.display ?? this.url}](${this.url})`;
+    }
+}
+
+export namespace Widgets {
+    /** Create a list pair widget matching the given key and value. */
+    export function listPair(key: Literal, value: Literal): ListPairWidget {
+        return new ListPairWidget(key, value);
+    }
+
+    /** Create an external link widget which renders an external Obsidian link. */
+    export function externalLink(url: string, display?: string): ExternalLinkWidget {
+        return new ExternalLinkWidget(url, display);
+    }
+
+    /** Checks if the given widget is a list pair widget. */
+    export function isListPair(widget: Widget): widget is ListPairWidget {
+        return widget.$widget === "dataview:list-pair";
+    }
+
+    export function isExternalLink(widget: Widget): widget is ExternalLinkWidget {
+        return widget.$widget === "dataview:external-link";
+    }
+
+    /** Determines if the given widget is any kind of built-in widget with special rendering handling. */
+    export function isBuiltin(widget: Widget): boolean {
+        return isListPair(widget) || isExternalLink(widget);
     }
 }

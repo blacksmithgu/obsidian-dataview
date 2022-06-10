@@ -8,27 +8,18 @@ import {
     PluginSettingTab,
     Setting,
 } from "obsidian";
-import { renderCodeBlock, renderErrorPre, renderValue } from "ui/render";
+import { renderErrorPre, renderValue } from "ui/render";
 import { FullIndex } from "data-index/index";
-import { Query } from "query/query";
 import { parseField } from "expression/parse";
-import { parseQuery } from "query/parse";
 import { canonicalizeVarName, tryOrPropogate } from "util/normalize";
-import { DataviewApi } from "api/plugin-api";
+import { DataviewApi, isDataviewDisabled } from "api/plugin-api";
 import { DataviewSettings, DEFAULT_QUERY_SETTINGS, DEFAULT_SETTINGS, QuerySettings } from "settings";
 import { extractInlineFields, parseInlineValue } from "data-import/inline-field";
-import { API_NAME, DvAPIInterface } from "./typings/api";
-import { DataviewCalendarRenderer } from "ui/views/calendar-view";
 import { DataviewInlineRenderer } from "ui/views/inline-view";
-import { DataviewInlineJSRenderer, DataviewJSRenderer } from "ui/views/js-view";
+import { DataviewInlineJSRenderer } from "ui/views/js-view";
 import { currentLocale } from "util/locale";
 import { DateTime } from "luxon";
 import { DataviewInlineApi } from "api/inline-api";
-import { createTaskView } from "ui/views/task-view";
-import { createListView } from "ui/views/list-view";
-import { createTableView } from "ui/views/table-view";
-
-const API_NAME: API_NAME extends keyof typeof window ? API_NAME : never = "DataviewAPI" as const; // this line will throw error if name out of sync
 
 export default class DataviewPlugin extends Plugin {
     /** Plugin-wide default settigns. */
@@ -37,7 +28,7 @@ export default class DataviewPlugin extends Plugin {
     /** The index that stores all dataview data. */
     public index: FullIndex;
     /** External-facing plugin API. */
-    public api: DvAPIInterface;
+    public api: DataviewApi;
 
     async onload() {
         // Settings initialization; write defaults first time around.
@@ -57,7 +48,7 @@ export default class DataviewPlugin extends Plugin {
         this.api = new DataviewApi(this.app, this.index, this.settings, this.manifest.version);
 
         // Register API to global window object.
-        (window[API_NAME] = this.api) && this.register(() => delete window[API_NAME]);
+        (window["DataviewAPI"] = this.api) && this.register(() => delete window["DataviewAPI"]);
 
         // Dataview query language code blocks.
         this.registerPriorityCodeblockPostProcessor("dataview", -100, async (source: string, el, ctx) =>
@@ -153,37 +144,7 @@ export default class DataviewPlugin extends Plugin {
         component: Component | MarkdownPostProcessorContext,
         sourcePath: string
     ) {
-        if (isDataviewDisabled(sourcePath)) {
-            renderCodeBlock(el, source);
-            return;
-        }
-
-        let maybeQuery = tryOrPropogate(() => parseQuery(source));
-
-        // In case of parse error, just render the error.
-        if (!maybeQuery.successful) {
-            renderErrorPre(el, "Dataview: " + maybeQuery.error);
-            return;
-        }
-
-        let query = maybeQuery.value;
-        let init = { app: this.app, settings: this.settings, index: this.index, container: el };
-        switch (query.header.type) {
-            case "task":
-                component.addChild(createTaskView(init, query as Query, sourcePath));
-                break;
-            case "list":
-                component.addChild(createListView(init, query as Query, sourcePath));
-                break;
-            case "table":
-                component.addChild(createTableView(init, query as Query, sourcePath));
-                break;
-            case "calendar":
-                component.addChild(
-                    new DataviewCalendarRenderer(query as Query, el, this.index, sourcePath, this.settings, this.app)
-                );
-                break;
-        }
+        this.api.execute(source, el, component, sourcePath);
     }
 
     /** Generate a DataviewJS view running the given source in the given element. */
@@ -193,14 +154,7 @@ export default class DataviewPlugin extends Plugin {
         component: Component | MarkdownPostProcessorContext,
         sourcePath: string
     ) {
-        if (isDataviewDisabled(sourcePath)) {
-            renderCodeBlock(el, source, "javascript");
-            return;
-        }
-
-        component.addChild(
-            new DataviewJSRenderer(source, el, this.app, this.index, sourcePath, this.settings, this.manifest.version)
-        );
+        this.api.executeJs(source, el, component, sourcePath);
     }
 
     /** Render all dataview inline expressions in the given element. */
@@ -221,18 +175,7 @@ export default class DataviewPlugin extends Plugin {
                 let code = text.substring(this.settings.inlineJsQueryPrefix.length).trim();
                 if (code.length == 0) continue;
 
-                component.addChild(
-                    new DataviewInlineJSRenderer(
-                        code,
-                        el,
-                        codeblock,
-                        this.app,
-                        this.index,
-                        sourcePath,
-                        this.settings,
-                        this.manifest.version
-                    )
-                );
+                component.addChild(new DataviewInlineJSRenderer(this.api, code, el, codeblock, sourcePath));
             } else if (this.settings.inlineQueryPrefix.length > 0 && text.startsWith(this.settings.inlineQueryPrefix)) {
                 let potentialField = text.substring(this.settings.inlineQueryPrefix.length).trim();
                 if (potentialField.length == 0) continue;
@@ -268,7 +211,7 @@ export default class DataviewPlugin extends Plugin {
     }
 
     /** @deprecated Call the given callback when the dataview API has initialized. */
-    public withApi(callback: (api: DvAPIInterface) => void) {
+    public withApi(callback: (api: DataviewApi) => void) {
         callback(this.api);
     }
 
@@ -277,7 +220,7 @@ export default class DataviewPlugin extends Plugin {
      * The API will output results to the given HTML element.
      */
     public localApi(path: string, component: Component, el: HTMLElement): DataviewInlineApi {
-        return new DataviewInlineApi(this.index, component, el, this.app, this.settings, this.manifest.version, path);
+        return new DataviewInlineApi(this.api, component, el, path);
     }
 }
 
@@ -604,12 +547,4 @@ async function replaceInlineFields(
             toReplace.textContent = toReplace.wholeText.substring(field.end - field.start);
         }
     }
-}
-
-/** Determines if source-path has a `?no-dataview` annotation that disables dataview. */
-function isDataviewDisabled(sourcePath: string): boolean {
-    let questionLocation = sourcePath.lastIndexOf("?");
-    if (questionLocation == -1) return false;
-
-    return sourcePath.substring(questionLocation).contains("no-dataview");
 }

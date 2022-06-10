@@ -1,7 +1,7 @@
 /** Default function implementations for the expression evaluator. */
 
 import { DateTime } from "luxon";
-import { LiteralType, Link, Literal, Values } from "data-model/value";
+import { LiteralType, Link, Literal, Values, Widgets } from "data-model/value";
 import { currentLocale } from "util/locale";
 import { LiteralReprAll, LiteralTypeOrAll } from "./binaryop";
 import type { Context } from "./context";
@@ -180,7 +180,7 @@ export namespace DefaultFunctions {
         .add1("date", _ => "date")
         .add1("duration", _ => "duration")
         .add1("function", _ => "function")
-        .add1("html", _ => "html")
+        .add1("widget", _ => "widget")
         .add1("link", _ => "link")
         .add1("null", _ => "null")
         .add1("number", _ => "number")
@@ -240,15 +240,7 @@ export namespace DefaultFunctions {
 
     /** External link constructor function. */
     export const elink: FunctionImpl = new FunctionBuilder("elink")
-        .add2("string", "string", (a, d) => {
-            let elem = document.createElement("a");
-            elem.textContent = d;
-            elem.rel = "noopener";
-            elem.target = "_blank";
-            elem.classList.add("external-link");
-            elem.href = a;
-            return elem;
-        })
+        .add2("string", "string", (a, d) => Widgets.externalLink(a, d))
         .add2("string", "null", (s, _n, c) => elink(c, s, s))
         .add2("null", "*", () => null)
         .vectorize(2, [0])

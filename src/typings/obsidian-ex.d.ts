@@ -1,10 +1,9 @@
+import type { DataviewApi } from "api/plugin-api";
 import "obsidian";
-import { DvAPIInterface } from "./api";
-import { DvEvtTriggerArgs } from "./events";
 
 declare module "obsidian" {
     interface MetadataCache {
-        trigger(...args: DvEvtTriggerArgs): void;
+        trigger(...args: Parameters<MetadataCache["on"]>): void;
         trigger(name: string, ...data: any[]): void;
     }
 
@@ -14,7 +13,7 @@ declare module "obsidian" {
             enabledPlugins: Set<string>;
             plugins: {
                 dataview?: {
-                    api: DvAPIInterface;
+                    api: DataviewApi;
                 };
             };
         };
@@ -23,5 +22,11 @@ declare module "obsidian" {
     interface Workspace {
         /** Sent to rendered dataview components to tell them to possibly refresh */
         on(name: "dataview:refresh-views", callback: () => void, ctx?: any): EventRef;
+    }
+}
+
+declare global {
+    interface Window {
+        DataviewAPI?: DataviewApi;
     }
 }

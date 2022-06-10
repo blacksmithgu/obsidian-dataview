@@ -1,6 +1,6 @@
 import { Literal } from "data-model/value";
 import { executeTable } from "query/engine";
-import { Query, TableQuery } from "query/query";
+import { Query } from "query/query";
 import { asyncTryOrPropogate } from "util/normalize";
 import {
     DataviewContext,
@@ -80,22 +80,7 @@ export function TableView({ query, sourcePath }: { query: Query; sourcePath: str
                 executeTable(query, context.index, sourcePath, context.settings)
             );
             if (!result.successful) return { state: "error", error: result.error };
-
-            let showId = (query.header as TableQuery).showId;
-            if (showId) {
-                let dataWithNames: Literal[][] = [];
-                for (let entry of result.value.data) dataWithNames.push([entry.id].concat(entry.values));
-
-                let name =
-                    result.value.idMeaning.type === "group"
-                        ? result.value.idMeaning.name
-                        : context.settings.tableIdColumnName;
-
-                return { state: "ready", headings: [name].concat(result.value.names), values: dataWithNames };
-            }
-
-            // Do not append the ID field by default.
-            return { state: "ready", headings: result.value.names, values: result.value.data.map(v => v.values) };
+            return { state: "ready", headings: result.value.names, values: result.value.data };
         }
     );
 

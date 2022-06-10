@@ -1,23 +1,18 @@
-import { asyncEvalInContext, makeApiContext } from "api/inline-api";
-import { FullIndex } from "data-index";
-import { App } from "obsidian";
-import { DataviewSettings } from "settings";
+import { asyncEvalInContext, DataviewInlineApi } from "api/inline-api";
 import { renderErrorPre, renderValue } from "ui/render";
 import { DataviewRefreshableRenderer } from "ui/refreshable-view";
+import { DataviewApi } from "api/plugin-api";
 
 export class DataviewJSRenderer extends DataviewRefreshableRenderer {
     static PREAMBLE: string = "const dataview = this;const dv = this;";
 
     constructor(
+        public api: DataviewApi,
         public script: string,
         public container: HTMLElement,
-        public app: App,
-        public index: FullIndex,
         public origin: string,
-        public settings: DataviewSettings,
-        public verNum: string
     ) {
-        super(container);
+        super(container, api.index, api.app, api.settings);
     }
 
     async render() {
@@ -35,7 +30,7 @@ export class DataviewJSRenderer extends DataviewRefreshableRenderer {
         try {
             await asyncEvalInContext(
                 DataviewJSRenderer.PREAMBLE + this.script,
-                makeApiContext(this.index, this, this.app, this.settings, this.verNum, this.container, this.origin)
+                new DataviewInlineApi(this.api, this, this.container, this.origin)
             );
         } catch (e) {
             this.containerEl.innerHTML = "";
@@ -52,16 +47,13 @@ export class DataviewInlineJSRenderer extends DataviewRefreshableRenderer {
     errorbox?: HTMLElement;
 
     constructor(
+        public api: DataviewApi,
         public script: string,
         public container: HTMLElement,
         public target: HTMLElement,
-        public app: App,
-        public index: FullIndex,
         public origin: string,
-        public settings: DataviewSettings,
-        public verNum: string
     ) {
-        super(container);
+        super(container, api.index, api.app, api.settings);
     }
 
     async render() {
@@ -79,7 +71,7 @@ export class DataviewInlineJSRenderer extends DataviewRefreshableRenderer {
             let temp = document.createElement("span");
             let result = await asyncEvalInContext(
                 DataviewInlineJSRenderer.PREAMBLE + this.script,
-                makeApiContext(this.index, this, this.app, this.settings, this.verNum, temp, this.origin)
+                new DataviewInlineApi(this.api, this, temp, this.origin)
             );
             this.target.replaceWith(temp);
             this.target = temp;

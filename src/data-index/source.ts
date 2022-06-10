@@ -2,6 +2,7 @@
 
 /** The source of files for a query. */
 export type Source = TagSource | CsvSource | FolderSource | LinkSource | EmptySource | NegatedSource | BinaryOpSource;
+/** Valid operations for combining sources. */
 export type SourceOp = "&" | "|";
 
 /** A tag as a source of data. */
@@ -59,26 +60,42 @@ export interface BinaryOpSource {
 
 /** Utility functions for creating and manipulating sources. */
 export namespace Sources {
+    /** Create a source which searches from a tag. */
     export function tag(tag: string): TagSource {
         return { type: "tag", tag };
     }
 
+    /** Create a source which fetches from a CSV file. */
     export function csv(path: string): CsvSource {
         return { type: "csv", path };
     }
 
+    /** Create a source which searches for files under a folder prefix. */
     export function folder(prefix: string): FolderSource {
         return { type: "folder", folder: prefix };
     }
 
+    /** Create a source which searches for files which link to/from a given file. */
     export function link(file: string, incoming: boolean): LinkSource {
         return { type: "link", file, direction: incoming ? "incoming" : "outgoing" };
     }
 
+    /** Create a source which joins two sources by a logical operator (and/or). */
     export function binaryOp(left: Source, op: SourceOp, right: Source): Source {
         return { type: "binaryop", left, op, right };
     }
 
+    /** Create a source which takes the intersection of two sources. */
+    export function and(left:Source, right: Source): Source {
+        return { type: "binaryop", left, op: '&', right };
+    }
+
+    /** Create a source which takes the union of two sources. */
+    export function or(left:Source, right: Source): Source {
+        return { type: "binaryop", left, op: '|', right };
+    }
+
+    /** Create a source which negates the underlying source. */
     export function negate(child: Source): NegatedSource {
         return { type: "negate", child };
     }

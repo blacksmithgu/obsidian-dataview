@@ -1,47 +1,47 @@
-export { DvAPIInterface as DataviewAPI } from "./typings/api";
+// Basic API type.
+export type { DataviewApi } from "api/plugin-api";
 
-// Data Types
+// Core Dataview types.
 export type { DateTime, Duration } from "luxon";
 export type {
     Link,
     DataObject,
     LiteralType,
-    Literal as LiteralValue,
+    Literal,
     LiteralRepr,
-    WrappedLiteral as WrappedLiteralValue,
-    LiteralWrapper as LiteralValueWrapper,
+    WrappedLiteral,
+    LiteralWrapper,
+    Widget
 } from "data-model/value";
 
-export type { ListItem } from "data-model/markdown";
+export type { Result, Success, Failure } from "api/result";
+export type { DataArray } from "api/data-array";
 
 // Dataview Index.
+export type { ListItem, PageMetadata } from "data-model/markdown";
 export type { FullIndex, PrefixIndex, IndexMap } from "data-index/index";
 
+// Serialized types which describe all outputs of serialization.
+export type { SMarkdownPage, SListEntry, STask } from "data-model/serialized/markdown";
+
+////////////////////
+// Implementation //
+////////////////////
+
+import type { DataviewApi } from "api/plugin-api";
+
 import "obsidian";
-import { App } from "obsidian";
-import { DvAPIInterface } from "./typings/api";
-import { DvEventFullName, IndexEvtFullName } from "./typings/events";
+import type { App } from "obsidian";
 
-// EVENTS
-
-declare module "obsidian" {
-    interface MetadataCache {
-        /** @deprecated Not required anymore, though holding onto it for backwards-compatibility.  */
-        on(name: DvEventFullName<"api-ready">, callback: (api: DvAPIInterface) => void): EventRef;
-        /** Called when all files in the vault have been indexed by dataview. */
-        on(name: DvEventFullName<"index-ready">, callback: () => any): EventRef;
-        /** Index events: Called when dataview metadata for a file changes. */
-        on(name: IndexEvtFullName, callback: (type: "rename", file: TAbstractFile, oldPath: string) => void): EventRef;
-        /** Index events: Called when a file is deleted from the dataview index. */
-        on(name: IndexEvtFullName, callback: (type: "delete" | "update", file: TFile) => void): EventRef;
-    }
-}
-
-// UTIL FUNCTIONS
-
-export const getAPI = (app?: App): DvAPIInterface | undefined => {
+// Utility functions.
+/**
+ * Get the current Dataview API from the app if provided; if not, it is inferred from the global API object installed
+ * on the window.
+ */
+export const getAPI = (app?: App): DataviewApi | undefined => {
     if (app) return app.plugins.plugins.dataview?.api;
-    else return window["DataviewAPI"];
+    else return window.DataviewAPI;
 };
 
+/** Determine if Dataview is enabled in the given application. */
 export const isPluginEnabled = (app: App) => app.plugins.enabledPlugins.has("dataview");

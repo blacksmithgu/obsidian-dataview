@@ -5,7 +5,7 @@ import { useContext, useEffect, useRef, useState } from "preact/hooks";
 import { Component } from "obsidian";
 import { DataviewSettings } from "settings";
 import { FullIndex } from "data-index";
-import { Literal, Values } from "data-model/value";
+import { Literal, Values, Widgets } from "data-model/value";
 import React, { unmountComponentAtNode } from "preact/compat";
 import { renderMinimalDate, renderMinimalDuration } from "util/normalize";
 import { currentLocale } from "util/locale";
@@ -134,8 +134,17 @@ export function RawLit({
         }
 
         return <Markdown content={value.markdown()} sourcePath={sourcePath} />;
-    } else if (Values.isHtml(value)) {
-        return <EmbedHtml element={value} />;
+    } else if (Values.isWidget(value)) {
+        if (Widgets.isListPair(value)) {
+            return <Fragment>
+                        <Lit value={value.key} sourcePath={sourcePath} />:{" "}
+                        <Lit value={value.value} sourcePath={sourcePath} />
+                    </Fragment>;
+        } else if (Widgets.isExternalLink(value)) {
+            return <a href={value.url} rel="noopener" target="_blank" class="external-link">{value.display ?? value.url}</a>;
+        } else {
+            return <b>&lt;unknown widget '{value.$widget}'&gt;</b>;
+        }
     } else if (Values.isFunction(value)) {
         return <Fragment>&lt;function&gt;</Fragment>;
     } else if (Values.isArray(value) || DataArray.isDataArray(value)) {

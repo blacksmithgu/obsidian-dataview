@@ -68,31 +68,37 @@ export interface CalendarQuery {
 
 export type QueryHeader = ListQuery | TableQuery | TaskQuery | CalendarQuery;
 
+/** A step which only retains rows whose 'clause' field is truthy. */
 export interface WhereStep {
     type: "where";
     clause: Field;
 }
 
+/** A step which sorts all current rows by the given list of sorts. */
 export interface SortByStep {
     type: "sort";
     fields: QuerySortBy[];
 }
 
+/** A step which truncates the number of rows to the given amount. */
 export interface LimitStep {
     type: "limit";
     amount: Field;
 }
 
+/** A step which flattens rows into multiple child rows. */
 export interface FlattenStep {
     type: "flatten";
     field: NamedField;
 }
 
+/** A step which groups rows into groups by the given field. */
 export interface GroupStep {
     type: "group";
     field: NamedField;
 }
 
+/** A virtual step which extracts an array of values from each row. */
 export interface ExtractStep {
     type: "extract";
     fields: Record<string, Field>;

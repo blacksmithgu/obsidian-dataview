@@ -26,6 +26,10 @@ export class Success<T, E> {
         return this.value;
     }
 
+    public cast<U>(): Result<U, E> {
+        return this as any;
+    }
+
     public orElseThrow(_message?: (e: E) => string): T {
         return this.value;
     }
@@ -59,6 +63,10 @@ export class Failure<T, E> {
         return value;
     }
 
+    public cast<U>(): Result<U, E> {
+        return this as any;
+    }
+
     public orElseThrow(message?: (e: E) => string): T {
         if (message) throw new Error(message(this.error));
         else throw new Error("" + this.error);
@@ -69,14 +77,17 @@ export type Result<T, E> = Success<T, E> | Failure<T, E>;
 
 /** Monadic 'Result' type which encapsulates whether a procedure succeeded or failed, as well as it's return value. */
 export namespace Result {
+    /** Construct a new success result wrapping the given value. */
     export function success<T, E>(value: T): Result<T, E> {
         return new Success(value);
     }
 
+    /** Construct a new failure value wrapping the given error. */
     export function failure<T, E>(error: E): Result<T, E> {
         return new Failure(error);
     }
 
+    /** Join two results with a bi-function and return a new result. */
     export function flatMap2<T1, T2, O, E>(
         first: Result<T1, E>,
         second: Result<T2, E>,
@@ -90,6 +101,7 @@ export namespace Result {
         }
     }
 
+    /** Join two results with a bi-function and return a new result. */
     export function map2<T1, T2, O, E>(
         first: Result<T1, E>,
         second: Result<T2, E>,
