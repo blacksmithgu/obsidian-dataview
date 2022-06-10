@@ -3,7 +3,7 @@
 import { App, Component } from "obsidian";
 import { FullIndex } from "data-index";
 import { renderValue, renderErrorPre } from "ui/render";
-import type { DataviewApi, DataviewIOApi } from "api/plugin-api";
+import type { DataviewApi, DataviewIOApi, QueryApiSettings, QueryResult } from "api/plugin-api";
 import { DataviewSettings } from "settings";
 import { DataObject, Grouping, Link, Literal, Values, Widgets } from "data-model/value";
 import { BoundFunctionImpl, DEFAULT_FUNCTIONS, Functions } from "expression/functions";
@@ -136,6 +136,16 @@ export class DataviewInlineApi {
     // Dataview Query Evaluation //
     ///////////////////////////////
 
+    /** Execute a Dataview query, returning the results in programmatic form. */
+    public async query(source: string, originFile?: string, settings?: QueryApiSettings): Promise<Result<QueryResult, string>> {
+        return this.api.query(source, originFile, settings);
+    }
+
+    /** Error-throwing version of {@link query}. */
+    public async tryQuery(source: string, originFile?: string, settings?: QueryApiSettings): Promise<QueryResult> {
+        return this.api.tryQuery(source, originFile, settings);
+    }
+
     /**
      * Evaluate a dataview expression (like '2 + 2' or 'link("hello")'), returning the evaluated result.
      * This takes an optional second argument which provides definitions for variables, such as:
@@ -161,6 +171,16 @@ export class DataviewInlineApi {
     /** Error-throwing version of `dv.evaluate`. */
     public tryEvaluate(expression: string, context?: DataObject): Literal {
         return this.evaluate(expression, context).orElseThrow();
+    }
+
+    /** Execute a Dataview query and embed it into the current view. */
+    public async execute(source: string) {
+        this.api.execute(source, this.container, this.component, this.currentFilePath);
+    }
+
+    /** Execute a DataviewJS query and embed it into the current view. */
+    public async executeJs(code: string) {
+        this.api.executeJs(code, this.container, this.component, this.currentFilePath);
     }
 
     /////////////
