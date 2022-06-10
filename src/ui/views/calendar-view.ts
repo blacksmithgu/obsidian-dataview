@@ -26,7 +26,7 @@ export class DataviewCalendarRenderer extends DataviewRefreshableRenderer {
         public settings: DataviewSettings,
         public app: App
     ) {
-        super(container);
+        super(container, index, app, settings);
     }
 
     async render() {
