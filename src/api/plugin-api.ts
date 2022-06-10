@@ -30,7 +30,7 @@ import { createFixedTableView, createTableView } from "ui/views/table-view";
 import { Result } from "api/result";
 import { parseQuery } from "query/parse";
 import { tryOrPropogate } from "util/normalize";
-import { Query } from "query/query";
+import { ListQuery, Query, TableQuery } from "query/query";
 import { DataviewCalendarRenderer } from "ui/views/calendar-view";
 import { DataviewJSRenderer } from "ui/views/js-view";
 
@@ -261,11 +261,11 @@ export class DataviewApi {
      * task nesting.
      */
     public async query(
-        source: string,
+        source: string | Query,
         originFile?: string,
         settings?: QueryApiSettings
     ): Promise<Result<QueryResult, string>> {
-        const query = parseQuery(source);
+        const query = typeof source === "string" ? parseQuery(source) : Result.success<Query, string>(source);
         if (!query.successful) return query.cast();
 
         const header = query.value.header;
@@ -281,6 +281,8 @@ export class DataviewApi {
 
                 return Result.success({ type: "task", values: tasks.value.tasks });
             case "list":
+                if (settings?.forceId !== undefined) header.showId = settings.forceId;
+
                 const lres = await executeList(query.value, this.index, originFile ?? "", this.settings);
                 if (!lres.successful) return lres.cast();
 
@@ -293,6 +295,8 @@ export class DataviewApi {
                     primaryMeaning: lres.value.primaryMeaning,
                 });
             case "table":
+                if (settings?.forceId !== undefined) header.showId = settings.forceId;
+
                 const tres = await executeTable(query.value, this.index, originFile ?? "", this.settings);
                 if (!tres.successful) return tres.cast();
 
