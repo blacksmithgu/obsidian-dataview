@@ -30,7 +30,7 @@ import { createFixedTableView, createTableView } from "ui/views/table-view";
 import { Result } from "api/result";
 import { parseQuery } from "query/parse";
 import { tryOrPropogate } from "util/normalize";
-import { ListQuery, Query, TableQuery } from "query/query";
+import { Query } from "query/query";
 import { DataviewCalendarRenderer } from "ui/views/calendar-view";
 import { DataviewJSRenderer } from "ui/views/js-view";
 
