@@ -36,7 +36,7 @@ export function TableGrouping({
                         {headings.map((heading, index) => (
                             <th class="table-view-th">
                                 <Markdown sourcePath={sourcePath} content={heading} />
-                                {index == 0 && <span class="dataview small-text">&nbsp;({values.length})</span>}
+                                {index == 0 && <span class="dataview small-text">{values.length}</span>}
                             </th>
                         ))}
                     </tr>
