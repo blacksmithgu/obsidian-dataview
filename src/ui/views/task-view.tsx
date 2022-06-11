@@ -117,7 +117,7 @@ function TaskGrouping({ items, sourcePath }: { items: Grouping<SListItem>; sourc
                     <Fragment>
                         <h4>
                             <Lit value={item.key} sourcePath={sourcePath} />
-                            <span class="dataview small-text">&nbsp;({Groupings.count(item.rows)})</span>
+                            <span class="dataview small-text">{Groupings.count(item.rows)}</span>
                         </h4>
                         <div class="dataview result-group">
                             <TaskGrouping items={item.rows} sourcePath={sourcePath} />
