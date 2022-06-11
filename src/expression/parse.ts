@@ -144,7 +144,7 @@ export function chainOpt<T>(base: P.Parser<T>, ...funcs: ((r: T) => P.Parser<T>)
 ////////////////////////
 
 type PostfixFragment =
-    | { type: "dot"; field: Field }
+    | { type: "dot"; field: string }
     | { type: "index"; field: Field }
     | { type: "function"; fields: Field[] };
 
@@ -517,6 +517,8 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
             for (let post of postfixes) {
                 switch (post.type) {
                     case "dot":
+                        result = Fields.index(result, Fields.literal(post.field));
+                        break;
                     case "index":
                         result = Fields.index(result, post.field);
                         break;
@@ -552,7 +554,7 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
 
     dotPostfix: q =>
         P.seqMap(P.string("."), q.identifier, (_, field) => {
-            return { type: "dot", field: Fields.literal(field) };
+            return { type: "dot", field: field };
         }),
     indexPostfix: q =>
         P.seqMap(P.string("["), P.optWhitespace, q.field, P.optWhitespace, P.string("]"), (_, _2, field, _3, _4) => {

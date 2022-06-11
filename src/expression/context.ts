@@ -123,17 +123,16 @@ export class Context {
                 }
             case "index":
                 // TODO: Will move this out to an 'primitives' module and add more content to it.
-                let literalIndex =
-                    field.index.type == "variable"
-                        ? Result.success<string, string>(field.index.name)
-                        : this.evaluate(field.index, data);
-                let checkedIndex: Result<string | number, string> = literalIndex.flatMap(s =>
-                    Values.isString(s) || Values.isNumber(s)
-                        ? Result.success<string | number, string>(s)
-                        : Result.failure("Can only index with a string, variable, or number")
+                let literalIndex = this.evaluate(field.index, data);
+                let checkedIndex: Result<string | number | null, string> = literalIndex.flatMap(s =>
+                    Values.isString(s) || Values.isNumber(s) || Values.isNull(s)
+                        ? Result.success<string | number | null, string>(s)
+                        : Result.failure("Can only index with a string or number")
                 );
                 if (!checkedIndex.successful) return checkedIndex;
+
                 let index = checkedIndex.value;
+                if (Values.isNull(index)) return Result.success(null);
 
                 let checkedObject =
                     field.object.type == "variable" && field.object.name == "row"
