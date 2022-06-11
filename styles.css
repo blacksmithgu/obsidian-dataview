@@ -126,5 +126,5 @@ div.dataview-error-box {
 
 .dataview.small-text {
     font-size: smaller;
-    color: var(--text-selection);
+    color: var(--text-muted);
 }
