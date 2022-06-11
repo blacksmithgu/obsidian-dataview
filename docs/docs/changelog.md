@@ -1,3 +1,10 @@
+# 0.5.34
+
+- Fix #1174: Fix indexing with a variable.
+- Fix an issue with the experimental calendar view.
+
+---
+
 # 0.5.33
 
 - Fix a bug with inline views that was introduced in 0.5.32.
