@@ -1,3 +1,10 @@
+# 0.5.36
+
+- Fix a bug when checking if an element is an HTMLElement.
+- Properly include the nice improvements to the file count in tables and lists.
+
+---
+
 # 0.5.35
 
 - Fix #1196, #1176: Re-enable HTML values. This was never a featured I advertised since it was just for some internal
