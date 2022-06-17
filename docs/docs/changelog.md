@@ -1,3 +1,11 @@
+# 0.5.35
+
+- Fix #1196, #1176: Re-enable HTML values. This was never a featured I advertised since it was just for some internal
+  hackery, but it appears people just discovered it in DataviewJS queries.
+- Improved initial time to popular queries that use `file.starred`.
+
+---
+
 # 0.5.34
 
 - Fix #1174: Fix indexing with a variable.
