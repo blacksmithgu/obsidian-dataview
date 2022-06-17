@@ -43,11 +43,24 @@ export const DEFAULT_QUERY_SETTINGS: QuerySettings = {
     tableGroupColumnName: "Group",
 };
 
+/////////////////////
+// Export Settings //
+/////////////////////
+
+export interface ExportSettings {
+    /** Whether or not HTML should be used for formatting in exports. */
+    allowHtml: boolean;
+}
+
+export const DEFAULT_EXPORT_SETTINGS: ExportSettings = {
+    allowHtml: true
+}
+
 ///////////////////////////////
 // General Dataview Settings //
 ///////////////////////////////
 
-export interface DataviewSettings extends QuerySettings {
+export interface DataviewSettings extends QuerySettings, ExportSettings {
     /** The prefix for inline queries by default. */
     inlineQueryPrefix: string;
     /** The prefix for inline JS queries by default. */
@@ -63,6 +76,7 @@ export interface DataviewSettings extends QuerySettings {
 /** Default settings for dataview on install. */
 export const DEFAULT_SETTINGS: DataviewSettings = {
     ...DEFAULT_QUERY_SETTINGS,
+    ...DEFAULT_EXPORT_SETTINGS,
     ...{
         inlineQueryPrefix: "=",
         inlineJsQueryPrefix: "$=",

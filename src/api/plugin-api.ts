@@ -21,7 +21,7 @@ import {
 import { DateTime, Duration } from "luxon";
 import * as Luxon from "luxon";
 import { compare, CompareOperator, satisfies } from "compare-versions";
-import { DataviewSettings } from "settings";
+import { DataviewSettings, ExportSettings } from "settings";
 import { parseFrontmatter } from "data-import/markdown-file";
 import { SListItem, SMarkdownPage } from "data-model/serialized/markdown";
 import { createFixedTaskView, createTaskView } from "ui/views/task-view";
@@ -33,6 +33,7 @@ import { tryOrPropogate } from "util/normalize";
 import { Query } from "query/query";
 import { DataviewCalendarRenderer } from "ui/views/calendar-view";
 import { DataviewJSRenderer } from "ui/views/js-view";
+import { markdownTable } from "ui/export/markdown";
 
 /** Asynchronous API calls related to file / system IO. */
 export class DataviewIOApi {
@@ -492,6 +493,19 @@ export class DataviewApi {
         inline: boolean = false
     ) {
         return renderValue(value as Literal, container, filePath, component, this.settings, inline);
+    }
+
+    /////////////////
+    // Data Export //
+    /////////////////
+
+    /** Render data to a markdown table */
+    public markdownTable(headers: string[] | undefined, values: any[][] | DataArray<any> | undefined, settings?: Partial<ExportSettings>): string {
+        if (!headers) headers = [];
+        if (!values) values = [];
+
+        const combined = Object.assign({}, this.settings, settings);
+        return markdownTable(headers, values as any[][], combined);
     }
 }
 

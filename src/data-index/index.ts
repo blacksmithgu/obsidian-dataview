@@ -385,6 +385,8 @@ export type StarredEntry = { type: "file"; path: string; title: string } | { typ
 
 /** Optional connector to the Obsidian 'Starred' plugin which allows for efficiently querying if a file is starred or not. */
 export class StarredCache extends Component {
+    /** Initial delay before checking the cache; we need to wait for it to asynchronously load the initial stars. */
+    public static INITIAL_DELAY = 4 * 1_000;
     /** How frequently to check for star updates. */
     public static REFRESH_INTERVAL = 30 * 1_000;
 
@@ -396,6 +398,9 @@ export class StarredCache extends Component {
 
         this.stars = StarredCache.fetch(this.app);
         this.registerInterval(window.setInterval(() => this.reload(), StarredCache.REFRESH_INTERVAL));
+
+        const initialHandler = window.setTimeout(() => this.reload(), StarredCache.INITIAL_DELAY);
+        this.register(() => window.clearTimeout(initialHandler));
     }
 
     /** Determines if the given path is starred. */

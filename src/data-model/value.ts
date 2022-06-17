@@ -91,7 +91,7 @@ export namespace Values {
 
         switch (wrapped.type) {
             case "null":
-                return "" + setting.renderNullAs;
+                return setting.renderNullAs;
             case "string":
                 return wrapped.value;
             case "number":
