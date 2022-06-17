@@ -352,7 +352,11 @@ export namespace Values {
     }
 
     export function isHtml(val: any): val is HTMLElement {
-        return val instanceof HTMLElement;
+        if (typeof HTMLElement !== "undefined") {
+            return val instanceof HTMLElement;
+        } else {
+            return false;
+        }
     }
 
     export function isObject(val: any): val is Record<string, any> {
