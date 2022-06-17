@@ -500,7 +500,11 @@ export class DataviewApi {
     /////////////////
 
     /** Render data to a markdown table */
-    public markdownTable(headers: string[] | undefined, values: any[][] | DataArray<any> | undefined, settings?: Partial<ExportSettings>): string {
+    public markdownTable(
+        headers: string[] | undefined,
+        values: any[][] | DataArray<any> | undefined,
+        settings?: Partial<ExportSettings>
+    ): string {
         if (!headers) headers = [];
         if (!values) values = [];
 

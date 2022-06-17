@@ -53,8 +53,8 @@ export interface ExportSettings {
 }
 
 export const DEFAULT_EXPORT_SETTINGS: ExportSettings = {
-    allowHtml: true
-}
+    allowHtml: true,
+};
 
 ///////////////////////////////
 // General Dataview Settings //

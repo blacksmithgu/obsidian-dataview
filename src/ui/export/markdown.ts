@@ -2,9 +2,15 @@ import { Literal, Values } from "data-model/value";
 import { DEFAULT_SETTINGS, ExportSettings, QuerySettings } from "settings";
 
 /** Render a table of literals to Markdown. */
-export function markdownTable(headers: string[], values: Literal[][], settings?: QuerySettings & ExportSettings): string {
+export function markdownTable(
+    headers: string[],
+    values: Literal[][],
+    settings?: QuerySettings & ExportSettings
+): string {
     if (values.length > 0 && headers.length != values[0].length)
-        throw new Error(`The number of headers (${headers.length}) must match the number of columns (${values[0].length})`);
+        throw new Error(
+            `The number of headers (${headers.length}) must match the number of columns (${values[0].length})`
+        );
 
     settings = settings ?? DEFAULT_SETTINGS;
 
@@ -48,9 +54,15 @@ function rawTableLiteral(value: Literal, allowHtml: boolean = true, settings?: Q
     if (Values.isArray(value)) {
         return `<ul>${value.map(v => "<li>" + tableLiteral(v, allowHtml, settings) + "</li>").join("")}</ul>`;
     } else if (Values.isObject(value)) {
-        const inner = Object.entries(value).map(([k, v]) => {
-            return `<li><b>${tableLiteral(k, allowHtml, settings)}</b>: ${tableLiteral(v, allowHtml, settings)}</li>`;
-        }).join("");
+        const inner = Object.entries(value)
+            .map(([k, v]) => {
+                return `<li><b>${tableLiteral(k, allowHtml, settings)}</b>: ${tableLiteral(
+                    v,
+                    allowHtml,
+                    settings
+                )}</li>`;
+            })
+            .join("");
 
         return `<ul>${inner}</ul>`;
     } else {

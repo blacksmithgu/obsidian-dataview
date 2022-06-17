@@ -68,6 +68,8 @@ export async function renderValue(
         await renderCompactMarkdown("" + field, container, originFile, component);
     } else if (Values.isLink(field)) {
         await renderCompactMarkdown(field.markdown(), container, originFile, component);
+    } else if (Values.isHtml(field)) {
+        container.appendChild(field);
     } else if (Values.isWidget(field)) {
         if (Widgets.isListPair(field)) {
             await renderValue(field.key, container, originFile, component, settings, expandList, context, depth);

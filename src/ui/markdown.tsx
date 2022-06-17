@@ -134,6 +134,8 @@ export function RawLit({
         }
 
         return <Markdown content={value.markdown()} sourcePath={sourcePath} />;
+    } else if (Values.isHtml(value)) {
+        return <EmbedHtml element={value} />;
     } else if (Values.isWidget(value)) {
         if (Widgets.isListPair(value)) {
             return (

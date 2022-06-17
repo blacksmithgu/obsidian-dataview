@@ -16,6 +16,7 @@ export type LiteralType =
     | "object"
     | "function"
     | "null"
+    | "html"
     | "widget";
 /** The raw values that a literal can take on. */
 export type Literal =
@@ -29,6 +30,7 @@ export type Literal =
     | DataObject
     | Function
     | null
+    | HTMLElement
     | Widget;
 
 /** A grouping on a type which supports recursively-nested groups. */
@@ -56,6 +58,8 @@ export type LiteralRepr<T extends LiteralType> = T extends "boolean"
     ? Record<string, Literal>
     : T extends "function"
     ? Function
+    : T extends "html"
+    ? HTMLElement
     : T extends "widget"
     ? Widget
     : any;
@@ -70,6 +74,7 @@ export type WrappedLiteral =
     | LiteralWrapper<"link">
     | LiteralWrapper<"array">
     | LiteralWrapper<"object">
+    | LiteralWrapper<"html">
     | LiteralWrapper<"widget">
     | LiteralWrapper<"function">
     | LiteralWrapper<"null">;
@@ -97,6 +102,8 @@ export namespace Values {
             case "number":
             case "boolean":
                 return "" + wrapped.value;
+            case "html":
+                return wrapped.value.outerHTML;
             case "widget":
                 return wrapped.value.markdown();
             case "link":
@@ -140,6 +147,7 @@ export namespace Values {
         else if (isArray(val)) return { type: "array", value: val };
         else if (isLink(val)) return { type: "link", value: val };
         else if (isFunction(val)) return { type: "function", value: val };
+        else if (isHtml(val)) return { type: "html", value: val };
         else if (isObject(val)) return { type: "object", value: val };
         else return undefined;
     }
@@ -247,9 +255,10 @@ export namespace Values {
                     let comp = compareValue(o1[key], o2[key]);
                     if (comp != 0) return comp;
                 }
+
                 return 0;
             case "widget":
-                return 0;
+            case "html":
             case "function":
                 return 0;
         }
@@ -284,8 +293,8 @@ export namespace Values {
                 return wrapped.value.length > 0;
             case "null":
                 return false;
+            case "html":
             case "widget":
-                return true;
             case "function":
                 return true;
         }
@@ -342,9 +351,14 @@ export namespace Values {
         return val instanceof Widget;
     }
 
+    export function isHtml(val: any): val is HTMLElement {
+        return val instanceof HTMLElement;
+    }
+
     export function isObject(val: any): val is Record<string, any> {
         return (
             typeof val == "object" &&
+            !isHtml(val) &&
             !isWidget(val) &&
             !isArray(val) &&
             !isDuration(val) &&
