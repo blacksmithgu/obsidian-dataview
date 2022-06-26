@@ -104,7 +104,7 @@ export class PageMetadata {
     public fullTags(): Set<string> {
         let result = new Set<string>();
         for (let tag of this.tags) {
-            for (let subtag of extractSubtags(tag)) result.add(subtag);
+            for (let subtag of extractSubtags(tag)) result.add(subtag.toLocaleLowerCase());
         }
 
         return result;
@@ -129,7 +129,7 @@ export class PageMetadata {
                 link: Link.file(this.path),
                 outlinks: this.fileLinks(),
                 inlinks: Array.from(index.links.getInverse(this.path)).map(l => Link.file(l)),
-                etags: Array.from(this.tags),
+                etags: Array.from(this.tags).map(t=>t.toLocaleLowerCase()),
                 tags: Array.from(this.fullTags()),
                 aliases: Array.from(this.aliases),
                 lists: this.lists.map(l => realCache.get(l.line)),
