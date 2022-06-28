@@ -6,10 +6,7 @@ import { DataviewContext, DataviewInit, Lit } from "ui/markdown";
 import { canonicalizeVarName } from "util/normalize";
 
 /** Replaces raw textual inline fields in text containers with pretty HTML equivalents. */
-export async function replaceInlineFields(
-    ctx: MarkdownPostProcessorContext,
-    init: DataviewInit,
-): Promise<void> {
+export async function replaceInlineFields(ctx: MarkdownPostProcessorContext, init: DataviewInit): Promise<void> {
     let inlineFields = extractInlineFields(init.container.innerHTML);
     if (inlineFields.length == 0) return;
 
@@ -37,9 +34,15 @@ export async function replaceInlineFields(
             // Explicitly set the inner HTML to respect any key formatting that we should carry over.
             key.innerHTML = field.key;
 
-            renderContainer.createSpan({ cls: ["dataview", "inline-field-value"], attr: { id: "dataview-inline-field-" + x } });
+            renderContainer.createSpan({
+                cls: ["dataview", "inline-field-value"],
+                attr: { id: "dataview-inline-field-" + x },
+            });
         } else {
-            renderContainer.createSpan({ cls: ["dataview", "inline-field-standalone-value"], attr: { id: "dataview-inline-field-" + x } });
+            renderContainer.createSpan({
+                cls: ["dataview", "inline-field-standalone-value"],
+                attr: { id: "dataview-inline-field-" + x },
+            });
         }
 
         values.push(parseInlineValue(field.value));
@@ -47,7 +50,7 @@ export async function replaceInlineFields(
     }
 
     // Use a <template> block to render this HTML properly to nodes.
-    const template = document.createElement('template');
+    const template = document.createElement("template");
     template.innerHTML = result;
 
     // Replace the container children with the new rendered children.
@@ -59,8 +62,11 @@ export async function replaceInlineFields(
         if (!box) continue;
 
         const context = Object.assign({}, init, { container: box, component: component });
-        render(<DataviewContext.Provider value={context}>
-            <Lit value={values[index]} inline={true} sourcePath={ctx.sourcePath}/>
-        </DataviewContext.Provider>, box);
+        render(
+            <DataviewContext.Provider value={context}>
+                <Lit value={values[index]} inline={true} sourcePath={ctx.sourcePath} />
+            </DataviewContext.Provider>,
+            box
+        );
     }
 }

@@ -1,12 +1,4 @@
-import {
-    App,
-    Component,
-    debounce,
-    MarkdownPostProcessorContext,
-    Plugin,
-    PluginSettingTab,
-    Setting,
-} from "obsidian";
+import { App, Component, debounce, MarkdownPostProcessorContext, Plugin, PluginSettingTab, Setting } from "obsidian";
 import { renderErrorPre } from "ui/render";
 import { FullIndex } from "data-index/index";
 import { parseField } from "expression/parse";
@@ -76,7 +68,7 @@ export default class DataviewPlugin extends Plugin {
                     app: this.app,
                     index: this.index,
                     settings: this.settings,
-                    container: p
+                    container: p,
                 };
 
                 await replaceInlineFields(ctx, init);
@@ -181,8 +173,12 @@ export default class DataviewPlugin extends Plugin {
             let codeblock = codeblocks.item(index);
 
             // Skip code inside of pre elements if not explicitly enabled.
-            if (codeblock.parentElement && codeblock.parentElement.nodeName.toLowerCase() == "pre"
-                && !this.settings.inlineQueriesInCodeblocks) continue;
+            if (
+                codeblock.parentElement &&
+                codeblock.parentElement.nodeName.toLowerCase() == "pre" &&
+                !this.settings.inlineQueriesInCodeblocks
+            )
+                continue;
 
             let text = codeblock.innerText.trim();
             if (this.settings.inlineJsQueryPrefix.length > 0 && text.startsWith(this.settings.inlineJsQueryPrefix)) {
@@ -310,8 +306,11 @@ class GeneralSettingsTab extends PluginSettingTab {
         new Setting(this.containerEl)
             .setName("Codeblock Inline Queries")
             .setDesc("If enabled, inline queries will also be evaluated inside full codeblocks.")
-            .addToggle(toggle => toggle.setValue(this.plugin.settings.inlineQueriesInCodeblocks)
-                .onChange(async value => await this.plugin.updateSettings({ inlineQueriesInCodeblocks: value })));
+            .addToggle(toggle =>
+                toggle
+                    .setValue(this.plugin.settings.inlineQueriesInCodeblocks)
+                    .onChange(async value => await this.plugin.updateSettings({ inlineQueriesInCodeblocks: value }))
+            );
 
         this.containerEl.createEl("h2", { text: "View Settings" });
         this.containerEl.createEl("h3", { text: "General" });
