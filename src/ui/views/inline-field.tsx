@@ -1,5 +1,4 @@
 import { extractInlineFields, parseInlineValue } from "data-import/inline-field";
-import { Literal } from "data-model/value";
 import { MarkdownPostProcessorContext, MarkdownRenderChild } from "obsidian";
 import { h, render } from "preact";
 import { DataviewContext, DataviewInit, Lit } from "ui/markdown";
@@ -14,7 +13,6 @@ export async function replaceInlineFields(ctx: MarkdownPostProcessorContext, ini
     ctx.addChild(component);
 
     // Iterate through the raw HTML and replace inline field matches with corresponding rendered values.
-    const values: Literal[] = [];
     let result = init.container.innerHTML;
     for (let x = inlineFields.length - 1; x >= 0; x--) {
         let field = inlineFields[x];
@@ -45,7 +43,6 @@ export async function replaceInlineFields(ctx: MarkdownPostProcessorContext, ini
             });
         }
 
-        values.push(parseInlineValue(field.value));
         result = result.slice(0, field.start) + renderContainer.outerHTML + result.slice(field.end);
     }
 
@@ -57,14 +54,14 @@ export async function replaceInlineFields(ctx: MarkdownPostProcessorContext, ini
     // TODO: Replace this with a dom-to-dom diff to reduce the actual amount of updates.
     init.container.replaceChildren(...template.content.childNodes);
 
-    for (let index = 0; index < values.length; index++) {
+    for (let index = 0; index < inlineFields.length; index++) {
         const box = init.container.querySelector("#dataview-inline-field-" + index);
         if (!box) continue;
 
         const context = Object.assign({}, init, { container: box, component: component });
         render(
             <DataviewContext.Provider value={context}>
-                <Lit value={values[index]} inline={true} sourcePath={ctx.sourcePath} />
+                <Lit value={parseInlineValue(inlineFields[index].value)} inline={true} sourcePath={ctx.sourcePath} />
             </DataviewContext.Provider>,
             box
         );
