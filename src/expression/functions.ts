@@ -614,6 +614,24 @@ export namespace DefaultFunctions {
         .vectorize(3, [0, 1, 2])
         .build();
 
+    export const truncate: FunctionImpl = new FunctionBuilder("truncate")
+        .add3("string", "number", "string", (str, length, suffix) => {
+            if (str.length > length - suffix.length) {
+                return str.substring(0, Math.max(0, length - suffix.length)) + suffix;
+            } else {
+                return str;
+            }
+        })
+        .add2("string", "number", (str, length, ctx) => truncate(ctx, str, length, "..."))
+        .add2("null", "*", () => null)
+        .add2("*", "null", () => null)
+        .add3("null", "*", "*", () => null)
+        .add3("*", "null", "*", () => null)
+        .add3("*", "*", "null", () => null)
+        .vectorize(2, [0, 1])
+        .vectorize(3, [0, 1, 2])
+        .build();
+
     export const fdefault = new FunctionBuilder("default")
         .add2("*", "*", (v, bk) => (Values.isNull(v) ? bk : v))
         .vectorize(2, [0, 1])
@@ -761,6 +779,7 @@ export const DEFAULT_FUNCTIONS: Record<string, FunctionImpl> = {
     padleft: DefaultFunctions.padleft,
     padright: DefaultFunctions.padright,
     substring: DefaultFunctions.substring,
+    truncate: DefaultFunctions.truncate,
 
     // Date Operations.
     striptime: DefaultFunctions.striptime,
