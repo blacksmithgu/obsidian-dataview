@@ -5,7 +5,7 @@ import { ListItem, PageMetadata } from "data-model/markdown";
 import { Literal, Link, Values } from "data-model/value";
 import { EXPRESSION } from "expression/parse";
 import { DateTime } from "luxon";
-import type { CachedMetadata, FileStats, FrontMatterCache, HeadingCache } from "obsidian";
+import { CachedMetadata, FileStats, FrontMatterCache, HeadingCache } from "obsidian";
 import { canonicalizeVarName, extractDate, getFileTitle } from "util/normalize";
 import * as common from "data-import/common";
 
@@ -88,11 +88,20 @@ export function extractTags(metadata: FrontMatterCache): string[] {
         .map(str => (str.startsWith("#") ? str : "#" + str));
 }
 
-/** Extract tags intelligently from frontmatter. Handles arrays, numbers, and strings.  */
+/** Extract aliases intelligently from frontmatter. Handles arrays, numbers, and strings.  */
 export function extractAliases(metadata: FrontMatterCache): string[] {
     let aliasKeys = Object.keys(metadata).filter(t => t.toLowerCase() == "alias" || t.toLowerCase() == "aliases");
 
-    return aliasKeys.map(k => splitFrontmatterTagOrAlias(metadata[k], /,/)).reduce((p, c) => p.concat(c), []);
+    const result: string[] = [];
+    for (let key of aliasKeys) {
+        const value = metadata[key];
+        if (!value) continue;
+
+        if (Array.isArray(value)) result.push(...value.map(v => ("" + v).trim()));
+        else result.push(...splitFrontmatterTagOrAlias(value, /,/));
+    }
+
+    return result;
 }
 
 /** Split a frontmatter list into separate elements; handles actual lists, comma separated lists, and single elements. */
