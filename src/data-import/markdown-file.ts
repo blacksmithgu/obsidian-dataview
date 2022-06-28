@@ -146,7 +146,7 @@ export function parseMarkdown(
             if (listLinesToSkip.has(lineno)) continue;
 
             // Fast bail-out for lines that are too long or do not contain '::'.
-            if (line.length > 2048 || !line.includes("::")) continue;
+            if (line.length > 32768 || !line.includes("::")) continue;
             line = line.trim();
 
             let inlineFields = extractInlineFields(line);

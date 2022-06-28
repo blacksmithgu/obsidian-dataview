@@ -133,6 +133,13 @@ modes:
    This page was last modified at `$= dv.current().file.mtime`.
    ~~~
 
+#### JavaScript Queries: Security Note
+
+JavaScript queries are very powerful, but they run at the same level of access as any other Obsidian plugin. This means
+they can potentially rewrite, create, or delete files, as well as make network calls. You should generally write
+JavaScript queries yourself or use scripts that you understand or that come from reputable sources. Regular Dataview
+queries are sandboxed and cannot make negative changes to your vault (in exchange for being much more limited).
+
 ## Contributing
 
 Contributions via bug reports, bug fixes, documentation, and general improvements are always welcome. For more major

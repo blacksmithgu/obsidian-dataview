@@ -48,6 +48,7 @@ function findClosing(
             continue;
         }
 
+        // If escaped, ignore the next character for computing nesting, regardless of what it is.
         if (escaped) {
             escaped = false;
             continue;
