@@ -1,3 +1,10 @@
+# 0.5.37
+
+Fixes inline field rendering to once again work for highlighting/links, as well as some other rendering quirks with
+inline queries in codeblocks.
+
+---
+
 # 0.5.36
 
 - Fix a bug when checking if an element is an HTMLElement.
