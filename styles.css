@@ -66,9 +66,7 @@
 /*******************/
 
 .dataview.inline-field-key {
-    border-top-left-radius: 250px;
-    border-bottom-left-radius: 250px;
-    padding-left: 16px;
+    padding-left: 8px;
     padding-right: 8px;
     font-family: var(--font-monospace);
     background-color: var(--background-primary-alt);
@@ -76,19 +74,16 @@
 }
 
 .dataview.inline-field-value {
-    border-top-right-radius: 250px;
-    border-bottom-right-radius: 250px;
     padding-left: 8px;
-    padding-right: 16px;
+    padding-right: 8px;
     font-family: var(--font-monospace);
     background-color: var(--background-secondary-alt);
     color: var(--text-nav-selected);
 }
 
 .dataview.inline-field-standalone-value {
-    border-radius: 250px;
-    padding-left: 16px;
-    padding-right: 16px;
+    padding-left: 8px;
+    padding-right: 8px;
     font-family: var(--font-monospace);
     background-color: var(--background-secondary-alt);
     color: var(--text-nav-selected);

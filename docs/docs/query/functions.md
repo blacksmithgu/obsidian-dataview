@@ -382,6 +382,30 @@ padright("hello", 7) = "hello  "
 padright("yes", 5, "!") = "yes!!"
 ```
 
+### `substring(string, start, [end])`
+
+Take a slice of a string, starting at `start` and ending at `end` (or the end of the string if unspecified).
+
+```
+substring("hello", 0, 2) = "he"
+substring("hello", 2, 4) = "ll"
+substring("hello", 2) = "llo"
+substring("hello", 0) = "hello"
+```
+
+### `truncate(string, length, [suffix])`
+
+Truncate a string to be at most the given length, including the `suffix` (which defaults to `...`). Generally useful
+to cut off long text in tables.
+
+```
+truncate("Hello there!", 8) = "Hello..."
+truncate("Hello there!", 8, "/") = "Hello t/"
+truncate("Hello there!", 10) = "Hello t..."
+truncate("Hello there!", 10, "!") = "Hello the!"
+truncate("Hello there!", 20) = "Hello there!"
+```
+
 ## Utility Functions
 
 ### `default(field, value)`

@@ -1,25 +1,17 @@
-import {
-    App,
-    Component,
-    debounce,
-    MarkdownPostProcessorContext,
-    MarkdownRenderChild,
-    Plugin,
-    PluginSettingTab,
-    Setting,
-} from "obsidian";
-import { renderErrorPre, renderValue } from "ui/render";
+import { App, Component, debounce, MarkdownPostProcessorContext, Plugin, PluginSettingTab, Setting } from "obsidian";
+import { renderErrorPre } from "ui/render";
 import { FullIndex } from "data-index/index";
 import { parseField } from "expression/parse";
-import { canonicalizeVarName, tryOrPropogate } from "util/normalize";
+import { tryOrPropogate } from "util/normalize";
 import { DataviewApi, isDataviewDisabled } from "api/plugin-api";
-import { DataviewSettings, DEFAULT_QUERY_SETTINGS, DEFAULT_SETTINGS, QuerySettings } from "settings";
-import { extractInlineFields, parseInlineValue } from "data-import/inline-field";
+import { DataviewSettings, DEFAULT_QUERY_SETTINGS, DEFAULT_SETTINGS } from "settings";
 import { DataviewInlineRenderer } from "ui/views/inline-view";
 import { DataviewInlineJSRenderer } from "ui/views/js-view";
 import { currentLocale } from "util/locale";
 import { DateTime } from "luxon";
 import { DataviewInlineApi } from "api/inline-api";
+import { replaceInlineFields } from "ui/views/inline-field";
+import { DataviewInit } from "ui/markdown";
 
 export default class DataviewPlugin extends Plugin {
     /** Plugin-wide default settigns. */
@@ -70,7 +62,17 @@ export default class DataviewPlugin extends Plugin {
             // Allow for lame people to disable the pretty rendering.
             if (!this.settings.prettyRenderInlineFields || isDataviewDisabled(ctx.sourcePath)) return;
 
-            await replaceInlineFields(ctx, el, this.settings);
+            // Handle p, header elements explicitly (opt-in rather than opt-out for now).
+            for (let p of el.findAllSelf("p,h1,h2,h3,h4,h5,h6,li,span,th,td")) {
+                const init: DataviewInit = {
+                    app: this.app,
+                    index: this.index,
+                    settings: this.settings,
+                    container: p,
+                };
+
+                await replaceInlineFields(ctx, init);
+            }
         });
 
         // Dataview "force refresh" operation.
@@ -169,6 +171,14 @@ export default class DataviewPlugin extends Plugin {
         let codeblocks = el.querySelectorAll("code");
         for (let index = 0; index < codeblocks.length; index++) {
             let codeblock = codeblocks.item(index);
+
+            // Skip code inside of pre elements if not explicitly enabled.
+            if (
+                codeblock.parentElement &&
+                codeblock.parentElement.nodeName.toLowerCase() == "pre" &&
+                !this.settings.inlineQueriesInCodeblocks
+            )
+                continue;
 
             let text = codeblock.innerText.trim();
             if (this.settings.inlineJsQueryPrefix.length > 0 && text.startsWith(this.settings.inlineJsQueryPrefix)) {
@@ -291,6 +301,15 @@ class GeneralSettingsTab extends PluginSettingTab {
 
                         await this.plugin.updateSettings({ inlineJsQueryPrefix: value });
                     })
+            );
+
+        new Setting(this.containerEl)
+            .setName("Codeblock Inline Queries")
+            .setDesc("If enabled, inline queries will also be evaluated inside full codeblocks.")
+            .addToggle(toggle =>
+                toggle
+                    .setValue(this.plugin.settings.inlineQueriesInCodeblocks)
+                    .onChange(async value => await this.plugin.updateSettings({ inlineQueriesInCodeblocks: value }))
             );
 
         this.containerEl.createEl("h2", { text: "View Settings" });
@@ -449,102 +468,5 @@ class GeneralSettingsTab extends PluginSettingTab {
                     await this.plugin.updateSettings({ taskCompletionText: value.trim() });
                 })
             );
-    }
-}
-
-const acceptNode = (node: Node): number => {
-    switch (node.nodeName) {
-        // skip code and math equations
-        case "CODE":
-        case "MJX-CONTAINER":
-            return NodeFilter.FILTER_REJECT;
-        case "#text": {
-            if (node.nodeValue && extractInlineFields(node.nodeValue).length > 0) {
-                return NodeFilter.FILTER_ACCEPT;
-            } else return NodeFilter.FILTER_REJECT;
-        }
-        default:
-            return NodeFilter.FILTER_SKIP;
-    }
-};
-/** Replaces raw textual inline fields in text containers with pretty HTML equivalents. */
-async function replaceInlineFields(
-    ctx: MarkdownPostProcessorContext,
-    container: HTMLElement,
-    settings: QuerySettings
-): Promise<void> {
-    const originFile = ctx.sourcePath;
-    const walker = document.createTreeWalker(container, NodeFilter.SHOW_ALL, {
-        acceptNode,
-    });
-    let currentNode: Node | null = walker.currentNode;
-    while (currentNode) {
-        // if being a text node, replace inline fields
-        if (currentNode.nodeType === 3) {
-            const text = currentNode as Text & { __PENDING__?: Promise<any> };
-            // don't wait for new node to be inserted
-            (async () => {
-                let textNodes = [text];
-                if (text.__PENDING__) {
-                    // wait for prevous post processor to finish
-                    await text.__PENDING__;
-                    // rescan for new text nodes
-                    textNodes = [...text.parentElement!.childNodes].filter((n): n is Text => n instanceof Text);
-                }
-                const pending = Promise.all(textNodes.map(insertInlineFieldsToText));
-                // save promise to __PENDING__ to notify other async post processor
-                text.__PENDING__ = pending;
-                await pending;
-                delete text.__PENDING__;
-            })();
-        }
-        currentNode = walker.nextNode();
-    }
-
-    async function insertInlineFieldsToText(text: Text) {
-        const inlineFields = extractInlineFields(text.wholeText);
-
-        for (let i = inlineFields.length - 1; i >= 0; i--) {
-            const field = inlineFields[i];
-            let component = new MarkdownRenderChild(container);
-            ctx.addChild(component);
-            let renderContainer = document.createElement("span");
-            renderContainer.addClasses(["dataview", "inline-field"]);
-
-            // Block inline fields render the key, parenthesis ones do not.
-            if (field.wrapping == "[") {
-                renderContainer.createSpan({
-                    text: field.key,
-                    cls: ["dataview", "inline-field-key"],
-                    attr: {
-                        "data-dv-key": field.key,
-                        "data-dv-norm-key": canonicalizeVarName(field.key),
-                    },
-                });
-
-                let valueContainer = renderContainer.createSpan({ cls: ["dataview", "inline-field-value"] });
-                await renderValue(
-                    parseInlineValue(field.value),
-                    valueContainer,
-                    originFile,
-                    component,
-                    settings,
-                    false
-                );
-            } else {
-                let valueContainer = renderContainer.createSpan({ cls: ["dataview", "inline-field-standalone-value"] });
-                await renderValue(
-                    parseInlineValue(field.value),
-                    valueContainer,
-                    originFile,
-                    component,
-                    settings,
-                    false
-                );
-            }
-            const toReplace = text.splitText(field.start);
-            toReplace.parentElement?.insertBefore(renderContainer, toReplace);
-            toReplace.textContent = toReplace.wholeText.substring(field.end - field.start);
-        }
     }
 }

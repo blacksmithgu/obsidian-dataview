@@ -110,3 +110,11 @@ describe("substring()", () => {
     test("(hello, 2, 4)", () => expect(parseEval(`substring("hello", 2, 4)`)).toEqual("ll"));
     test("(, 0)", () => expect(parseEval(`substring("", 0)`)).toEqual(""));
 });
+
+describe("truncate()", () => {
+    test("8", () => check(`truncate("Hello There!", 8)`).toEqual("Hello..."));
+    test("10", () => check(`truncate("Hello There!", 10)`).toEqual("Hello T..."));
+    test("10", () => check(`truncate("Hello There!", 10, "!")`).toEqual("Hello The!"));
+});
+
+export const check = (text: string) => expect(parseEval(text));

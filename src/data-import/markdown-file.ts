@@ -5,7 +5,7 @@ import { ListItem, PageMetadata } from "data-model/markdown";
 import { Literal, Link, Values } from "data-model/value";
 import { EXPRESSION } from "expression/parse";
 import { DateTime } from "luxon";
-import type { CachedMetadata, FileStats, FrontMatterCache, HeadingCache } from "obsidian";
+import { CachedMetadata, FileStats, FrontMatterCache, HeadingCache } from "obsidian";
 import { canonicalizeVarName, extractDate, getFileTitle } from "util/normalize";
 import * as common from "data-import/common";
 
@@ -92,7 +92,16 @@ export function extractTags(metadata: FrontMatterCache): string[] {
 export function extractAliases(metadata: FrontMatterCache): string[] {
     let aliasKeys = Object.keys(metadata).filter(t => t.toLowerCase() == "alias" || t.toLowerCase() == "aliases");
 
-    return aliasKeys.map(k => splitFrontmatterTagOrAlias(metadata[k], /,/)).reduce((p, c) => p.concat(c), []);
+    const result: string[] = [];
+    for (let key of aliasKeys) {
+        const value = metadata[key];
+        if (!value) continue;
+
+        if (Array.isArray(value)) result.push(...value.map(v => ("" + v).trim()));
+        else result.push(...splitFrontmatterTagOrAlias(value, /,/));
+    }
+
+    return result;
 }
 
 /** Split a frontmatter list into separate elements; handles actual lists, comma separated lists, and single elements. */
@@ -146,7 +155,7 @@ export function parseMarkdown(
             if (listLinesToSkip.has(lineno)) continue;
 
             // Fast bail-out for lines that are too long or do not contain '::'.
-            if (line.length > 2048 || !line.includes("::")) continue;
+            if (line.length > 32768 || !line.includes("::")) continue;
             line = line.trim();
 
             let inlineFields = extractInlineFields(line);
