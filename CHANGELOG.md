@@ -1,3 +1,10 @@
+# 0.5.38
+
+- Some minor documentation improvements.
+- Fix an issue with inline fields rendering out of order. That was a wierd bug.
+
+---
+
 # 0.5.37
 
 Fixes inline field rendering to once again work for highlighting/links, as well as some other rendering quirks with
