@@ -47,7 +47,7 @@ dv.pagePaths("#books") => the paths of pages with tag 'books'
 
 ### `dv.page(path)`
 
-Map a simple path to the full page object, which includes all of the pages fields. Automatically does link resolution,
+Map a simple path or link to the full page object, which includes all of the pages fields. Automatically does link resolution,
 and will figure out the extension automatically if not present.
 
 ```js
@@ -57,7 +57,7 @@ dv.page("books/The Raisin.md") => The page object for /books/The Raisin.md
 
 ## Render
 
-### `dv.el(text)`
+### `dv.el(element, text)`
 
 Render arbitrary text in the given html element.
 ```js
@@ -93,6 +93,23 @@ Render arbitrary text in a span (no padding above/below, unlike a paragraph).
 
 ```js
 dv.span("This is some text");
+```
+
+### `dv.execute(source)`
+
+Execute an arbitrary dataview query and embed the view into the current page.
+
+```js
+dv.execute("LIST FROM #tag");
+dv.execute("TABLE field1, field2 FROM #thing");
+```
+
+### `dv.executeJs(source)`
+
+Execute an arbitrary DataviewJS query and embed the view into the current page.
+
+```js
+dv.executeJs("dv.list([1, 2, 3])");
 ```
 
 ### `dv.view(path, input)`
@@ -186,10 +203,29 @@ dv.isArray({ x: 1 }) => false
 Converts a textual path into a Dataview `Link` object; you can optionally also specify if the link is embedded as well
 as it's display name.
 
-```
+```js
 dv.fileLink("2021-08-08") => link to file named "2021-08-08"
 dv.fileLink("book/The Raisin", true) => embed link to "The Raisin"
 dv.fileLink("Test", false, "Test File") => link to file "Test" with display name "Test File"
+```
+
+### `dv.sectionLink(path, section, [embed?], [display?])`
+
+Converts a textual path + section name into a Dataview `Link` object; you can optionally also specify if the link is embedded and
+it's display name.
+
+```js
+dv.sectionLink("Index", "Books") => [[Index#Books]]
+dv.sectionLink("Index", "Books", false, "My Books") => [[Index#Books|My Books]]
+```
+
+### `dv.blockLink(path, blockId, [embed?], [display?])`
+
+Converts a textual path + block ID into a Dataview `Link` object; you
+can optionally also specify if the link is embedded and it's display name.
+
+```js
+dv.blockLink("Notes", "12gdhjg3") => [[Index#^12gdhjg3]]
 ```
 
 ### `dv.date(text)`
@@ -201,13 +237,22 @@ dv.date("2021-08-08") => DateTime for August 8th, 2021
 dv.date(dv.fileLink("2021-08-07")) => dateTime for August 8th, 2021
 ```
 
+### `dv.duration(text)`
+
+Coerce text to a luxon `Duration`; uses the same parsing rules as Dataview duration types.
+
+```js
+dv.duration("8 minutes") => Duration { 8 minutes }
+dv.duration("9 hours, 2 minutes, 3 seconds") => Duration { 9 hours, 2 minutes, 3 seconds }
+```
+
 ### `dv.compare(a, b)`
 
 Compare two arbitrary JavaScript values according to dataview's default comparison rules; useful if you are writing a
 custom comparator and want to fall back to the default behavior. Returns a negative value if `a < b`, 0 if `a = b`, and
 a positive value if `a > b`.
 
-```
+```js
 dv.compare(1, 2) = -1
 dv.compare("yes", "no") = 1
 dv.compare({ what: 0 }, { what: 0 }) = 0
@@ -218,9 +263,29 @@ dv.compare({ what: 0 }, { what: 0 }) = 0
 Compare two arbitrary JavaScript values and return true if they are equal according to Dataview's default comparison
 rules.
 
-```
+```js
 dv.equal(1, 2) = false
 dv.equal(1, 1) = true
+```
+
+### `dv.clone(value)`
+
+Deep clone any Dataview value, including dates, arrays, and links.
+
+```js
+dv.clone(1) = 1
+dv.clone({ a: 1 }) = { a: 1 }
+```
+
+### `dv.parse(value)`
+
+Parse an arbitrary string object into a complex Dataview type
+(mainly supporting links, dates, and durations).
+
+```js
+dv.parse("[[A]]") = Link { path: A }
+dv.parse("2020-08-14") = DateTime { 2020-08-14 }
+dv.parse("9 seconds") = Duration { 9 seconds }
 ```
 
 ## File I/O
@@ -256,6 +321,35 @@ dv.io.normalize("Test", "dataview/test2/Index.md") => "dataview/test2/Test.md", 
 ```
 
 ## Query Evaluation
+
+### `dv.query(source, [file, settings])`
+
+Execute a Dataview query and return the results as a structured return.
+The return type of this function varies by the query type being executed,
+though will always be an object with a `type` denoting the return type. This version of `query` returns a result type - you may want `tryQuery`, which instead throws an error on failed query execution.
+
+```javascript
+dv.query("LIST FROM #tag") =>
+    Success { type: "list", values: [value1, value2, ...] }
+
+dv.query(`TABLE WITHOUT ID file.name, value FROM "path"`) =>
+    Success { type: "table", headers: ["file.name", "value"], values: [["A", 1], ["B", 2]] }
+
+dv.query("TASK WHERE due") =>
+    Success { type: "task", values: [task1, task2, ...]}
+```
+
+`dv.query` accepts two additional, optional arguments:
+1. `file`: The file path to resolve the query from (in case of references to `this`). Defaults to the current file.
+2. `settings`: Execution settings for running the query. This is largely an advanced use case (where I recommend you
+   directly check the API implementation to see all available options).
+
+### `dv.tryQuery(source, [file, settings])`
+
+Exactly the same as `dv.query`, but more convienent in short scripts as
+execution failures will be raised as JavaScript exceptions instead of a
+result type.
+
 
 ### `dv.tryEvaluate(expression, [context])`
 
