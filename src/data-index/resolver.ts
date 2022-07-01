@@ -18,7 +18,7 @@ export function matchingSourcePaths(
         case "empty":
             return Result.success(new Set<string>());
         case "tag":
-            return Result.success(index.tags.getInverse(source.tag));
+            return Result.success(index.tags.getInverse(source.tag.toLocaleLowerCase()));
         case "csv":
             return Result.success(new Set<string>([index.prefix.resolveRelative(source.path, originFile)]));
         case "folder":
