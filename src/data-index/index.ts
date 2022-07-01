@@ -225,9 +225,9 @@ export class FullIndex extends Component {
             if (realPath) return link.withPath(realPath.path);
             else return link;
         });
-        
+
         let tags: Set<string> = new Set();
-        meta.fullTags().forEach(t=>tags.add(t.toLocaleLowerCase()));
+        meta.fullTags().forEach(t => tags.add(t.toLocaleLowerCase()));
 
         this.pages.set(file.path, meta);
         this.tags.set(file.path, tags);

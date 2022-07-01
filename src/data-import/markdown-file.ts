@@ -81,7 +81,7 @@ export function parsePage(path: string, contents: string, stat: FileStats, metad
 /** Extract tags intelligently from frontmatter. Handles arrays, numbers, and strings. */
 export function extractTags(metadata: FrontMatterCache): string[] {
     let tagKeys = Object.keys(metadata).filter(t => t.toLowerCase() == "tags" || t.toLowerCase() == "tag");
-    
+
     return tagKeys
         .map(k => splitFrontmatterTagOrAlias(metadata[k], /[,\s]+/))
         .reduce((p, c) => p.concat(c), [])
