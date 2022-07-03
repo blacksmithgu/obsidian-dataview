@@ -4,7 +4,7 @@ import { App, Component } from "obsidian";
 import { FullIndex } from "data-index";
 import { renderValue, renderErrorPre } from "ui/render";
 import type { DataviewApi, DataviewIOApi, QueryApiSettings, QueryResult } from "api/plugin-api";
-import { DataviewSettings } from "settings";
+import { DataviewSettings, ExportSettings } from "settings";
 import { DataObject, Grouping, Link, Literal, Values, Widgets } from "data-model/value";
 import { BoundFunctionImpl, DEFAULT_FUNCTIONS, Functions } from "expression/functions";
 import { Context } from "expression/context";
@@ -376,6 +376,15 @@ export class DataviewInlineApi {
     /** Render a dataview task view with the given tasks. */
     public taskList(tasks: Grouping<SListItem>, groupByFile: boolean = true) {
         return this.api.taskList(tasks, groupByFile, this.container, this.component, this.currentFilePath);
+    }
+
+    /** Render a table directly to markdown, returning the markdown. */
+    public markdownTable(
+        headers: string[],
+        values?: any[][] | DataArray<any>,
+        settings?: Partial<ExportSettings>
+    ): string {
+        return this.api.markdownTable(headers, values, settings);
     }
 }
 
