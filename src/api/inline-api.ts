@@ -137,12 +137,26 @@ export class DataviewInlineApi {
         originFile?: string,
         settings?: QueryApiSettings
     ): Promise<Result<QueryResult, string>> {
-        return this.api.query(source, originFile, settings);
+        return this.api.query(source, originFile ?? this.currentFilePath, settings);
     }
 
     /** Error-throwing version of {@link query}. */
     public async tryQuery(source: string, originFile?: string, settings?: QueryApiSettings): Promise<QueryResult> {
-        return this.api.tryQuery(source, originFile, settings);
+        return this.api.tryQuery(source, originFile ?? this.currentFilePath, settings);
+    }
+
+    /** Execute a Dataview query, returning the results in Markdown. */
+    public async queryMarkdown(
+        source: string,
+        originFile?: string,
+        settings?: QueryApiSettings
+    ): Promise<Result<string, string>> {
+        return this.api.queryMarkdown(source, originFile ?? this.currentFilePath, settings);
+    }
+
+    /** Error-throwing version of {@link queryMarkdown}. */
+    public async tryQueryMarkdown(source: string, originFile?: string, settings?: QueryApiSettings): Promise<string> {
+        return this.api.tryQueryMarkdown(source, originFile ?? this.currentFilePath, settings);
     }
 
     /**
@@ -378,6 +392,10 @@ export class DataviewInlineApi {
         return this.api.taskList(tasks, groupByFile, this.container, this.component, this.currentFilePath);
     }
 
+    ////////////////////////
+    // Markdown Rendering //
+    ////////////////////////
+
     /** Render a table directly to markdown, returning the markdown. */
     public markdownTable(
         headers: string[],
@@ -385,6 +403,16 @@ export class DataviewInlineApi {
         settings?: Partial<ExportSettings>
     ): string {
         return this.api.markdownTable(headers, values, settings);
+    }
+
+    /** Render a list directly to markdown, returning the markdown. */
+    public markdownList(values?: any[] | DataArray<any> | undefined, settings?: Partial<ExportSettings>) {
+        return this.api.markdownList(values, settings);
+    }
+
+    /** Render at ask list directly to markdown, returning the markdown. */
+    public markdownTaskList(values: Grouping<SListItem>, settings?: Partial<ExportSettings>) {
+        return this.api.markdownTaskList(values, settings);
     }
 }
 

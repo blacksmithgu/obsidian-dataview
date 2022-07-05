@@ -177,6 +177,42 @@ dv.table(["File", "Genre", "Time Read", "Rating"], dv.pages("#book")
     .map(b => [b.file.link, b.genre, b["time-read"], b.rating]))
 ```
 
+## Markdown Dataviews
+
+Functions which render to plain Markdown strings which you can then render or manipulate as desired.
+
+### `dv.markdownTable(headers, values)`
+
+Equivalent to `dv.table()`, which renders a table with the given list of headers and 2D array of elements, but
+returns plain Markdown.
+
+```js
+// Render a simple table of book info sorted by rating.
+const table = dv.markdownTable(["File", "Genre", "Time Read", "Rating"], dv.pages("#book")
+    .sort(b => b.rating)
+    .map(b => [b.file.link, b.genre, b["time-read"], b.rating]))
+
+dv.paragraph(table);
+```
+
+### `dv.markdownList(values)`
+
+Equivalent to `dv.list()`, which renders a list of the given elements, but returns plain Markdown.
+
+```js
+const markdown = dv.list([1, 2, 3]);
+dv.paragraph(markdown);
+```
+
+### `dv.markdownTaskList(tasks)`
+
+Equivalent to `dv.taskList()`, which renders a task list, but returns plain Markdown.
+
+```js
+const markdown = dv.markdownTaskList(dv.pages("#project").file.tasks);
+dv.paragraph(markdown);
+```
+
 ## Utility
 
 ### `dv.array(value)`
@@ -350,6 +386,18 @@ Exactly the same as `dv.query`, but more convienent in short scripts as
 execution failures will be raised as JavaScript exceptions instead of a
 result type.
 
+### `dv.queryMarkdown(source, [file], [settings])`
+
+Equivalent to `dv.query()`, but returns rendered Markdown.
+
+```js
+dv.queryMarkdown("LIST FROM #tag") =>
+    Success { "- [[Page 1]]\n- [[Page 2]]" }
+```
+
+### `dv.tryQueryMarkdown(source, [file], [settings])`
+
+Exactly the same as `dv.queryMarkdown()`, but throws an error on parse failure.
 
 ### `dv.tryEvaluate(expression, [context])`
 
