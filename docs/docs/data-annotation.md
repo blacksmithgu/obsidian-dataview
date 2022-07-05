@@ -34,6 +34,11 @@ You can add fields to a markdown page in three different ways:
     ```markdown
     I would rate this a [rating:: 9]! It was [mood:: acceptable].
     ```
+    There is also the alternative parenthesis syntax, which is functionally similar to brackets but hides the key when
+    rendered in Reader mode:
+    ```markdown
+    This will not show the (very long key:: key).
+    ```
 
 3. **Implicit**: Dataview annotates pages with a large amount of metadata automatically, like the day the file was
    created (`file.cday`), any associated dates (`file.day`), links in the file (`file.outlinks`), tags (`file.tags`),
