@@ -232,9 +232,6 @@ export function ErrorMessage({ message }: { message: string }) {
     );
 }
 
-/** A react element which produces nothing. */
-export const Nothing = () => null;
-
 /**
  * Complex convienence hook which calls `compute` every time the index updates, updating the current state.
  */
@@ -250,17 +247,20 @@ export function useIndexBackedState<T>(
     let [state, updateState] = useState(initial);
     let [lastReload, setLastReload] = useState(index.revision);
 
+    // Initial setup to queue fetching the correct state.
     if (!initialized) {
-        compute().then(v => updateState(v));
+        setLastReload(index.revision);
         setInitialized(true);
+
+        compute().then(updateState);
     }
 
     // Updated on every container re-create; automatically updates state.
     useEffect(() => {
-        let refreshOperation = () => {
+        const refreshOperation = () => {
             if (lastReload != index.revision && container.isShown() && settings.refreshEnabled) {
+                compute().then(updateState);
                 setLastReload(index.revision);
-                compute().then(v => updateState(v));
             }
         };
 
@@ -273,7 +273,7 @@ export function useIndexBackedState<T>(
             app.workspace.offref(workEvent);
             nodeEvent();
         };
-    }, [container]);
+    }, [container, lastReload]);
 
     return state;
 }

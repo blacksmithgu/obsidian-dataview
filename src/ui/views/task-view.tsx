@@ -101,7 +101,7 @@ function TaskList({ items }: { items: SListItem[] }) {
     let [nest, _mask] = nestItems(items);
     return (
         <ul class="contains-task-list">
-            {nest.map(item => (item.task ? <TaskItem item={item} /> : <ListItem item={item} />))}
+            {nest.map(item => (item.task ? <TaskItem key={listId(item)} item={item} /> : <ListItem key={listId(item)} item={item} />))}
         </ul>
     );
 }
@@ -114,7 +114,7 @@ function TaskGrouping({ items, sourcePath }: { items: Grouping<SListItem>; sourc
         <Fragment>
             {isGrouping &&
                 items.map(item => (
-                    <Fragment>
+                    <Fragment key={item.key}>
                         <h4>
                             <Lit value={item.key} sourcePath={sourcePath} />
                             <span class="dataview small-text">{Groupings.count(item.rows)}</span>
@@ -242,6 +242,18 @@ export function nestItems(raw: SListItem[]): [SListItem[], Set<string>] {
         elem => elem.parent == undefined || elem.parent == null || !elements.has(parentListId(elem))
     );
     return [replaceChildren(roots, elements), mask];
+}
+
+/**
+ * Recursively removes tasks from each subgroup if they are already present by being a child of another task.
+ * Fixes child pointers. Retains original order of input list.
+ */
+export function nestGroups(raw: Grouping<SListItem>): Grouping<SListItem> {
+    if (Groupings.isGrouping(raw)) {
+        return raw.map(g => { return { key: g.key, rows: nestGroups(g.rows) }});
+    } else {
+        return nestItems(raw)[0];
+    }
 }
 
 ///////////////////////

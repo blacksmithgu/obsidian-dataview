@@ -1,5 +1,10 @@
-import { Literal, Values } from "data-model/value";
+import { SListItem } from "data-model/serialized/markdown";
+import { Grouping, Groupings, Literal, Values, Widgets } from "data-model/value";
 import { DEFAULT_SETTINGS, ExportSettings, QuerySettings } from "settings";
+
+////////////
+// Tables //
+////////////
 
 /** Render a table of literals to Markdown. */
 export function markdownTable(
@@ -31,7 +36,7 @@ export function markdownTable(
 
     // Then construct the actual table...
     // Append the header fields first.
-    let table = `| ${headers.map((v, i) => padright(v, " ", maxLengths[i])).join(" | ")} |\n`;
+    let table = `| ${headers.map((v, i) => padright(escapeTable(v), " ", maxLengths[i])).join(" | ")} |\n`;
     // Then the separating column.
     table += `| ${maxLengths.map(i => padright("", "-", i)).join(" | ")} |\n`;
     // Then the data colunns.
@@ -79,4 +84,73 @@ function padright(text: string, padding: string, length: number): string {
 /** Escape bars inside table content to prevent it from messing up table rows. */
 function escapeTable(text: string): string {
     return text.split(/(<!\\)|/i).join("\\|");
+}
+
+///////////
+// Lists //
+///////////
+
+/** Render a list of literal elements to a markdown list. */
+export function markdownList(values: Literal[], settings?: QuerySettings & ExportSettings): string {
+    return markdownListRec(values, settings, 0);
+}
+
+/** Internal recursive function which renders markdown lists. */
+function markdownListRec(input: Literal, settings?: QuerySettings & ExportSettings, depth: number = 0): string {
+    if (Values.isArray(input)) {
+        let result = (depth == 0) ? "" : "\n";
+        for (let value of input) {
+            result += "    ".repeat(depth) + "- ";
+            result += markdownListRec(value, settings, depth);
+            result += "\n";
+        }
+
+        return result;
+    } else if (Values.isObject(input)) {
+        let result = (depth == 0) ? "" : "\n";
+        for (let [key, value] of Object.entries(input)) {
+            result += "    ".repeat(depth) + "- ";
+            result += Values.toString(key) + ": ";
+            result += markdownListRec(value, settings, depth);
+            result += "\n";
+        }
+
+        return result;
+    } else if (Values.isWidget(input) && Widgets.isListPair(input)) {
+        return `${Values.toString(input.key)}: ${markdownListRec(input.value, settings, depth + 1)}`;
+    }
+
+    return Values.toString(input);
+}
+
+///////////
+// Tasks //
+///////////
+
+/** Render the result of a task query to markdown. */
+export function markdownTaskList(tasks: Grouping<SListItem>, settings?: QuerySettings & ExportSettings, depth: number = 0): string {
+    if (Groupings.isGrouping(tasks)) {
+        let result = "";
+        for (let element of tasks) {
+            result += "#".repeat(depth + 1) + " " + Values.toString(element.key) + "\n\n";
+            result += markdownTaskList(element.rows, settings, depth + 1);
+        }
+        return result;
+    } else {
+        let result = "";
+        for (let element of tasks) {
+            result += "    ".repeat(depth) + "- ";
+            if (Groupings.isElementGroup(element)) {
+
+            } else {
+                if (element.task) {
+                    result += `[${element.status}] ${(element.visual ?? element.text).split("\n").join(" ")}\n`;
+                }
+
+                result += markdownTaskList(element.children, settings, depth + 1);
+            }
+        }
+
+        return result;
+    }
 }

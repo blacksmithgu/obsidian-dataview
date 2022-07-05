@@ -46,8 +46,8 @@ export function ListView({ query, sourcePath }: { query: Query; sourcePath: stri
             let result = await asyncTryOrPropogate(() =>
                 executeList(query, context.index, sourcePath, context.settings)
             );
-            if (!result.successful) return { state: "error", error: result.error, sourcePath };
 
+            if (!result.successful) return { state: "error", error: result.error, sourcePath };
             return { state: "ready", items: result.value.data };
         }
     );

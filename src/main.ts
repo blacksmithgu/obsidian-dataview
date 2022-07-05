@@ -80,7 +80,7 @@ export default class DataviewPlugin extends Plugin {
             id: "dataview-force-refresh-views",
             name: "Force Refresh All Views and Blocks",
             callback: () => {
-                this.index.touch();
+                this.index.revision += 1;
                 this.app.workspace.trigger("dataview:refresh-views");
             },
         });

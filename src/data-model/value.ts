@@ -359,6 +359,7 @@ export namespace Values {
         }
     }
 
+    /** Checks if the given value is an object (and not any other dataview-recognized object-like type). */
     export function isObject(val: any): val is Record<string, any> {
         return (
             typeof val == "object" &&

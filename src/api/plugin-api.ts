@@ -24,7 +24,7 @@ import { compare, CompareOperator, satisfies } from "compare-versions";
 import { DataviewSettings, ExportSettings } from "settings";
 import { parseFrontmatter } from "data-import/markdown-file";
 import { SListItem, SMarkdownPage } from "data-model/serialized/markdown";
-import { createFixedTaskView, createTaskView } from "ui/views/task-view";
+import { createFixedTaskView, createTaskView, nestGroups } from "ui/views/task-view";
 import { createFixedListView, createListView } from "ui/views/list-view";
 import { createFixedTableView, createTableView } from "ui/views/table-view";
 import { Result } from "api/result";
@@ -33,7 +33,7 @@ import { tryOrPropogate } from "util/normalize";
 import { Query } from "query/query";
 import { DataviewCalendarRenderer } from "ui/views/calendar-view";
 import { DataviewJSRenderer } from "ui/views/js-view";
-import { markdownTable } from "ui/export/markdown";
+import { markdownList, markdownTable, markdownTaskList } from "ui/export/markdown";
 
 /** Asynchronous API calls related to file / system IO. */
 export class DataviewIOApi {
@@ -315,6 +315,28 @@ export class DataviewApi {
         return (await this.query(source, originFile, settings)).orElseThrow();
     }
 
+    /** Execute an arbitrary dataview query, returning the results in well-formatted markdown. */
+    public async queryMarkdown(source: string | Query, originFile?: string, settings?: Partial<QueryApiSettings & ExportSettings>): Promise<Result<string, string>> {
+        const result = await this.query(source, originFile, settings);
+        if (!result.successful) return result.cast();
+
+        switch (result.value.type) {
+            case "list":
+                return Result.success(this.markdownList(result.value.values, settings));
+            case "table":
+                return Result.success(this.markdownTable(result.value.headers, result.value.values, settings));
+            case "task":
+                return Result.success(this.markdownTaskList(result.value.values, settings));
+            case "calendar":
+                return Result.failure("Cannot render calendar queries to markdown.");
+        }
+    }
+
+    /** Error-throwing version of {@link queryMarkdown}. */
+    public async tryQueryMarkdown(source: string | Query, originFile?: string, settings?: Partial<QueryApiSettings & ExportSettings>): Promise<string> {
+        return (await this.queryMarkdown(source, originFile, settings)).orElseThrow();
+    }
+
     /**
      * Evaluate a dataview expression (like '2 + 2' or 'link("hello")'), returning the evaluated result.
      * This takes an optional second argument which provides definitions for variables, such as:
@@ -499,7 +521,7 @@ export class DataviewApi {
     // Data Export //
     /////////////////
 
-    /** Render data to a markdown table */
+    /** Render data to a markdown table. */
     public markdownTable(
         headers: string[] | undefined,
         values: any[][] | DataArray<any> | undefined,
@@ -510,6 +532,26 @@ export class DataviewApi {
 
         const combined = Object.assign({}, this.settings, settings);
         return markdownTable(headers, values as any[][], combined);
+    }
+
+    /** Render data to a markdown list. */
+    public markdownList(
+        values: any[] | DataArray<any> | undefined,
+        settings?: Partial<ExportSettings>
+    ): string {
+        if (!values) values = [];
+
+        const combined = Object.assign({}, this.settings, settings);
+        return markdownList(values as any[], combined);
+    }
+
+    /** Render tasks or list items to a markdown task list. */
+    public markdownTaskList(values: Grouping<SListItem>, settings?: Partial<ExportSettings>): string {
+        if (!values) values = [];
+
+        const sparse = nestGroups(values);
+        const combined = Object.assign({}, this.settings, settings);
+        return markdownTaskList(sparse as any[], combined);
     }
 }
 

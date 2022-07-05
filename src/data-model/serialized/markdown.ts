@@ -64,6 +64,7 @@ export interface SListItemBase {
     parent?: number;
     /** The children elements of this list item. */
     children: SListItem[];
+    /** Links contained inside this list item. */
     outlinks: Link[];
 
     /** The raw text of this item. */
@@ -98,6 +99,7 @@ export interface SListEntry extends SListItemBase {
 /** A serialized task. */
 export interface STask extends SListItemBase {
     task: true;
+    /** The status of this task, the text between the brackets ('[ ]'). Will be a space if the task is currently unchecked. */
     status: string;
     /** Indicates whether the task has any value other than empty space. */
     checked: boolean;
