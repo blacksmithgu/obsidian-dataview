@@ -1,3 +1,9 @@
+# 0.5.40
+
+Adds some more documentation about the new markdown functionality.
+
+---
+
 # 0.5.39
 
 - Fixed an issue where checking a task in a task view would check the wrong box visually.
