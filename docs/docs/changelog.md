@@ -1,3 +1,11 @@
+# 0.5.39
+
+- Fixed an issue where checking a task in a task view would check the wrong box visually.
+- Added experimental plugin APIs for querying dataview directly as markdown, and converting dataview results to properly
+  formatted markdown.
+
+---
+
 # 0.5.38
 
 - Some minor documentation improvements.
