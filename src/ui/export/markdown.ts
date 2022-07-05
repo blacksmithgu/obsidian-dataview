@@ -98,7 +98,7 @@ export function markdownList(values: Literal[], settings?: QuerySettings & Expor
 /** Internal recursive function which renders markdown lists. */
 function markdownListRec(input: Literal, settings?: QuerySettings & ExportSettings, depth: number = 0): string {
     if (Values.isArray(input)) {
-        let result = (depth == 0) ? "" : "\n";
+        let result = depth == 0 ? "" : "\n";
         for (let value of input) {
             result += "    ".repeat(depth) + "- ";
             result += markdownListRec(value, settings, depth);
@@ -107,7 +107,7 @@ function markdownListRec(input: Literal, settings?: QuerySettings & ExportSettin
 
         return result;
     } else if (Values.isObject(input)) {
-        let result = (depth == 0) ? "" : "\n";
+        let result = depth == 0 ? "" : "\n";
         for (let [key, value] of Object.entries(input)) {
             result += "    ".repeat(depth) + "- ";
             result += Values.toString(key) + ": ";
@@ -128,7 +128,11 @@ function markdownListRec(input: Literal, settings?: QuerySettings & ExportSettin
 ///////////
 
 /** Render the result of a task query to markdown. */
-export function markdownTaskList(tasks: Grouping<SListItem>, settings?: QuerySettings & ExportSettings, depth: number = 0): string {
+export function markdownTaskList(
+    tasks: Grouping<SListItem>,
+    settings?: QuerySettings & ExportSettings,
+    depth: number = 0
+): string {
     if (Groupings.isGrouping(tasks)) {
         let result = "";
         for (let element of tasks) {
@@ -141,7 +145,6 @@ export function markdownTaskList(tasks: Grouping<SListItem>, settings?: QuerySet
         for (let element of tasks) {
             result += "    ".repeat(depth) + "- ";
             if (Groupings.isElementGroup(element)) {
-
             } else {
                 if (element.task) {
                     result += `[${element.status}] ${(element.visual ?? element.text).split("\n").join(" ")}\n`;

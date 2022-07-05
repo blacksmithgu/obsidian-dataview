@@ -101,7 +101,9 @@ function TaskList({ items }: { items: SListItem[] }) {
     let [nest, _mask] = nestItems(items);
     return (
         <ul class="contains-task-list">
-            {nest.map(item => (item.task ? <TaskItem key={listId(item)} item={item} /> : <ListItem key={listId(item)} item={item} />))}
+            {nest.map(item =>
+                item.task ? <TaskItem key={listId(item)} item={item} /> : <ListItem key={listId(item)} item={item} />
+            )}
         </ul>
     );
 }
@@ -250,7 +252,9 @@ export function nestItems(raw: SListItem[]): [SListItem[], Set<string>] {
  */
 export function nestGroups(raw: Grouping<SListItem>): Grouping<SListItem> {
     if (Groupings.isGrouping(raw)) {
-        return raw.map(g => { return { key: g.key, rows: nestGroups(g.rows) }});
+        return raw.map(g => {
+            return { key: g.key, rows: nestGroups(g.rows) };
+        });
     } else {
         return nestItems(raw)[0];
     }

@@ -316,7 +316,11 @@ export class DataviewApi {
     }
 
     /** Execute an arbitrary dataview query, returning the results in well-formatted markdown. */
-    public async queryMarkdown(source: string | Query, originFile?: string, settings?: Partial<QueryApiSettings & ExportSettings>): Promise<Result<string, string>> {
+    public async queryMarkdown(
+        source: string | Query,
+        originFile?: string,
+        settings?: Partial<QueryApiSettings & ExportSettings>
+    ): Promise<Result<string, string>> {
         const result = await this.query(source, originFile, settings);
         if (!result.successful) return result.cast();
 
@@ -333,7 +337,11 @@ export class DataviewApi {
     }
 
     /** Error-throwing version of {@link queryMarkdown}. */
-    public async tryQueryMarkdown(source: string | Query, originFile?: string, settings?: Partial<QueryApiSettings & ExportSettings>): Promise<string> {
+    public async tryQueryMarkdown(
+        source: string | Query,
+        originFile?: string,
+        settings?: Partial<QueryApiSettings & ExportSettings>
+    ): Promise<string> {
         return (await this.queryMarkdown(source, originFile, settings)).orElseThrow();
     }
 
@@ -535,10 +543,7 @@ export class DataviewApi {
     }
 
     /** Render data to a markdown list. */
-    public markdownList(
-        values: any[] | DataArray<any> | undefined,
-        settings?: Partial<ExportSettings>
-    ): string {
+    public markdownList(values: any[] | DataArray<any> | undefined, settings?: Partial<ExportSettings>): string {
         if (!values) values = [];
 
         const combined = Object.assign({}, this.settings, settings);
