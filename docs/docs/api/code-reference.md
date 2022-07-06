@@ -358,20 +358,20 @@ dv.io.normalize("Test", "dataview/test2/Index.md") => "dataview/test2/Test.md", 
 
 ## Query Evaluation
 
-### `dv.query(source, [file, settings])`
+### ⌛ `dv.query(source, [file, settings])`
 
 Execute a Dataview query and return the results as a structured return.
 The return type of this function varies by the query type being executed,
 though will always be an object with a `type` denoting the return type. This version of `query` returns a result type - you may want `tryQuery`, which instead throws an error on failed query execution.
 
 ```javascript
-dv.query("LIST FROM #tag") =>
+await dv.query("LIST FROM #tag") =>
     Success { type: "list", values: [value1, value2, ...] }
 
-dv.query(`TABLE WITHOUT ID file.name, value FROM "path"`) =>
+await dv.query(`TABLE WITHOUT ID file.name, value FROM "path"`) =>
     Success { type: "table", headers: ["file.name", "value"], values: [["A", 1], ["B", 2]] }
 
-dv.query("TASK WHERE due") =>
+await dv.query("TASK WHERE due") =>
     Success { type: "task", values: [task1, task2, ...]}
 ```
 
@@ -380,22 +380,22 @@ dv.query("TASK WHERE due") =>
 2. `settings`: Execution settings for running the query. This is largely an advanced use case (where I recommend you
    directly check the API implementation to see all available options).
 
-### `dv.tryQuery(source, [file, settings])`
+### ⌛ `dv.tryQuery(source, [file, settings])`
 
 Exactly the same as `dv.query`, but more convienent in short scripts as
 execution failures will be raised as JavaScript exceptions instead of a
 result type.
 
-### `dv.queryMarkdown(source, [file], [settings])`
+### ⌛ `dv.queryMarkdown(source, [file], [settings])`
 
 Equivalent to `dv.query()`, but returns rendered Markdown.
 
 ```js
-dv.queryMarkdown("LIST FROM #tag") =>
+await dv.queryMarkdown("LIST FROM #tag") =>
     Success { "- [[Page 1]]\n- [[Page 2]]" }
 ```
 
-### `dv.tryQueryMarkdown(source, [file], [settings])`
+### ⌛ `dv.tryQueryMarkdown(source, [file], [settings])`
 
 Exactly the same as `dv.queryMarkdown()`, but throws an error on parse failure.
 

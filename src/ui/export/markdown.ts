@@ -20,7 +20,7 @@ export function markdownTable(
     settings = settings ?? DEFAULT_SETTINGS;
 
     const mvalues: string[][] = [];
-    const maxLengths: number[] = Array.from(headers, v => v.length);
+    const maxLengths: number[] = Array.from(headers, v => escapeTable(v).length);
 
     // Pre-construct the table in memory so we can size columns.
     for (let row = 0; row < values.length; row++) {
@@ -83,7 +83,7 @@ function padright(text: string, padding: string, length: number): string {
 
 /** Escape bars inside table content to prevent it from messing up table rows. */
 function escapeTable(text: string): string {
-    return text.split(/(<!\\)|/i).join("\\|");
+    return text.split(/(?!\\)\|/i).join("\\|");
 }
 
 ///////////
