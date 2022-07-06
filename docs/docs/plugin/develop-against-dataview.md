@@ -19,7 +19,8 @@ import { getAPI } from "obsidian-dataview";
 const api = getAPI();
 ```
 
-For full API definitions available, check [api.ts](https://github.com/blacksmithgu/obsidian-dataview/blob/master/src/typings/api.d.ts).
+For full API definitions available, check
+[index.ts](https://github.com/blacksmithgu/obsidian-dataview/blob/master/src/index.ts) or the plugin API definition [plugin-api.ts](https://github.com/blacksmithgu/obsidian-dataview/blob/master/src/api/plugin-api.ts).
 
 ##### Binding to Dataview Events
 
