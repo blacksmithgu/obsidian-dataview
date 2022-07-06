@@ -1,3 +1,10 @@
+# 0.5.41
+
+- Fix a bad regex doing escaping in markdown tables.
+- Improve async documentation.
+
+---
+
 # 0.5.40
 
 Adds some more documentation about the new markdown functionality.
