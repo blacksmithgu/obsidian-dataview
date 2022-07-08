@@ -60,13 +60,15 @@ export class FullIndex extends Component {
 
         this.vault = app.vault;
         this.metadataCache = app.metadataCache;
-        this.persister = new LocalStorageCache(app.appId || "shared", indexVersion);
 
         this.pages = new Map();
         this.tags = new IndexMap();
         this.etags = new IndexMap();
         this.links = new IndexMap();
         this.revision = 0;
+
+        // Caches metadata via durable storage to speed up cache initialization when Obsidian restarts.
+        this.persister = new LocalStorageCache(app.appId || "shared", indexVersion);
 
         // Handles asynchronous reloading of files on web workers.
         this.addChild((this.importer = new FileImporter(2, this.vault, this.metadataCache)));

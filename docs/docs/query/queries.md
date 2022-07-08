@@ -153,13 +153,8 @@ Task views render all tasks whose pages match the given predicate.
     TASK FROM "dataview"
     ```
 === "Output"
-    [dataview/Project A](#)
-
     - [ ] I am a task.
     - [ ] I am another task.
-
-    [dataview/Project A](#)
-
     - [ ] I could be a task, though who knows.
         - [X] Determine if this is a task.
     - [X] I'm a finished task.
@@ -193,6 +188,30 @@ statements:
     Folder 3
 
     - [ ] What even is a task, anyway?
+
+A common use case for tasks is to group them by their originating file:
+
+=== "Syntax"
+    ```
+    TASK FROM <source>
+    GROUP BY file.link
+    ```
+=== "Query"
+    ``` sql
+    TASK FROM "dataview"
+    GROUP BY file.link
+    ```
+=== "Output"
+    [dataview/Project A](#)
+
+    - [ ] I am a task.
+    - [ ] I am another task.
+
+    [dataview/Project A](#)
+
+    - [ ] I could be a task, though who knows.
+        - [X] Determine if this is a task.
+    - [X] I'm a finished task.
 
 ### Calendar Queries
 
