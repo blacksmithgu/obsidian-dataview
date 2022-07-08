@@ -7,7 +7,7 @@ import typescript2 from "rollup-plugin-typescript2";
 
 const BASE_CONFIG = {
     input: "src/main.ts",
-    external: ["obsidian"],
+    external: ["obsidian", "@codemirror/view", "@codemirror/state", "@codemirror/language"],
     onwarn: (warning, warn) => {
         // Sorry rollup, but we're using eval...
         if (/Use of eval is strongly discouraged/.test(warning.message)) return;

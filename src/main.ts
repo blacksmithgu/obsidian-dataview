@@ -12,6 +12,8 @@ import { DateTime } from "luxon";
 import { DataviewInlineApi } from "api/inline-api";
 import { replaceInlineFields } from "ui/views/inline-field";
 import { DataviewInit } from "ui/markdown";
+import {inlinePlugin} from "./ui/lp-render";
+import {Extension} from "@codemirror/state";
 
 export default class DataviewPlugin extends Plugin {
     /** Plugin-wide default settigns. */
@@ -21,6 +23,7 @@ export default class DataviewPlugin extends Plugin {
     public index: FullIndex;
     /** External-facing plugin API. */
     public api: DataviewApi;
+    private cmExtension: Extension[];
 
     async onload() {
         // Settings initialization; write defaults first time around.
@@ -74,6 +77,10 @@ export default class DataviewPlugin extends Plugin {
                 await replaceInlineFields(ctx, init);
             }
         });
+
+        // editor extension for inline queries
+        this.cmExtension = [inlinePlugin(this.index, this.settings, this.api)];
+        this.registerEditorExtension(this.cmExtension);
 
         // Dataview "force refresh" operation.
         this.addCommand({
