@@ -33,12 +33,14 @@ import { EditorSelection, Range } from "@codemirror/state";
 import { syntaxTree } from "@codemirror/language";
 import {DataviewSettings} from "../settings";
 import { FullIndex } from "../data-index";
-import {/*Component,*/ editorLivePreviewField } from "obsidian";
+import {/*Component,*/ editorLivePreviewField, TFile} from "obsidian";
 //import {asyncEvalInContext, DataviewInlineApi} from "../api/inline-api";
 import {DataviewApi} from "../api/plugin-api";
-import {tryOrPropogate} from "../util/normalize";
+import {renderMinimalDate, renderMinimalDuration, tryOrPropogate} from "../util/normalize";
 import {parseField} from "../expression/parse";
 import {executeInline} from "../query/engine";
+import {currentLocale} from "../util/locale";
+import {Literal, Values} from "../data-model/value";
 
 function selectionAndRangeOverlap(selection: EditorSelection, rangeFrom:
     number, rangeTo: number) {
@@ -80,7 +82,7 @@ function getInlineCodeBounds(view: EditorView, pos?: number): {start: number, en
 
 
 class InlineWidget extends WidgetType {
-    constructor(readonly markdown: string) {
+    constructor(readonly markdown: string | Literal, readonly settings: DataviewSettings, readonly currentFile: TFile) {
         super();
     }
     eq(other: InlineWidget): boolean {
@@ -88,8 +90,25 @@ class InlineWidget extends WidgetType {
     }
 
     toDOM(view: EditorView): HTMLElement {
+        const value = this.markdown;
+        let result: string  = "";
+        if (value) {
+            // only support strings
+            if (Values.isDate(value)) {
+                result = renderMinimalDate(value, this.settings, currentLocale());
+            } else if (Values.isDuration(value)) {
+                result = renderMinimalDuration(value);
+            } else if (Values.isString(value)) {
+                result = value;
+            } else if (Values.isFunction(value)) {
+                result = "<function>";
+            } else {
+                result = "Not supported in LP or unrecognized.";
+            }
+        }
         const el = createSpan({
-            text: this.markdown
+            text: result,
+            cls: ['dataview', 'dataview-inline']
         })
         return el;
     }
@@ -102,7 +121,7 @@ class InlineWidget extends WidgetType {
 
 function inlineRender(view: EditorView, index: FullIndex, dvSettings: DataviewSettings, api: DataviewApi) {
 
-    const widgets: Range<Decoration>[] = []
+    const widgets: Range<Decoration>[] = [];
     const selection = view.state.selection;
 
     //@ts-ignore
@@ -121,12 +140,12 @@ function inlineRender(view: EditorView, index: FullIndex, dvSettings: DataviewSe
             let code: string;
             // the `this` isn't correct here, it's just for testing
             const PREAMBLE: string = "const dataview = comp;const dv=comp;";
-            let result: string = "";
+            let result: string | Literal = "";
             const currentFile = app.workspace.getActiveFile();
             if (!currentFile) return;
             if (dvSettings.inlineQueryPrefix.length > 0 && text.startsWith(dvSettings.inlineQueryPrefix)) {
                 code = text.substring(dvSettings.inlineQueryPrefix.length).trim()
-                const field = tryOrPropogate(() => parseField(code))
+                const field = tryOrPropogate(() => parseField(code));
                 if (!field.successful) {
                     result = `Dataview (inline field '${code}'): ${field.error}`;
                 } else {
@@ -135,9 +154,8 @@ function inlineRender(view: EditorView, index: FullIndex, dvSettings: DataviewSe
                     if (!intermediateResult.successful) {
                         result = `Dataview (for inline query '${fieldValue}'): ${intermediateResult.error}`;
                     } else {
-                        if (intermediateResult.value) {
-                            result = intermediateResult.value.toString();
-                        }
+                        const { value } = intermediateResult;
+                        result = value;
                     }
                 }
             } else if (dvSettings.inlineJsQueryPrefix.length > 0 && text.startsWith(dvSettings.inlineJsQueryPrefix)) {
@@ -153,6 +171,7 @@ function inlineRender(view: EditorView, index: FullIndex, dvSettings: DataviewSe
                         }
                         if (code.includes("await")) {
                             // await doesn't seem to work with it because the WidgetPlugin expects it to be synchronous
+                            // so this should be removed and instead an error message shown
                             (evalWoContext("(async () => { " + PREAMBLE + code + " })()") as Promise<any>).then((value: any) => result = value)
                         } else {
                             result = evalWoContext(PREAMBLE + code);
@@ -180,8 +199,7 @@ function inlineRender(view: EditorView, index: FullIndex, dvSettings: DataviewSe
 
             widgets.push(
                 Decoration.replace({
-                    // @ts-ignore
-                    widget: new InlineWidget(result, currentFile.path, index, dvSettings),
+                    widget: new InlineWidget(result, dvSettings, currentFile),
                     inclusive: false,
                     block: false,
                 }).range(start, end)
