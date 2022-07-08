@@ -464,7 +464,7 @@ export namespace DefaultFunctions {
         return result;
     };
 
-    // Reverse aan array or string.
+    // Reverse an array or string.
     export const reverse = new FunctionBuilder("reverse")
         .add1("array", l => {
             let result = [];
