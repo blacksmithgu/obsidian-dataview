@@ -30,9 +30,9 @@ export class FullIndex extends Component {
     public pages: Map<string, PageMetadata>;
 
     /** Map files -> tags in that file, and tags -> files. This version includes subtags. */
-    public tags: IndexMap;
+    public tags: ValueCaseInsensitiveIndexMap;
     /** Map files -> exact tags in that file, and tags -> files. This version does not automatically add subtags. */
-    public etags: IndexMap;
+    public etags: ValueCaseInsensitiveIndexMap;
     /** Map files -> linked files in that file, and linked file -> files that link to it. */
     public links: IndexMap;
     /** Search files by path prefix. */
@@ -62,8 +62,8 @@ export class FullIndex extends Component {
         this.metadataCache = app.metadataCache;
 
         this.pages = new Map();
-        this.tags = new IndexMap();
-        this.etags = new IndexMap();
+        this.tags = new ValueCaseInsensitiveIndexMap();
+        this.etags = new ValueCaseInsensitiveIndexMap();
         this.links = new IndexMap();
         this.revision = 0;
 
@@ -228,11 +228,8 @@ export class FullIndex extends Component {
             else return link;
         });
 
-        let tags: Set<string> = new Set();
-        meta.fullTags().forEach(t => tags.add(t.toLocaleLowerCase()));
-
         this.pages.set(file.path, meta);
-        this.tags.set(file.path, tags);
+        this.tags.set(file.path, meta.fullTags());
         this.etags.set(file.path, meta.tags);
         this.links.set(file.path, new Set<string>(meta.links.map(l => l.path)));
 
@@ -445,7 +442,7 @@ export class IndexMap {
         this.invMap = new Map();
     }
 
-    /** Returns all values for the given key.  (This is unused except for tests - does it really need to be here?) */
+    /** Returns all values for the given key. */
     public get(key: string): Set<string> {
         let result = this.map.get(key);
         if (result) {
@@ -512,4 +509,41 @@ export class IndexMap {
     }
 
     static EMPTY_SET: Readonly<Set<string>> = Object.freeze(new Set<string>());
+}
+
+/** Index map wrapper which is case-insensitive in the key. */
+export class ValueCaseInsensitiveIndexMap {
+    /** Create a new, empty case insensitive index map. */
+    public constructor(public delegate: IndexMap = new IndexMap()) {}
+
+    /** Returns all values for the given key. */
+    public get(key: string): Set<string> {
+        return this.delegate.get(key);
+    }
+
+    /** Returns all keys that reference the given value. Mutating the returned set is not allowed. */
+    public getInverse(value: string): Readonly<Set<string>> {
+        return this.delegate.getInverse(value.toLocaleLowerCase());
+    }
+
+    /** Sets the key to the given values; this will delete the old mapping for the key if one was present. */
+    public set(key: string, values: Set<string>): this {
+        this.delegate.set(key, new Set(Array.from(values).map(v => v.toLocaleLowerCase())));
+        return this;
+    }
+
+    /** Clears all values for the given key so they can be re-added. */
+    public delete(key: string): boolean {
+        return this.delegate.delete(key);
+    }
+
+    /** Rename all references to the given key to a new value. */
+    public rename(oldKey: string, newKey: string): boolean {
+        return this.delegate.rename(oldKey, newKey);
+    }
+
+    /** Clear the entire index. */
+    public clear() {
+        this.delegate.clear();
+    }
 }
