@@ -56,32 +56,6 @@ function selectionAndRangeOverlap(selection: EditorSelection, rangeFrom:
 }
 
 
-// also returns text between inline code, so there always needs to be a check whether the correct prefix is used.
-function getInlineCodeBounds(view: EditorView, pos?: number): {start: number, end: number} | null {
-    const text = view.state.doc.toString()
-    if (typeof pos === "undefined") {
-        pos = view.state.selection.main.from;
-    }
-    let left = text.lastIndexOf('`', pos)
-    const right = text.indexOf('`', pos)
-    // no backtick before or after the current backtick
-    if (left === -1 || right === -1) return null;
-    const leftNewline = text.lastIndexOf('\n', pos)
-    const rightNewline = text.indexOf('\n', pos)
-
-    // start or end of document w/o new lines
-    if (leftNewline === -1 || rightNewline === -1) {
-        return {start: left , end: right+1}
-    }
-
-    if (leftNewline > left || rightNewline < right) return null;
-
-    return {start: left , end: right+1}
-}
-
-
-
-
 class InlineWidget extends WidgetType {
     constructor(readonly markdown: string | Literal, readonly settings: DataviewSettings, readonly currentFile: TFile) {
         super();
@@ -124,7 +98,12 @@ function inlineRender(view: EditorView, index: FullIndex, dvSettings: DataviewSe
 
     const widgets: Range<Decoration>[] = [];
     const selection = view.state.selection;
-    const regex = new RegExp("formatting_formatting-code.*?_inline-code");
+    // before:
+    //     em for italics
+    //     highlight for highlight
+    // after:
+    //     strong for bold
+    const regex = new RegExp(".*?_?inline-code_?.*");
 
     //@ts-ignore
     for (const { from, to } of view.visibleRanges) {
@@ -133,19 +112,17 @@ function inlineRender(view: EditorView, index: FullIndex, dvSettings: DataviewSe
             // settings and index aren't initialised yet
             if (!dvSettings || !index) return;
             const type = node.type;
-            //const from = node.from;
-            const to = node.to;
+            // markdown formatting symbols
+            if (type.name.includes("formatting")) return;
             if (!regex.test(type.name)) {return}
-            const bounds = getInlineCodeBounds(view, to);
-            if (!bounds) return;
 
             // at this point bounds contains the position we want to replace and
             // result contains the text with which we want to replace it
-            const start = bounds.start;
-            const end = bounds.end;
-            if (selectionAndRangeOverlap(selection, start, end)) return;
+            const start = node.from;
+            const end = node.to;
+            if (selectionAndRangeOverlap(selection, start-1, end+1)) return;
 
-            const text = view.state.doc.sliceString(start + 1, end -1);
+            const text = view.state.doc.sliceString(start, end);
             let code: string;
             // the `this` isn't correct here, it's just for testing
             const PREAMBLE: string = "const dataview=this;const dv=this;";
@@ -201,7 +178,7 @@ function inlineRender(view: EditorView, index: FullIndex, dvSettings: DataviewSe
                     widget: new InlineWidget(result, dvSettings, currentFile),
                     inclusive: false,
                     block: false,
-                }).range(start, end)
+                }).range(start-1, end+1)
             );
 
             }
