@@ -33,7 +33,7 @@ import { EditorSelection, Range } from "@codemirror/state";
 import { syntaxTree } from "@codemirror/language";
 import {DataviewSettings} from "../settings";
 import { FullIndex } from "../data-index";
-import {/*Component,*/ editorLivePreviewField, TFile} from "obsidian";
+import {Component, editorLivePreviewField, TFile} from "obsidian";
 //import {asyncEvalInContext, DataviewInlineApi} from "../api/inline-api";
 import {DataviewApi} from "../api/plugin-api";
 import {renderMinimalDate, renderMinimalDuration, tryOrPropogate} from "../util/normalize";
@@ -41,6 +41,7 @@ import {parseField} from "../expression/parse";
 import {executeInline} from "../query/engine";
 import {currentLocale} from "../util/locale";
 import {Literal, Values} from "../data-model/value";
+import {DataviewInlineApi} from "../api/inline-api";
 
 function selectionAndRangeOverlap(selection: EditorSelection, rangeFrom:
     number, rangeTo: number) {
@@ -103,7 +104,7 @@ class InlineWidget extends WidgetType {
             } else if (Values.isFunction(value)) {
                 result = "<function>";
             } else {
-                result = "Not supported in LP or unrecognized.";
+                result = "Not supported in LP (non-string representation) or unrecognized.";
             }
         }
         const el = createSpan({
@@ -147,7 +148,7 @@ function inlineRender(view: EditorView, index: FullIndex, dvSettings: DataviewSe
             const text = view.state.doc.sliceString(start + 1, end -1);
             let code: string;
             // the `this` isn't correct here, it's just for testing
-            const PREAMBLE: string = "const dataview = comp;const dv=comp;";
+            const PREAMBLE: string = "const dataview=this;const dv=this;";
             let result: string | Literal = "";
             const currentFile = app.workspace.getActiveFile();
             if (!currentFile) return;
@@ -170,23 +171,19 @@ function inlineRender(view: EditorView, index: FullIndex, dvSettings: DataviewSe
                 if (dvSettings.enableInlineDataviewJs) {
                     code = text.substring(dvSettings.inlineJsQueryPrefix.length).trim()
                     try {
-                        // how do I set the `this` context properly?
-                        const comp = {
-                            api: api,
-                            current: () => currentFile,
-                            settings: dvSettings,
-                            index: index
-                        }
+                        const myEl = createDiv();
+                        const dvInlineApi = new DataviewInlineApi(api, null as unknown as Component, myEl, currentFile.path);
                         if (code.includes("await")) {
                             // await doesn't seem to work with it because the WidgetPlugin expects it to be synchronous
                             // so this should be removed and instead an error message shown
-                            (evalWoContext("(async () => { " + PREAMBLE + code + " })()") as Promise<any>).then((value: any) => result = value)
+                            //(evalWoContext("(async () => { " + PREAMBLE + code + " })()") as Promise<any>).then((value: any) => result = value)
+                            result = "Asynchronous code currently not supported in LP";
                         } else {
                             result = evalWoContext(PREAMBLE + code);
                         }
 
                         function evalWoContext(script: string): any {
-                            return function () {return eval(script)}.call(comp);
+                            return function () {return eval(script)}.call(dvInlineApi);
                         }
                     } catch (e) {
                         result = `Dataview (for inline JS query '${code}'): ${e}`;
