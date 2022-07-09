@@ -123,6 +123,7 @@ function inlineRender(view: EditorView, index: FullIndex, dvSettings: DataviewSe
 
     const widgets: Range<Decoration>[] = [];
     const selection = view.state.selection;
+    const regex = new RegExp("formatting_formatting-code.*?_inline-code");
 
     //@ts-ignore
     for (const { from, to } of view.visibleRanges) {
@@ -133,10 +134,17 @@ function inlineRender(view: EditorView, index: FullIndex, dvSettings: DataviewSe
             const type = node.type;
             //const from = node.from;
             const to = node.to;
-            if (type.name !== "formatting_formatting-code_inline-code") {return}
+            if (!regex.test(type.name)) {return}
             const bounds = getInlineCodeBounds(view, to);
             if (!bounds) return;
-            const text = view.state.doc.sliceString(bounds.start + 1, bounds.end -1);
+
+            // at this point bounds contains the position we want to replace and
+            // result contains the text with which we want to replace it
+            const start = bounds.start;
+            const end = bounds.end;
+            if (selectionAndRangeOverlap(selection, start, end)) return;
+
+            const text = view.state.doc.sliceString(start + 1, end -1);
             let code: string;
             // the `this` isn't correct here, it's just for testing
             const PREAMBLE: string = "const dataview = comp;const dv=comp;";
@@ -190,12 +198,6 @@ function inlineRender(view: EditorView, index: FullIndex, dvSettings: DataviewSe
             } else {
                 return;
             }
-
-            // at this point bounds contains the position we want to replace and
-            // result contains the text with which we want to replace it
-            const start = bounds.start;
-            const end = bounds.end;
-            if (selectionAndRangeOverlap(selection, start, end)) return;
 
             widgets.push(
                 Decoration.replace({
