@@ -82,8 +82,14 @@ class InlineWidget extends WidgetType {
         return this.el;
     }
 
-    ignoreEvent(event: Event): boolean {
-        return false;
+    ignoreEvent(event: MouseEvent): boolean {
+        // make queries only editable when shift is pressed or navigated inside with the keyboard
+        // or the mouse is placed at the end - mostly useful for links, and makes results selectable
+        // if the queries should always be expandable, always return false
+        if (event.shiftKey) {
+            return false;
+        }
+        return true;
     }
 }
 
