@@ -33,7 +33,7 @@ import {EditorSelection, Range} from "@codemirror/state";
 import {syntaxTree} from "@codemirror/language";
 import {DataviewSettings} from "../settings";
 import {FullIndex} from "../data-index";
-import {Component, editorLivePreviewField} from "obsidian";
+import {Component, editorEditorField, editorLivePreviewField, editorViewField} from "obsidian";
 import {DataviewApi} from "../api/plugin-api";
 import {tryOrPropogate} from "../util/normalize";
 import {parseField} from "../expression/parse";
@@ -58,7 +58,7 @@ function selectionAndRangeOverlap(selection: EditorSelection, rangeFrom:
 class InlineWidget extends WidgetType {
 
     constructor(readonly cssClasses: string[], readonly rawQuery: string,
-                private el: HTMLElement) {
+                private el: HTMLElement, private view: EditorView) {
         super();
     }
 
@@ -86,13 +86,23 @@ class InlineWidget extends WidgetType {
         return this.el;
     }
 
-    /* Make queries only editable when shift is pressed or navigated inside with the keyboard
-     * or the mouse is placed at the end - mostly useful for links, and makes results selectable.
+    /* Make queries only editable when shift is pressed (or navigated inside with the keyboard
+     * or the mouse is placed at the end, but that is always possible regardless of this method).
+     * Mostly useful for links, and makes results selectable.
      * If the widgets should always be expandable, make this always return false.
      */
-    ignoreEvent(event: MouseEvent): boolean {
-        if (event.shiftKey) {
-            return false;
+    ignoreEvent(event: MouseEvent | Event): boolean {
+        if (event instanceof MouseEvent) {
+            const currentPos = this.view.posAtCoords({x: event.x, y: event.y})
+            if (event.shiftKey) {
+                // Set the cursor after the element so that it doesn't select starting from the last cursor position.
+                if (currentPos) {
+                    //@ts-ignore
+                    const {editor} = this.view.state.field(editorEditorField).state.field(editorViewField);
+                    editor.setCursor(editor.offsetToPos(currentPos));
+                }
+                return false;
+            }
         }
         return true;
     }
@@ -216,7 +226,7 @@ function inlineRender(view: EditorView, index: FullIndex, dvSettings: DataviewSe
 
             widgets.push(
                 Decoration.replace({
-                    widget: new InlineWidget(classes, code, el),
+                    widget: new InlineWidget(classes, code, el, view),
                     inclusive: false,
                     block: false,
                 }).range(start-1, end+1)
