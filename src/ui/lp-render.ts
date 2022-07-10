@@ -228,8 +228,9 @@ export function inlinePlugin(index: FullIndex, settings: DataviewSettings, api: 
                 this.decorations = Decoration.none;
                 return;
             }
-            if (update.docChanged || update.viewportChanged || update.selectionSet)
+            if (update.docChanged || update.viewportChanged || update.selectionSet) {
                 this.decorations = inlineRender(update.view, index, settings, api)
+            }
         }
     }, {decorations: v => v.decorations,});
 }
