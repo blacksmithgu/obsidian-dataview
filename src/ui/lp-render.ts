@@ -33,14 +33,14 @@ import {EditorSelection, Range} from "@codemirror/state";
 import {syntaxTree} from "@codemirror/language";
 import {DataviewSettings} from "../settings";
 import {FullIndex} from "../data-index";
-import {Component, editorLivePreviewField, TFile} from "obsidian";
+import {Component, editorLivePreviewField} from "obsidian";
 import {DataviewApi} from "../api/plugin-api";
-import {renderMinimalDate, renderMinimalDuration, tryOrPropogate} from "../util/normalize";
+import {tryOrPropogate} from "../util/normalize";
 import {parseField} from "../expression/parse";
 import {executeInline} from "../query/engine";
-import {currentLocale} from "../util/locale";
-import {Literal, Values} from "../data-model/value";
+import {Literal} from "../data-model/value";
 import {DataviewInlineApi} from "../api/inline-api";
+import {renderValue} from "./render";
 
 function selectionAndRangeOverlap(selection: EditorSelection, rangeFrom:
     number, rangeTo: number) {
@@ -56,19 +56,11 @@ function selectionAndRangeOverlap(selection: EditorSelection, rangeFrom:
 
 
 class InlineWidget extends WidgetType {
-    el: HTMLElement;
 
-    constructor(readonly settings: DataviewSettings, readonly currentFile: TFile,
-                readonly cssClasses: string[], readonly rawQuery: string, readonly markdown: string | Literal | HTMLElement) {
+    constructor(readonly settings: DataviewSettings,
+                readonly cssClasses: string[], readonly rawQuery: string,
+                private el: HTMLElement) {
         super();
-        if (markdown instanceof HTMLElement) {
-            this.el = markdown;
-        } else {
-            this.el = createSpan({
-                text: '',
-                cls: ['dataview', 'dataview-inline']
-            })
-        }
     }
     eq(other: InlineWidget): boolean {
         if (other.rawQuery === this.rawQuery) {
@@ -86,10 +78,6 @@ class InlineWidget extends WidgetType {
     }
 
     toDOM(view: EditorView): HTMLElement {
-        // when not async execution, set innerText
-        if (!(this.markdown instanceof  HTMLElement)) {
-            this.el.innerText = renderResult(this.markdown, this.settings);
-        }
         // always add  CSS classes and return (possibly empty) HTML element
         this.el.addClasses(this.cssClasses);
         return this.el;
@@ -100,22 +88,6 @@ class InlineWidget extends WidgetType {
     }
 }
 
-function renderResult(value: string | Literal, settings: DataviewSettings): string {
-    let result;
-    // only support strings
-    if (Values.isDate(value)) {
-        result = renderMinimalDate(value, settings, currentLocale());
-    } else if (Values.isDuration(value)) {
-        result = renderMinimalDuration(value);
-    } else if (Values.isString(value)) {
-        result = value;
-    } else if (Values.isFunction(value)) {
-        result = "<function>";
-    } else {
-        result = "Not supported in LP (non-string representation) or unrecognized.";
-    }
-    return result;
-}
 
 function getCssClasses(nodeName: string): string[] {
     const classes: string[] = [];
@@ -143,6 +115,7 @@ function inlineRender(view: EditorView, index: FullIndex, dvSettings: DataviewSe
     //     highlight for highlight
     // after:
     //     strong for bold
+    //     strikethrough for strikethrough
     const regex = new RegExp(".*?_?inline-code_?.*");
 
     //@ts-ignore
@@ -169,19 +142,25 @@ function inlineRender(view: EditorView, index: FullIndex, dvSettings: DataviewSe
             let result: string | Literal | HTMLElement = "";
             const currentFile = app.workspace.getActiveFile();
             if (!currentFile) return;
+            const el = createSpan({
+                cls: ['dataview', 'dataview-inline']
+            });
             if (dvSettings.inlineQueryPrefix.length > 0 && text.startsWith(dvSettings.inlineQueryPrefix)) {
                 code = text.substring(dvSettings.inlineQueryPrefix.length).trim()
                 const field = tryOrPropogate(() => parseField(code));
                 if (!field.successful) {
                     result = `Dataview (inline field '${code}'): ${field.error}`;
+                    el.innerText = result;
                 } else {
                     const fieldValue = field.value;
                     const intermediateResult = tryOrPropogate(() => executeInline(fieldValue, currentFile.path, index, dvSettings));
                     if (!intermediateResult.successful) {
                         result = `Dataview (for inline query '${fieldValue}'): ${intermediateResult.error}`;
+                        el.innerText = result;
                     } else {
                         const { value } = intermediateResult;
                         result = value;
+                        renderValue(result, el, currentFile.path, null as unknown as Component, dvSettings)
                     }
                 }
             } else if (dvSettings.inlineJsQueryPrefix.length > 0 && text.startsWith(dvSettings.inlineJsQueryPrefix)) {
@@ -192,17 +171,12 @@ function inlineRender(view: EditorView, index: FullIndex, dvSettings: DataviewSe
                         const dvInlineApi = new DataviewInlineApi(api, null as unknown as Component, myEl, currentFile.path);
                         if (code.includes("await")) {
                             // create Element, pass it on to Widget and fill it later
-                            result = createSpan({
-                                text: '',
-                                cls: ['dataview', 'dataview-inline']
-                            });
-                            (evalInContext("(async () => { " + PREAMBLE + code + " })()") as Promise<any>).then((value: any) => {
-                                if (result instanceof HTMLElement) {
-                                    result.innerText = value;
-                                }
+                            (evalInContext("(async () => { " + PREAMBLE + code + " })()") as Promise<any>).then((result: any) => {
+                                renderValue(result, el, currentFile.path, null as unknown as Component, dvSettings)
                             })
                         } else {
                             result = evalInContext(PREAMBLE + code);
+                            renderValue(result, el, currentFile.path, null as unknown as Component, dvSettings)
                         }
 
                         function evalInContext(script: string): any {
@@ -210,9 +184,11 @@ function inlineRender(view: EditorView, index: FullIndex, dvSettings: DataviewSe
                         }
                     } catch (e) {
                         result = `Dataview (for inline JS query '${code}'): ${e}`;
+                        el.innerText = result;
                     }
                 } else {
                     result = "(disabled; enable in settings)";
+                    el.innerText = result;
                 }
 
             } else {
@@ -223,7 +199,7 @@ function inlineRender(view: EditorView, index: FullIndex, dvSettings: DataviewSe
 
             widgets.push(
                 Decoration.replace({
-                    widget: new InlineWidget(dvSettings, currentFile, classes, code, result),
+                    widget: new InlineWidget(dvSettings, classes, code, el),
                     inclusive: false,
                     block: false,
                 }).range(start-1, end+1)
