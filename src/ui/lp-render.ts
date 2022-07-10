@@ -34,7 +34,6 @@ import { syntaxTree } from "@codemirror/language";
 import {DataviewSettings} from "../settings";
 import { FullIndex } from "../data-index";
 import {Component, editorLivePreviewField, TFile} from "obsidian";
-//import {asyncEvalInContext, DataviewInlineApi} from "../api/inline-api";
 import {DataviewApi} from "../api/plugin-api";
 import {renderMinimalDate, renderMinimalDuration, tryOrPropogate} from "../util/normalize";
 import {parseField} from "../expression/parse";
@@ -57,11 +56,29 @@ function selectionAndRangeOverlap(selection: EditorSelection, rangeFrom:
 
 
 class InlineWidget extends WidgetType {
-    constructor(readonly markdown: string | Literal, readonly settings: DataviewSettings, readonly currentFile: TFile) {
+    el: HTMLElement;
+
+    constructor(readonly settings: DataviewSettings, readonly currentFile: TFile,
+                readonly cssClasses: string[], readonly rawQuery: string, readonly markdown?: string | Literal) {
         super();
+        this.el = createSpan({
+            text: '',
+            cls: ['dataview', 'dataview-inline']
+        })
     }
     eq(other: InlineWidget): boolean {
-        return other.markdown === this.markdown;
+        if (other.rawQuery === this.rawQuery) {
+            // change CSS classes without redrawing the element
+            for (let value of other.cssClasses) {
+                if (!this.cssClasses.includes(value)) {
+                    this.el.removeClass(value);
+                } else {
+                    this.el.addClass(value);
+                }
+            }
+            return true;
+        }
+        return false;
     }
 
     toDOM(view: EditorView): HTMLElement {
@@ -81,16 +98,30 @@ class InlineWidget extends WidgetType {
                 result = "Not supported in LP (non-string representation) or unrecognized.";
             }
         }
-        const el = createSpan({
-            text: result,
-            cls: ['dataview', 'dataview-inline']
-        })
-        return el;
+        this.el.innerText = result;
+        this.el.addClasses(this.cssClasses);
+        return this.el;
     }
 
     ignoreEvent(event: Event): boolean {
         return false;
     }
+}
+
+function getCssClasses(nodeName: string): string[] {
+    const classes: string[] = [];
+    if (nodeName.includes("strong")) {
+        classes.push("cm-strong");
+    } if (nodeName.includes("em")) {
+        classes.push("cm-em");
+    } if (nodeName.includes("highlight")) {
+        classes.push("cm-highlight");
+    } if (nodeName.includes("strikethrough")) {
+        classes.push("cm-strikethrough");
+    } if (nodeName.includes("comment")) {
+        classes.push("cm-comment");
+    }
+    return classes;
 }
 
 
@@ -123,7 +154,7 @@ function inlineRender(view: EditorView, index: FullIndex, dvSettings: DataviewSe
             if (selectionAndRangeOverlap(selection, start-1, end+1)) return;
 
             const text = view.state.doc.sliceString(start, end);
-            let code: string;
+            let code: string = "";
             // the `this` isn't correct here, it's just for testing
             const PREAMBLE: string = "const dataview=this;const dv=this;";
             let result: string | Literal = "";
@@ -173,9 +204,11 @@ function inlineRender(view: EditorView, index: FullIndex, dvSettings: DataviewSe
                 return;
             }
 
+            const classes = getCssClasses(type.name);
+
             widgets.push(
                 Decoration.replace({
-                    widget: new InlineWidget(result, dvSettings, currentFile),
+                    widget: new InlineWidget(dvSettings, currentFile, classes, code, result),
                     inclusive: false,
                     block: false,
                 }).range(start-1, end+1)
