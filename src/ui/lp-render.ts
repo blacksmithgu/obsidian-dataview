@@ -28,11 +28,11 @@
 * */
 
 
-import {EditorView, ViewUpdate, Decoration, ViewPlugin, DecorationSet, WidgetType} from "@codemirror/view";
-import { EditorSelection, Range } from "@codemirror/state";
-import { syntaxTree } from "@codemirror/language";
+import {Decoration, DecorationSet, EditorView, ViewPlugin, ViewUpdate, WidgetType} from "@codemirror/view";
+import {EditorSelection, Range} from "@codemirror/state";
+import {syntaxTree} from "@codemirror/language";
 import {DataviewSettings} from "../settings";
-import { FullIndex } from "../data-index";
+import {FullIndex} from "../data-index";
 import {Component, editorLivePreviewField, TFile} from "obsidian";
 import {DataviewApi} from "../api/plugin-api";
 import {renderMinimalDate, renderMinimalDuration, tryOrPropogate} from "../util/normalize";
@@ -59,12 +59,16 @@ class InlineWidget extends WidgetType {
     el: HTMLElement;
 
     constructor(readonly settings: DataviewSettings, readonly currentFile: TFile,
-                readonly cssClasses: string[], readonly rawQuery: string, readonly markdown?: string | Literal) {
+                readonly cssClasses: string[], readonly rawQuery: string, readonly markdown: string | Literal | HTMLElement) {
         super();
-        this.el = createSpan({
-            text: '',
-            cls: ['dataview', 'dataview-inline']
-        })
+        if (markdown instanceof HTMLElement) {
+            this.el = markdown;
+        } else {
+            this.el = createSpan({
+                text: '',
+                cls: ['dataview', 'dataview-inline']
+            })
+        }
     }
     eq(other: InlineWidget): boolean {
         if (other.rawQuery === this.rawQuery) {
@@ -82,23 +86,11 @@ class InlineWidget extends WidgetType {
     }
 
     toDOM(view: EditorView): HTMLElement {
-        const value = this.markdown;
-        let result: string  = "";
-        if (value) {
-            // only support strings
-            if (Values.isDate(value)) {
-                result = renderMinimalDate(value, this.settings, currentLocale());
-            } else if (Values.isDuration(value)) {
-                result = renderMinimalDuration(value);
-            } else if (Values.isString(value)) {
-                result = value;
-            } else if (Values.isFunction(value)) {
-                result = "<function>";
-            } else {
-                result = "Not supported in LP (non-string representation) or unrecognized.";
-            }
+        // when not async execution, set innerText
+        if (!(this.markdown instanceof  HTMLElement)) {
+            this.el.innerText = renderResult(this.markdown, this.settings);
         }
-        this.el.innerText = result;
+        // always add  CSS classes and return (possibly empty) HTML element
         this.el.addClasses(this.cssClasses);
         return this.el;
     }
@@ -106,6 +98,23 @@ class InlineWidget extends WidgetType {
     ignoreEvent(event: Event): boolean {
         return false;
     }
+}
+
+function renderResult(value: string | Literal, settings: DataviewSettings): string {
+    let result;
+    // only support strings
+    if (Values.isDate(value)) {
+        result = renderMinimalDate(value, settings, currentLocale());
+    } else if (Values.isDuration(value)) {
+        result = renderMinimalDuration(value);
+    } else if (Values.isString(value)) {
+        result = value;
+    } else if (Values.isFunction(value)) {
+        result = "<function>";
+    } else {
+        result = "Not supported in LP (non-string representation) or unrecognized.";
+    }
+    return result;
 }
 
 function getCssClasses(nodeName: string): string[] {
@@ -157,7 +166,7 @@ function inlineRender(view: EditorView, index: FullIndex, dvSettings: DataviewSe
             let code: string = "";
             // the `this` isn't correct here, it's just for testing
             const PREAMBLE: string = "const dataview=this;const dv=this;";
-            let result: string | Literal = "";
+            let result: string | Literal | HTMLElement = "";
             const currentFile = app.workspace.getActiveFile();
             if (!currentFile) return;
             if (dvSettings.inlineQueryPrefix.length > 0 && text.startsWith(dvSettings.inlineQueryPrefix)) {
@@ -182,15 +191,21 @@ function inlineRender(view: EditorView, index: FullIndex, dvSettings: DataviewSe
                         const myEl = createDiv();
                         const dvInlineApi = new DataviewInlineApi(api, null as unknown as Component, myEl, currentFile.path);
                         if (code.includes("await")) {
-                            // await doesn't seem to work with it because the WidgetPlugin expects it to be synchronous
-                            // so this should be removed and instead an error message shown
-                            //(evalWoContext("(async () => { " + PREAMBLE + code + " })()") as Promise<any>).then((value: any) => result = value)
-                            result = "Asynchronous code currently not supported in LP";
+                            // create Element, pass it on to Widget and fill it later
+                            result = createSpan({
+                                text: '',
+                                cls: ['dataview', 'dataview-inline']
+                            });
+                            (evalInContext("(async () => { " + PREAMBLE + code + " })()") as Promise<any>).then((value: any) => {
+                                if (result instanceof HTMLElement) {
+                                    result.innerText = value;
+                                }
+                            })
                         } else {
-                            result = evalWoContext(PREAMBLE + code);
+                            result = evalInContext(PREAMBLE + code);
                         }
 
-                        function evalWoContext(script: string): any {
+                        function evalInContext(script: string): any {
                             return function () {return eval(script)}.call(dvInlineApi);
                         }
                     } catch (e) {
