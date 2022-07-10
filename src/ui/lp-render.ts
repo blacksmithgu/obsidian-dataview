@@ -61,6 +61,9 @@ class InlineWidget extends WidgetType {
                 private el: HTMLElement) {
         super();
     }
+
+    // Widgets only get updated when the raw query changes/the element gets focus and loses it
+    // to prevent redraws when the editor updates.
     eq(other: InlineWidget): boolean {
         if (other.rawQuery === this.rawQuery) {
             // change CSS classes without redrawing the element
@@ -76,16 +79,18 @@ class InlineWidget extends WidgetType {
         return false;
     }
 
+    // Add CSS classes and return HTML element.
+    // In "complex" cases it will get filled with the correct text/child elements later.
     toDOM(view: EditorView): HTMLElement {
-        // always add  CSS classes and return (possibly empty) HTML element
         this.el.addClasses(this.cssClasses);
         return this.el;
     }
 
+    /* Make queries only editable when shift is pressed or navigated inside with the keyboard
+     * or the mouse is placed at the end - mostly useful for links, and makes results selectable.
+     * If the widgets should always be expandable, make this always return false.
+     */
     ignoreEvent(event: MouseEvent): boolean {
-        // make queries only editable when shift is pressed or navigated inside with the keyboard
-        // or the mouse is placed at the end - mostly useful for links, and makes results selectable
-        // if the queries should always be expandable, always return false
         if (event.shiftKey) {
             return false;
         }
@@ -113,17 +118,20 @@ function getCssClasses(nodeName: string): string[] {
 
 function inlineRender(view: EditorView, index: FullIndex, dvSettings: DataviewSettings, api: DataviewApi) {
 
+    const currentFile = app.workspace.getActiveFile();
+    if (!currentFile) return;
+
     const widgets: Range<Decoration>[] = [];
     const selection = view.state.selection;
-    // before:
-    //     em for italics
-    //     highlight for highlight
-    // after:
-    //     strong for bold
-    //     strikethrough for strikethrough
+    /* before:
+     *     em for italics
+     *     highlight for highlight
+     * after:
+     *     strong for bold
+     *     strikethrough for strikethrough
+     */
     const regex = new RegExp(".*?_?inline-code_?.*");
 
-    //@ts-ignore
     for (const { from, to } of view.visibleRanges) {
 
         syntaxTree(view.state).iterate({ from, to, enter: ({node}) => {
@@ -132,24 +140,28 @@ function inlineRender(view: EditorView, index: FullIndex, dvSettings: DataviewSe
             const type = node.type;
             // markdown formatting symbols
             if (type.name.includes("formatting")) return;
+            // current node is not inline code
             if (!regex.test(type.name)) return;
 
-            // at this point bounds contains the position we want to replace and
-            // result contains the text with which we want to replace it
+            // contains the position of inline code
             const start = node.from;
             const end = node.to;
+            // don't continue if current cursor position and inline code node (including formatting
+            // symbols) overlap
             if (selectionAndRangeOverlap(selection, start-1, end+1)) return;
 
             const text = view.state.doc.sliceString(start, end);
             let code: string = "";
-            // the `this` isn't correct here, it's just for testing
             const PREAMBLE: string = "const dataview=this;const dv=this;";
-            let result: string | Literal | HTMLElement = "";
-            const currentFile = app.workspace.getActiveFile();
-            if (!currentFile) return;
+            let result: Literal = "";
             const el = createSpan({
                 cls: ['dataview', 'dataview-inline']
             });
+            /* If the query result is predefined text (e.g. in the case of errors), set innerText to it.
+             * Otherwise, pass on an empty element and fill it in later.
+             * This is necessary because {@link InlineWidget.toDOM} is synchronous but some rendering
+             * asynchronous.
+             */
             if (dvSettings.inlineQueryPrefix.length > 0 && text.startsWith(dvSettings.inlineQueryPrefix)) {
                 code = text.substring(dvSettings.inlineQueryPrefix.length).trim()
                 const field = tryOrPropogate(() => parseField(code));
@@ -172,10 +184,10 @@ function inlineRender(view: EditorView, index: FullIndex, dvSettings: DataviewSe
                 if (dvSettings.enableInlineDataviewJs) {
                     code = text.substring(dvSettings.inlineJsQueryPrefix.length).trim()
                     try {
+                        // for setting the correct context for dv/dataview
                         const myEl = createDiv();
                         const dvInlineApi = new DataviewInlineApi(api, null as unknown as Component, myEl, currentFile.path);
                         if (code.includes("await")) {
-                            // create Element, pass it on to Widget and fill it later
                             (evalInContext("(async () => { " + PREAMBLE + code + " })()") as Promise<any>).then((result: any) => {
                                 renderValue(result, el, currentFile.path, null as unknown as Component, dvSettings)
                             })
@@ -219,23 +231,23 @@ function inlineRender(view: EditorView, index: FullIndex, dvSettings: DataviewSe
 }
 
 
-
 export function inlinePlugin(index: FullIndex, settings: DataviewSettings, api: DataviewApi) {
     return ViewPlugin.fromClass(class {
         decorations: DecorationSet
 
         constructor(view: EditorView) {
-            this.decorations = inlineRender(view, index, settings, api)
+            this.decorations = inlineRender(view, index, settings, api) ?? Decoration.none;
         }
 
         update(update: ViewUpdate) {
+            // only activate in LP and not source mode
             //@ts-ignore
             if (!update.state.field(editorLivePreviewField)) {
                 this.decorations = Decoration.none;
                 return;
             }
             if (update.docChanged || update.viewportChanged || update.selectionSet) {
-                this.decorations = inlineRender(update.view, index, settings, api)
+                this.decorations = inlineRender(update.view, index, settings, api) ?? Decoration.none;
             }
         }
     }, {decorations: v => v.decorations,});
