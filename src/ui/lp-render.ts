@@ -57,8 +57,7 @@ function selectionAndRangeOverlap(selection: EditorSelection, rangeFrom:
 
 class InlineWidget extends WidgetType {
 
-    constructor(readonly settings: DataviewSettings,
-                readonly cssClasses: string[], readonly rawQuery: string,
+    constructor(readonly cssClasses: string[], readonly rawQuery: string,
                 private el: HTMLElement) {
         super();
     }
@@ -127,7 +126,7 @@ function inlineRender(view: EditorView, index: FullIndex, dvSettings: DataviewSe
             const type = node.type;
             // markdown formatting symbols
             if (type.name.includes("formatting")) return;
-            if (!regex.test(type.name)) {return}
+            if (!regex.test(type.name)) return;
 
             // at this point bounds contains the position we want to replace and
             // result contains the text with which we want to replace it
@@ -199,7 +198,7 @@ function inlineRender(view: EditorView, index: FullIndex, dvSettings: DataviewSe
 
             widgets.push(
                 Decoration.replace({
-                    widget: new InlineWidget(dvSettings, classes, code, el),
+                    widget: new InlineWidget(classes, code, el),
                     inclusive: false,
                     block: false,
                 }).range(start-1, end+1)
