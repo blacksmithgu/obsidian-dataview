@@ -9,6 +9,8 @@ export interface QuerySettings {
     taskCompletionTracking: boolean;
     /** The name of the inline field to be added as a task's completion when checked */
     taskCompletionText: string;
+    /** Date format of the task's completion timestamp */
+    taskCompletionDateFormat: string,
     /** If true, render a modal which shows no results were returned. */
     warnOnEmptyResult: boolean;
     /** Whether or not automatic view refreshing is enabled. */
@@ -32,6 +34,7 @@ export const DEFAULT_QUERY_SETTINGS: QuerySettings = {
     renderNullAs: "\\-",
     taskCompletionTracking: false,
     taskCompletionText: "completion",
+    taskCompletionDateFormat: "yyyy-MM-dd",
     warnOnEmptyResult: true,
     refreshEnabled: true,
     refreshInterval: 2500,

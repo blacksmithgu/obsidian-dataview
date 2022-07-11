@@ -63,7 +63,7 @@ function TaskItem({ item }: { item: STask }) {
 
         let updatedText = undefined;
         if (context.settings.taskCompletionTracking)
-            updatedText = setTaskCompletion(item.text, context.settings.taskCompletionText, completed);
+            updatedText = setTaskCompletion(item.text, context.settings.taskCompletionText, context.settings.taskCompletionDateFormat, completed);
 
         rewriteTask(context.app.vault, item, status, updatedText);
     };
@@ -274,11 +274,11 @@ function trimEndingLines(text: string): string {
 }
 
 /** Set the task completion key on check. */
-export function setTaskCompletion(originalText: string, completionKey: string, complete: boolean): string {
+export function setTaskCompletion(originalText: string, completionKey: string, completionDateFormat: string, complete: boolean): string {
     if (!complete) return trimEndingLines(setInlineField(originalText, completionKey, undefined));
 
     let parts = originalText.split(/\r?\n/u);
-    parts[parts.length - 1] = setInlineField(parts[parts.length - 1], completionKey, DateTime.now().toISODate());
+    parts[parts.length - 1] = setInlineField(parts[parts.length - 1], completionKey, DateTime.now().toFormat(completionDateFormat));
     return parts.join("\n");
 }
 
