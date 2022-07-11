@@ -468,5 +468,16 @@ class GeneralSettingsTab extends PluginSettingTab {
                     await this.plugin.updateSettings({ taskCompletionText: value.trim() });
                 })
             );
+        
+        new Setting(this.containerEl)
+            .setName("Automatic Task Completion Date Format")
+            .setDesc(
+                "Date format for tracking task completion date when toggling a task's checkbox in a dataview view (see Luxon date format options).ś"
+            )
+            .addText(text =>
+                text.setValue(this.plugin.settings.taskCompletionDateFormat).onChange(async value => {
+                    await this.plugin.updateSettings({ taskCompletionDateFormat: value.trim() });
+                })
+            );
     }
 }
