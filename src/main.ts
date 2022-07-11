@@ -12,8 +12,8 @@ import { DateTime } from "luxon";
 import { DataviewInlineApi } from "api/inline-api";
 import { replaceInlineFields } from "ui/views/inline-field";
 import { DataviewInit } from "ui/markdown";
-import {inlinePlugin} from "./ui/lp-render";
-import {Extension} from "@codemirror/state";
+import { inlinePlugin } from "./ui/lp-render";
+import { Extension } from "@codemirror/state";
 
 export default class DataviewPlugin extends Plugin {
     /** Plugin-wide default settigns. */
