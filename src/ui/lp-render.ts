@@ -144,6 +144,7 @@ function inlineRender(view: EditorView, index: FullIndex, dvSettings: DataviewSe
      *     strikethrough for strikethrough
      */
     const regex = new RegExp(".*?_?inline-code_?.*");
+    const PREAMBLE: string = "const dataview=this;const dv=this;";
 
     for (const { from, to } of view.visibleRanges) {
         syntaxTree(view.state).iterate({
@@ -165,7 +166,6 @@ function inlineRender(view: EditorView, index: FullIndex, dvSettings: DataviewSe
 
                 const text = view.state.doc.sliceString(start, end);
                 let code: string = "";
-                const PREAMBLE: string = "const dataview=this;const dv=this;";
                 let result: Literal = "";
                 const el = createSpan({
                     cls: ["dataview", "dataview-inline"],
