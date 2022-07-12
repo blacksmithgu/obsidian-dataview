@@ -91,9 +91,10 @@ class InlineWidget extends WidgetType {
      * If the widgets should always be expandable, make this always return false.
      */
     ignoreEvent(event: MouseEvent | Event): boolean {
-        if (event instanceof MouseEvent) {
-            const currentPos = this.view.posAtCoords({ x: event.x, y: event.y });
-            if (event.shiftKey) {
+        // instanceof check does not work in pop-out windows, so check it like this
+        if (event.type === 'mousedown') {
+            const currentPos = this.view.posAtCoords({ x: (event as MouseEvent).x, y: (event as MouseEvent).y });
+            if ((event as MouseEvent).shiftKey) {
                 // Set the cursor after the element so that it doesn't select starting from the last cursor position.
                 if (currentPos) {
                     //@ts-ignore
