@@ -161,6 +161,7 @@ export class DataviewApi {
     private _addDataArrays(pageObject: SMarkdownPage): SMarkdownPage {
         // Remap the "file" metadata entries to be data arrays.
         for (let [key, value] of Object.entries(pageObject.file)) {
+            //@ts-ignore; error appeared after updating Obsidian to 0.15.4; it also updated other packages but didn't say which
             if (Array.isArray(value)) (pageObject.file as any)[key] = DataArray.wrap(value, this.settings);
         }
 
