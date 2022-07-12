@@ -128,6 +128,8 @@ function getCssClasses(nodeName: string): string[] {
 }
 
 function inlineRender(view: EditorView, index: FullIndex, dvSettings: DataviewSettings, api: DataviewApi) {
+    // still doesn't work as expected for tables and callouts
+    if (!index.initialized) return;
     const currentFile = app.workspace.getActiveFile();
     if (!currentFile) return;
 
@@ -147,8 +149,6 @@ function inlineRender(view: EditorView, index: FullIndex, dvSettings: DataviewSe
             from,
             to,
             enter: ({ node }) => {
-                // settings and index aren't initialised yet
-                if (!dvSettings || !index) return;
                 const type = node.type;
                 // markdown formatting symbols
                 if (type.name.includes("formatting")) return;
