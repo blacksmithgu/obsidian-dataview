@@ -89,9 +89,11 @@ class InlineWidget extends WidgetType {
      * or the mouse is placed at the end, but that is always possible regardless of this method).
      * Mostly useful for links, and makes results selectable.
      * If the widgets should always be expandable, make this always return false.
+     * @param event - Is either of type MouseEvent or Event; set to UIEvent so that the type check for pop-out windows works.
+     * https://github.com/obsidianmd/obsidian-api/blob/b9bde9e32c007eb28c0fd632cf2c42b01dfd022a/obsidian.d.ts#L50-L53
      */
-    ignoreEvent(event: MouseEvent | Event): boolean {
-        if (event instanceof MouseEvent) {
+    ignoreEvent(event: UIEvent): boolean {
+        if (event.instanceOf(MouseEvent)) {
             const currentPos = this.view.posAtCoords({ x: event.x, y: event.y });
             if (event.shiftKey) {
                 // Set the cursor after the element so that it doesn't select starting from the last cursor position.
