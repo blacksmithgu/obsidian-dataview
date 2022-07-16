@@ -495,6 +495,7 @@ export class Link {
     }
 
     /** Update this link with a new path. */
+    //@ts-ignore; error appeared after updating Obsidian to 0.15.4; it also updated other packages but didn't say which
     public withPath(path: string) {
         return new Link(Object.assign({}, this, { path }));
     }
