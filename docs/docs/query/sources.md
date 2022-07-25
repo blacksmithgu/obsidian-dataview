@@ -11,7 +11,7 @@ Dataview, so they are fast to query. Dataview currently supports four source typ
 3. **Links**: You can either select links **to** a file, or all links **from** a file.
     - To obtain all pages which link **to** `[[note]]`, use `[[note]]`.
     - To obtain all pages which link **from** `[[note]]` (i.e., all the links in that file), use `outgoing([[note]])`.
-    - You can implicitly reference the current file via `[[#]]` or `[[]]`.
+    - You can implicitly reference the current file via `[[#]]` or `[[]]`, i.e. `[[]]` lets you query from all files linking to the current file.
 
 You can compose these filters in order to get more advanced sources using `and` and `or`.
 
