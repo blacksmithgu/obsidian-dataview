@@ -166,6 +166,30 @@ the first argument is an object, a list, or a string.
     contains("yes", "no") = false
     ```
 
+### `containsword(list|string, value)`
+
+Checks if `value` has an exact word match in `string` or `list`.
+This is case insensitive.
+The outputs are different for different types of input, see examples.
+
+- For strings, it checks if the word is present in the given string.
+    ```
+    containsword("word", "word") = true
+    containsword("word", "Word") = true
+    containsword("words", "Word") = false
+    containsword("Hello there!, "hello") = true
+    containsword("Hello there!, "HeLLo") = true
+    containsword("Hello there chaps!, "chap") = false
+    containsword("Hello there chaps!, "chaps") = true
+    ```
+
+- For lists, it returns a list of booleans indicating if the word's exact case insensitive match was found.
+    ```
+    containsword(["I have no words.", "words"], "Word") = [false, false]
+    containsword(["word", "Words"], "Word") = [true, false]
+    containsword(["Word", "Words in word"], "WORD") = [true, true]
+    ```
+
 ### `extract(object, key1, key2, ...)`
 
 Pulls multiple fields out of an object, creating a new object with just those fields.
