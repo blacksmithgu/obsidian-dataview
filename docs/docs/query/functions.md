@@ -174,6 +174,10 @@ the first argument is an object, a list, or a string.
     contains("yes", "no") = false
     ```
 
+### `icontains(object|list|string, value)`
+
+Case insensitive version of `contains()`.
+
 ### `containsword(list|string, value)`
 
 Checks if `value` has an exact word match in `string` or `list`.
@@ -220,6 +224,7 @@ This function is case sensitive.
     econtains({key:"value", pairs:"here"}, "here") = false
     econtains({key:"value", pairs:"here"}, "key") = false
     econtains({key:"value", recur:{recurkey: "val"}}, "value") = false
+    econtains({key:"value", recur:{recurkey: "val"}}, "Recur") = false
     econtains({key:"value", recur:{recurkey: "val"}}, "recurkey") = false
     ```
 
