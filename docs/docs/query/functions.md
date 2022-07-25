@@ -139,6 +139,14 @@ round(16.555555) = 7
 round(16.555555, 2) = 16.56
 ```
 
+### `product()`
+
+Calculates the product of a list of numbers.
+
+```
+product([1,2,3]) = 6
+```
+
 --
 
 ## Objects, Arrays, and String Operations
