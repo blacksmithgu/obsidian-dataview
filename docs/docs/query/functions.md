@@ -190,6 +190,31 @@ The outputs are different for different types of input, see examples.
     containsword(["Word", "Words in word"], "WORD") = [true, true]
     ```
 
+### `econtains(object|list|string, value)`
+
+"Exact contains" checks if the exact match is found in the string/list.
+This function is case sensitive.
+
+- For strings, it behaves exactly like [`contains()`](#containsobjectliststring-value).
+    ```
+    econtains("Hello", "Lo") = false
+    econtains("Hello", "lo") = true
+    ```
+
+- For lists, it checks if the exact word is in the list.
+    ```
+    econtains(["These", "are", "words"], "word") = false
+    econtains(["These", "are", "words"], "words") = true
+    ```
+
+- For objects, it checks if the exact key name is present in the object. It does **not** do recursive checks.
+    ```
+    econtains({key:"value", pairs:"here"}, "here") = false
+    econtains({key:"value", pairs:"here"}, "key") = false
+    econtains({key:"value", recur:{recurkey: "val"}}, "value") = false
+    econtains({key:"value", recur:{recurkey: "val"}}, "recurkey") = false
+    ```
+
 ### `extract(object, key1, key2, ...)`
 
 Pulls multiple fields out of an object, creating a new object with just those fields.
