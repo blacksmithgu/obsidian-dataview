@@ -232,8 +232,8 @@ which case it returns `true` if any of the arguments are truthy.
 any(list(1, 2, 3)) = true
 any(list(true, false)) = true
 any(list(false, false, false)) = false
-all(true, false) = true
-all(false, false) = false
+any(true, false) = true
+any(false, false) = false
 ```
 
 
