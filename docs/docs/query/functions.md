@@ -493,6 +493,18 @@ striptime(file.ctime) = file.cday
 striptime(file.mtime) = file.mday
 ```
 
+### `dateformat(date|datetime, string)`
+
+Format a Dataview date using a formatting string.
+Uses [Luxon tokens](https://moment.github.io/luxon/#/formatting?id=table-of-tokens).
+
+```
+dateformat(file.ctime,"yyyy-MM-dd") = "2022-01-05"
+dateformat(file.ctime,"HH:mm:ss") = "12:18:04"
+dateformat(date(now),"x") = "1407287224054"
+dateformat(file.mtime,"ffff") = "Wednesday, August 6, 2014, 1:07 PM Eastern Daylight Time"
+```
+
 ### `localtime(date)`
 
 Converts a date in a fixed timezone to a date in the current timezone.
