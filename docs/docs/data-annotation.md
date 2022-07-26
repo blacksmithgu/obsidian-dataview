@@ -124,7 +124,7 @@ with:
 Note that, if you do not like emojis, you can still annotate these fields textually (`[due:: ]`, `[created:: ]`,
 `[completion:: ]`, `[start:: ]`, `[scheduled:: ]`).
 
-### Task Implicit Fields
+### Implicit Fields
 
 As with pages, Dataview adds a number of implicit fields to each task:
 
