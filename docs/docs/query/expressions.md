@@ -72,12 +72,29 @@ boolean true or false value which can be used in `WHERE` blocks in queries.
 ### Array/Object Indexing
 
 You can retrieve data from arrays via the index operator `array[<index>]`, where `<index>` is any computed expression.
-Arrays are 0-indexed, so the first element is index 0, the second element is index 1, and so on.  For example `list(1,
-2, 3)[0] = 1`.
+Arrays are 0-indexed, so the first element is index 0, the second element is index 1, and so on.
+For example `list(1, 2, 3)[0] = 1`.
 
-You can retrieve data from objects (which map text to data values) also using the index operator, where indexes are now
-strings/text instead of numbers. You can also use the shorthand `object.<name>`, where `<name>` is the name of the value
-to retrieve. For example `object("yes", 1).yes = 1`.
+A similar notation style works for objects.
+You can use `field["nestedfield"]` to reference fields inside an object or otherwise similarly nested.
+For example, in the YAML defined below, we can reference `previous` via `episode_metadata["previous"]`.
+```yaml
+---
+current_episode: "S01E03"
+episode_metadata:
+  previous: "S01E02"
+  next: "S01E04"
+---
+```
+
+You can also retrieve data from objects (which map text to data values) also using the index operator, where indexes are now strings/text instead of numbers.
+You can also use the shorthand `object.<name>`, where `<name>` is the name of the value to retrieve.
+For the previous frontmatter example, we could also use `episode_metadata.previous` to obtain the same value.
+
+Index expressions also work on objects which have fields that are not directly supported by the query language.
+A good example is `where`, since it is a keyword.
+If your frontmatter/metadata contains a field `where`, you can reference it via the `row` syntax: `row["where"]`.
+See the [note in the FAQ](faq.md#how-do-i-use-fields-with-the-same-name-as-keywords-like-from-where) and [the corresponding issue](https://github.com/blacksmithgu/obsidian-dataview/issues/1164) for further information.
 
 ### Function Calls
 
