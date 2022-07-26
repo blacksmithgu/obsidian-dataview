@@ -237,6 +237,14 @@ export class ListItem {
             this.fields.get("compday"))?.[0];
     }
 
+    public start(): Literal | undefined {
+        return this.fields.get("start")?.[0];
+    }
+
+    public scheduled(): Literal | undefined {
+        return this.fields.get("scheduled")?.[0];
+    }
+
     /** Create an API-friendly copy of this list item. De-duplication is done via the provided cache. */
     public serialize(cache: ListSerializationCache): SListItem {
         // Map children to their serialized/de-duplicated equivalents right away.
@@ -276,11 +284,15 @@ export class ListItem {
 
             let created = this.created(),
                 due = this.due(),
-                completed = this.completed();
+                completed = this.completed(),
+                start = this.start(),
+                scheduled = this.scheduled();
 
             if (created) result.created = Values.deepCopy(created);
             if (due) result.due = Values.deepCopy(due);
             if (completed) result.completion = Values.deepCopy(completed);
+            if (start) result.start = Values.deepCopy(start);
+            if (scheduled) result.scheduled = Values.deepCopy(scheduled);
         }
 
         return result as SListItem;

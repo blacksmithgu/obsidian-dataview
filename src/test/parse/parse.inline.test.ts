@@ -119,6 +119,26 @@ describe("Inline Inline With HTML", () => {
     });
 });
 
+describe("Inline task emoji shorthands", () => {
+    test("Created emoji shorthand", () => {
+        let result = extractInlineFields(" - [ ] testTask \u{2795}2022-07-25", true);
+        expect(result[0].key).toEqual("created");
+        expect(result[0].value).toEqual("2022-07-25");
+    });
+
+    test("Start date emoji shorthand", () => {
+        let result = extractInlineFields(" - [ ] testTask 🛫2022-07-21", true);
+        expect(result[0].key).toEqual("start");
+        expect(result[0].value).toEqual("2022-07-21");
+    });
+
+    test("Scheduled date emoji shorthand", () => {
+        let result = extractInlineFields(" - [ ] testTask ⏳2022-07-24", true);
+        expect(result[0].key).toEqual("scheduled");
+        expect(result[0].value).toEqual("2022-07-24");
+    });
+});
+
 describe("Set Inline", () => {
     test("Add Annotation", () => {
         let input = "- [ ] an uncompleted task";

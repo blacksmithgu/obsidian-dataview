@@ -59,7 +59,7 @@ reviewed: false
 [mood:: okay] | [length:: 2 hours]
 ```
 
-#### Implicit Fields
+### Implicit Fields
 
 Dataview automatically adds a large amount of metadata to each page:
 
@@ -103,7 +103,7 @@ You can also annotate your *tasks* (I.e., lines of the form `- [ ] blah blah bla
 - [X] I finished this on [completion::2021-08-15].
 ```
 
-#### Field Shorthands
+### Field Shorthands
 
 For supporting "common use cases", Dataview understands a few shorthands for common data you may want to annotate task
 with:
@@ -112,15 +112,19 @@ with:
     - Due Date: `🗓️YYYY-MM-DD`
     - Completed Date: `✅YYYY-MM-DD`
     - Created Date: `➕YYYY-MM-DD`
+    - Start Date: `🛫YYYY-MM-DD`
+    - Scheduled Date: `⏳YYYY-MM-DD`
 === "Example"
     - [ ] Do this saturday 🗓️2021-08-29.
     - [x] Completed last saturday ✅2021-08-22.
     - [ ] I made this on ➕1990-06-14.
+    - [ ] Task I can start this weekend 🛫2021-08-29.
+    - [x] Task I finished ahead of schedule ⏳2021-08-29 ✅2021-08-22.
 
 Note that, if you do not like emojis, you can still annotate these fields textually (`[due:: ]`, `[created:: ]`,
-`[completion:: ]`).
+`[completion:: ]`, `[start:: ]`, `[scheduled:: ]`).
 
-#### Implicit Fields
+### Task Implicit Fields
 
 As with pages, Dataview adds a number of implicit fields to each task:
 
@@ -147,6 +151,8 @@ As with pages, Dataview adds a number of implicit fields to each task:
 - `completion`: The date a task was completed; set by `[completion:: ...]` or shorthand syntax.
 - `due`: The date a task is due, if it has one. Set by `[due:: ...]` or shorthand syntax.
 - `created`: The date a task was created; set by `[created:: ...]` or shorthand syntax.
+- `start`: The date a task can be started; set by `[start:: ...]` or shorthand syntax.
+- `scheduled`: The date a task is scheduled to work on; set by `[scheduled:: ...]` or shorthand syntax.
 - `annotated`: True if the task has any custom annotations, and false otherwise.
 - `parent`: The line number of the task above this task, if present; will be null if this is a root-level task.
 - `blockId`: The block ID of this task / list element, if one has been defined with the `^blockId` syntax; otherwise null.

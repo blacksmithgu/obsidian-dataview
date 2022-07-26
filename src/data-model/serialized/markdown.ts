@@ -114,4 +114,8 @@ export interface STask extends SListItemBase {
     due?: Literal;
     /** If present, then the time that this task was completed. */
     completion?: Literal;
+    /** If present, then the day that this task can be started. */
+    start?: Literal;
+    /** If present, then the day that work on this task is scheduled. */
+    scheduled?: Literal;
 }

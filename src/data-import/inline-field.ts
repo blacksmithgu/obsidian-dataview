@@ -173,45 +173,33 @@ export function extractFullLineField(text: string): InlineField | undefined {
 }
 
 export const CREATED_DATE_REGEX = /\u{2795}\s*(\d{4}-\d{2}-\d{2})/u;
-export const DUE_DATE_REGEX = /[\u{1F4C5}\u{1F4C6}\u{1F5D3}\u{FE0F}]{1,}\s*(\d{4}-\d{2}-\d{2})/u;
+export const DUE_DATE_REGEX = /(?:\u{1F4C5}|\u{1F4C6}|\u{1F5D3}|\u{FE0F})\s*(\d{4}-\d{2}-\d{2})/u;
 export const DONE_DATE_REGEX = /\u{2705}\s*(\d{4}-\d{2}-\d{2})/u;
+export const SCHEDULED_DATE_REGEX = /(?:\u{23F3}|\u{231B})\s*(\d{4}-\d{2}-\d{2})/u;
+export const START_DATE_REGEX = /\u{1F6EB}\s*(\d{4}-\d{2}-\d{2})/u;
 
 /** Parse special completed/due/done task fields which are marked via emoji. */
 function extractSpecialTaskFields(line: string): InlineField[] {
-    let results = [];
+    let results: InlineField[] = [];
 
-    let createdMatch = CREATED_DATE_REGEX.exec(line);
-    if (createdMatch)
-        results.push({
-            key: "created",
-            value: createdMatch[1],
-            start: createdMatch.index,
-            startValue: createdMatch.index + 1,
-            end: createdMatch.index + createdMatch[0].length,
-            wrapping: "emoji-shorthand",
-        });
-
-    let dueMatch = DUE_DATE_REGEX.exec(line);
-    if (dueMatch)
-        results.push({
-            key: "due",
-            value: dueMatch[1],
-            start: dueMatch.index,
-            startValue: dueMatch.index + 1,
-            end: dueMatch.index + dueMatch[0].length,
-            wrapping: "emoji-shorthand",
-        });
-
-    let completedMatch = DONE_DATE_REGEX.exec(line);
-    if (completedMatch)
-        results.push({
-            key: "completion",
-            value: completedMatch[1],
-            start: completedMatch.index,
-            startValue: completedMatch.index + 1,
-            end: completedMatch.index + completedMatch[0].length,
-            wrapping: "emoji-shorthand",
-        });
+    [
+        { shorthandDateRegex: CREATED_DATE_REGEX, shorthandDateKey: "created" },
+        { shorthandDateRegex: START_DATE_REGEX, shorthandDateKey: "start" },
+        { shorthandDateRegex: SCHEDULED_DATE_REGEX, shorthandDateKey: "scheduled" },
+        { shorthandDateRegex: DUE_DATE_REGEX, shorthandDateKey: "due" },
+        { shorthandDateRegex: DONE_DATE_REGEX, shorthandDateKey: "completion" },
+    ].forEach(shorthandRegexAndKey => {
+        const shorthandDateMatch = shorthandRegexAndKey.shorthandDateRegex.exec(line);
+        if (shorthandDateMatch)
+            results.push({
+                key: shorthandRegexAndKey.shorthandDateKey,
+                value: shorthandDateMatch[1],
+                start: shorthandDateMatch.index,
+                startValue: shorthandDateMatch.index + 1,
+                end: shorthandDateMatch.index + shorthandDateMatch[0].length,
+                wrapping: "emoji-shorthand",
+            });
+    });
 
     return results;
 }
