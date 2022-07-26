@@ -200,7 +200,7 @@ dv.paragraph(table);
 Equivalent to `dv.list()`, which renders a list of the given elements, but returns plain Markdown.
 
 ```js
-const markdown = dv.list([1, 2, 3]);
+const markdown = dv.markdownList([1, 2, 3]);
 dv.paragraph(markdown);
 ```
 
@@ -212,7 +212,7 @@ Equivalent to `dv.taskList()`, which renders a task list, but returns plain Mark
 const markdown = dv.markdownTaskList(dv.pages("#project").file.tasks);
 dv.paragraph(markdown);
 ```
-
+ 
 ## Utility
 
 ### `dv.array(value)`
