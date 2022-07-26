@@ -153,7 +153,24 @@ product([1,2,3]) = 6
 
 Operations that manipulate values inside of container objects.
 
-### `contains(object|list|string, value)`
+### `contains()` and friends
+
+For a quick summary, here are some examples:
+
+```
+contains("Hello", "Lo") = false
+contains("Hello", "lo") = true
+
+icontains("Hello", "Lo") = true
+icontains("Hello", "lo") = true
+
+econtains("Hello", "Lo") = false
+econtains("Hello", "lo") = true
+econtains(["this","is","example"], "ex") = false
+econtains(["this","is","example"], "is") = true
+```
+
+#### `contains(object|list|string, value)`
 
 Checks if the given container type has the given value in it. This function behave slightly differently based on whether
 the first argument is an object, a list, or a string.
@@ -175,35 +192,11 @@ This function is case-sensitive.
     contains("yes", "no") = false
     ```
 
-### `icontains(object|list|string, value)`
+#### `icontains(object|list|string, value)`
 
 Case insensitive version of `contains()`.
 
-### `containsword(list|string, value)`
-
-Checks if `value` has an exact word match in `string` or `list`.
-This is case insensitive.
-The outputs are different for different types of input, see examples.
-
-- For strings, it checks if the word is present in the given string.
-    ```
-    containsword("word", "word") = true
-    containsword("word", "Word") = true
-    containsword("words", "Word") = false
-    containsword("Hello there!, "hello") = true
-    containsword("Hello there!, "HeLLo") = true
-    containsword("Hello there chaps!, "chap") = false
-    containsword("Hello there chaps!, "chaps") = true
-    ```
-
-- For lists, it returns a list of booleans indicating if the word's exact case insensitive match was found.
-    ```
-    containsword(["I have no words.", "words"], "Word") = [false, false]
-    containsword(["word", "Words"], "Word") = [true, false]
-    containsword(["Word", "Words in word"], "WORD") = [true, true]
-    ```
-
-### `econtains(object|list|string, value)`
+#### `econtains(object|list|string, value)`
 
 "Exact contains" checks if the exact match is found in the string/list.
 This function is case sensitive.
@@ -227,6 +220,30 @@ This function is case sensitive.
     econtains({key:"value", recur:{recurkey: "val"}}, "value") = false
     econtains({key:"value", recur:{recurkey: "val"}}, "Recur") = false
     econtains({key:"value", recur:{recurkey: "val"}}, "recurkey") = false
+    ```
+
+### `containsword(list|string, value)`
+
+Checks if `value` has an exact word match in `string` or `list`.
+This is case insensitive.
+The outputs are different for different types of input, see examples.
+
+- For strings, it checks if the word is present in the given string.
+    ```
+    containsword("word", "word") = true
+    containsword("word", "Word") = true
+    containsword("words", "Word") = false
+    containsword("Hello there!, "hello") = true
+    containsword("Hello there!, "HeLLo") = true
+    containsword("Hello there chaps!, "chap") = false
+    containsword("Hello there chaps!, "chaps") = true
+    ```
+
+- For lists, it returns a list of booleans indicating if the word's exact case insensitive match was found.
+    ```
+    containsword(["I have no words.", "words"], "Word") = [false, false]
+    containsword(["word", "Words"], "Word") = [true, false]
+    containsword(["Word", "Words in word"], "WORD") = [true, true]
     ```
 
 ### `extract(object, key1, key2, ...)`
