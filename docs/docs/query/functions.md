@@ -157,6 +157,7 @@ Operations that manipulate values inside of container objects.
 
 Checks if the given container type has the given value in it. This function behave slightly differently based on whether
 the first argument is an object, a list, or a string.
+This function is case-sensitive.
 
 - For objects, checks if the object has a key with the given name. For example,
     ```
