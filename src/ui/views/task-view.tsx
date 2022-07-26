@@ -1,4 +1,4 @@
-import { setInlineField } from "data-import/inline-field";
+import { extractInlineFields, setInlineField } from "data-import/inline-field";
 import { LIST_ITEM_REGEX } from "data-import/markdown-file";
 import { SListEntry, SListItem, STask } from "data-model/serialized/markdown";
 import { Grouping, Groupings } from "data-model/value";
@@ -65,6 +65,7 @@ function TaskItem({ item }: { item: STask }) {
         if (context.settings.taskCompletionTracking)
             updatedText = setTaskCompletion(
                 item.text,
+                context.settings.taskCompletionUseEmojiShorthand,
                 context.settings.taskCompletionText,
                 context.settings.taskCompletionDateFormat,
                 completed
@@ -281,18 +282,39 @@ function trimEndingLines(text: string): string {
 /** Set the task completion key on check. */
 export function setTaskCompletion(
     originalText: string,
+    useEmojiShorthand: boolean,
     completionKey: string,
     completionDateFormat: string,
     complete: boolean
 ): string {
-    if (!complete) return trimEndingLines(setInlineField(originalText, completionKey, undefined));
+    if (!complete && !useEmojiShorthand) return trimEndingLines(setInlineField(originalText, completionKey, undefined));
 
     let parts = originalText.split(/\r?\n/u);
-    parts[parts.length - 1] = setInlineField(
-        parts[parts.length - 1],
-        completionKey,
-        DateTime.now().toFormat(completionDateFormat)
-    );
+    if (useEmojiShorthand) {
+        console.log(`Emoji shorthand time! Original text: ${originalText}, complete: ${complete}`);
+        const existingKeys = extractInlineFields(parts[parts.length - 1], true).filter(
+            f => f.key === "completion" && f.wrapping === "emoji-shorthand"
+        );
+
+        // Only set completion if there are no duplicates AND the field must be changed (date set or key removed).
+        if (existingKeys.length <= 2 && (complete || existingKeys.length > 0)) {
+            /* No wrapper, add own spacing */
+            const annotation = complete ? ` ✅ ${DateTime.now().toFormat("yyyy-MM-dd")} ` : " ";
+            if (existingKeys[0]) {
+                const prefix = parts[parts.length - 1].substring(0, existingKeys[0].start);
+                const suffix = parts[parts.length - 1].substring(existingKeys[0].end);
+                parts[parts.length - 1] = `${prefix.trimEnd()}${annotation}${suffix.trimStart()}`;
+            } else {
+                parts[parts.length - 1] = `${parts[parts.length - 1].trimEnd()}${annotation}`;
+            }
+        }
+    } else {
+        parts[parts.length - 1] = setInlineField(
+            parts[parts.length - 1],
+            completionKey,
+            DateTime.now().toFormat(completionDateFormat)
+        );
+    }
     return parts.join("\n");
 }
 

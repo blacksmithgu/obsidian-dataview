@@ -355,23 +355,26 @@ class GeneralSettingsTab extends PluginSettingTab {
                 toggle.setValue(this.plugin.settings.refreshEnabled).onChange(async value => {
                     await this.plugin.updateSettings({ refreshEnabled: value });
                     this.plugin.index.touch();
+                    this.display();
                 })
             );
 
-        new Setting(this.containerEl)
-            .setName("Refresh Interval")
-            .setDesc("How long to wait (in milliseconds) for files to stop changing before updating views.")
-            .addText(text =>
-                text
-                    .setPlaceholder("500")
-                    .setValue("" + this.plugin.settings.refreshInterval)
-                    .onChange(async value => {
-                        let parsed = parseInt(value);
-                        if (isNaN(parsed)) return;
-                        parsed = parsed < 100 ? 100 : parsed;
-                        await this.plugin.updateSettings({ refreshInterval: parsed });
-                    })
-            );
+        if (this.plugin.settings.refreshEnabled) {
+            new Setting(this.containerEl)
+                .setName("Refresh Interval")
+                .setDesc("How long to wait (in milliseconds) for files to stop changing before updating views.")
+                .addText(text =>
+                    text
+                        .setPlaceholder("500")
+                        .setValue("" + this.plugin.settings.refreshInterval)
+                        .onChange(async value => {
+                            let parsed = parseInt(value);
+                            if (isNaN(parsed)) return;
+                            parsed = parsed < 100 ? 100 : parsed;
+                            await this.plugin.updateSettings({ refreshInterval: parsed });
+                        })
+                );
+        }
 
         let dformat = new Setting(this.containerEl)
             .setName("Date Format")
@@ -457,34 +460,57 @@ class GeneralSettingsTab extends PluginSettingTab {
         new Setting(this.containerEl)
             .setName("Automatic Task Completion Tracking")
             .setDesc(
-                "If enabled, Dataview will automatically append tasks with their completion date when they are checked in Dataview views."
+                "If enabled, Dataview will automatically append tasks with their completion date when they are checked in Dataview views." +
+                    " Example with default field name and date format: - [x] my task [completion:: 2022-01-01]"
             )
             .addToggle(toggle =>
                 toggle.setValue(this.plugin.settings.taskCompletionTracking).onChange(async value => {
                     await this.plugin.updateSettings({ taskCompletionTracking: value });
+                    // Force reload of settings tab
+                    this.display();
                 })
             );
 
-        new Setting(this.containerEl)
-            .setName("Automatic Task Completion Field")
-            .setDesc(
-                "Text used as inline field key to track task completion date when toggling a task's checkbox in a dataview view."
-            )
-            .addText(text =>
-                text.setValue(this.plugin.settings.taskCompletionText).onChange(async value => {
-                    await this.plugin.updateSettings({ taskCompletionText: value.trim() });
-                })
-            );
+        if (this.plugin.settings.taskCompletionTracking) {
+            new Setting(this.containerEl)
+                .setName("Use Emoji Shorthand for Task Completion")
+                .setDesc(
+                    "If enabled, will use emoji shorthand for task completion date instead of inline field formatting. Example: - [x] my task ✅ 2022-01-01" +
+                        " This fills out the implicit Dataview field `completion` for the task with the date." +
+                        " Disable this if you want to customize the completion date format or the field name, or to use Dataview inline field formatting."
+                )
+                .addToggle(toggle =>
+                    toggle.setValue(this.plugin.settings.taskCompletionUseEmojiShorthand).onChange(async value => {
+                        await this.plugin.updateSettings({ taskCompletionUseEmojiShorthand: value });
+                        // Force reload of settings tab
+                        this.display();
+                    })
+                );
 
-        new Setting(this.containerEl)
-            .setName("Automatic Task Completion Date Format")
-            .setDesc(
-                "Date format for tracking task completion date when toggling a task's checkbox in a dataview view (see Luxon date format options).ś"
-            )
-            .addText(text =>
-                text.setValue(this.plugin.settings.taskCompletionDateFormat).onChange(async value => {
-                    await this.plugin.updateSettings({ taskCompletionDateFormat: value.trim() });
-                })
-            );
+            /* Display inline field name and date format only if not using emoji shorthand */
+            if (!this.plugin.settings.taskCompletionUseEmojiShorthand) {
+                new Setting(this.containerEl)
+                    .setName("Automatic Task Completion Field Name")
+                    .setDesc(
+                        "Text used as inline field key to track task completion date when toggling a task's checkbox in a dataview view."
+                    )
+                    .addText(text =>
+                        text.setValue(this.plugin.settings.taskCompletionText).onChange(async value => {
+                            await this.plugin.updateSettings({ taskCompletionText: value.trim() });
+                        })
+                    );
+
+                new Setting(this.containerEl)
+                    .setName("Automatic Task Completion Date Format")
+                    .setDesc(
+                        "Date-time format for tracking task completion date when toggling a task's checkbox in a dataview view (see Luxon date format options)."
+                    )
+                    .addText(text =>
+                        text.setValue(this.plugin.settings.taskCompletionDateFormat).onChange(async value => {
+                            await this.plugin.updateSettings({ taskCompletionDateFormat: value.trim() });
+                        })
+                    );
+            }
+        }
     }
 }
