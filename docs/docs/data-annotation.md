@@ -115,7 +115,7 @@ with:
     - Start Date: `🛫YYYY-MM-DD`
     - Scheduled Date: `⏳YYYY-MM-DD`
 === "Example"
-    - [ ] Do this saturday 🗓️2021-08-29.
+    - [ ] Due this saturday 🗓️2021-08-29.
     - [x] Completed last saturday ✅2021-08-22.
     - [ ] I made this on ➕1990-06-14.
     - [ ] Task I can start this weekend 🛫2021-08-29.
