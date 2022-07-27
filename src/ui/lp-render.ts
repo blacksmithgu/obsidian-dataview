@@ -92,7 +92,7 @@ class InlineWidget extends WidgetType {
      */
     ignoreEvent(event: MouseEvent | Event): boolean {
         // instanceof check does not work in pop-out windows, so check it like this
-        if (event.type === 'mousedown') {
+        if (event.type === "mousedown") {
             const currentPos = this.view.posAtCoords({ x: (event as MouseEvent).x, y: (event as MouseEvent).y });
             if ((event as MouseEvent).shiftKey) {
                 // Set the cursor after the element so that it doesn't select starting from the last cursor position.

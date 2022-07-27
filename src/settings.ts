@@ -10,7 +10,7 @@ export interface QuerySettings {
     /** The name of the inline field to be added as a task's completion when checked */
     taskCompletionText: string;
     /** Date format of the task's completion timestamp */
-    taskCompletionDateFormat: string,
+    taskCompletionDateFormat: string;
     /** If true, render a modal which shows no results were returned. */
     warnOnEmptyResult: boolean;
     /** Whether or not automatic view refreshing is enabled. */

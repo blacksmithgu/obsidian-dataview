@@ -475,7 +475,7 @@ class GeneralSettingsTab extends PluginSettingTab {
                     await this.plugin.updateSettings({ taskCompletionText: value.trim() });
                 })
             );
-        
+
         new Setting(this.containerEl)
             .setName("Automatic Task Completion Date Format")
             .setDesc(
