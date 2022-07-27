@@ -287,11 +287,10 @@ export function setTaskCompletion(
     completionDateFormat: string,
     complete: boolean
 ): string {
-    if (!complete && !useEmojiShorthand) return trimEndingLines(setInlineField(originalText, completionKey, undefined));
+    if (!complete && !useEmojiShorthand) return trimEndingLines(setInlineField(originalText, completionKey));
 
     let parts = originalText.split(/\r?\n/u);
     if (useEmojiShorthand) {
-        console.log(`Emoji shorthand time! Original text: ${originalText}, complete: ${complete}`);
         const existingKeys = extractInlineFields(parts[parts.length - 1], true).filter(
             f => f.key === "completion" && f.wrapping === "emoji-shorthand"
         );
