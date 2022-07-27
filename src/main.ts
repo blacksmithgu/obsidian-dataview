@@ -355,26 +355,23 @@ class GeneralSettingsTab extends PluginSettingTab {
                 toggle.setValue(this.plugin.settings.refreshEnabled).onChange(async value => {
                     await this.plugin.updateSettings({ refreshEnabled: value });
                     this.plugin.index.touch();
-                    this.display();
                 })
             );
 
-        if (this.plugin.settings.refreshEnabled) {
-            new Setting(this.containerEl)
-                .setName("Refresh Interval")
-                .setDesc("How long to wait (in milliseconds) for files to stop changing before updating views.")
-                .addText(text =>
-                    text
-                        .setPlaceholder("500")
-                        .setValue("" + this.plugin.settings.refreshInterval)
-                        .onChange(async value => {
-                            let parsed = parseInt(value);
-                            if (isNaN(parsed)) return;
-                            parsed = parsed < 100 ? 100 : parsed;
-                            await this.plugin.updateSettings({ refreshInterval: parsed });
-                        })
-                );
-        }
+        new Setting(this.containerEl)
+            .setName("Refresh Interval")
+            .setDesc("How long to wait (in milliseconds) for files to stop changing before updating views.")
+            .addText(text =>
+                text
+                    .setPlaceholder("500")
+                    .setValue("" + this.plugin.settings.refreshInterval)
+                    .onChange(async value => {
+                        let parsed = parseInt(value);
+                        if (isNaN(parsed)) return;
+                        parsed = parsed < 100 ? 100 : parsed;
+                        await this.plugin.updateSettings({ refreshInterval: parsed });
+                    })
+            );
 
         let dformat = new Setting(this.containerEl)
             .setName("Date Format")
