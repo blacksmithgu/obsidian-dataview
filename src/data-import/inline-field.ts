@@ -233,3 +233,22 @@ export function setInlineField(source: string, key: string, value?: string): str
 
     return source;
 }
+
+export function setEmojiShorthandCompletionField(source: string, value?: string): string {
+    const existing = extractInlineFields(source, true);
+    const existingKeys = existing.filter(f => f.key === "completion" && f.wrapping === "emoji-shorthand");
+
+    // Don't do anything if there are duplicate keys OR the key already doesn't exist.
+    if (existingKeys.length > 2 || (existingKeys.length == 0 && !value)) return source;
+
+    /* No wrapper, add own spacing */
+    const annotation = value ? ` ✅ ${value} ` : " ";
+    let existingKey = existingKeys[0];
+    if (existingKey) {
+        const prefix = source.substring(0, existingKey.start);
+        const suffix = source.substring(existingKey.end);
+        return `${prefix.trimEnd()}${annotation}${suffix.trimStart()}`;
+    } else {
+        return `${source.trimEnd()}${annotation}`;
+    }
+}
