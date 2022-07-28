@@ -59,7 +59,7 @@ reviewed: false
 [mood:: okay] | [length:: 2 hours]
 ```
 
-#### Implicit Fields
+### Implicit Fields
 
 Dataview automatically adds a large amount of metadata to each page:
 
@@ -103,7 +103,7 @@ You can also annotate your *tasks* (I.e., lines of the form `- [ ] blah blah bla
 - [X] I finished this on [completion::2021-08-15].
 ```
 
-#### Field Shorthands
+### Field Shorthands
 
 For supporting "common use cases", Dataview understands a few shorthands for common data you may want to annotate task
 with:
@@ -112,15 +112,19 @@ with:
     - Due Date: `🗓️YYYY-MM-DD`
     - Completed Date: `✅YYYY-MM-DD`
     - Created Date: `➕YYYY-MM-DD`
+    - Start Date: `🛫YYYY-MM-DD`
+    - Scheduled Date: `⏳YYYY-MM-DD`
 === "Example"
-    - [ ] Do this saturday 🗓️2021-08-29.
-    - [x] Completed last saturday ✅2021-08-22.
-    - [ ] I made this on ➕1990-06-14.
+    - [ ] Due this saturday 🗓️2021-08-29
+    - [x] Completed last saturday ✅2021-08-22
+    - [ ] I made this on ➕1990-06-14
+    - [ ] Task I can start this weekend 🛫2021-08-29
+    - [x] Task I finished ahead of schedule ⏳2021-08-29 ✅2021-08-22
 
 Note that, if you do not like emojis, you can still annotate these fields textually (`[due:: ]`, `[created:: ]`,
-`[completion:: ]`).
+`[completion:: ]`, `[start:: ]`, `[scheduled:: ]`).
 
-#### Implicit Fields
+### Implicit Fields
 
 As with pages, Dataview adds a number of implicit fields to each task:
 
@@ -144,9 +148,11 @@ As with pages, Dataview adds a number of implicit fields to each task:
 - `link`: A link to the closest linkable block near this task; useful for making links which go to the task.
 - `children`: Any subtasks or sublists of this task.
 - `task`: If true, this is a task; otherwise, it is a regular list element.
-- `completion`: The date a task was completed; set by `[completion:: ...]` or shorthand syntax.
-- `due`: The date a task is due, if it has one. Set by `[due:: ...]` or shorthand syntax.
-- `created`: The date a task was created; set by `[created:: ...]` or shorthand syntax.
+- `completion`: The date a task was completed; set by `[completion:: ...]` or [shorthand syntax](#field-shorthands).
+- `due`: The date a task is due, if it has one. Set by `[due:: ...]` or [shorthand syntax](#field-shorthands).
+- `created`: The date a task was created; set by `[created:: ...]` or [shorthand syntax](#field-shorthands).
+- `start`: The date a task can be started; set by `[start:: ...]` or [shorthand syntax](#field-shorthands).
+- `scheduled`: The date a task is scheduled to work on; set by `[scheduled:: ...]` or [shorthand syntax](#field-shorthands).
 - `annotated`: True if the task has any custom annotations, and false otherwise.
 - `parent`: The line number of the task above this task, if present; will be null if this is a root-level task.
 - `blockId`: The block ID of this task / list element, if one has been defined with the `^blockId` syntax; otherwise null.
@@ -159,22 +165,22 @@ All fields in dataview have a *type*, which determines how dataview will render,
 Dataview understands several distinct field types to cover common use cases:
 
 - **Text**: The default catch-all. If a field doesn't match a more specific type, it is just plain text.
-    ```
+    ```markdown
     Example:: This is some normal text.
     ```
 - **Number**: Numbers like '6' and '3.6'.
-    ```
+    ```markdown
     Example:: 6
     Example:: 2.4
     Example:: -80
     ```
 - **Boolean**: true/false, as the programming concept.
-    ```
+    ```markdown
     Example:: true
     Example:: false
     ```
 - **Date**: ISO8601 dates of the general form `YYYY-MM[-DDTHH:mm:ss.nnn+ZZ]`. Everything after the month is optional.
-    ```
+    ```markdown
     Example:: 2021-04-18
     Example:: 2021-04-18T04:19:35.000
     Example:: 2021-04-18T04:19:35.000+06:30
@@ -182,7 +188,7 @@ Dataview understands several distinct field types to cover common use cases:
 - **Duration**: Durations of the form `<time> <unit>`, like `6 hours` or `4 minutes`. Common english abbreviations like
   `6hrs` or `2m` are accepted. You can specify multiple units using an optional comma separator: `6 hours, 4 minutes`
   or `6hr4min`.
-    ```
+    ```markdown
     Example:: 7 hours
     Example:: 4min
     Example:: 16 days
@@ -191,19 +197,19 @@ Dataview understands several distinct field types to cover common use cases:
     ```
 - **Link**: Plain Obsidian links like `[[Page]]` or `[[Page|Page Display]]`.
     - If you reference a link in frontmatter, you need to quote it, as so: `key: "[[Link]]"`. This is default Obsidian-supported behavior.
-    ```
+    ```markdown
     Example:: [[A Page]]
     Example:: [[Some Other Page|Render Text]]
     ```
 - **List**: Lists of other dataview fields. In YAML, these are defined as normal YAML lists; for inline fields, they are
   just comma-separated lists.
-    ```
+    ```markdown
     Example:: 1, 2, 3
     Example:: "yes", "or", "no"
     ```
 - **Object**: A map of name to dataview field. These can only be defined in YAML frontmatter, using the normal YAML
   object syntax:
-  ```
+  ```yaml
   field:
     value1: 1
     value2: 2
