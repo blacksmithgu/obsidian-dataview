@@ -138,7 +138,14 @@ export function extractInlineFields(line: string, includeTaskFields: boolean = f
     if (includeTaskFields) fields = fields.concat(extractSpecialTaskFields(line));
 
     fields.sort((a, b) => a.start - b.start);
-    return fields;
+    
+    let filteredFields: InlineField[] = [];
+    for (let i = 0; i < fields.length; i++) {
+        if (i == 0 || filteredFields[filteredFields.length-1].end < fields[i].start) {
+            filteredFields.push(fields[i]);
+        }
+    }
+    return filteredFields;
 }
 
 /** Validates that a raw field name has a valid form. */
