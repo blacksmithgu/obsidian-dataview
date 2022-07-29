@@ -461,8 +461,15 @@ class GeneralSettingsTab extends PluginSettingTab {
         new Setting(this.containerEl)
             .setName("Automatic Task Completion Tracking")
             .setDesc(
-                "If enabled, Dataview will automatically append tasks with their completion date when they are checked in Dataview views." +
-                    " Example with default field name and date format: - [x] my task [completion:: 2022-01-01]"
+                createFragment(el => {
+                    el.appendText(
+                        "If enabled, Dataview will automatically append tasks with their completion date when they are checked in Dataview views."
+                    );
+                    el.createEl("br");
+                    el.appendText(
+                        "Example with default field name and date format: - [x] my task [completion:: 2022-01-01]"
+                    );
+                })
             )
             .addToggle(toggle =>
                 toggle.setValue(this.plugin.settings.taskCompletionTracking).onChange(async value => {
@@ -478,10 +485,19 @@ class GeneralSettingsTab extends PluginSettingTab {
         if (taskCompletionSubsettingsEnabled)
             taskEmojiShorthand
                 .setDesc(
-                    "If enabled, will use emoji shorthand to fill out the task's implicit Dataview field `completion` instead of inline field formatting." +
-                        " Example: - [x] my task ✅ 2022-01-01" +
-                        " Disable this if you want to customize the completion date format or the field name, or to use Dataview inline field formatting." +
-                        " Only enabled when `Automatic Task Completion Tracking` is enabled."
+                    createFragment(el => {
+                        el.appendText(
+                            'If enabled, will use emoji shorthand instead of inline field formatting to fill out implicit task field "completion".'
+                        );
+                        el.createEl("br");
+                        el.appendText("Example: - [x] my task ✅ 2022-01-01");
+                        el.createEl("br");
+                        el.appendText(
+                            "Disable this to customize the completion date format or field name, or to use Dataview inline field formatting."
+                        );
+                        el.createEl("br");
+                        el.appendText('Only available when "Automatic Task Completion Tracking" is enabled.');
+                    })
                 )
                 .addToggle(toggle =>
                     toggle.setValue(this.plugin.settings.taskCompletionUseEmojiShorthand).onChange(async value => {
@@ -490,7 +506,7 @@ class GeneralSettingsTab extends PluginSettingTab {
                         this.display();
                     })
                 );
-        else taskEmojiShorthand.setDesc("Only enabled when `Automatic Task Completion Tracking` is enabled.");
+        else taskEmojiShorthand.setDesc('Only available when "Automatic Task Completion Tracking" is enabled.');
 
         let taskFieldName = new Setting(this.containerEl)
             .setName("Completion Field Name")
@@ -498,8 +514,15 @@ class GeneralSettingsTab extends PluginSettingTab {
         if (taskCompletionInlineSubsettingsEnabled)
             taskFieldName
                 .setDesc(
-                    "Text used as inline field key to track task completion date when toggling a task's checkbox in a dataview view." +
-                        " Only enabled when `Automatic Task Completion Tracking` is enabled and `Use Emoji Shorthand for Completion` is disabled."
+                    createFragment(el => {
+                        el.appendText(
+                            "Text used as inline field key for task completion date when toggling a task's checkbox in a dataview view."
+                        );
+                        el.createEl("br");
+                        el.appendText(
+                            'Only available when "Automatic Task Completion Tracking" is enabled and "Use Emoji Shorthand for Completion" is disabled.'
+                        );
+                    })
                 )
                 .addText(text =>
                     text.setValue(this.plugin.settings.taskCompletionText).onChange(async value => {
@@ -508,23 +531,32 @@ class GeneralSettingsTab extends PluginSettingTab {
                 );
         else
             taskFieldName.setDesc(
-                "Only enabled when `Automatic Task Completion Tracking` is enabled and `Use Emoji Shorthand for Completion` is disabled."
+                'Only available when "Automatic Task Completion Tracking" is enabled and "Use Emoji Shorthand for Completion" is disabled.'
             );
 
         let taskDtFormat = new Setting(this.containerEl)
             .setName("Completion Date Format")
             .setDisabled(!taskCompletionInlineSubsettingsEnabled);
         if (taskCompletionInlineSubsettingsEnabled) {
-            let descText =
-                "Date-time format for tracking task completion date when toggling a task's checkbox in a dataview view (see Luxon date format options)." +
-                " Only enabled when `Automatic Task Completion Tracking` is enabled and `Use Emoji Shorthand for Completion` is disabled." +
-                "Currently: ";
+            let descTextLines = [
+                "Date-time format for task completion date when toggling a task's checkbox in a dataview view (see Luxon date format options).",
+                'Only available when "Automatic Task Completion Tracking" is enabled and "Use Emoji Shorthand for Completion" is disabled.',
+                "Currently: ",
+            ];
             taskDtFormat
                 .setDesc(
-                    descText +
-                        DateTime.now().toFormat(this.plugin.settings.taskCompletionDateFormat, {
-                            locale: currentLocale(),
-                        })
+                    createFragment(el => {
+                        el.appendText(descTextLines[0]);
+                        el.createEl("br");
+                        el.appendText(descTextLines[1]);
+                        el.createEl("br");
+                        el.appendText(
+                            descTextLines[2] +
+                                DateTime.now().toFormat(this.plugin.settings.taskCompletionDateFormat, {
+                                    locale: currentLocale(),
+                                })
+                        );
+                    })
                 )
                 .addText(text =>
                     text
@@ -532,7 +564,16 @@ class GeneralSettingsTab extends PluginSettingTab {
                         .setValue(this.plugin.settings.taskCompletionDateFormat)
                         .onChange(async value => {
                             taskDtFormat.setDesc(
-                                descText + DateTime.now().toFormat(value.trim(), { locale: currentLocale() })
+                                createFragment(el => {
+                                    el.appendText(descTextLines[0]);
+                                    el.createEl("br");
+                                    el.appendText(descTextLines[1]);
+                                    el.createEl("br");
+                                    el.appendText(
+                                        descTextLines[2] +
+                                            DateTime.now().toFormat(value.trim(), { locale: currentLocale() })
+                                    );
+                                })
                             );
                             await this.plugin.updateSettings({ taskCompletionDateFormat: value.trim() });
                             this.plugin.index.touch();
@@ -540,7 +581,7 @@ class GeneralSettingsTab extends PluginSettingTab {
                 );
         } else {
             taskDtFormat.setDesc(
-                "Only enabled when `Automatic Task Completion Tracking` is enabled and `Use Emoji Shorthand for Completion` is disabled."
+                'Only available when "Automatic Task Completion Tracking" is enabled and "Use Emoji Shorthand for Completion" is disabled.'
             );
         }
     }
