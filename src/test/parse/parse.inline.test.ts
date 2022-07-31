@@ -1,6 +1,6 @@
 import { EXPRESSION } from "expression/parse";
 import { Link } from "data-model/value";
-import { extractInlineFields, setInlineField } from "data-import/inline-field";
+import { extractInlineFields, setEmojiShorthandCompletionField, setInlineField } from "data-import/inline-field";
 
 // <-- Inline field wierd edge cases -->
 
@@ -156,5 +156,26 @@ describe("Set Inline", () => {
 
         result = setInlineField(input, "completion", "2021-02-22");
         expect(result).toEqual("- [x] a completed task [completion:: 2021-02-22] foo bar");
+    });
+
+    test("Add emoji shorthand annotation", () => {
+        let input = "- [ ] an uncompleted task";
+        /* Nothing added when should not be */
+        let result = setEmojiShorthandCompletionField(input);
+        expect(result).toEqual(input);
+
+        /* Completion date added */
+        result = setEmojiShorthandCompletionField(input, "2022-07-26");
+        expect(result).toEqual(input + " ✅ 2022-07-26");
+        const extracted = extractInlineFields(result, true);
+        expect(extracted[0].key).toEqual("completion");
+        expect(extracted[0].value).toEqual("2022-07-26");
+
+        /* Remove the completion field */
+        result = setEmojiShorthandCompletionField(result);
+        expect(result).toEqual(input);
+        const input2 = "- [x] a completed task ✅ 2022-07-26 foo bar";
+        result = setEmojiShorthandCompletionField(input2);
+        expect(result).toEqual("- [x] a completed task foo bar");
     });
 });

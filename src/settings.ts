@@ -7,9 +7,11 @@ export interface QuerySettings {
     renderNullAs: string;
     /** If enabled, tasks in Dataview views will automatically have their completion date appended when they are checked. */
     taskCompletionTracking: boolean;
-    /** The name of the inline field to be added as a task's completion when checked */
+    /** If enabled, automatic completions will use emoji shorthand ✅ YYYY-MM-DD instead of [completion:: date]. */
+    taskCompletionUseEmojiShorthand: boolean;
+    /** The name of the inline field to be added as a task's completion when checked. Only used if completionTracking is enabled and emojiShorthand is not. */
     taskCompletionText: string;
-    /** Date format of the task's completion timestamp */
+    /** Date format of the task's completion timestamp. Only used if completionTracking is enabled and emojiShorthand is not. */
     taskCompletionDateFormat: string;
     /** If true, render a modal which shows no results were returned. */
     warnOnEmptyResult: boolean;
@@ -33,6 +35,7 @@ export interface QuerySettings {
 export const DEFAULT_QUERY_SETTINGS: QuerySettings = {
     renderNullAs: "\\-",
     taskCompletionTracking: false,
+    taskCompletionUseEmojiShorthand: false,
     taskCompletionText: "completion",
     taskCompletionDateFormat: "yyyy-MM-dd",
     warnOnEmptyResult: true,
