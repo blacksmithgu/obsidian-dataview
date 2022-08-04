@@ -4,7 +4,7 @@ A dataview "source" is something that identifies a set of files, tasks, or other
 Dataview, so they are fast to query. Dataview currently supports four source types:
 
 1. **Tags**: Sources of the form `#tag`. These match all files / sections / tasks with the given tag.
-2. **Folders**: Sources of the form `"folder"`. These match all files / sections / tasks contained in the given folder.
+2. **Folders**: Sources of the form `"folder"`. These match all files / sections / tasks contained in the given folder. The full vault path is expected instead of just the folder name. Note that trailing slashes are not supported, i.e. `"Path/To/Folder/"` will not work but `"Path/To/Folder"` will.
 3. **Specific Files**: You can select from a specific file by specifying it's full path: `"folder/File"`.
     - If you have both a file and a folder with the exact same path, Dataview will prefer the folder. You can force
     it to read from the file by specifying an extension: `folder/File.md`.
