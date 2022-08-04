@@ -90,3 +90,7 @@ JavaScript views. There are four ways to do this:
     ~~~markdown
     This page was last modified at `$= dv.current().file.mtime`.
     ~~~
+
+## Resources and Help
+
+See [getting started](./resources-and-support.md) for a list of resources and how to find support.
