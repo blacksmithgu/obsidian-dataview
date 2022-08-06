@@ -3,7 +3,7 @@ import { LIST_ITEM_REGEX } from "data-import/markdown-file";
 import { SListEntry, SListItem, STask } from "data-model/serialized/markdown";
 import { Grouping, Groupings } from "data-model/value";
 import { DateTime } from "luxon";
-import { MarkdownRenderChild, Vault } from "obsidian";
+import { MarkdownRenderChild, Platform, Vault } from "obsidian";
 import { Fragment, h } from "preact";
 import { useContext } from "preact/hooks";
 import { executeTask } from "query/engine";
@@ -42,10 +42,11 @@ function TaskItem({ item }: { item: STask }) {
             },
         };
 
+        // MacOS interprets the Command key as Meta.
         context.app.workspace.openLinkText(
             item.link.toFile().obsidianLink(),
             item.path,
-            evt.ctrlKey,
+            evt.ctrlKey || (evt.metaKey && Platform.isMacOS),
             selectionState as any
         );
     };
