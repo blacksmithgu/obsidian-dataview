@@ -23,3 +23,7 @@ There are two ways:
     ```javascript
     row["Field With Space In It"]
     ```
+
+### Do you have a list of resources to learn from?
+
+Yes! Please see the [Resources](../resources-and-support.md) page.
