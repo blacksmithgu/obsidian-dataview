@@ -13,11 +13,15 @@ Feel free to contribute directly to this list, documentation, or even reach out 
 
 ### YouTube videos
 
-- Some are already linked to in the Obsidian Hub section.
+- SkepticMystic's aforementioned community talk
 - [Dataview Plugin: How To Use This Powerful Obsidian Plugin (With Examples) by Filipe Donadio](https://www.youtube.com/watch?v=7kFEl7Ovsr8)
 - [Automate Your Vault With Dataview - How To Use Dataview in Obsidian by FromSergio](https://www.youtube.com/watch?v=8yjNuiSBSAM)
 - [How to use the Obsidian Dataview plugin by Nicole van der Hoeven](https://www.youtube.com/watch?v=JTObSymEvWA)
 - [Intro to Dataview Plugin - Obsidian Community Talk](https://www.youtube.com/watch?v=lclif6l9UgQ)
+
+### Example Vault
+
+- @s-blu has very kindly put together [a vault of example queries](https://github.com/s-blu/obsidian_dataview_example_vault/) that you can use as a playground of sorts.
 
 ### Blog Posts
 
