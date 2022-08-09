@@ -334,6 +334,26 @@ For example, flatten the `authors` field in each literature note to give one row
     |smithPainAssaultSelf2007 SN|Jonathan A. Smith|
     |smithPainAssaultSelf2007 SN|Mike Osborn|
 
+A good use of this would be when there is a deeply nested list that you want to use more easily.
+For example, `file.lists` or `file.tasks`.
+Note the simpler query though the end results are slightly different (grouped vs non-grouped).
+You can use a `GROUP BY file.link` to achieve identical results but would need to use `rows.T.text` as described earlier.
+
+```
+table T.text as "Task Text"
+from "Scratchpad"
+flatten file.tasks as T
+where T.text
+```
+
+```
+table filter(file.tasks.text, (t) => t) as "Task Text"
+from "Scratchpad"
+where file.tasks.text
+```
+
+`FLATTEN` makes it easier to operate on nested lists since you can then use simpler where conditions on them as opposed to using functions like `map()` or `filter()`.
+
 ### LIMIT
 
 Restrict the results to at most N values.

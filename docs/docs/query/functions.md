@@ -139,16 +139,42 @@ round(16.555555) = 7
 round(16.555555, 2) = 16.56
 ```
 
+### `product()`
+
+Calculates the product of a list of numbers.
+
+```
+product([1,2,3]) = 6
+```
+
 --
 
 ## Objects, Arrays, and String Operations
 
 Operations that manipulate values inside of container objects.
 
-### `contains(object|list|string, value)`
+### `contains()` and friends
+
+For a quick summary, here are some examples:
+
+```
+contains("Hello", "Lo") = false
+contains("Hello", "lo") = true
+
+icontains("Hello", "Lo") = true
+icontains("Hello", "lo") = true
+
+econtains("Hello", "Lo") = false
+econtains("Hello", "lo") = true
+econtains(["this","is","example"], "ex") = false
+econtains(["this","is","example"], "is") = true
+```
+
+#### `contains(object|list|string, value)`
 
 Checks if the given container type has the given value in it. This function behave slightly differently based on whether
 the first argument is an object, a list, or a string.
+This function is case-sensitive.
 
 - For objects, checks if the object has a key with the given name. For example,
     ```
@@ -164,6 +190,60 @@ the first argument is an object, a list, or a string.
     ```
     contains("hello", "lo") = true
     contains("yes", "no") = false
+    ```
+
+#### `icontains(object|list|string, value)`
+
+Case insensitive version of `contains()`.
+
+#### `econtains(object|list|string, value)`
+
+"Exact contains" checks if the exact match is found in the string/list.
+This function is case sensitive.
+
+- For strings, it behaves exactly like [`contains()`](#containsobjectliststring-value).
+    ```
+    econtains("Hello", "Lo") = false
+    econtains("Hello", "lo") = true
+    ```
+
+- For lists, it checks if the exact word is in the list.
+    ```
+    econtains(["These", "are", "words"], "word") = false
+    econtains(["These", "are", "words"], "words") = true
+    ```
+
+- For objects, it checks if the exact key name is present in the object. It does **not** do recursive checks.
+    ```
+    econtains({key:"value", pairs:"here"}, "here") = false
+    econtains({key:"value", pairs:"here"}, "key") = false
+    econtains({key:"value", recur:{recurkey: "val"}}, "value") = false
+    econtains({key:"value", recur:{recurkey: "val"}}, "Recur") = false
+    econtains({key:"value", recur:{recurkey: "val"}}, "recurkey") = false
+    ```
+
+### `containsword(list|string, value)`
+
+Checks if `value` has an exact word match in `string` or `list`.
+This is case insensitive.
+The outputs are different for different types of input, see examples.
+
+- For strings, it checks if the word is present in the given string.
+    ```
+    containsword("word", "word") = true
+    containsword("word", "Word") = true
+    containsword("words", "Word") = false
+    containsword("Hello there!, "hello") = true
+    containsword("Hello there!, "HeLLo") = true
+    containsword("Hello there chaps!, "chap") = false
+    containsword("Hello there chaps!, "chaps") = true
+    ```
+
+- For lists, it returns a list of booleans indicating if the word's exact case insensitive match was found.
+    ```
+    containsword(["I have no words.", "words"], "Word") = [false, false]
+    containsword(["word", "Words"], "Word") = [true, false]
+    containsword(["Word", "Words in word"], "WORD") = [true, true]
     ```
 
 ### `extract(object, key1, key2, ...)`
@@ -232,8 +312,8 @@ which case it returns `true` if any of the arguments are truthy.
 any(list(1, 2, 3)) = true
 any(list(true, false)) = true
 any(list(false, false, false)) = false
-all(true, false) = true
-all(false, false) = false
+any(true, false) = true
+any(false, false) = false
 ```
 
 
@@ -442,6 +522,18 @@ about the time.
 ```
 striptime(file.ctime) = file.cday
 striptime(file.mtime) = file.mday
+```
+
+### `dateformat(date|datetime, string)`
+
+Format a Dataview date using a formatting string.
+Uses [Luxon tokens](https://moment.github.io/luxon/#/formatting?id=table-of-tokens).
+
+```
+dateformat(file.ctime,"yyyy-MM-dd") = "2022-01-05"
+dateformat(file.ctime,"HH:mm:ss") = "12:18:04"
+dateformat(date(now),"x") = "1407287224054"
+dateformat(file.mtime,"ffff") = "Wednesday, August 6, 2014, 1:07 PM Eastern Daylight Time"
 ```
 
 ### `localtime(date)`
