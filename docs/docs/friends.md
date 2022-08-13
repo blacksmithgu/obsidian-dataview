@@ -8,6 +8,6 @@ Another non-exhaustive list of plugins which use Dataview for some of the heavy-
 
  - [Kanban](https://matthewmeye.rs/obsidian-kanban/) - Create markdown-backed Kanban boards in Obsidian
  - [Breadcrumbs](https://breadcrumbs-wiki.onrender.com/docs/Home) - Gives you a way to visualise a custom-built hierarchy in your Obsidian vault
- - [Supercharged Links](https://github.com/mdelobelle/obsidian_supercharged_links) - Allows you to style links in your Obsidian valut based on note metadata
+ - [Supercharged Links](https://github.com/mdelobelle/obsidian_supercharged_links) - Allows you to style links in your Obsidian vault based on note metadata
 
 A full list can be found using GitHub's [Dependents](https://github.com/blacksmithgu/obsidian-dataview/network/dependents) feature.
