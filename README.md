@@ -32,7 +32,7 @@ list from #game/moba or #game/crpg
 
 ---
 
-List all tasks in un-completed projects:
+List all [tasks](https://blacksmithgu.github.io/obsidian-dataview/data-annotation/#tasks) in un-completed projects:
 
 ~~~markdown
 ```dataview
@@ -41,6 +41,8 @@ task from #projects/active
 ~~~
 
 ![Task List](docs/docs/assets/project-task.png)
+
+Note: To create a task you just add `- [ ] I am a task.` to a note (in this case a note with the `#projects/active` somewhere in it)
 
 ---
 
