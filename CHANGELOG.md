@@ -1,3 +1,18 @@
+# 0.5.42
+
+It's been over a month since the last release! Anyway, this release bundles several nice user-contributed features:
+
+- @AB1908: Tag queries are now case insensitive.
+- @AB1908: Shift-clicking a link/task to open in a new tab now works properly on Mac.
+- @AB1908: Numerous documentation fixes for clarity and more examples.
+- @AnnaKornfeldSimpson: Additional emoji shorthands for more task fields (finished, due).
+- @ooker777: Documentation improvements for some DataviewJS functions, and the ability to use inline emoji for the
+  completion tracking feature.
+- @mt-krainski: Custom date formats for task completions.
+- @gentlegiantJGC: Better support for nested inline fields (i.e., less crashy).
+
+---
+
 # 0.5.41
 
 - Fix a bad regex doing escaping in markdown tables.
