@@ -216,7 +216,7 @@ This function is case sensitive.
 - For objects, it checks if the exact key name is present in the object. It does **not** do recursive checks.
     ```
     econtains({key:"value", pairs:"here"}, "here") = false
-    econtains({key:"value", pairs:"here"}, "key") = false
+    econtains({key:"value", pairs:"here"}, "key") = true
     econtains({key:"value", recur:{recurkey: "val"}}, "value") = false
     econtains({key:"value", recur:{recurkey: "val"}}, "Recur") = false
     econtains({key:"value", recur:{recurkey: "val"}}, "recurkey") = false
