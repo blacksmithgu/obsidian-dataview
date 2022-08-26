@@ -120,6 +120,17 @@ describe("Inline Inline With HTML", () => {
 });
 
 describe("Inline task emoji shorthands", () => {
+    test("Due emoji shorthand", () => {
+        let result = extractInlineFields("- [ ] testTask 🗓️2022-07-14", true);
+        expect(result[0].key).toEqual("due");
+        expect(result[0].value).toEqual("2022-07-14");
+
+        // This is a different calendar emoji!
+        result = extractInlineFields("- [ ] testTask 🗓2022-07-14", true);
+        expect(result[0].key).toEqual("due");
+        expect(result[0].value).toEqual("2022-07-14");
+    });
+
     test("Created emoji shorthand", () => {
         let result = extractInlineFields(" - [ ] testTask \u{2795}2022-07-25", true);
         expect(result[0].key).toEqual("created");
