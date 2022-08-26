@@ -1,3 +1,9 @@
+# 0.5.43
+
+- Fix #1366: Better handling of calendar emoji (used as due dates in tasks).
+
+---
+
 # 0.5.42
 
 It's been over a month since the last release! Anyway, this release bundles several nice user-contributed features:
