@@ -186,11 +186,11 @@ export const SCHEDULED_DATE_REGEX = /[\u{23F3}\u{231B}]\s*(\d{4}-\d{2}-\d{2})/u;
 export const START_DATE_REGEX = /\u{1F6EB}\s*(\d{4}-\d{2}-\d{2})/u;
 
 export const EMOJI_REGEXES = [
-        { regex: CREATED_DATE_REGEX, key: "created" },
-        { regex: START_DATE_REGEX, key: "start" },
-        { regex: SCHEDULED_DATE_REGEX, key: "scheduled" },
-        { regex: DUE_DATE_REGEX, key: "due" },
-        { regex: DONE_DATE_REGEX, key: "completion" },
+    { regex: CREATED_DATE_REGEX, key: "created" },
+    { regex: START_DATE_REGEX, key: "start" },
+    { regex: SCHEDULED_DATE_REGEX, key: "scheduled" },
+    { regex: DUE_DATE_REGEX, key: "due" },
+    { regex: DONE_DATE_REGEX, key: "completion" },
 ];
 
 /** Parse special completed/due/done task fields which are marked via emoji. */
