@@ -23,6 +23,7 @@ export default class DataviewPlugin extends Plugin {
     public index: FullIndex;
     /** External-facing plugin API. */
     public api: DataviewApi;
+    /** CodeMirror 6 extensions that dataview installs. Tracked via array to allow for dynamic update. */
     private cmExtension: Extension[];
 
     async onload() {
