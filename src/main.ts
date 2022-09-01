@@ -122,7 +122,9 @@ export default class DataviewPlugin extends Plugin {
         );
     }
 
-    onunload() {}
+    public onunload() {
+        console.log(`Dataview: version ${this.manifest.version} unloaded.`);
+    }
 
     /** Register a markdown post processor with the given priority. */
     public registerPriorityMarkdownPostProcessor(
