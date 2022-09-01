@@ -140,3 +140,10 @@ div.dataview-error-box {
 .dataview.small-text::after {
 	content: ")";
 }
+
+/** Admin View: Index Statistics / State. */
+
+.text-centered {
+    width: 100%;
+    text-align: center;
+}

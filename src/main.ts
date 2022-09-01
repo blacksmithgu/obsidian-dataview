@@ -14,6 +14,7 @@ import { replaceInlineFields } from "ui/views/inline-field";
 import { DataviewInit } from "ui/markdown";
 import { inlinePlugin } from "./ui/lp-render";
 import { Extension } from "@codemirror/state";
+import { IndexStatsView } from "ui/admin/index-stats";
 
 export default class DataviewPlugin extends Plugin {
     /** Plugin-wide default settigns. */
@@ -99,6 +100,18 @@ export default class DataviewPlugin extends Plugin {
                 this.index.reinitialize();
             },
         });
+
+        this.addCommand({
+            id: "dataview-index-stats",
+            name: "View Index State",
+            callback: () => {
+                const leaf = this.app.workspace.getLeaf();
+                leaf.setViewState({ type: IndexStatsView.TYPE });
+            }
+        })
+
+        // Dataview administrative views.
+        this.registerView(IndexStatsView.TYPE, leaf => new IndexStatsView(leaf, this.index, this.settings));
 
         // Run index initialization, which actually traverses the vault to index files.
         if (!this.app.workspace.layoutReady) {
