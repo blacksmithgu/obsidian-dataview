@@ -12,7 +12,7 @@ export function IndexStats({ index, container, settings }: { index: FullIndex, c
     useIndexBackedState(container, index.app, settings, index, null, async () => { return null; });
 
     return <div>
-        <h1 class="text-centered"><u>Dataview</u></h1>
+        <h1 class="text-centered"><u>Dataview {index.indexVersion}</u></h1>
         <p class="text-centered">Currently tracking <b>{index.pages.size}</b> files.</p>
     </div>;
 }
