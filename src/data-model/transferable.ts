@@ -64,10 +64,10 @@ export namespace Transferable {
             if ("___transfer-type" in transferable) {
                 switch (transferable["___transfer-type"]) {
                     case "date":
-                        let rawDate = DateTime.fromObject(value(transferable.value));
                         let dateOpts = value(transferable.options);
-                        if (dateOpts.zone) rawDate.setZone(dateOpts.zone);
-                        return rawDate;
+                        let dateData = value(transferable.value) as any;
+
+                        return DateTime.fromObject(dateData, { zone: dateOpts.zone });
                     case "duration":
                         return Duration.fromObject(value(transferable.value));
                     case "link":
