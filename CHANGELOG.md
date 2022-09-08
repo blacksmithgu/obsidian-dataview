@@ -1,3 +1,11 @@
+# 0.5.44
+
+- #1404: Fixed dates in non-local timezones parsing incorrectly.
+- Fixed some build non-determinism issues.
+- Swapped to pull requests for adding new functionality, and added some more internal tests.
+
+---
+
 # 0.5.43
 
 - Fix #1366: Better handling of calendar emoji (used as due dates in tasks).
