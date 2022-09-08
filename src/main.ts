@@ -84,6 +84,9 @@ export default class DataviewPlugin extends Plugin {
         this.cmExtension = [inlinePlugin(this.index, this.settings, this.api)];
         this.registerEditorExtension(this.cmExtension);
 
+        // Index state visualizer at the bottom of the screen.
+        this.registerIndexStatusBar();
+
         // Dataview "force refresh" operation.
         this.addCommand({
             id: "dataview-force-refresh-views",
@@ -157,6 +160,14 @@ export default class DataviewPlugin extends Plugin {
     ) {
         let registered = this.registerMarkdownCodeBlockProcessor(language, processor);
         registered.sortOrder = priority;
+    }
+
+    /**
+     * Register an index status bar at the bottom of the screen which updates how many files have been indexed
+     * by Dataview, and the rate at which they are being indexed.
+     */
+    public registerIndexStatusBar() {
+
     }
 
     /**
