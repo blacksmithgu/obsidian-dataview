@@ -1,3 +1,10 @@
+# 0.5.45
+
+- #1400: Properly use the group by field for the group name.
+- Fix bad table highlighting in some themes.
+
+---
+
 # 0.5.44
 
 - #1404: Fixed dates in non-local timezones parsing incorrectly.
