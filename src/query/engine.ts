@@ -348,7 +348,7 @@ export async function executeTable(
 
     return executeCoreExtract(fileset.value, rootContext, query.operations, fields).map(core => {
         if (showId) {
-            const idName = core.idMeaning.type === "group" ? settings.tableGroupColumnName : settings.tableIdColumnName;
+            const idName = core.idMeaning.type === "group" ? core.idMeaning.name : settings.tableIdColumnName;
             let names = [idName].concat(targetFields.map(f => f.name));
 
             let data = core.data.map(p => ([p.id] as Literal[]).concat(targetFields.map(f => p.data[f.name])));
