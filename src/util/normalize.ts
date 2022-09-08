@@ -134,10 +134,10 @@ export function normalizeHeaderForLink(header: string): string {
 export function renderMinimalDate(time: DateTime, settings: QuerySettings, locale: string): string {
     // If there is no relevant time specified, fall back to just rendering the date.
     if (time.second == 0 && time.minute == 0 && time.hour == 0) {
-        return time.toFormat(settings.defaultDateFormat, { locale });
+        return time.toLocal().toFormat(settings.defaultDateFormat, { locale });
     }
 
-    return time.toFormat(settings.defaultDateTimeFormat, { locale });
+    return time.toLocal().toFormat(settings.defaultDateTimeFormat, { locale });
 }
 
 /** Render a duration in a minimal format to save space. */
