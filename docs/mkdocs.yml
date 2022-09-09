@@ -18,15 +18,18 @@ theme:
 nav:
   - Overview: 'index.md'
   - Data Annotation: 'data-annotation.md'
-  - Data Querying: 'data-queries.md'
+  - Data Querying: 
+    - DQL, Javascript and Inlines: 'queries/dql-js-inline.md'
+    - Structure of a Query: 'queries/structure.md'
+    - Query Types: 'queries/query-types.md'
+    - Data Commands: 'queries/data-commands.md'
   - Query Language Reference:
-    - Queries: 'query/queries.md'
-    - Expressions: 'query/expressions.md'
-    - Literals: 'query/literals.md'
-    - Sources: 'query/sources.md'
-    - Functions: 'query/functions.md'
-    - Examples: 'query/examples.md'
-    - Frequently Asked Questions: 'query/faq.md'
+    - Expressions: 'reference/expressions.md'
+    - Literals: 'reference/literals.md'
+    - Sources: 'reference/sources.md'
+    - Functions: 'reference/functions.md'
+    - Examples: 'reference/examples.md'
+    - Frequently Asked Questions: 'reference/faq.md'
   - JavaScript Reference:
     - Overview: 'api/intro.md'
     - Data Arrays: 'api/data-array.md'
@@ -41,13 +44,15 @@ plugins:
   - redirects:
       redirect_maps:
         docs/where-data-comes-from.md: data-annotation.md
-        docs/creating-queries.md: data-queries.md
-        docs/query/queries.md: query/queries.md
-        docs/query/expressions.md: query/expressions.md
-        docs/query/sources.md: query/sources.md
-        docs/query/functions.md: query/functions.md
-        docs/query/examples.md: query/examples.md
+        docs/creating-queries.md: queries/dql-js-inline.md
+        docs/query/queries.md: queries/structure.md
+        docs/query/expressions.md: reference/expressions.md
+        docs/query/sources.md: reference/sources.md
+        docs/query/functions.md: reference/functions.md
+        docs/query/examples.md: reference/examples.md
         docs/api/intro.md: api/intro.md
         docs/api/data-array.md: api/data-array.md
         docs/api/code-reference.md: api/code-reference.md
         docs/api/code-examples.md: api/code-examples.md
+        data-queries.md: queries/dql-js-inline.md
+        query/queries.md: queries/structure.md
