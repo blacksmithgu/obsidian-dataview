@@ -1,3 +1,9 @@
+# 0.5.46
+
+- Fix #1412: Fix bad `file.cday` and `file.ctime` comparisons due to wrong timezone being set. Ugh.
+
+---
+
 # 0.5.45
 
 - #1400: Properly use the group by field for the group name.
