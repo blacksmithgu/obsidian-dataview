@@ -13,6 +13,11 @@ test("Date", () => expect(roundTrip(DateTime.fromObject({ year: 1982, month: 5, 
 test("Duration", () => expect(roundTrip(Duration.fromMillis(10000)).toMillis()).toEqual(10000));
 test("Link", () => expect(roundTrip(Link.file("hello"))).toEqual(Link.file("hello")));
 
+test("Full Date", () => {
+    let date = DateTime.fromObject({ year: 1982, month: 5, day: 19 }, { zone: "UTC+8" });
+    expect(roundTrip(date).equals(date)).toBeTruthy();
+});
+
 /** Run a value through the transferable converter and back again. */
 function roundTrip<T>(value: T): T {
     return Transferable.value(Transferable.transferable(value));

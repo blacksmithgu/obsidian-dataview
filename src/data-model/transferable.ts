@@ -1,5 +1,5 @@
 import { Link, Values } from "data-model/value";
-import { DateTime, Duration } from "luxon";
+import { DateTime, Duration, SystemZone } from "luxon";
 
 /** Simplifies passing dataview values across the JS web worker barrier. */
 export namespace Transferable {
@@ -29,7 +29,7 @@ export namespace Transferable {
                 return {
                     "___transfer-type": "date",
                     value: transferable(wrapped.value.toObject()),
-                    options: { zone: wrapped.value.zoneName },
+                    options: { zone: wrapped.value.zone.equals(SystemZone.instance) ? undefined : wrapped.value.zoneName },
                 };
             case "duration":
                 return { "___transfer-type": "duration", value: transferable(wrapped.value.toObject()) };
