@@ -19,6 +19,7 @@ nav:
   - Overview: 'index.md'
   - Data Annotation: 'data-annotation.md'
   - Data Querying: 'data-queries.md'
+  - Resources and Support: 'resources-and-support.md'
   - Query Language Reference:
     - Queries: 'query/queries.md'
     - Expressions: 'query/expressions.md'
