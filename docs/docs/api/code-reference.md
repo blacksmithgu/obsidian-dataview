@@ -135,6 +135,23 @@ views/custom
 View scripts have access to the `dv` object (the API object), and an `input` object which is exactly whatever the second
 argument of `dv.view()` was.
 
+### `task.visual`
+
+Render arbitrary text for tasks in `dv.taskList()`
+
+```js
+// Fetch all tasks from vault
+let tasks = dv.pages().file.tasks
+
+// Assign string "Task" to every task 
+for (let task of tasks){
+	task.visual = "Task"
+}
+
+// Render tasks
+dv.taskList(tasks)
+```
+
 ## Dataviews
 
 ### `dv.list(elements)`
