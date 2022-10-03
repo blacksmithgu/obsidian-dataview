@@ -303,6 +303,14 @@ all(true, false) = false
 all(true, true, true) = true
 ```
 
+You can pass a function as second argument to return only true if all elements in the array matches the predicate.
+
+```
+all(list(1, 2, 3), (x) => x > 0) = true
+all(list(1, 2, 3), (x) => x > 1) = false
+all(list("apple", "pie", 3), (x) => typeof(x) = "string") = false
+```
+
 ### `any(array)`
 
 Returns `true` if ANY of the values in the array are truthy. You can also pass multiple arguments to this function, in
@@ -316,6 +324,12 @@ any(true, false) = true
 any(false, false) = false
 ```
 
+You can pass a function as second argument to return only true if any element in the array matches the predicate.
+
+```
+any(list(1, 2, 3), (x) => x > 2) = true
+any(list(1, 2, 3), (x) => x = 0) = false
+```
 
 ### `none(array)`
 
@@ -326,6 +340,14 @@ none([]) = true
 none([false, false]) = true
 none([false, true]) = false
 none([1, 2, 3]) = false
+```
+
+You can pass a function as second argument to return only true if none of the elements in the array matches the predicate.
+
+```
+none([1, 2, 3], (x) => x = 0) = true
+none([true, true], (x) => x = false) = true
+none(["Apple", "Pi", "Banana"], (x) => startswith(x, "A")) = false
 ```
 
 ### `join(array)`
