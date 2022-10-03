@@ -17,7 +17,10 @@ theme:
   custom_dir: overrides
 nav:
   - Overview: 'index.md'
-  - Data Annotation: 'data-annotation.md'
+  - Data Annotation:
+    - Types of Data: 'annotation/types-of-metadata.md'
+    - Metadata on pages: 'annotation/metadata-pages.md'
+    - Metadata on tasks: 'annotation/metadata-tasks.md'
   - Data Querying: 
     - DQL, Javascript and Inlines: 'queries/dql-js-inline.md'
     - Structure of a Query: 'queries/structure.md'
@@ -28,15 +31,16 @@ nav:
     - Literals: 'reference/literals.md'
     - Sources: 'reference/sources.md'
     - Functions: 'reference/functions.md'
-    - Examples: 'reference/examples.md'
-    - Frequently Asked Questions: 'reference/faq.md'
   - JavaScript Reference:
     - Overview: 'api/intro.md'
     - Data Arrays: 'api/data-array.md'
     - Codeblock Reference: 'api/code-reference.md'
     - Codeblock Examples: 'api/code-examples.md'
-  - Plugin Developers:
+  - FAQ and Resources:
+    - Frequently Asked Questions: 'reference/faq.md'
+    - Examples: 'reference/examples.md'
     - Developing Against Dataview: 'plugin/develop-against-dataview.md'
+    - Other Resources: 'resources-and-support.md'
   - Friends of Dataview: 'friends.md'
   - Changelog: 'changelog.md'
 plugins:
@@ -56,3 +60,4 @@ plugins:
         docs/api/code-examples.md: api/code-examples.md
         data-queries.md: queries/dql-js-inline.md
         query/queries.md: queries/structure.md
+        data-annotation.md: annotation/types-of-metadata.md
