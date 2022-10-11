@@ -398,7 +398,9 @@ test("Parse function with duration", () => {
 
 test("Parse null duration", () => {
     expect(EXPRESSION.field.tryParse("dur(null)")).toEqual(Fields.func(Fields.variable("dur"), [Fields.literal(null)]));
-    expect(EXPRESSION.field.tryParse('dur("null")')).toEqual(Fields.func(Fields.variable("dur"), [Fields.literal("null")]));
+    expect(EXPRESSION.field.tryParse('dur("null")')).toEqual(
+        Fields.func(Fields.variable("dur"), [Fields.literal("null")])
+    );
 });
 
 test("Parse function with null duration", () => {
@@ -413,18 +415,10 @@ test("Parse function with null duration", () => {
 
 test("Parse date +/- null", () => {
     expect(EXPRESSION.field.tryParse("today() + null")).toEqual(
-        Fields.binaryOp(
-            Fields.func(Fields.variable("today"), []),
-            "+",
-            Fields.literal(null)
-        )
+        Fields.binaryOp(Fields.func(Fields.variable("today"), []), "+", Fields.literal(null))
     );
     expect(EXPRESSION.field.tryParse("today() - null")).toEqual(
-        Fields.binaryOp(
-            Fields.func(Fields.variable("today"), []),
-            "-",
-            Fields.literal(null)
-        )
+        Fields.binaryOp(Fields.func(Fields.variable("today"), []), "-", Fields.literal(null))
     );
 });
 
