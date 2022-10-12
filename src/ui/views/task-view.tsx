@@ -51,9 +51,6 @@ function TaskItem({ item }: { item: STask }) {
         );
     };
 
-	// create dummy state
-	//     this is so that if/when tasks are updated recursively, the component re-renders
-
     // Check/uncheck the task in the original file.
     const onChecked = (evt: preact.JSX.TargetedEvent<HTMLInputElement>) => {
         evt.stopPropagation();
@@ -66,7 +63,6 @@ function TaskItem({ item }: { item: STask }) {
 		let flatted: STask[] = [item]
 
 		function flatter(iitem: STask | SListItem) {
-			// console.log("debug|itemtoflat", iitem)
 			flatted.push(iitem as STask)
 			iitem.children.forEach(flatter)
 		}
@@ -86,19 +82,11 @@ function TaskItem({ item }: { item: STask }) {
 						completed
 					);
 				}
-				console.log("debug|tc", updatedText, completed);
-				// await waiter()
-				// let debouncedRewrite = debounce(rewriteTask, 50, false)
-				// debouncedRewrite(context.app.vault, _item, status, updatedText)
 				await rewriteTask(context.app.vault, _item, status, updatedText);
-
 			}
 			context.app.workspace.trigger("dataview:refresh-views")
 		}
-
-		console.log("debug|flattened", flatted, context.settings)
-		effectFn()
-        // rewriteTask(context.app.vault, item, status, updatedText);
+		effectFn();
     };
 
     const checked = item.status !== " ";
