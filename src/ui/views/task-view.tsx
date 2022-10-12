@@ -3,7 +3,7 @@ import { LIST_ITEM_REGEX } from "data-import/markdown-file";
 import { SListEntry, SListItem, STask } from "data-model/serialized/markdown";
 import { Grouping, Groupings } from "data-model/value";
 import { DateTime } from "luxon";
-import { MarkdownRenderChild, Platform, Vault } from "obsidian";
+import { MarkdownRenderChild, Platform, Vault, /* debounce */ } from "obsidian";
 import { Fragment, h } from "preact";
 import { useContext } from "preact/hooks";
 import { executeTask } from "query/engine";
@@ -51,43 +51,53 @@ function TaskItem({ item }: { item: STask }) {
         );
     };
 
-    // Check/uncheck trhe task in the original file.
-    const onChecked = async (evt: preact.JSX.TargetedEvent<HTMLInputElement>) => {
+	// create dummy state
+	//     this is so that if/when tasks are updated recursively, the component re-renders
+
+    // Check/uncheck the task in the original file.
+    const onChecked = (evt: preact.JSX.TargetedEvent<HTMLInputElement>) => {
         evt.stopPropagation();
         const completed = evt.currentTarget.checked;
         const status = completed ? "x" : " ";
-		const waiter = () => new Promise((res) => setTimeout(res, 50))
         // Update data-task on the parent element (css style)
         const parent = evt.currentTarget.parentElement;
         parent?.setAttribute("data-task", status);
 
 		let flatted: STask[] = [item]
 
-        if (context.settings.taskCompletionTracking) {
-		}
 		function flatter(iitem: STask | SListItem) {
-			console.log("blaaaaaaaaa", iitem)
+			// console.log("debug|itemtoflat", iitem)
 			flatted.push(iitem as STask)
 			iitem.children.forEach(flatter)
 		}
 		item.children.forEach(flatter)
 		flatted = flatted.flat(Infinity)
-		console.log("flaaaaaaa", flatted)
-		for (let i = 0; i < flatted.length; i++) {
-			const _item = flatted[i];
-			let tw = setTaskCompletion(
-                _item.text,
-                context.settings.taskCompletionUseEmojiShorthand,
-                context.settings.taskCompletionText,
-                context.settings.taskCompletionDateFormat,
-                completed
-            )
-			console.log("tc", tw, completed)
-			await waiter()
-			rewriteTask(context.app.vault, _item, status, tw);
-		}
-		console.log("flaaaaaaa", flatted)
 
+		async function effectFn() {
+			for (let i = 0; i < flatted.length; i++) {
+				const _item = flatted[i];
+				let updatedText: string = _item.text;
+				if (context.settings.taskCompletionTracking) {
+					updatedText = setTaskCompletion(
+						_item.text,
+						context.settings.taskCompletionUseEmojiShorthand,
+						context.settings.taskCompletionText,
+						context.settings.taskCompletionDateFormat,
+						completed
+					);
+				}
+				console.log("debug|tc", updatedText, completed);
+				// await waiter()
+				// let debouncedRewrite = debounce(rewriteTask, 50, false)
+				// debouncedRewrite(context.app.vault, _item, status, updatedText)
+				await rewriteTask(context.app.vault, _item, status, updatedText);
+
+			}
+			context.app.workspace.trigger("dataview:refresh-views")
+		}
+
+		console.log("debug|flattened", flatted, context.settings)
+		effectFn()
         // rewriteTask(context.app.vault, item, status, updatedText);
     };
 
