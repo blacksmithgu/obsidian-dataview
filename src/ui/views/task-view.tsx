@@ -62,12 +62,14 @@ function TaskItem({ item }: { item: STask }) {
 
 		let flatted: STask[] = [item]
 
-		function flatter(iitem: STask | SListItem) {
-			flatted.push(iitem as STask)
-			iitem.children.forEach(flatter)
+		if(context.settings.recursiveSubTaskCompletion) {
+			function flatter(iitem: STask | SListItem) {
+				flatted.push(iitem as STask)
+				iitem.children.forEach(flatter)
+			}
+			item.children.forEach(flatter)
+			flatted = flatted.flat(Infinity)
 		}
-		item.children.forEach(flatter)
-		flatted = flatted.flat(Infinity)
 
 		async function effectFn() {
 			for (let i = 0; i < flatted.length; i++) {
