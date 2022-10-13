@@ -3,7 +3,7 @@ import { LIST_ITEM_REGEX } from "data-import/markdown-file";
 import { SListEntry, SListItem, STask } from "data-model/serialized/markdown";
 import { Grouping, Groupings } from "data-model/value";
 import { DateTime } from "luxon";
-import { MarkdownRenderChild, Platform, Vault, /* debounce */ } from "obsidian";
+import { MarkdownRenderChild, Platform, Vault } from "obsidian";
 import { Fragment, h } from "preact";
 import { useContext } from "preact/hooks";
 import { executeTask } from "query/engine";
