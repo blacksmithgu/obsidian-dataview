@@ -591,12 +591,10 @@ class GeneralSettingsTab extends PluginSettingTab {
             .setName("Recursive Sub-Task Completion")
             // I gotta word this better :/
             .setDesc("If enabled, completing a task in a DataView will automatically complete its subtasks too.")
-            .addToggle((toggle) =>
+            .addToggle(toggle =>
                 toggle
                     .setValue(this.plugin.settings.recursiveSubTaskCompletion)
-                    .onChange(async value =>
-                        await this.plugin.updateSettings({recursiveSubTaskCompletion: value})
-                    )
-            )
+                    .onChange(async value => await this.plugin.updateSettings({ recursiveSubTaskCompletion: value }))
+            );
     }
 }

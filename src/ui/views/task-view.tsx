@@ -60,35 +60,35 @@ function TaskItem({ item }: { item: STask }) {
         const parent = evt.currentTarget.parentElement;
         parent?.setAttribute("data-task", status);
 
-		let flatted: STask[] = [item]
+        let flatted: STask[] = [item];
 
-		if(context.settings.recursiveSubTaskCompletion) {
-			function flatter(iitem: STask | SListItem) {
-				flatted.push(iitem as STask)
-				iitem.children.forEach(flatter)
-			}
-			item.children.forEach(flatter)
-			flatted = flatted.flat(Infinity)
-		}
+        if (context.settings.recursiveSubTaskCompletion) {
+            function flatter(iitem: STask | SListItem) {
+                flatted.push(iitem as STask);
+                iitem.children.forEach(flatter);
+            }
+            item.children.forEach(flatter);
+            flatted = flatted.flat(Infinity);
+        }
 
-		async function effectFn() {
-			for (let i = 0; i < flatted.length; i++) {
-				const _item = flatted[i];
-				let updatedText: string = _item.text;
-				if (context.settings.taskCompletionTracking) {
-					updatedText = setTaskCompletion(
-						_item.text,
-						context.settings.taskCompletionUseEmojiShorthand,
-						context.settings.taskCompletionText,
-						context.settings.taskCompletionDateFormat,
-						completed
-					);
-				}
-				await rewriteTask(context.app.vault, _item, status, updatedText);
-			}
-			context.app.workspace.trigger("dataview:refresh-views")
-		}
-		effectFn();
+        async function effectFn() {
+            for (let i = 0; i < flatted.length; i++) {
+                const _item = flatted[i];
+                let updatedText: string = _item.text;
+                if (context.settings.taskCompletionTracking) {
+                    updatedText = setTaskCompletion(
+                        _item.text,
+                        context.settings.taskCompletionUseEmojiShorthand,
+                        context.settings.taskCompletionText,
+                        context.settings.taskCompletionDateFormat,
+                        completed
+                    );
+                }
+                await rewriteTask(context.app.vault, _item, status, updatedText);
+            }
+            context.app.workspace.trigger("dataview:refresh-views");
+        }
+        effectFn();
     };
 
     const checked = item.status !== " ";
