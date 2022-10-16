@@ -288,14 +288,14 @@ export function setTaskCompletion(
     completionDateFormat: string,
     complete: boolean
 ): string {
+    const blockIdRegex = /\^[a-z0-9\-]+\s/i;
 
-	const blockIdRegex = /\^[a-z0-9\-]+\s/i
-
-    if (!complete && !useEmojiShorthand) return trimEndingLines(setInlineField(originalText.trimEnd(), completionKey)).trimEnd();
+    if (!complete && !useEmojiShorthand)
+        return trimEndingLines(setInlineField(originalText.trimEnd(), completionKey)).trimEnd();
 
     let parts = originalText.split(/\r?\n/u);
-	const matches = blockIdRegex.exec(parts[parts.length - 1])
-	console.debug("matchreg", matches)
+    const matches = blockIdRegex.exec(parts[parts.length - 1]);
+    console.debug("matchreg", matches);
     if (useEmojiShorthand) {
         parts[parts.length - 1] = setEmojiShorthandCompletionField(
             parts[parts.length - 1],
@@ -310,7 +310,6 @@ export function setTaskCompletion(
     }
     return parts.join("\n");
 }
-
 
 /** Rewrite a task with the given completion status and new text. */
 export async function rewriteTask(vault: Vault, task: STask, desiredStatus: string, desiredText?: string) {
