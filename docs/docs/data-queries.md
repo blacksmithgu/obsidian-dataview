@@ -43,7 +43,7 @@ language, you create Dataview JS blocks via a `dataviewjs`-annotated codeblock:
 ```dataviewjs
 let pages = dv.pages("#books and -#books/finished").where(b => b.rating >= 7);
 for (let group of pages.groupBy(b => b.genre)) {
-   dv.header(group.key);
+   dv.header(3, group.key);
    dv.list(group.rows.file.name);
 }
 ```
