@@ -13,6 +13,8 @@ export interface QuerySettings {
     taskCompletionText: string;
     /** Date format of the task's completion timestamp. Only used if completionTracking is enabled and emojiShorthand is not. */
     taskCompletionDateFormat: string;
+    /** Whether or not subtasks should be recursively completed in addition to their parent task. */
+    recursiveSubTaskCompletion: boolean;
     /** If true, render a modal which shows no results were returned. */
     warnOnEmptyResult: boolean;
     /** Whether or not automatic view refreshing is enabled. */
@@ -25,7 +27,6 @@ export interface QuerySettings {
     defaultDateTimeFormat: string;
     /** Maximum depth that objects will be expanded when being rendered recursively. */
     maxRecursiveRenderDepth: number;
-
     /** The name of the default ID field ('File'). */
     tableIdColumnName: string;
     /** The name of default ID fields on grouped data ('Group'). */
@@ -38,6 +39,7 @@ export const DEFAULT_QUERY_SETTINGS: QuerySettings = {
     taskCompletionUseEmojiShorthand: false,
     taskCompletionText: "completion",
     taskCompletionDateFormat: "yyyy-MM-dd",
+    recursiveSubTaskCompletion: false,
     warnOnEmptyResult: true,
     refreshEnabled: true,
     refreshInterval: 2500,

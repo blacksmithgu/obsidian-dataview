@@ -51,28 +51,44 @@ function TaskItem({ item }: { item: STask }) {
         );
     };
 
-    // Check/uncheck trhe task in the original file.
+    // Check/uncheck the task in the original file.
     const onChecked = (evt: preact.JSX.TargetedEvent<HTMLInputElement>) => {
         evt.stopPropagation();
-
         const completed = evt.currentTarget.checked;
         const status = completed ? "x" : " ";
-
         // Update data-task on the parent element (css style)
         const parent = evt.currentTarget.parentElement;
         parent?.setAttribute("data-task", status);
 
-        let updatedText = undefined;
-        if (context.settings.taskCompletionTracking)
-            updatedText = setTaskCompletion(
-                item.text,
-                context.settings.taskCompletionUseEmojiShorthand,
-                context.settings.taskCompletionText,
-                context.settings.taskCompletionDateFormat,
-                completed
-            );
+        let flatted: STask[] = [item];
 
-        rewriteTask(context.app.vault, item, status, updatedText);
+        if (context.settings.recursiveSubTaskCompletion) {
+            function flatter(iitem: STask | SListItem) {
+                flatted.push(iitem as STask);
+                iitem.children.forEach(flatter);
+            }
+            item.children.forEach(flatter);
+            flatted = flatted.flat(Infinity);
+        }
+
+        async function effectFn() {
+            for (let i = 0; i < flatted.length; i++) {
+                const _item = flatted[i];
+                let updatedText: string = _item.text;
+                if (context.settings.taskCompletionTracking) {
+                    updatedText = setTaskCompletion(
+                        _item.text,
+                        context.settings.taskCompletionUseEmojiShorthand,
+                        context.settings.taskCompletionText,
+                        context.settings.taskCompletionDateFormat,
+                        completed
+                    );
+                }
+                await rewriteTask(context.app.vault, _item, status, updatedText);
+            }
+            context.app.workspace.trigger("dataview:refresh-views");
+        }
+        effectFn();
     };
 
     const checked = item.status !== " ";

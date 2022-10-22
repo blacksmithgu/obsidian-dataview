@@ -4,6 +4,7 @@
 
 # VSCode
 .vscode
+.history/
 
 # npm
 node_modules
