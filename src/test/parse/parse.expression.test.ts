@@ -396,6 +396,32 @@ test("Parse function with duration", () => {
     );
 });
 
+test("Parse null duration", () => {
+    expect(EXPRESSION.field.tryParse("dur(null)")).toEqual(Fields.func(Fields.variable("dur"), [Fields.literal(null)]));
+    expect(EXPRESSION.field.tryParse('dur("null")')).toEqual(
+        Fields.func(Fields.variable("dur"), [Fields.literal("null")])
+    );
+});
+
+test("Parse function with null duration", () => {
+    expect(EXPRESSION.field.tryParse("today() + dur(null)")).toEqual(
+        Fields.binaryOp(
+            Fields.func(Fields.variable("today"), []),
+            "+",
+            Fields.func(Fields.variable("dur"), [Fields.literal(null)])
+        )
+    );
+});
+
+test("Parse date +/- null", () => {
+    expect(EXPRESSION.field.tryParse("today() + null")).toEqual(
+        Fields.binaryOp(Fields.func(Fields.variable("today"), []), "+", Fields.literal(null))
+    );
+    expect(EXPRESSION.field.tryParse("today() - null")).toEqual(
+        Fields.binaryOp(Fields.func(Fields.variable("today"), []), "-", Fields.literal(null))
+    );
+});
+
 test("Parse function with mixed dot, index, and function call", () => {
     expect(EXPRESSION.field.tryParse("list().parts[0]")).toEqual(
         Fields.index(Fields.index(Fields.func(Fields.variable("list"), []), Fields.literal("parts")), Fields.literal(0))

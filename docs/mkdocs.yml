@@ -39,7 +39,7 @@ nav:
     - Frequently Asked Questions: 'reference/faq.md'
     - Examples: 'reference/examples.md'
     - Developing Against Dataview: 'plugin/develop-against-dataview.md'
-    - Other Resources: 'resources-and-support.md'
+    - Resources and Support: 'resources-and-support.md'
   - Friends of Dataview: 'friends.md'
   - Changelog: 'changelog.md'
 plugins:

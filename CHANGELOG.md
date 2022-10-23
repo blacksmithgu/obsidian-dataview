@@ -1,3 +1,9 @@
+# 0.5.47
+
+Improves `date + duration` behavior when either the date or duration are null.
+
+---
+
 # 0.5.46
 
 - Fix #1412: Fix bad `file.cday` and `file.ctime` comparisons due to wrong timezone being set. Ugh.
