@@ -1,6 +1,6 @@
-# Tasks
+# Metadata on tasks
 
-You can also annotate your *tasks* (I.e., lines of the form `- [ ] blah blah blah`) with metadata using inline field syntax:
+Just like pages, you can also add **fields** on task level to bind it to a specific task as context. You can also annotate your *tasks* (I.e., lines of the form `- [ ] blah blah blah`) with metadata using [inline field syntax](add-metadata.md):
 
 ```markdown
 - [ ] Hello, this is some [metadata:: value]!

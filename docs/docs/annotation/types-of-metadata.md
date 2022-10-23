@@ -5,6 +5,8 @@ base. Dataview tracks information at the *markdown page* and *markdown task* lev
 arbitrary amount of complex (numbers, objects, lists) *fields* associated with it. Each *field* is a named value with
 a certain type (like "number" or "text").
 
+Read more about how to create fields and meta data on your pages and tasks on [metadata on pages](./metadata-pages.md) and [metadata on tasks](./metadata-tasks.md).
+
 ## Field Types
 
 All fields in dataview have a *type*, which determines how dataview will render, sort, and operate on that field.

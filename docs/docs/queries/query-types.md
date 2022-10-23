@@ -1,6 +1,6 @@
 # Query Types
 
-TODO: add short explanation, maybe copy over from structure.md
+Your **Query Type** determines how the output of your dataview query looks like. LIST, TABLE and CALENDAR always operates on page level, whereas TASK queries operate on `file.tasks` level.
 
 ## List Queries
 

@@ -18,6 +18,7 @@ theme:
 nav:
   - Overview: 'index.md'
   - Metadata:
+    - Adding metadata: 'annotation/add-metadata.md'
     - Types of Data: 'annotation/types-of-metadata.md'
     - Metadata on pages: 'annotation/metadata-pages.md'
     - Metadata on tasks: 'annotation/metadata-tasks.md'
@@ -46,7 +47,7 @@ plugins:
   - search
   - redirects:
       redirect_maps:
-        docs/where-data-comes-from.md: annotation/types-of-metadata.md
+        docs/where-data-comes-from.md: annotation/add-metadata.md
         docs/creating-queries.md: queries/dql-js-inline.md
         docs/query/queries.md: queries/structure.md
         docs/query/expressions.md: reference/expressions.md
@@ -59,4 +60,4 @@ plugins:
         docs/api/code-examples.md: api/code-examples.md
         data-queries.md: queries/dql-js-inline.md
         query/queries.md: queries/structure.md
-        data-annotation.md: annotation/types-of-metadata.md
+        data-annotation.md: annotation/add-metadata.md

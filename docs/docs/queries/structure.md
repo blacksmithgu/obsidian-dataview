@@ -12,6 +12,9 @@ The query language supports the following view types, described below:
 1. **TABLE**: The traditional view type; one row per data point, with several columns of field data.
 2. **LIST**: A list of pages which match the query. You can output a single associated value for each page.
 3. **TASK**: A list of tasks whose pages match the given query.
+4. **CALENDAR**: A calendar view displaying each hit via a dot on its reffered date
+
+Read more about the available types [here](./query-types.md)
 
 ## General Format
 
@@ -19,17 +22,23 @@ The general format for queries is:
 
 ~~~
 ```dataview
-TABLE|LIST|TASK <field> [AS "Column Name"], <field>, ..., <field> FROM <source>
+TABLE|LIST|TASK <field> [AS "Column Name"], <field>, ..., <field> 
+FROM <source>
 WHERE <expression>
 SORT <expression> [ASC/DESC]
 ... other data commands
 ```
 ~~~
 
-TODO: Link to query types and data commands
-TODO: Add more basic, better understandable examples
-TODO: Add CALENDAR
-TODO: Extract Query 
+Only the [**Query Type**](./query-types.md) (table/list/task/calendar) statement is required - if the "from" statement is omitted, the query runs for all files in
+your vault. You can specify [data commands](./data-commands.md) like `WHERE` multiple times; they will run in the order they are written. 
 
-Only the table/list/task statement is required - if the "from" statement is omitted, the query runs for all files in
-your vault. You can specify data commands like `WHERE` multiple times; they will simply run in the order they are written.
+The most basic example of a dataview query is:
+
+~~~
+```dataview
+LIST
+```
+~~~
+
+which will list **all files in your vault**. Find more examples [here](../reference/examples.md).

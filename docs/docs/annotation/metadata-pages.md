@@ -1,39 +1,6 @@
-# Pages
+# Metadata on pages
 
-You can add fields to a markdown page in three different ways:
-
-1. **Frontmatter**: Frontmatter is a common Markdown extension which allows for YAML metadata to be added to the top of
-   a page. All YAML fields will be available as Dataview fields:
-    ```yaml
-    ---
-    alias: "document"
-    last-reviewed: 2021-08-17
-    thoughts:
-      rating: 8
-      reviewable: false
-    ---
-    ```
-2. **Inline Fields**: For those wanting a more natural-looking annotation, Dataview supports "inline" fields, which
-   offer a simple `Key:: Value` syntax that you can embed directly in your file:
-    ```markdown
-    # Markdown Page
-
-    Basic Field:: Value
-    **Bold Field**:: Nice!
-    ```
-    If you want to embed metadata inside sentences, or multiple fields on the same line, you can use the bracket syntax:
-    ```markdown
-    I would rate this a [rating:: 9]! It was [mood:: acceptable].
-    ```
-    There is also the alternative parenthesis syntax, which is functionally similar to brackets but hides the key when
-    rendered in Reader mode:
-    ```markdown
-    This will not show the (very long key:: key).
-    ```
-
-3. **Implicit**: Dataview annotates pages with a large amount of metadata automatically, like the day the file was
-   created (`file.cday`), any associated dates (`file.day`), links in the file (`file.outlinks`), tags (`file.tags`),
-   and so on.
+You can add fields (queryable information) to a markdown page (a note) in three different ways - via Frontmatter, Inline fields and Implicit fields. Read more about [how to add metadata](./add-metadata.md).
 
 A simple Markdown page which includes both user-defined ways to add metadata:
 
