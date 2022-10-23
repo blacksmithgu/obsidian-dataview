@@ -17,19 +17,18 @@ theme:
   custom_dir: overrides
 nav:
   - Overview: 'index.md'
-  - Data Annotation:
+  - Metadata:
     - Types of Data: 'annotation/types-of-metadata.md'
     - Metadata on pages: 'annotation/metadata-pages.md'
     - Metadata on tasks: 'annotation/metadata-tasks.md'
-  - Data Querying: 
-    - DQL, Javascript and Inlines: 'queries/dql-js-inline.md'
+  - DQL, JS and Inlines: 'queries/dql-js-inline.md'
+  - Query Language Reference:
     - Structure of a Query: 'queries/structure.md'
     - Query Types: 'queries/query-types.md'
     - Data Commands: 'queries/data-commands.md'
-  - Query Language Reference:
+    - Sources: 'reference/sources.md'
     - Expressions: 'reference/expressions.md'
     - Literals: 'reference/literals.md'
-    - Sources: 'reference/sources.md'
     - Functions: 'reference/functions.md'
   - JavaScript Reference:
     - Overview: 'api/intro.md'
@@ -47,7 +46,7 @@ plugins:
   - search
   - redirects:
       redirect_maps:
-        docs/where-data-comes-from.md: data-annotation.md
+        docs/where-data-comes-from.md: annotation/types-of-metadata.md
         docs/creating-queries.md: queries/dql-js-inline.md
         docs/query/queries.md: queries/structure.md
         docs/query/expressions.md: reference/expressions.md
