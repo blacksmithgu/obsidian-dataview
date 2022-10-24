@@ -1,15 +1,8 @@
-# Data Annotation
-
-Dataview is a data index first and foremost, so it supports relatively rich ways of adding metadata to your knowledge
-base. Dataview tracks information at the *markdown page* and *markdown task* levels, where each page/task can have an
-arbitrary amount of complex (numbers, objects, lists) *fields* associated with it. Each *field* is a named value with
-a certain type (like "number" or "text").
-
-Read more about how to create fields and meta data on your pages and tasks on [metadata on pages](./metadata-pages.md) and [metadata on tasks](./metadata-tasks.md).
-
-## Field Types
+# Field Types
 
 All fields in dataview have a *type*, which determines how dataview will render, sort, and operate on that field.
+Read more about how to create fields and meta data on your pages and tasks on [metadata on pages](./metadata-pages.md) and [metadata on tasks](./metadata-tasks.md).
+
 Dataview understands several distinct field types to cover common use cases:
 
 - **Text**: The default catch-all. If a field doesn't match a more specific type, it is just plain text.
