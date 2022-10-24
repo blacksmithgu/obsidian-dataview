@@ -1,6 +1,11 @@
 # Adding metadata to your pages
 
-To make information available in dataview queries, you need to store this information in **fields**. All fields you add to a page (a note in your vault) can be later accessed when writing dataview queries. 
+Dataview is a data index first and foremost, so it supports relatively rich ways of adding metadata to your knowledge
+base. Dataview tracks information at the *markdown page* and *markdown task* levels, where each page/task can have an
+arbitrary amount of complex (numbers, objects, lists) *fields* associated with it. Each *field* is a named value with
+a certain type (like "number" or "text"). Read more about types [here](./types-of-metadata.md).
+
+To make information available in dataview queries, you need to store this information in fields. All fields you add to a page (a note in your vault) can be later accessed when writing dataview queries. 
 
 You can add fields to a markdown page in three different ways.
 
