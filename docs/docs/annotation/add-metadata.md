@@ -1,8 +1,8 @@
-# Adding metadata to your pages
+# Adding Metadata to your Pages
 
 Dataview is a data index first and foremost, so it supports relatively rich ways of adding metadata to your knowledge
-base. Dataview tracks information at the *markdown page* and *markdown task* levels, where each page/task can have an
-arbitrary amount of complex (numbers, objects, lists) *fields* associated with it. Each *field* is a named value with
+base. Dataview tracks information at the *markdown page* and *markdown list item* (including task) levels, where each page/list item can have an
+arbitrary amount of *fields* associated with it. Each *field* is a named value with
 a certain type (like "number" or "text"). Read more about types [here](./types-of-metadata.md).
 
 To make information available in dataview queries, you need to store this information in fields. All fields you add to a page (a note in your vault) can be later accessed when writing dataview queries. 
@@ -21,6 +21,7 @@ Frontmatter is a common Markdown extension which allows for YAML metadata to be 
       reviewable: false
     ---
     ```
+
 ## Inline Fields
 
 For those wanting a more natural-looking annotation, Dataview supports "inline" fields, which
@@ -44,4 +45,4 @@ For those wanting a more natural-looking annotation, Dataview supports "inline" 
 ## Implicit
  Dataview annotates pages and tasks with a large amount of metadata automatically, like the day the file was
    created (`file.cday`), any associated dates (`file.day`), links in the file (`file.outlinks`), tags (`file.tags`),
-   and so on.
+   and so on. Find the full list on [Metadata on pages](metadata-pages.md) and [Metadata on Tasks and Lists](metadata-tasks.md).

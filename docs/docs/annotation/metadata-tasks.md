@@ -1,11 +1,13 @@
-# Metadata on tasks
+# Metadata on Tasks and Lists
 
-Just like pages, you can also add **fields** on task level to bind it to a specific task as context. You can also annotate your *tasks* (I.e., lines of the form `- [ ] blah blah blah`) with metadata using [inline field syntax](add-metadata.md):
+Just like pages, you can also add **fields** on list item and task level to bind it to a specific task as context. You can also annotate your *tasks* (I.e., lines of the form `- [ ] blah blah blah`) with metadata using [inline field syntax](add-metadata.md):
 
 ```markdown
 - [ ] Hello, this is some [metadata:: value]!
 - [X] I finished this on [completion::2021-08-15].
 ```
+
+Tasks and list items are the same data wise, so all your bullet points have all the information described here available, too. 
 
 ## Field Shorthands
 

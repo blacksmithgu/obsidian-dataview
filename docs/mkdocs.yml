@@ -21,7 +21,7 @@ nav:
     - Adding Metadata: 'annotation/add-metadata.md'
     - Data Types: 'annotation/types-of-metadata.md'
     - Metadata on Pages: 'annotation/metadata-pages.md'
-    - Metadata on Tasks: 'annotation/metadata-tasks.md'
+    - Metadata on Tasks and Lists: 'annotation/metadata-tasks.md'
   - DQL, JS and Inlines: 'queries/dql-js-inline.md'
   - Query Language Reference:
     - Structure of a Query: 'queries/structure.md'

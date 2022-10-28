@@ -1,4 +1,4 @@
-# Metadata on pages
+# Metadata on Pages
 
 You can add fields (queryable information) to a markdown page (a note) in three different ways - via Frontmatter, Inline fields and Implicit fields. Read more about [how to add metadata](./add-metadata.md).
 
@@ -44,8 +44,8 @@ Dataview automatically adds a large amount of metadata to each page:
 
 If the file has a date inside its title (of form `yyyy-mm-dd` or `yyyymmdd`), or has a `Date` field/inline field, it also has the following attributes:
 
-- `file.day`: An explicit date associated with the file.
+- `file.day`: An explicit date associated with the file title.
 
-If you use the Obsidian default "Starred Files" plugin, the following metadata is also available:
+If you use the Obsidian Core Plugin "Starred Files", the following metadata is also available:
 
 - `file.starred`: If this file has been starred by the "stars" Obsidian plugin.

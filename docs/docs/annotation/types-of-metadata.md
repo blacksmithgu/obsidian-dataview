@@ -37,7 +37,7 @@ Dataview understands several distinct field types to cover common use cases:
     Example:: 9 yrs 8 min
     ```
 - **Link**: Plain Obsidian links like `[[Page]]` or `[[Page|Page Display]]`.
-    - If you reference a link in frontmatter, you need to quote it, as so: `key: "[[Link]]"`. This is default Obsidian-supported behavior.
+    - If you reference a link in frontmatter, you need to quote it, as so: `key: "[[Link]]"`. This is default Obsidian-supported behavior. Please be aware that this is only a link for dataview, but not for Obsidian anymore - that ultimatively means it won't show up in the Outgoing links and won't be updated on i.e. a rename. 
     ```markdown
     Example:: [[A Page]]
     Example:: [[Some Other Page|Render Text]]
