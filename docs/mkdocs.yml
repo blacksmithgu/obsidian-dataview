@@ -37,10 +37,10 @@ nav:
     - Codeblock Reference: 'api/code-reference.md'
     - Codeblock Examples: 'api/code-examples.md'
   - FAQ and Resources:
-    - Frequently Asked Questions: 'reference/faq.md'
-    - Examples: 'reference/examples.md'
-    - Developing Against Dataview: 'plugin/develop-against-dataview.md'
-    - Resources and Support: 'resources-and-support.md'
+    - Frequently Asked Questions: 'resources/faq.md'
+    - Examples: 'resources/examples.md'
+    - Developing Against Dataview: 'resources/develop-against-dataview.md'
+    - Resources and Support: 'resources/resources-and-support.md'
   - Friends of Dataview: 'friends.md'
   - Changelog: 'changelog.md'
 plugins:
@@ -53,7 +53,7 @@ plugins:
         docs/query/expressions.md: reference/expressions.md
         docs/query/sources.md: reference/sources.md
         docs/query/functions.md: reference/functions.md
-        docs/query/examples.md: reference/examples.md
+        docs/query/examples.md: resources/examples.md
         docs/api/intro.md: api/intro.md
         docs/api/data-array.md: api/data-array.md
         docs/api/code-reference.md: api/code-reference.md
@@ -61,3 +61,7 @@ plugins:
         data-queries.md: queries/dql-js-inline.md
         query/queries.md: queries/structure.md
         data-annotation.md: annotation/add-metadata.md
+        resources-and-support.md: resources/resources-and-support.md
+        plugin/develop-against-dataview.md: resources/develop-against-dataview.md
+        reference/faq.md: resources/faq.md
+        reference/examples.md: resources/examples.md

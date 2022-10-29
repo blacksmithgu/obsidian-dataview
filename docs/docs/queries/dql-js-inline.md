@@ -18,7 +18,7 @@ SORT rating DESC
 ~~~
 
 The details of how to write a query are explained in the [query language
-reference](../../queries/structure); if you learn better by example, take a look at the [query examples](../../reference/examples).
+reference](../../queries/structure); if you learn better by example, take a look at the [query examples](../../resources/examples).
 
 ## Inline DQL
 

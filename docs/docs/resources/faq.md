@@ -26,4 +26,4 @@ There are two ways:
 
 ### Do you have a list of resources to learn from?
 
-Yes! Please see the [Resources](../resources-and-support.md) page.
+Yes! Please see the [Resources](../resources/resources-and-support.md) page.

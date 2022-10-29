@@ -41,4 +41,4 @@ LIST
 ```
 ~~~
 
-which will list **all files in your vault**. Find more examples [here](../reference/examples.md).
+which will list **all files in your vault**. Find more examples [here](../resources/examples.md).
