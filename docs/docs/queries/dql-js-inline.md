@@ -1,12 +1,12 @@
 # Creating Queries
 
-Once you've added useful data to relevant pages, you'll want to actually display it somewhere or operate on it. Dataview
+Once you've added [useful data to relevant pages](../annotation/add-metadata.md), you'll want to actually display it somewhere or operate on it. Dataview
 allows this in four different ways, all of which are written in codeblocks directly in your Markdown and live-reloaded
 when your vault changes.
 
 ## Dataview Query Language (DQL)
 
-The dataview [query language](../query/queries) is a simplistic, SQL-like language for quickly creating views. It
+The dataview [query language](../../queries/structure) is a simplistic, SQL-like language for quickly creating views. It
 supports basic arithmetic and comparison operations, and is good for basic applications. You create dataview queries
 using `dataview`-annotated codeblocks:
 
@@ -18,7 +18,7 @@ SORT rating DESC
 ~~~
 
 The details of how to write a query are explained in the [query language
-reference](../query/queries); if you learn better by example, take a look at the [query examples](../query/examples).
+reference](../../queries/structure); if you learn better by example, take a look at the [query examples](../../reference/examples).
 
 ## Inline DQL
 
@@ -30,12 +30,12 @@ directly inside a page - for example, todays date via `= date(today)`, or a fiel
 `= this.file.name`
 ~~~
 
-Inline DQL expressions are written using the [query language expression language](../query/expressions). You can
+Inline DQL expressions are written using the [query language expression language](../../reference/expressions). You can
 configure inline queries to use a different prefix (like `dv:` or `~`) in the Dataview settings.
 
 ## Dataview JS
 
-The dataview [JavaScript API](../api/intro) gives you the full power of JavaScript and provides a DSL for pulling
+The dataview [JavaScript API](../../api/intro) gives you the full power of JavaScript and provides a DSL for pulling
 Dataview data and executing queries, allowing you to create arbitrarily complex queries and views. Similar to the query
 language, you create Dataview JS blocks via a `dataviewjs`-annotated codeblock:
 
@@ -43,15 +43,15 @@ language, you create Dataview JS blocks via a `dataviewjs`-annotated codeblock:
 ```dataviewjs
 let pages = dv.pages("#books and -#books/finished").where(b => b.rating >= 7);
 for (let group of pages.groupBy(b => b.genre)) {
-   dv.header(group.key);
+   dv.header(3, group.key);
    dv.list(group.rows.file.name);
 }
 ```
 ~~~
 
 Inside of a JS dataview block, you have access to the full dataview API via the `dv` variable. For an explanation of
-what you can do with it, see the [API documentation](../api/code-reference), or the [API
-examples](../api/code-examples).
+what you can do with it, see the [API documentation](../../api/code-reference), or the [API
+examples](../../api/code-examples).
 
 ## Inline Dataview JS
 

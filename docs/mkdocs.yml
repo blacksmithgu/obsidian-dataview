@@ -17,37 +17,47 @@ theme:
   custom_dir: overrides
 nav:
   - Overview: 'index.md'
-  - Data Annotation: 'data-annotation.md'
-  - Data Querying: 'data-queries.md'
+  - Metadata:
+    - Adding Metadata: 'annotation/add-metadata.md'
+    - Data Types: 'annotation/types-of-metadata.md'
+    - Metadata on Pages: 'annotation/metadata-pages.md'
+    - Metadata on Tasks and Lists: 'annotation/metadata-tasks.md'
+  - DQL, JS and Inlines: 'queries/dql-js-inline.md'
   - Query Language Reference:
-    - Queries: 'query/queries.md'
-    - Expressions: 'query/expressions.md'
-    - Literals: 'query/literals.md'
-    - Sources: 'query/sources.md'
-    - Functions: 'query/functions.md'
-    - Examples: 'query/examples.md'
-    - Frequently Asked Questions: 'query/faq.md'
+    - Structure of a Query: 'queries/structure.md'
+    - Query Types: 'queries/query-types.md'
+    - Data Commands: 'queries/data-commands.md'
+    - Sources: 'reference/sources.md'
+    - Expressions: 'reference/expressions.md'
+    - Literals: 'reference/literals.md'
+    - Functions: 'reference/functions.md'
   - JavaScript Reference:
     - Overview: 'api/intro.md'
     - Data Arrays: 'api/data-array.md'
     - Codeblock Reference: 'api/code-reference.md'
     - Codeblock Examples: 'api/code-examples.md'
-  - Plugin Developers:
+  - FAQ and Resources:
+    - Frequently Asked Questions: 'reference/faq.md'
+    - Examples: 'reference/examples.md'
     - Developing Against Dataview: 'plugin/develop-against-dataview.md'
+    - Resources and Support: 'resources-and-support.md'
   - Friends of Dataview: 'friends.md'
   - Changelog: 'changelog.md'
 plugins:
   - search
   - redirects:
       redirect_maps:
-        docs/where-data-comes-from.md: data-annotation.md
-        docs/creating-queries.md: data-queries.md
-        docs/query/queries.md: query/queries.md
-        docs/query/expressions.md: query/expressions.md
-        docs/query/sources.md: query/sources.md
-        docs/query/functions.md: query/functions.md
-        docs/query/examples.md: query/examples.md
+        docs/where-data-comes-from.md: annotation/add-metadata.md
+        docs/creating-queries.md: queries/dql-js-inline.md
+        docs/query/queries.md: queries/structure.md
+        docs/query/expressions.md: reference/expressions.md
+        docs/query/sources.md: reference/sources.md
+        docs/query/functions.md: reference/functions.md
+        docs/query/examples.md: reference/examples.md
         docs/api/intro.md: api/intro.md
         docs/api/data-array.md: api/data-array.md
         docs/api/code-reference.md: api/code-reference.md
         docs/api/code-examples.md: api/code-examples.md
+        data-queries.md: queries/dql-js-inline.md
+        query/queries.md: queries/structure.md
+        data-annotation.md: annotation/add-metadata.md

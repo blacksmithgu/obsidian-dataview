@@ -1,3 +1,30 @@
+# 0.5.47
+
+Improves `date + duration` behavior when either the date or duration are null.
+
+---
+
+# 0.5.46
+
+- Fix #1412: Fix bad `file.cday` and `file.ctime` comparisons due to wrong timezone being set. Ugh.
+
+---
+
+# 0.5.45
+
+- #1400: Properly use the group by field for the group name.
+- Fix bad table highlighting in some themes.
+
+---
+
+# 0.5.44
+
+- #1404: Fixed dates in non-local timezones parsing incorrectly.
+- Fixed some build non-determinism issues.
+- Swapped to pull requests for adding new functionality, and added some more internal tests.
+
+---
+
 # 0.5.43
 
 - Fix #1366: Better handling of calendar emoji (used as due dates in tasks).

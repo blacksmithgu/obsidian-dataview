@@ -19,7 +19,7 @@
 }
 
 .table-view-table > tbody > tr:hover {
-    background-color: var(--text-selection);
+    background-color: var(--text-selection) !important;
 }
 
 .table-view-table > thead > tr > th {

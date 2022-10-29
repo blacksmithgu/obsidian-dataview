@@ -38,7 +38,7 @@ Try searching the forums for an answer, especially if it seems like a beginner q
 
 ### Discord
 
-The [Obsidian Members Group Discord server](https://obsidian.md/community) has a `#dataview` thread under the `#plugin-advanced` channel.
+The [Obsidian Members Group Discord server](https://obsidian.md/community) has a `#dataview` channel.
 Once again, more likely than not, your question has been asked before so try searching the thread though it is known that Discord's search can be spotty.
 In case you don't find anything satisfactory, 
 This is the closest you'll get to real-time support but there are no guarantees of instant replies.
