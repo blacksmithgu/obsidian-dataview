@@ -316,13 +316,13 @@ export function setTaskCompletion(
         parts[parts.length - 1] = `${setEmojiShorthandCompletionField(
             parts[parts.length - 1].split(blockIdRegex).join(""),
             complete ? DateTime.now().toFormat("yyyy-MM-dd") : ""
-        )}${matches?.length ? " " + matches[0].trim() : ""}`.trimEnd();
+        ).trimEnd()}${matches?.length ? " " + matches[0].trim() : ""}`.trimEnd();
     } else {
         parts[parts.length - 1] = `${setInlineField(
             parts[parts.length - 1].split(blockIdRegex).join(""),
             completionKey,
             DateTime.now().toFormat(completionDateFormat)
-        )}${matches?.length ? " " + matches[0].trim() : ""}`.trimEnd();
+        ).trimEnd()}${matches?.length ? " " + matches[0].trim() : ""}`.trimEnd();
     }
     return parts.join("\n");
 }
