@@ -312,18 +312,23 @@ export function setTaskCompletion(
     let parts = originalText.split(/\r?\n/u);
     const matches = blockIdRegex.exec(parts[parts.length - 1]);
     console.debug("matchreg", matches);
+
+    let processedPart = parts[parts.length - 1].split(blockIdRegex).join(""); // last part without block id
     if (useEmojiShorthand) {
-        parts[parts.length - 1] = `${setEmojiShorthandCompletionField(
-            parts[parts.length - 1].split(blockIdRegex).join(""),
+        processedPart = setEmojiShorthandCompletionField(
+            processedPart,
             complete ? DateTime.now().toFormat("yyyy-MM-dd") : ""
-        ).trimEnd()}${matches?.length ? " " + matches[0].trim() : ""}`.trimEnd();
+        )
     } else {
-        parts[parts.length - 1] = `${setInlineField(
-            parts[parts.length - 1].split(blockIdRegex).join(""),
+        processedPart = setInlineField(
+            processedPart,
             completionKey,
             DateTime.now().toFormat(completionDateFormat)
-        ).trimEnd()}${matches?.length ? " " + matches[0].trim() : ""}`.trimEnd();
+        )
     }
+    processedPart = `${processedPart.trimEnd()}${matches?.length ? " " + matches[0].trim() : ""}`.trimEnd(); // add back block id
+    parts[parts.length - 1] = processedPart
+
     return parts.join("\n");
 }
 
