@@ -313,10 +313,10 @@ export function setTaskCompletion(
     const matches = blockIdRegex.exec(parts[parts.length - 1]);
     console.debug("matchreg", matches);
     if (useEmojiShorthand) {
-        parts[parts.length - 1] = setEmojiShorthandCompletionField(
-            parts[parts.length - 1],
+        parts[parts.length - 1] = `${setEmojiShorthandCompletionField(
+            parts[parts.length - 1].split(blockIdRegex).join(""),
             complete ? DateTime.now().toFormat("yyyy-MM-dd") : ""
-        );
+        )}${matches?.length ? " " + matches[0].trim() : ""}`.trimEnd();
     } else {
         parts[parts.length - 1] = `${setInlineField(
             parts[parts.length - 1].split(blockIdRegex).join(""),
