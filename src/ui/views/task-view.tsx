@@ -304,7 +304,7 @@ export function setTaskCompletion(
     completionDateFormat: string,
     complete: boolean
 ): string {
-    const blockIdRegex = /\^[a-z0-9\-]+\s/i;
+    const blockIdRegex = /\^[a-z0-9\-]+/i;
 
     if (!complete && !useEmojiShorthand)
         return trimEndingLines(setInlineField(originalText.trimEnd(), completionKey)).trimEnd();
@@ -322,7 +322,7 @@ export function setTaskCompletion(
             parts[parts.length - 1].split(blockIdRegex).join(""),
             completionKey,
             DateTime.now().toFormat(completionDateFormat)
-        )}${matches?.length ? "" + matches[0].trim() : ""}`.trimEnd();
+        )}${matches?.length ? " " + matches[0].trim() : ""}`.trimEnd();
     }
     return parts.join("\n");
 }
