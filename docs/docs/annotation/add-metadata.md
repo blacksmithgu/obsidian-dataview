@@ -9,11 +9,11 @@ A metadata field is a pair of a **key** and a **value**. The _value_ of a field 
 You can add any number of fields to a **note**, a **list item** or a **task**. 
 
 
-## How does a field look like? How do I add fields?
+## How do I add fields?
 
 You can add fields to a **note** in three different ways. How a field look like depends on the way you add it.
 
-## Frontmatter
+### Frontmatter
 
 Frontmatter is a common Markdown extension which allows for YAML metadata to be added to the top of a page. It is natively supported by Obsidian and explained in its [official documentation](https://help.obsidian.md/Advanced+topics/YAML+front+matter). All YAML Frontmatter fields will be automatically available as Dataview fields.
 
@@ -31,7 +31,7 @@ With this your note has metadata fields named `alias`, `last-reviewed`, and `tho
 
 - `alias` is a [text](./types-of-metadata/#text), because its wrapped in ""
 - `last-reviewed` a [date](./types-of-metadata/#date), because it follows the ISO date format
-- `thoughts` a [object](./types-of-metadata/#object) field, because it uses the [YAML Frontmatter object syntax]() TODO link is missing, is this somewhere documented?
+- `thoughts` a [object](./types-of-metadata/#object) field, because it uses the YAML Frontmatter object syntax
 
 You could i.e. query for this note with the following query, because `thoughts` is a object with the value `rating`:
 
@@ -42,7 +42,7 @@ WHERE thoughts.rating = 8
 ```
 ~~~
 
-## Inline Fields
+### Inline Fields
 
 For those wanting a more natural-looking annotation, Dataview supports "inline" fields via a `Key:: Value` syntax that you can use everywhere in your file. This allows you do write your queryable data right where you need it - for example in the middle of a sentence. 
 
@@ -55,9 +55,10 @@ Basic Field:: Value
 **Bold Field**:: Nice!
 ```
 
+All content after the `::` is the value of the field, until the next line break.
+
 !!! hint 
     Note that you need to use a double colon `::` between key and value when using inline fields, contrary to YAML Frontmatter fields where one colon is enough. 
-
 
 If you want to embed metadata inside sentences, or multiple fields on the same line, you can use the bracket syntax and wrap your field in square brackets:
 
@@ -66,22 +67,54 @@ I would rate this a [rating:: 9]! It was [mood:: acceptable].
 ```
 
 !!! info "Inline fields on list items and tasks"
-    When you want to annotate a list item, e.g. a task, with meta data, you always need to use the bracket syntax (because the field is not the only information in this line)
+    When you want to annotate a list item, e.g. a task, with metadata, you always need to use the bracket syntax (because the field is not the only information in this line)
+    ```markdown
+    - [ ] Send an mail to David about the deadline [due:: 2022-04-05].
+    ```
 
 There is also the alternative parenthesis syntax, which hides the key when
 rendered in Reader mode:
 
 ```markdown
-This will not show the (very long key:: key).
+This will not show the (longKeyIDontNeedWhenReading:: key).
 ```
 
-TODO example what is available now and how to query it
+will render to:
+
+```markdown
+This will not show the key.
+```
+
+You can use YAML Frontmatter and Inline fields with all syntax variants in the same file. You do not need to decide for one.
 
 ## Field names
 
-TODO sanitized values for bold, camelcase and spaces
+ Imagine you used all the examples for Inline fields you see above in one note, then following metadata would be available to you:
 
-## Implicit TODO
- Dataview annotates pages and tasks with a large amount of metadata automatically, like the day the file was
-   created (`file.cday`), any associated dates (`file.day`), links in the file (`file.outlinks`), tags (`file.tags`),
-   and so on. Find the full list on [Metadata on pages](metadata-pages.md) and [Metadata on Tasks and Lists](metadata-tasks.md).
+| Metadata Key | Sanitized Metadata key | Value | Data Type of Value |
+| ----------- | ------------------------|----------- | ----------- |
+| `Basic Field` | `basic-field`  | Value | Text |
+| `Bold Field` | `bold-field`  | Nice! | Text |
+| `rating` | - | 9 | Number |
+| `mood` | - | acceptable | Text |
+| `due` | - | Date Object for 2022-04-05 | Date |
+| `longKeyIDontNeedWhenReading` | `longkeyidontneedwhenreading` | key | Text |
+
+Like you can see in the table, if you are using **spaces or capitalized letters** in your metadata key name, dataview will provide you with a **sanitized version** of the key. 
+
+**Keys with spaces** cannot be used in a query as-is. You have two possibilities here: Either use the sanitized name, that is always all lowercase and with dashes instead of spaces or use the **row** variable syntax. Find out more [in the FAQ](../resources/faq.md).
+
+**Keys with capitalized letters** can be used as-is, if you wish. The sanitized version allows you to query for a key independent of its capitalization and makes it easier to use: You can query the same field thats, for example, in one file named `someMetadata` and in another `someMetaDate` when using the sanitized key `somemetadata`. 
+
+In addition, the **bold field key is missing its formatting tokens**. Even though the `**` used to make it appear bold are part of the key name in the file, they are left out when indexing your note. The same goes for all other built-in formatting, like strike through or italic. This means formatted keys can only be queried without their formatting. This allows you to format the key in context of the note without worrying that you might create different keys for the same type of information. 
+
+## Implicit fields
+
+Even if you do not add any metadata explicitly to your note, dataview provides you with a big amount of indexed data out of the box. Some examples for implicit fields are:
+
+- day the file was created (`file.cday`)
+- links in the file (`file.outlinks`)
+- tags in the file (`file.etags`)
+- all list items in the file (`file.lists` and `file.tasks`)
+
+and many more. Available implicit fields differ depending if you look at a page or a list item. Find the full list of available implicit fields on [Metadata on pages](metadata-pages.md) and [Metadata on Tasks and Lists](metadata-tasks.md).
