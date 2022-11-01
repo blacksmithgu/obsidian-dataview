@@ -1,3 +1,16 @@
+# 0.5.48 (Beta)
+
+We're back to more regular beta releases while I trial out new functionality!
+
+- Fixed broken list behavior for `dv.markdownTaskList`.
+- @GamerGirlandCo: Better handling of block IDs when checking off tasks!
+- @s-blu and @AB1908: Lots of big documentation upgrades! Nice!
+- @leoccyao: More block ID task checking fixes. Should work after this one.
+- Add expression/query parsing to the dataview NPM package.
+- @charleshan: Fix a missing header level in the dataview `dv.header` example.
+
+---
+
 # 0.5.47
 
 Improves `date + duration` behavior when either the date or duration are null.
