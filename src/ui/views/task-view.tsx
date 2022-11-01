@@ -318,16 +318,12 @@ export function setTaskCompletion(
         processedPart = setEmojiShorthandCompletionField(
             processedPart,
             complete ? DateTime.now().toFormat("yyyy-MM-dd") : ""
-        )
+        );
     } else {
-        processedPart = setInlineField(
-            processedPart,
-            completionKey,
-            DateTime.now().toFormat(completionDateFormat)
-        )
+        processedPart = setInlineField(processedPart, completionKey, DateTime.now().toFormat(completionDateFormat));
     }
     processedPart = `${processedPart.trimEnd()}${matches?.length ? " " + matches[0].trim() : ""}`.trimEnd(); // add back block id
-    parts[parts.length - 1] = processedPart
+    parts[parts.length - 1] = processedPart;
 
     return parts.join("\n");
 }
