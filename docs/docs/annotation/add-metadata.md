@@ -13,6 +13,8 @@ You can add any number of fields to a **note**, a **list item** or a **task**.
 
 You can add fields to a **note** in three different ways. How a field look like depends on the way you add it.
 
+On tasks or list items in general, you cannot use YAML Frontmatter to add information - Frontmatter always applies to the whole page. For these, use the Inline Fields or available implicit fields.
+
 ### Frontmatter
 
 Frontmatter is a common Markdown extension which allows for YAML metadata to be added to the top of a page. It is natively supported by Obsidian and explained in its [official documentation](https://help.obsidian.md/Advanced+topics/YAML+front+matter). All YAML Frontmatter fields will be automatically available as Dataview fields.
@@ -51,13 +53,13 @@ If your inline field has an own line, without any content beforehand, you can wr
 ```markdown
 # Markdown Page
 
-Basic Field:: Value
+Basic Field:: Some random Value
 **Bold Field**:: Nice!
 ```
 
 All content after the `::` is the value of the field, until the next line break.
 
-!!! hint 
+!!! hint "Mind the `::`"
     Note that you need to use a double colon `::` between key and value when using inline fields, contrary to YAML Frontmatter fields where one colon is enough. 
 
 If you want to embed metadata inside sentences, or multiple fields on the same line, you can use the bracket syntax and wrap your field in square brackets:
@@ -66,11 +68,12 @@ If you want to embed metadata inside sentences, or multiple fields on the same l
 I would rate this a [rating:: 9]! It was [mood:: acceptable].
 ```
 
-!!! info "Inline fields on list items and tasks"
+!!! info "Fields on list items and tasks"
     When you want to annotate a list item, e.g. a task, with metadata, you always need to use the bracket syntax (because the field is not the only information in this line)
     ```markdown
     - [ ] Send an mail to David about the deadline [due:: 2022-04-05].
     ```
+    Bracketed inline fields are the only way to explicitly add fields to specific list items, YAML frontmatter always applies to the whole page (but is also available in context of list items.)
 
 There is also the alternative parenthesis syntax, which hides the key when
 rendered in Reader mode:
@@ -89,11 +92,13 @@ You can use YAML Frontmatter and Inline fields with all syntax variants in the s
 
 ## Field names
 
+## TODO EMOJIS
+
  Imagine you used all the examples for Inline fields you see above in one note, then following metadata would be available to you:
 
 | Metadata Key | Sanitized Metadata key | Value | Data Type of Value |
 | ----------- | ------------------------|----------- | ----------- |
-| `Basic Field` | `basic-field`  | Value | Text |
+| `Basic Field` | `basic-field`  | Some random Value | Text |
 | `Bold Field` | `bold-field`  | Nice! | Text |
 | `rating` | - | 9 | Number |
 | `mood` | - | acceptable | Text |
