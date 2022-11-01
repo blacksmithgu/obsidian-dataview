@@ -120,6 +120,9 @@ WHERE birthday.month = date(now).month
 
 gives you back all birthdays happening this month. Curious about `date(now)`? Read more about it under [literals](./../../reference/literals/#dates).
 
+!!! info "Displaying of date objects"
+    Dataview renders date objects in a human readable format, i.e. `3:15 PM - Februar 26, 2021`. You can adjust how this format looks like in Dataview's Setting under "General" with "Date Format" and "Date + Time Format". If you want to adjust the format in a specific query only, use the [dateformat function](../../reference/functions/#dateformatdatedatetime-string).
+
 ### Duration
 
 Durations are text of the form `<time> <unit>`, like `6 hours` or `4 minutes`. Common english abbreviations like

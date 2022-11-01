@@ -92,9 +92,7 @@ You can use YAML Frontmatter and Inline fields with all syntax variants in the s
 
 ## Field names
 
-## TODO EMOJIS
-
- Imagine you used all the examples for Inline fields you see above in one note, then following metadata would be available to you:
+Imagine you used all the examples for Inline fields you see above in one note, then following metadata would be available to you:
 
 | Metadata Key | Sanitized Metadata key | Value | Data Type of Value |
 | ----------- | ------------------------|----------- | ----------- |
@@ -112,6 +110,21 @@ Like you can see in the table, if you are using **spaces or capitalized letters*
 **Keys with capitalized letters** can be used as-is, if you wish. The sanitized version allows you to query for a key independent of its capitalization and makes it easier to use: You can query the same field thats, for example, in one file named `someMetadata` and in another `someMetaDate` when using the sanitized key `somemetadata`. 
 
 In addition, the **bold field key is missing its formatting tokens**. Even though the `**` used to make it appear bold are part of the key name in the file, they are left out when indexing your note. The same goes for all other built-in formatting, like strike through or italic. This means formatted keys can only be queried without their formatting. This allows you to format the key in context of the note without worrying that you might create different keys for the same type of information. 
+
+### Usage of emojis and non-latin characters
+
+You are not limited to latin characters when naming your metadata fields. 
+
+```markdown
+Noël:: Un jeu de console
+クリスマス:: 家庭用ゲーム機
+[🎅:: a console game]
+[xmas🎄:: a console game]
+```
+
+While **using emojis as metadata keys** is possible, it comes with some limitations. When using emojis in field names, you need to put them into square brackets so that dataview recognize them correctly. 
+
+Also, please be aware when switching i.e. the OS, the same emoji could use another character code and you maybe don't find your metadata when querying it. 
 
 ## Implicit fields
 
