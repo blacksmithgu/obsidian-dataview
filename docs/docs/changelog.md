@@ -1,3 +1,11 @@
+# 0.5.49 (Beta)
+
+- Add the `average` function to compute averages of lists (`average([list of things])`).
+- Added documentation for `average`, `min`, `max`, `minby`, and `maxby` functions.
+- Fixed the broken `nonnull` function and documented it.
+
+---
+
 # 0.5.48 (Beta)
 
 We're back to more regular beta releases while I trial out new functionality!
