@@ -422,7 +422,7 @@ none([true, true], (x) => x = false) = true
 none(["Apple", "Pi", "Banana"], (x) => startswith(x, "A")) = false
 ```
 
-### `join(array)`
+### `join(array, [delimiter])`
 
 Joins elements in an array into a single string (i.e., rendering them all on the same line). If provided with a second
 argument, then each element will be separated by the given separator.
