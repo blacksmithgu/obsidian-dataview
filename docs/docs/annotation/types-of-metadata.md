@@ -1,13 +1,13 @@
 # Field Types
 
-All fields in dataview have a *type*, which determines how dataview will render, sort, and operate on that field.
+All fields in dataview have a **type**, which determines how dataview will render, sort, and operate on that field.
 Read more about how to create fields on ["Adding metadata"](add-metadata.md) and which information you have automatically available on [metadata on pages](./metadata-pages.md) and [metadata on tasks and lists](./metadata-tasks.md).
-
-Dataview knows several field types to cover common use cases:
 
 ## Why does the type matter?
 
 Dataview provides [functions](../reference/functions.md) you can use to modify your metadata and allows you to write all sorts of complex queries. Specific functions need specific data types to work correctly. That means the data type of your field determines which functions you can use on these fields and how the functions behave. Furthermore, depending on the type, the output dataview renders can be different.
+
+Most of the time you do not need to worry too much about the type of your fields, but if you want to perform calculations and other magical operations on your data, you should be aware of them.
 
 !!! example "Different rendering based on type"
     If you have this file:
@@ -27,11 +27,11 @@ Dataview provides [functions](../reference/functions.md) you can use to modify y
     | -------- | ----- | ----- |
     | Untitled 2 | 3:15 PM - Februar 26, 2021 | 2021-04-17 18:00 |
 
-    `date1` is recognized as a **Date** while `date2` is a normal **Text** to dataview, that's why `date1` is parsed differently for you. Find out more on Dates below. 
-
-Most of the time you do not need to worry too much about the type of your fields, but if you want to perform calculations and other magical operations on your data, you should be aware of them.
+    `date1` is recognized as a **Date** while `date2` is a normal **Text** to dataview, that's why `date1` is parsed differently for you. Find out more on [Dates below](#date). 
 
 ## Available Field Types
+
+Dataview knows several field types to cover common use cases.
 
 ### Text
 
@@ -107,7 +107,7 @@ When querying for these dates, you can access properties that give you a certain
 - field.second
 - field.millisecond
 
-For example, if you're interested in which month your date lies, you can access it via `datefield.mo:
+For example, if you're interested in which month your date lies, you can access it via `datefield.month`:
 
 ~~~markdown
 birthday:: 2001-06-11
@@ -195,7 +195,7 @@ Example1:: 1, 2, 3
 Example2:: "yes", "or", "no"
 ```
 
-Please be aware that in Inline fields, you need to wrap **text values into quotes** to be recognized as a list (see `Example2`). `yes, or, no` is recognized as text.
+Please be aware that in Inline fields, you need to wrap **text values into quotes** to be recognized as a list (see `Example2`). `yes, or, no` is recognized as plain text.
 
 !!! info "Duplicated metadata keys in the same file lead to lists"
     If you're using a metadata key twice or more in the same note, dataview will collect all values and give you a list. For example

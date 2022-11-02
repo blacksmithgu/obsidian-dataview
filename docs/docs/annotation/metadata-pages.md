@@ -9,21 +9,21 @@ Dataview automatically adds a large amount of metadata to each page. These impli
 - `file.name`: A text. The file name as seen in Obsidians sidebar.
 - `file.folder`: A text. The path of the folder this file belongs to.
 - `file.path`: A text. The full file path, including the files name.
-- `file.ext`: A text. The extension of the file type; generally 'md'.
-- `file.link`: A link. A link to the file.
+- `file.ext`: A text. The extension of the file type; generally `md`.
+- `file.link`: A link to the file.
 - `file.size`: A number. The size (in bytes) of the file.
-- `file.ctime`: A Date+Time. The date that the file was created.
+- `file.ctime`: A Date with Time. The date that the file was created.
 - `file.cday`: A Date. The date that the file was created.
-- `file.mtime`: A Date+Time.The date that the file was last modified.
-- `file.mday`: A Date.The date that the file was last modified.
+- `file.mtime`: A Date with Time. The date that the file was last modified.
+- `file.mday`: A Date. The date that the file was last modified.
 - `file.tags`: A list of all unique tags in the note. Subtags are broken down by each level, so `#Tag/1/A` will be stored in
   the list as `[#Tag, #Tag/1, #Tag/1/A]`.
-- `file.etags`: An list of all explicit tags in the note; unlike `file.tags`, does not break subtags down, i.e. `[#Tag/1/A]`
-- `file.inlinks`: An list of all incoming links to this file, meaning all files that contain a link to this file.
-- `file.outlinks`: An list of all outgoing links from this file, meaning all links the file contains.
-- `file.aliases`: An list of all aliases for the note as defined via the [YAML frontmatter](https://help.obsidian.md/How+to/Add+aliases+to+note).
-- `file.tasks`: An list of all tasks (I.e., `- [ ] some task`) in this file.
-- `file.lists`: An list of all list elements in the file (including tasks); these elements are effectively tasks and can be rendered in task views.
+- `file.etags`: A list of all explicit tags in the note; unlike `file.tags`, does not break subtags down, i.e. `[#Tag/1/A]`
+- `file.inlinks`: A list of all incoming links to this file, meaning all files that contain a link to this file.
+- `file.outlinks`: A list of all outgoing links from this file, meaning all links the file contains.
+- `file.aliases`: A list of all aliases for the note as defined via the [YAML frontmatter](https://help.obsidian.md/How+to/Add+aliases+to+note).
+- `file.tasks`: A list of all tasks (I.e., `- [ ] some task`) in this file.
+- `file.lists`: A list of all list elements in the file (including tasks); these elements are effectively tasks and can be rendered in task views.
 - `file.frontmatter`: A list. Contains the raw values of all frontmatter in form of `key: value` text values; mainly useful for checking raw frontmatter values or
   for dynamically listing frontmatter keys.
 - `file.day`: A Date. Only available if the file has a date inside its file name (of form `yyyy-mm-dd` or `yyyymmdd`), or has a `Date` field/inline field.

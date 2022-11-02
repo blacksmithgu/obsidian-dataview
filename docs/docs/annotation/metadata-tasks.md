@@ -1,6 +1,6 @@
 # Metadata on Tasks and Lists
 
-Just like pages, you can also add **fields** on list item and task level to bind it to a specific task as context. For this you need to use the [inline field syntax](add-metadata.md):
+Just like pages, you can also add **fields** on list item and task level to bind it to a specific task as context. For this you need to use the [inline field syntax](../add-metadata/#inline-fields):
 
 ```markdown
 - [ ] Hello, this is some [metadata:: value]!
@@ -39,6 +39,13 @@ TASK
 WHERE completion = date("2021-08-22")
 ```
 ~~~
+
+Which will list both variants - shorthands and textual annotation:
+
+```markdown
+- [x] Completed last saturday ✅2021-08-22
+- [x] Some Done Task [completion:: 2021-08-22]
+```
 
 ## Implicit Fields
 
