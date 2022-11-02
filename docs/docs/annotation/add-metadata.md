@@ -8,7 +8,6 @@ A metadata field is a pair of a **key** and a **value**. The _value_ of a field 
 
 You can add any number of fields to a **note**, a **list item** or a **task**. 
 
-
 ## How do I add fields?
 
 You can add fields to a **note** in three different ways. How a field look like depends on the way you add it.
@@ -123,8 +122,10 @@ Noël:: Un jeu de console
 ```
 
 While **using emojis as metadata keys** is possible, it comes with some limitations. When using emojis in field names, you need to put them into square brackets so that dataview recognize them correctly. 
+Also, please be aware when switching the OS (i.e. from Windows to Android), the same emoji could use another character code and you maybe don't find your metadata when querying it.
 
-Also, please be aware when switching i.e. the OS, the same emoji could use another character code and you maybe don't find your metadata when querying it. 
+!!! info "Task Field Shorthands"
+    An exception to this are the [shorthand syntax](./metadata-tasks.md#field-shorthands) in Tasks. You can use shorthands without bracketing. Please mind though that this only counts for listed shorthands - every other field (if with emojis or not) need to use the `[key:: value]` syntax.
 
 ## Implicit fields
 
