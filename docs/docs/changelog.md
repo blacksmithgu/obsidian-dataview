@@ -1,3 +1,37 @@
+# 0.5.51 (Beta)
+
+- Allow disabling regular Dataview inline queries via configuration option.
+
+---
+
+# 0.5.50 (Beta)
+
+- Expose dataview EXPRESSION and QUERY parsing to the dataview npm plugin, so others can parse dataview ASTs.
+- Fix documentation issue with `join`.
+
+---
+
+# 0.5.49 (Beta)
+
+- Add the `average` function to compute averages of lists (`average([list of things])`).
+- Added documentation for `average`, `min`, `max`, `minby`, and `maxby` functions.
+- Fixed the broken `nonnull` function and documented it.
+
+---
+
+# 0.5.48 (Beta)
+
+We're back to more regular beta releases while I trial out new functionality!
+
+- Fixed broken list behavior for `dv.markdownTaskList`.
+- @GamerGirlandCo: Better handling of block IDs when checking off tasks!
+- @s-blu and @AB1908: Lots of big documentation upgrades! Nice!
+- @leoccyao: More block ID task checking fixes. Should work after this one.
+- Add expression/query parsing to the dataview NPM package.
+- @charleshan: Fix a missing header level in the dataview `dv.header` example.
+
+---
+
 # 0.5.47
 
 Improves `date + duration` behavior when either the date or duration are null.

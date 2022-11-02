@@ -304,7 +304,7 @@ export function setTaskCompletion(
     completionDateFormat: string,
     complete: boolean
 ): string {
-    const blockIdRegex = /\^[a-z0-9\-]+\s/i;
+    const blockIdRegex = /\^[a-z0-9\-]+/i;
 
     if (!complete && !useEmojiShorthand)
         return trimEndingLines(setInlineField(originalText.trimEnd(), completionKey)).trimEnd();
@@ -312,18 +312,19 @@ export function setTaskCompletion(
     let parts = originalText.split(/\r?\n/u);
     const matches = blockIdRegex.exec(parts[parts.length - 1]);
     console.debug("matchreg", matches);
+
+    let processedPart = parts[parts.length - 1].split(blockIdRegex).join(""); // last part without block id
     if (useEmojiShorthand) {
-        parts[parts.length - 1] = setEmojiShorthandCompletionField(
-            parts[parts.length - 1],
+        processedPart = setEmojiShorthandCompletionField(
+            processedPart,
             complete ? DateTime.now().toFormat("yyyy-MM-dd") : ""
         );
     } else {
-        parts[parts.length - 1] = `${setInlineField(
-            parts[parts.length - 1].split(blockIdRegex).join(""),
-            completionKey,
-            DateTime.now().toFormat(completionDateFormat)
-        )}${matches?.length ? "" + matches[0].trim() : ""}`.trimEnd();
+        processedPart = setInlineField(processedPart, completionKey, DateTime.now().toFormat(completionDateFormat));
     }
+    processedPart = `${processedPart.trimEnd()}${matches?.length ? " " + matches[0].trim() : ""}`.trimEnd(); // add back block id
+    parts[parts.length - 1] = processedPart;
+
     return parts.join("\n");
 }
 
