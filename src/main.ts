@@ -260,9 +260,7 @@ class GeneralSettingsTab extends PluginSettingTab {
 
         new Setting(this.containerEl)
             .setName("Enable Inline Queries")
-            .setDesc(
-                "Enable or disable executing regular inline Dataview queries."
-            )
+            .setDesc("Enable or disable executing regular inline Dataview queries.")
             .addToggle(toggle =>
                 toggle
                     .setValue(this.plugin.settings.enableInlineDataview)
