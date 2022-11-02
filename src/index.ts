@@ -25,7 +25,14 @@ export type { FullIndex, PrefixIndex, IndexMap } from "data-index/index";
 export type { SMarkdownPage, SListEntry, STask } from "data-model/serialized/markdown";
 
 // Useful utilities for directly using dataview parsers.
-export { DURATION_TYPES, DATE_SHORTHANDS, KEYWORDS, ExpressionLanguage, EXPRESSION, parseField } from "expression/parse";
+export {
+    DURATION_TYPES,
+    DATE_SHORTHANDS,
+    KEYWORDS,
+    ExpressionLanguage,
+    EXPRESSION,
+    parseField,
+} from "expression/parse";
 export { QUERY_LANGUAGE } from "query/parse";
 export { Query } from "query/query";
 
