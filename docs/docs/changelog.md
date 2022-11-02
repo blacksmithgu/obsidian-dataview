@@ -1,3 +1,10 @@
+# 0.5.50 (Beta)
+
+- Expose dataview EXPRESSION and QUERY parsing to the dataview npm plugin, so others can parse dataview ASTs.
+- Fix documentation issue with `join`.
+
+---
+
 # 0.5.49 (Beta)
 
 - Add the `average` function to compute averages of lists (`average([list of things])`).
