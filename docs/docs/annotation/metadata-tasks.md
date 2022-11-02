@@ -54,27 +54,26 @@ As with pages, Dataview adds a number of implicit fields to each task or list it
 !!! info "Inheritance of Fields"
     Tasks inherit *all fields* from their parent page - so if you have a `rating` field in your page, you can also access it on your task in a `TASK` Query. 
 
-- `status`: A text. The completion status of this task, as determined by the character inside the `[ ]` brackets. Generally a
-  space `" "` for incomplete tasks and a `"x"` for complete tasks, but allows for plugins which support alternative
-  task statuses.
-- `checked`: A boolean. Whether or not this task status is empty, meaning it has a space in its `[ ]` brackets
-- `completed`: A boolean. Whether or not this *specific* task has been completed; this does not consider the
-  completion/non-completion of any child tasks. A task is explicitly considered "completed" if it has been marked with
-  an 'x'. If you use a custom status, i.e. `[-]`, `checked` will be true, whereas `completed` will be false.
-- `fullyCompleted`: A boolean. Whether or not this task and **all** of its subtasks are completed.
-- `text`: A text. The plain text of this task, including any metadata field annotations.
-- `line`: A number. The line of the file this task shows up on.
-- `lineCount`: A number. The number of Markdown lines that this task takes up.
-- `path`: A text. The full path of the file this task is in. Equals to `file.path` for [pages](./metadata-pages.md)
-- `section`: A link to the section this task is contained in.
-- `tags`: A list. Any tags inside of the text task.
-- `outlinks`: A list. Any links defined in this task.
-- `link`: A link. A link to the closest linkable block near this task; useful for making links which go to the task.
-- `children`: A list. Any subtasks or sublists of this task.
-- `task`: A boolean. If true, this is a task; otherwise, it is a regular list element.
-- `annotated`: A boolean. True if the task text contains any metadata fields, false otherwise.
-- `parent`: A number. The line number of the task above this task, if present; will be null if this is a root-level task.
-- `blockId`: A text.The block ID of this task / list element, if one has been defined with the `^blockId` syntax; otherwise null.
+
+| Field name | Data Type | Description |
+| ---------- | --------- | ----------- |
+| `status` |  Text | The completion status of this task, as determined by the character inside the `[ ]` brackets. Generally a space `" "` for incomplete tasks and a `"x"` for complete tasks, but allows for plugins which support alternative task statuses. |
+| `checked` |  Boolean  | Whether or not this task status is empty, meaning it has a space in its `[ ]` brackets |
+| `completed` |  Boolean  | Whether or not this *specific* task has been completed; this does not consider the completionnon-completion of any child tasks. A task is explicitly considered "completed" if it has been marked with an 'x'. If you use a custom status, i.e. `[-]`, `checked` will be true, whereas `completed` will be false. |
+| `fullyCompleted` |  Boolean  | Whether or not this task and **all** of its subtasks are completed. |
+| `text` |  Text  | The plain text of this task, including any metadata field annotations. |
+| `line` |  Number  | The line of the file this task shows up on. |
+| `lineCount` |  Number  | The number of Markdown lines that this task takes up. |
+| `path` |  Text  | The full path of the file this task is in. Equals to `file.path` for [pages](./metadata-pages.md) |
+| `section` | Link |  link to the section this task is contained in. |
+| `tags` | List  | Any tags inside of the text task. |
+| `outlinks` | List |  Any links defined in this task. |
+| `link` | Link  |  link to the closest linkable block near this task; useful for making links which go to the task. |
+| `children` | List  | ny subtasks or sublists of this task. |
+| `task` | Boolean  | If true, this is a task; otherwise, it is a regular list element. |
+| `annotated` | Boolean  | True if the task text contains any metadata fields, false otherwise. |
+| `parent` | Number |  The line number of the task above this task, if present; will be null if this is a root-level task. |
+| `blockId` | Text | The block ID of this task / list element, if one has been defined with the `^blockId` syntax; otherwise null. |
 
 With usage of the [shorthand syntax](#field-shorthands), following additional properties may be available:
 
