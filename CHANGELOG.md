@@ -1,3 +1,9 @@
+# 0.5.51 (Beta)
+
+- Allow disabling regular Dataview inline queries via configuration option.
+
+---
+
 # 0.5.50 (Beta)
 
 - Expose dataview EXPRESSION and QUERY parsing to the dataview npm plugin, so others can parse dataview ASTs.
