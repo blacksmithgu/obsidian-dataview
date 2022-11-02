@@ -4,7 +4,7 @@ import { DateTime } from "luxon";
 import { LiteralType, Link, Literal, Values, Widgets } from "data-model/value";
 import { currentLocale } from "util/locale";
 import { LiteralReprAll, LiteralTypeOrAll } from "./binaryop";
-import type { Context } from "./context";
+import { Context } from "./context";
 import { Fields } from "./field";
 import { EXPRESSION } from "./parse";
 import { escapeRegex } from "util/normalize";
@@ -685,6 +685,20 @@ export namespace DefaultFunctions {
         .add1("*", e => e)
         .build();
 
+    export const average = new FunctionBuilder("average")
+        .add1("array", (array, context) => {
+            if (array.length == 0) return null;
+
+            const add = sum(context, array);
+            if (add == null || add == undefined) return null;
+
+            return context
+                .evaluate(Fields.binaryOp(Fields.literal(add), '/', Fields.literal(array.length)))
+                .orElseThrow();
+        })
+        .add1("*", e => e)
+        .build();
+
     export const product = new FunctionBuilder("product")
         .add1("array", (arr, c) => reduce(c, arr, "*"))
         .add1("*", e => e)
@@ -798,6 +812,7 @@ export const DEFAULT_FUNCTIONS: Record<string, FunctionImpl> = {
     join: DefaultFunctions.join,
     sum: DefaultFunctions.sum,
     product: DefaultFunctions.product,
+    average: DefaultFunctions.average,
     all: DefaultFunctions.all,
     any: DefaultFunctions.any,
     none: DefaultFunctions.none,

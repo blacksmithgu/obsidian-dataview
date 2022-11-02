@@ -45,6 +45,11 @@ describe("sum()", () => {
     test("empty list", () => expectEvals("sum(list())", null));
 });
 
+describe("average()", () => {
+    test("number list", () => expectEvals("average([2, 3, 1])", 2));
+    test("empty list", () => expectEvals("average([])", null));
+});
+
 describe("any()", () => {
     test("true, false", () => expectEvals("any(true, false)", true));
     test("[true, false]", () => expectEvals("any(list(true, false))", true));

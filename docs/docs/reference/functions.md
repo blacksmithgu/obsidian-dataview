@@ -278,8 +278,8 @@ reverse(list("a", "b", "c")) = list("c", "b", "a")
 Returns the number of fields in an object, or the number of entries in an array.
 
 ```
-length(list()) = 0
-length(list(1, 2, 3)) = 3
+length([]) = 0
+length([1, 2, 3]) = 3
 length(object("hello", 1, "goodbye", 2)) = 2
 ```
 
@@ -288,7 +288,16 @@ length(object("hello", 1, "goodbye", 2)) = 2
 Sums all numeric values in the array
 
 ```
-sum(list(1, 2, 3)) = 6
+sum([1, 2, 3]) = 6
+```
+
+### `average(array)`
+
+Computes the numeric average of numeric values.
+
+```
+average([1, 2, 3]) = 6
+average([]) = null
 ```
 
 ### `all(array)`
@@ -297,8 +306,8 @@ Returns `true` only if ALL values in the array are truthy. You can also pass mul
 which case it returns `true` only if all arguments are truthy.
 
 ```
-all(list(1, 2, 3)) = true
-all(list(true, false)) = false
+all([1, 2, 3]) = true
+all([true, false]) = false
 all(true, false) = false
 all(true, true, true) = true
 ```
@@ -306,9 +315,9 @@ all(true, true, true) = true
 You can pass a function as second argument to return only true if all elements in the array matches the predicate.
 
 ```
-all(list(1, 2, 3), (x) => x > 0) = true
-all(list(1, 2, 3), (x) => x > 1) = false
-all(list("apple", "pie", 3), (x) => typeof(x) = "string") = false
+all([1, 2, 3], (x) => x > 0) = true
+all([1, 2, 3], (x) => x > 1) = false
+all(["apple", "pie", 3], (x) => typeof(x) = "string") = false
 ```
 
 ### `any(array)`
