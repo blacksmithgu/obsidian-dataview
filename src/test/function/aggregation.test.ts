@@ -40,13 +40,14 @@ describe("maxby()", () => {
 });
 
 describe("sum()", () => {
-    test("number list", () => expectEvals("sum(list(2, 3, 1))", 6));
-    test("string list", () => expectEvals('sum(list("a", "b", "c"))', "abc"));
-    test("empty list", () => expectEvals("sum(list())", null));
+    test("number list", () => expectEvals("sum([2, 3, 1])", 6));
+    test("string list", () => expectEvals('sum(["a", "b", "c"])', "abc"));
+    test("empty list", () => expectEvals("sum([])", null));
 });
 
 describe("average()", () => {
     test("number list", () => expectEvals("average([2, 3, 1])", 2));
+    test("number list", () => expectEvals("average(nonnull([2, 3, null, 1]))", 2));
     test("empty list", () => expectEvals("average([])", null));
 });
 
@@ -65,4 +66,9 @@ describe("all()", () => {
         expectEvals('all(regexmatch("a+", list("a", "aaab")))', false);
         expectEvals('any(regexmatch("a+", list("a", "aaab")))', true);
     });
+});
+
+describe("nonnull()", () => {
+    test("empty", () => expectEvals("nonnull([])", []));
+    test("[null, false]", () => expectEvals("nonnull([null, false])", [false]));
 });

@@ -139,12 +139,82 @@ round(16.555555) = 7
 round(16.555555, 2) = 16.56
 ```
 
-### `product()`
+### `min(a, b, ..)`
 
-Calculates the product of a list of numbers.
+Compute the minimum value of a list of arguments, or an array.
+
+```
+min(1, 2, 3) = 1
+min([1, 2, 3]) = 1
+
+min("a", "ab", "abc") = "a"
+```
+
+### `max(a, b, ...)`
+
+Compute the maximum value of a list of arguments, or an array.
+
+```
+max(1, 2, 3) = 3
+max([1, 2, 3]) = 3
+
+max("a", "ab", "abc") = "abc"
+```
+
+### `sum(array)`
+
+Sums all numeric values in the array. If you have null values in your average, you can eliminate them via the `nonnull` function.
+
+```
+sum([1, 2, 3]) = 6
+sum([]) = null
+
+sum(nonnull([null, 1, 8])) = 9
+```
+
+### `product(array)`
+
+Calculates the product of a list of numbers. If you have null values in your average, you can eliminate them via the `nonnull` function.
 
 ```
 product([1,2,3]) = 6
+product([]) = null
+
+product(nonnull([null, 1, 2, 4])) = 8
+```
+
+### `average(array)`
+
+Computes the numeric average of numeric values. If you have null values in your average, you can eliminate them via the
+`nonnull` function.
+
+```
+average([1, 2, 3]) = 2
+average([]) = null
+
+average(nonnull([null, 1, 2])) = 1.5
+```
+
+### `minby(array, function)`
+
+Compute the minimum value of an array, using the provided function.
+
+```
+minby([1, 2, 3], (k) => k) = 1
+minby([1, 2, 3], (k) => 0 - k) => 3
+
+minby(this.file.tasks, (k) => k.due) => (earliest due)
+```
+
+### `maxby(array, function)`
+
+Compute the maximum value of an array, using the provided function.
+
+```
+maxby([1, 2, 3], (k) => k) = 3
+maxby([1, 2, 3], (k) => 0 - k) => 1
+
+maxby(this.file.tasks, (k) => k.due) => (latest due)
 ```
 
 --
@@ -283,21 +353,14 @@ length([1, 2, 3]) = 3
 length(object("hello", 1, "goodbye", 2)) = 2
 ```
 
-### `sum(array)`
+### `nonnull(array)`
 
-Sums all numeric values in the array
-
-```
-sum([1, 2, 3]) = 6
-```
-
-### `average(array)`
-
-Computes the numeric average of numeric values.
+Return a new array with all null values removed.
 
 ```
-average([1, 2, 3]) = 6
-average([]) = null
+nonnull([]) = []
+nonnull([null, false]) = [false]
+nonnull([1, 2, 3]) = [1, 2, 3]
 ```
 
 ### `all(array)`

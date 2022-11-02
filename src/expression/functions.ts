@@ -693,7 +693,7 @@ export namespace DefaultFunctions {
             if (add == null || add == undefined) return null;
 
             return context
-                .evaluate(Fields.binaryOp(Fields.literal(add), '/', Fields.literal(array.length)))
+                .evaluate(Fields.binaryOp(Fields.literal(add), "/", Fields.literal(array.length)))
                 .orElseThrow();
         })
         .add1("*", e => e)
@@ -742,6 +742,7 @@ export namespace DefaultFunctions {
         .build();
 
     export const nonnull = new FunctionBuilder("nonnull")
+        .add1("array", arr => arr.filter(v => Values.typeOf(v) != "null"))
         .vararg((_ctx, ...args) => args.filter(v => Values.typeOf(v) != "null"))
         .build();
 
