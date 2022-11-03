@@ -56,7 +56,7 @@ List all tasks in un-completed projects:
 
 ---
 
-List all of the files in the `books` folder, sorted by the last time you modifed the file:
+List all of the files in the `books` folder, sorted by the last time you modified the file:
 
 === "Query"
     ```sql

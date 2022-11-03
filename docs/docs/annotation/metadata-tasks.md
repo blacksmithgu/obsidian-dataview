@@ -15,8 +15,8 @@ For supporting "common use cases", Dataview understands a few shorthands for som
 with:
 
 === "Example"
-    - [ ] Due this saturday 🗓️2021-08-29
-    - [x] Completed last saturday ✅2021-08-22
+    - [ ] Due this Saturday 🗓️2021-08-29
+    - [x] Completed last Saturday ✅2021-08-22
     - [ ] I made this on ➕1990-06-14
     - [ ] Task I can start this weekend 🛫2021-08-29
     - [x] Task I finished ahead of schedule ⏳2021-08-29 ✅2021-08-22

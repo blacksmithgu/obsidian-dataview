@@ -125,7 +125,7 @@ gives you back all birthdays happening this month. Curious about `date(now)`? Re
 
 ### Duration
 
-Durations are text of the form `<time> <unit>`, like `6 hours` or `4 minutes`. Common english abbreviations like
+Durations are text of the form `<time> <unit>`, like `6 hours` or `4 minutes`. Common English abbreviations like
   `6hrs` or `2m` are accepted. You can specify multiple units in one field, i.e. `6hr 4min`, optionally with comma separator: `6 hours, 4 minutes`
 
 ```markdown
