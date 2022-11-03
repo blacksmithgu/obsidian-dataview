@@ -26,7 +26,7 @@ Dataview understands several distinct field types to cover common use cases:
     Example:: 2021-04-18T04:19:35.000
     Example:: 2021-04-18T04:19:35.000+06:30
     ```
-- **Duration**: Durations of the form `<time> <unit>`, like `6 hours` or `4 minutes`. Common english abbreviations like
+- **Duration**: Durations of the form `<time> <unit>`, like `6 hours` or `4 minutes`. Common English abbreviations like
   `6hrs` or `2m` are accepted. You can specify multiple units using an optional comma separator: `6 hours, 4 minutes`
   or `6hr4min`.
     ```markdown
@@ -37,7 +37,7 @@ Dataview understands several distinct field types to cover common use cases:
     Example:: 9 yrs 8 min
     ```
 - **Link**: Plain Obsidian links like `[[Page]]` or `[[Page|Page Display]]`.
-    - If you reference a link in frontmatter, you need to quote it, as so: `key: "[[Link]]"`. This is default Obsidian-supported behavior. Please be aware that this is only a link for dataview, but not for Obsidian anymore - that ultimatively means it won't show up in the Outgoing links and won't be updated on i.e. a rename. 
+    - If you reference a link in frontmatter, you need to quote it, as so: `key: "[[Link]]"`. This is default Obsidian-supported behavior. Please be aware that this is only a link for dataview, but not for Obsidian anymore - that ultimately means it won't show up in the Outgoing links and won't be updated on i.e. a rename. 
     ```markdown
     Example:: [[A Page]]
     Example:: [[Some Other Page|Render Text]]

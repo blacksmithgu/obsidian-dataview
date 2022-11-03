@@ -74,7 +74,7 @@ JavaScript views. There are four ways to do this:
     We are on page `= this.file.name`.
     ```
 
-3. **DataviewJS**: A high-powered JavaScript API which gives full access to the Dataview index and some convienent
+3. **DataviewJS**: A high-powered JavaScript API which gives full access to the Dataview index and some convenient
    rendering utilities. Highly recommended if you know JavaScript, since this is far more powerful than the query
    language. Check the [documentation](api/intro/) for more details.
 
@@ -84,7 +84,7 @@ JavaScript views. There are four ways to do this:
     ```
     ~~~
 
-4. **Inline JS Expressions**: The JavaScript equivalent to inline expressions, which allow you to execute arbitary JS
+4. **Inline JS Expressions**: The JavaScript equivalent to inline expressions, which allow you to execute arbitrary JS
    inline:
 
     ~~~markdown

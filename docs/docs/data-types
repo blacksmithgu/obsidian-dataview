@@ -24,7 +24,7 @@ Dataview understands several distinct field types to cover common use cases:
     Example:: 2021-04-18T04:19:35.000
     Example:: 2021-04-18T04:19:35.000+06:30
     ```
-- **Duration**: Durations of the form `<time> <unit>`, like `6 hours` or `4 minutes`. Common english abbreviations like
+- **Duration**: Durations of the form `<time> <unit>`, like `6 hours` or `4 minutes`. Common English abbreviations like
   `6hrs` or `2m` are accepted. You can specify multiple units using an optional comma separator: `6 hours, 4 minutes`
   or `6hr4min`.
     ```markdown

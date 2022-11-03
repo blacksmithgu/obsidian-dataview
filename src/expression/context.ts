@@ -48,7 +48,7 @@ export class Context {
         return this.globals[name] ?? null;
     }
 
-    /** Try to evaluate an arbitary field in this context, raising an exception on failure. */
+    /** Try to evaluate an arbitrary field in this context, raising an exception on failure. */
     public tryEvaluate(field: Field, data: Record<string, Literal> = {}): Literal {
         return this.evaluate(field, data).orElseThrow();
     }
@@ -86,7 +86,7 @@ export class Context {
                 return Result.success(objResult);
             case "lambda":
                 // Just relying on JS to capture 'data' for us implicitly; unsure
-                // if this is correct thing to do. Could cause wierd behaviors.
+                // if this is correct thing to do. Could cause weird behaviors.
                 return Result.success((ctx: Context, ...args: Literal[]) => {
                     let copy: Record<string, Literal> = Object.assign({}, data);
                     for (let arg = 0; arg < Math.min(args.length, field.arguments.length); arg++) {

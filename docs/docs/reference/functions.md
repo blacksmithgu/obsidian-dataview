@@ -584,7 +584,7 @@ truncate("Hello there!", 20) = "Hello there!"
 
 ### `default(field, value)`
 
-If `field` is null, return `value`; otherwise return `field`. Useful for replacing null values with defaults. For example, to show projects which haven't been completed yet, use `"incomplete"` as their defualt value:
+If `field` is null, return `value`; otherwise return `field`. Useful for replacing null values with defaults. For example, to show projects which haven't been completed yet, use `"incomplete"` as their default value:
 
 ```
 default(dateCompleted, "incomplete")
