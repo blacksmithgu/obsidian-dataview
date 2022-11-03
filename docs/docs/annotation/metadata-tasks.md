@@ -43,7 +43,7 @@ WHERE completion = date("2021-08-22")
 Which will list both variants - shorthands and textual annotation:
 
 ```markdown
-- [x] Completed last saturday ✅2021-08-22
+- [x] Completed last Saturday ✅2021-08-22
 - [x] Some Done Task [completion:: 2021-08-22]
 ```
 
