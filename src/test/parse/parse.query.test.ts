@@ -113,7 +113,7 @@ describe("Table Queries", () => {
         expect(tq.showId).toBe(false);
     });
 
-    test("WITHOUT ID (wierd spacing)", () => {
+    test("WITHOUT ID (weird spacing)", () => {
         let q = parseQuery("TABLE    WITHOUT     ID   name, value").orElseThrow();
         expect(typeof q).toBe("object");
         expect(q.header.type).toBe("table");

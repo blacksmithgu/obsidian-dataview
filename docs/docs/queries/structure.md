@@ -12,7 +12,7 @@ The query language supports the following view types, described below:
 1. **TABLE**: The traditional view type; one row per data point, with several columns of field data.
 2. **LIST**: A list of pages which match the query. You can output a single associated value for each page.
 3. **TASK**: A list of tasks whose pages match the given query.
-4. **CALENDAR**: A calendar view displaying each hit via a dot on its reffered date
+4. **CALENDAR**: A calendar view displaying each hit via a dot on its referred date
 
 Read more about the available types [here](./query-types.md)
 
