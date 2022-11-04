@@ -93,4 +93,4 @@ JavaScript views. There are four ways to do this:
 
 ## Resources and Help
 
-See [getting started](./resources-and-support.md) for a list of resources and how to find support.
+See [getting started](./resources/resources-and-support.md) for a list of resources and how to find support.
