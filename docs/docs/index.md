@@ -116,7 +116,7 @@ FROM #poems
 
 This'll give you back a result like:
 
-| File (2) |	author |	published	| Mentions |
+| File (3) |	author |	published	| Mentions |
 | -------- | ------- | ---------- | -------- |
 | The Bells |	Edgar Allan Poe |	1849 |  |	
 | The New Colossus |	Emma Lazarus | 1883	| - [[Favorite Poems]] |	
@@ -133,7 +133,7 @@ FROM #poems
 
 gives you back
 
-| File (2) |	author |	Age in Yrs	| Count of Mentions |
+| File (3) |	author |	Age in Yrs	| Count of Mentions |
 | -------- | ------- | ---------- | -------- |
 | The Bells	|  Edgar Allan Poe |	173 | 0 |
 | The New Colossus	| Emma Lazarus |	139 |	1 |
