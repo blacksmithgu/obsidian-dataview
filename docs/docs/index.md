@@ -1,6 +1,7 @@
 # Overview
 
-Dataview is a live index and query engine over your personal knowledge base. You can **add metadata** to your notes and **query** them to list, filter, sort or group them - dataview keeps your queries always up to date and makes data aggregation a breeze.
+Dataview is a live index and query engine over your personal knowledge base. You can [**add metadata**](annotation/add-metadata.md) to your notes and **query** them with the [**Dataview Query Language**](queries/structure.md) to list, filter, sort or group your data. Dataview keeps your queries always up to date and makes data aggregation a breeze.
+
 You could
 
 - Track your sleep by recording it in daily notes, and automatically create weekly tables of your sleep schedule.
@@ -11,14 +12,15 @@ You could
 
 and many, many things more.
 
+!!! hint "Dataview gives you a fast way to search, display and operate on indexed data in your vault!"
+
 Dataview is highly generic and high performance, scaling up to hundreds of thousands of annotated notes without issue. 
-**Dataview gives you a fast way to search, display and operate on indexed data**. 
 
 If the built in [query language](query/queries/) is insufficient for your purpose, you can run arbitrary
 JavaScript against the [dataview API](api/intro/) and build whatever utility you might need yourself, right in your notes.
 
 !!! info "Dataview is about displaying, not editing"
-    Dataview is meant for displaying and calculating data. It is no utility to edit data in your source files and will keep your notes always untouched (... except you're checking a [Task](queries/query-types.md#task-queries) through Dataview.)
+    Dataview is meant for displaying and calculating data. It is no utility to edit data in your source files and will keep your notes always untouched (... except if you're checking a [Task](queries/query-types.md#task-queries) through Dataview.)
 
 ## How to Use Dataview
 
@@ -29,7 +31,7 @@ Dataview consists out of two big building blocks: **Data Indexing** and **Data Q
 
 ### Data Indexing
 
-Dataview cannot read all your vault, but operates on specific data. Some of your content, like tags and bullet points (including tasks), are [available automatically](annotation/add-metadata.md#implicit-fields) in Dataview, and you can add other through **fields**, either on top of your file [per YAML Frontmatter](annotation/add-metadata.md#frontmatter) or in the middle of your content with [Inline Fields](annotation/add-metadata.md#inline-fields) via the `[key:: value]` syntax. Dataview _indexes_ these data to make it available for you to query. 
+Dataview cannot read all your vault, but operates on specific data. Some of your content, like tags and bullet points (including tasks), are [available automatically](annotation/add-metadata.md#implicit-fields) in Dataview. You can add other data through **fields**, either on top of your file [per YAML Frontmatter](annotation/add-metadata.md#frontmatter) or in the middle of your content with [Inline Fields](annotation/add-metadata.md#inline-fields) via the `[key:: value]` syntax. Dataview _indexes_ these data to make it available for you to query. 
 
 !!! hint "Only indexed data is available through Dataview!"
 
@@ -70,8 +72,6 @@ You can access **indexed data** with the help of **Queries**.
 There are **three different ways** you can write a Query: With help of the [Dataview Query Language](queries/dql-js-inline/#dataview-query-language-dql), as an [inline statement](queries/dql-js-inline#inline-dql) or in the most flexible and most complex way: as a [Javascript Query](queries/dql-js-inline#dataview-js). 
 
 The **Dataview Query Language** (short **DQL**) gives you a broad and powerful toolbelt to query, display and operate on your data. An [**inline query**](queries/dql-js-inline#inline-dql) gives you the possibility to display exactly one indexed value anywhere in your note. You can also do calculations this way. With **DQL** at your hands, you'll be probably fine without any Javascript throurough your data journey.
-
-Let's concentrate on the Dataview Query Language (DQL).
 
 A DQL Query consists of several parts:
 
@@ -116,11 +116,13 @@ FROM #poems
 
 This'll give you back a result like:
 
-| File (1) |	author |	published	| Mentions |
+| File (2) |	author |	published	| Mentions |
 | -------- | ------- | ---------- | -------- |
 | The Raven |	Edgar Allan Poe |	1845 | - [[Favorite Poems]] |	
+| The Bells |	Edgar Allan Poe |	1849 |  |	
+| The New Colossus |	Emma Lazarus | 1883	| - [[Favorite Poems]] |	
 
-That's not where the capabilities of dataview end, though. You can also **perform operations** on your values. Mind that these operations are only made inside your query - your **data in your files stays untouched**.
+That's not where the capabilities of dataview end, though. You can also **perform operations** with help of [**functions**](reference/functions.md) on your values. Mind that these operations are only made inside your query - your **data in your files stays untouched**.
 
 ~~~markdown
 ```dataview
@@ -131,9 +133,11 @@ FROM #poems
 
 gives you back
 
-| File (1) |	author |	Age in Yrs	| Count of Mentions |
+| File (2) |	author |	Age in Yrs	| Count of Mentions |
 | -------- | ------- | ---------- | -------- |
 | The Raven |	Edgar Allan Poe |	177 | 1 |	
+| The Bells	|  Edgar Allan Poe |	173 | 0 |
+|The New Colossus	| Emma Lazarus |	139 |	1 |
 
 As you can see, dataview doesn't only allow you to aggregate your data swiftly and always up to date, it also can help you with operations to give you new insights on your dataset. Browse through the documentation to find out more on how to interact with your data - have fun exploring your vault! 
 
