@@ -118,9 +118,9 @@ This'll give you back a result like:
 
 | File (2) |	author |	published	| Mentions |
 | -------- | ------- | ---------- | -------- |
-| The Raven |	Edgar Allan Poe |	1845 | - [[Favorite Poems]] |	
 | The Bells |	Edgar Allan Poe |	1849 |  |	
 | The New Colossus |	Emma Lazarus | 1883	| - [[Favorite Poems]] |	
+| The Raven |	Edgar Allan Poe |	1845 | - [[Favorite Poems]] |	
 
 That's not where the capabilities of dataview end, though. You can also **perform operations** with help of [**functions**](reference/functions.md) on your values. Mind that these operations are only made inside your query - your **data in your files stays untouched**.
 
@@ -135,9 +135,11 @@ gives you back
 
 | File (2) |	author |	Age in Yrs	| Count of Mentions |
 | -------- | ------- | ---------- | -------- |
-| The Raven |	Edgar Allan Poe |	177 | 1 |	
 | The Bells	|  Edgar Allan Poe |	173 | 0 |
-|The New Colossus	| Emma Lazarus |	139 |	1 |
+| The New Colossus	| Emma Lazarus |	139 |	1 |
+| The Raven |	Edgar Allan Poe |	177 | 1 |	
+
+!!! info "Find more examples [here](resources/examples.md)."
 
 As you can see, dataview doesn't only allow you to aggregate your data swiftly and always up to date, it also can help you with operations to give you new insights on your dataset. Browse through the documentation to find out more on how to interact with your data - have fun exploring your vault! 
 
