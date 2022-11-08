@@ -59,42 +59,8 @@ Today is November 07, 2022 - 2 months, 5 days until exams!
 
 You can use everything available as [expressions](../../reference/expressions) and [literals](../../reference/literals) in a Inline DQL, including [functions](../../reference/functions). Query Types and Data Commands on the other hand are **not available in Inlines.**
 
-### Using Inline DQL as metadata value
-
-You might have seen that users save Inline DQLs in a metadata field, like
-
-```markdown
-start:: 07h00m
-end:: 18h00m
-pause:: 01h30m
-duration:: `= this.end - this.start - this.pause`
-```
-
-You can list this value (9h 30m in our example) then i.e. in a TABLE without needing to repeat the calculation:
-
-~~~markdown
-```dataview
-TABLE start, end, duration
-WHERE duration
-```
-~~~
-
-Gives you
-
-| File (1)	| start| 	end| 	duration| 
-| ---- | ----- | ------ |  ----- | 
-| Example | 7 hours	| 18 hours| 	9 hours, 30 minutes | 
-
-This can be very handy, but comes with a limitation: While the value that gets displayed in the result is the calculated one, **the saved value inside the Inline DQL is still your calculation**. This means you cannot filter for the Inlines' result like:
-
-~~~markdown
-```dataview
-TABLE start, end, duration
-WHERE duration > dur("10h")
-```
-~~~
-
-This will give you the Example page back, even though the result does'nt fulfill the `WHERE` clause, because the value you are comparing against is no duration (yet).
+!!! hint "Saving Inline DQL in metadata fields"
+    You can store a Inline DQL inside a field for reusability with some limitations. Read more about it in [the FAQ](../../resources/faq#can-i-save-the-result-of-a-query-for-reusability).
 
 ## Dataview JS
 
@@ -132,3 +98,6 @@ In inline DataviewJS, you have access to the `dv` variable, as in `dataviewjs` c
 should be something which evaluates to a JavaScript value, which Dataview will automatically render appropriately.
 
 Unline Inline DQL queries, Inline JS queries do have access to everything a Dataview JS Query has available and can hence query and output multiple pages.
+
+!!! info "Change of Inline JS prefix"
+    You can change the `$=` to another token (like `dvjs:` or `$~`) in Dataviews' settings under "Codeblock Settings" > "Javascript Inline Query Prefix"
