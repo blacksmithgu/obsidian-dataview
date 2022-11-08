@@ -94,7 +94,7 @@ WHERE duration > dur("10h")
 ```
 ~~~
 
-This will give you the Example page back, even though the result doesnt fulfill the `WHERE` clause, because the value you are comparing against is no duration (yet).
+This will give you the Example page back, even though the result does'nt fulfill the `WHERE` clause, because the value you are comparing against is no duration (yet).
 
 ## Dataview JS
 
@@ -116,6 +116,9 @@ Inside of a JS dataview block, you have access to the full dataview API via the 
 what you can do with it, see the [API documentation](../../api/code-reference), or the [API
 examples](../../api/code-examples).
 
+!!! attention "Advanced usage"
+    Writing Javascript queries is a advanced technique that requires understanding in programming and JS. Please be aware that JS Queries have access to your file system and be cautious when using other peopless' JS Queries, especially when they are not publicy shared through the Obsidian Community.
+
 ## Inline Dataview JS
 
 Similar to the query language, you can write JS inline queries, which let you embed a computed JS value directly. You
@@ -127,3 +130,5 @@ create JS inline queries via inline code blocks:
 
 In inline DataviewJS, you have access to the `dv` variable, as in `dataviewjs` codeblocks, and can make all of the same calls. The result
 should be something which evaluates to a JavaScript value, which Dataview will automatically render appropriately.
+
+Unline Inline DQL queries, Inline JS queries do have access to everything a Dataview JS Query has available and can hence query and output multiple pages.
