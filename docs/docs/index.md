@@ -31,7 +31,7 @@ Dataview consists of two big building blocks: **Data Indexing** and **Data Query
 
 ### Data Indexing
 
-Dataview operates on metadata in your Markdown files and it cannot read everything in your vault. Some of your content, like tags and bullet points (including tasks), are [available automatically](annotation/add-metadata.md#implicit-fields) in Dataview. You can add other data through **fields**, either on top of your file [per YAML Frontmatter](annotation/add-metadata.md#frontmatter) or in the middle of your content with [Inline Fields](annotation/add-metadata.md#inline-fields) via the `[key:: value]` syntax. Dataview _indexes_ these data to make it available for you to query. 
+Dataview operates on metadata in your Markdown files. It cannot read everything in your vault, but only specific data. Some of your content, like tags and bullet points (including tasks), are [available automatically](annotation/add-metadata.md#implicit-fields) in Dataview. You can add other data through **fields**, either on top of your file [per YAML Frontmatter](annotation/add-metadata.md#frontmatter) or in the middle of your content with [Inline Fields](annotation/add-metadata.md#inline-fields) via the `[key:: value]` syntax. Dataview _indexes_ these data to make it available for you to query. 
 
 !!! hint "Dataview indexes [certain information](annotation/add-metadata.md#implicit-fields) like tags and list items and the data you add via fields. Only indexed data is available in a Dataview query!"
 
