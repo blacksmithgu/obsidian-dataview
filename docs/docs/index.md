@@ -31,9 +31,9 @@ Dataview consists of two big building blocks: **Data Indexing** and **Data Query
 
 ### Data Indexing
 
-Dataview cannot read all your vault, but operates on specific data. Some of your content, like tags and bullet points (including tasks), are [available automatically](annotation/add-metadata.md#implicit-fields) in Dataview. You can add other data through **fields**, either on top of your file [per YAML Frontmatter](annotation/add-metadata.md#frontmatter) or in the middle of your content with [Inline Fields](annotation/add-metadata.md#inline-fields) via the `[key:: value]` syntax. Dataview _indexes_ these data to make it available for you to query. 
+Dataview operates on metadata in your Markdown files and it cannot read everything in your vault. Some of your content, like tags and bullet points (including tasks), are [available automatically](annotation/add-metadata.md#implicit-fields) in Dataview. You can add other data through **fields**, either on top of your file [per YAML Frontmatter](annotation/add-metadata.md#frontmatter) or in the middle of your content with [Inline Fields](annotation/add-metadata.md#inline-fields) via the `[key:: value]` syntax. Dataview _indexes_ these data to make it available for you to query. 
 
-!!! hint "Only indexed data is available through Dataview!"
+!!! hint "Dataview indexes [certain information](annotation/add-metadata.md#implicit-fields) like tags and list items and the data you add via fields. Only indexed data is available in a Dataview query!"
 
 For example, a file might look like this:
 
@@ -63,7 +63,10 @@ Once upon a midnight dreary, while I pondered, weak and weary,
 Over many a quaint and curious volume of forgotten lore—
 ```
 
-In terms of indexed metadata (or what you can query), they are identical, and only differ in their annotation style. How you want to [annotate your  metadata](annotation/add-metadata.md) is up to you and your personal preference. With this file, you'd have the **metadata field** `author` available and everything Dataview provides you [automatically as implicit fields](annotation/metadata-pages.md), like the tag or note title.
+In terms of indexed metadata (or what you can query), they are identical, and only differ in their annotation style. How you want to [annotate your  metadata](annotation/add-metadata.md) is up to you and your personal preference. With this file, you'd have the **metadata field** `author` available and everything Dataview provides you [automatically as implicit fields](annotation/metadata-pages.md), like the tag or note title. 
+
+!!! attention "Data needs to be indexed"
+    In the above example, you _do not_ have the poem itself available in Dataview: It is a paragraph, no metadata field and nothing Dataview indexes automatically. It is not part of Dataviews index, so you won't be able to query it.
 
 ### Data Querying
 
