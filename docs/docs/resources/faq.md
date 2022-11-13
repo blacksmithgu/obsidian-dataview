@@ -27,3 +27,40 @@ There are two ways:
 ### Do you have a list of resources to learn from?
 
 Yes! Please see the [Resources](../resources/resources-and-support.md) page.
+
+### Can I save the result of a query for reusability?
+
+You can write reusable Javascript Queries with the [dv.view](../../api/code-reference/#dvviewpath-input) function. In DQL, beside the possibility of writing your Query inside a Template and using this template (either with the [Core Plugin Templates](https://help.obsidian.md/Plugins/Templates) or the popular Community Plugin [Templater](https://obsidian.md/plugins?id=templater-obsidian)), you can **save calculations in metadata fields via [Inline DQL](../../queries/dql-js-inline#inline-dql)**, for example:
+
+```markdown
+start:: 07h00m
+end:: 18h00m
+pause:: 01h30m
+duration:: `= this.end - this.start - this.pause`
+```
+
+You can list the value (9h 30m in our example) then i.e. in a TABLE without needing to repeat the calculation:
+
+~~~markdown
+```dataview
+TABLE start, end, duration
+WHERE duration
+```
+~~~
+
+Gives you
+
+| File (1)	| start| 	end| 	duration| 
+| ---- | ----- | ------ |  ----- | 
+| Example | 7 hours	| 18 hours| 	9 hours, 30 minutes | 
+
+**But storing a Inline DQL in a field comes with a limitation**: While the value that gets displayed in the result is the calculated one, **the saved value inside the Inline DQL is still your calculation**. This means you cannot filter for the Inlines' result like:
+
+~~~markdown
+```dataview
+TABLE start, end, duration
+WHERE duration > dur("10h")
+```
+~~~
+
+This will give you the Example page back, even though the result does'nt fulfill the `WHERE` clause, because the value you are comparing against is no duration (yet).
