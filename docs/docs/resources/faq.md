@@ -54,7 +54,7 @@ Gives you
 | ---- | ----- | ------ |  ----- | 
 | Example | 7 hours	| 18 hours| 	9 hours, 30 minutes | 
 
-**But storing a Inline DQL in a field comes with a limitation**: While the value that gets displayed in the result is the calculated one, **the saved value inside the Inline DQL is still your calculation**. This means you cannot filter for the Inlines' result like:
+**But storing a Inline DQL in a field comes with a limitation**: While the value that gets displayed in the result is the calculated one, **the saved value inside your metadata field is still your Inline DQL calculation**. The value literally is `= this.end - this.start - this.pause`. This means you cannot filter for the Inlines' result like:
 
 ~~~markdown
 ```dataview
@@ -63,4 +63,4 @@ WHERE duration > dur("10h")
 ```
 ~~~
 
-This will give you the Example page back, even though the result does'nt fulfill the `WHERE` clause, because the value you are comparing against is no duration (yet).
+This will give you the Example page back, even though the result doesn't fulfill the `WHERE` clause, because the value you are comparing against is `= this.end - this.start - this.pause` and no duration (yet).
