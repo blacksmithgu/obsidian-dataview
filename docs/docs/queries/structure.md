@@ -1,34 +1,50 @@
 # Structure of a Query
 
-Dataview provides [different ways](dql-js-inline.md) to create queries and the way you need to write a query differs for each.
+Dataview provides [multiple ways](dql-js-inline.md) to create queries and the way you need to write a query differs for each.
 
-This page provides information on how to write a **Dataview Query Language** (**DQL**) query. If you're interested in how to write Inline Queries, refer to the [inline section on DQL, JS and Inlines](dql-js-inline.md#inline-dql). You'll find more information about **Javascript Queries** on the [Codeblock Reference](../api/intro.md).
-
-
-## Capability of DQL
+This page provides information on how to write a **Dataview Query Language** (**DQL**) query. If you're interested in how to write Inline Queries, refer to the [inline section on DQL, JS and Inlines](dql-js-inline.md#inline-dql). You'll find more information about **Javascript Queries** on the [Javascript Reference](../api/intro.md).
 
 **DQL** is a SQL like query language for creating different views or calculations on your data. It
 supports:
 
 - Choosing a **output format** of your output (the [Query Type](./query-types.md))
 - Fetch pages **from a certain [source](../reference/sources.md)**, i.e. a tag, folder or link
-- **Filtering pages** / data by simple operations on fields, like comparison, existence checks, and so on
+- **Filtering pages/data** by simple operations on fields, like comparison, existence checks, and so on
 - **Transforming fields** for displaying, i.e. with calculations or splitting up multi-value fields
 - **Sorting** results based on fields
 - **Grouping** results based on fields
 - **Limiting** your result count
 
-Let's have a look at how to use these possibilities. 
+Let's have a look at how  we can put DQL to use.
 
+## General Format of a DQL Query
 
+Every query follows the same structure and consists of
 
+- exactly one **Query Type** with, depending on your Query type, zero, one or many [fields](../annotation/add-metadata.md) for displaying
+- zero or one **FROM** data command with one to many [sources](../reference/sources.md)
+- zero to many other **data commands** with one to many [expressions](../reference/expressions.md) and/or other infos depending on the data command 
 
-### Choose a Output Format
+Abstractly speaking, a query conforms the following pattern:
+
+~~~
+```dataview
+<QUERY-TYPE> <fields>
+FROM <source>
+<DATA COMMAND> <expression>
+```
+~~~
+
+!!! hint "Only the Query Type is mandatory."
+
+The following sections will walk through the theory in more detail.
+
+## Choose a Output Format
 
 The final output appareance of a query is determined by its **Query Type**. There are four available:
 
 1. **TABLE**: The traditional view type; one row per result, with several columns of field data.
-2. **LIST**: A list of pages which match the query. You can output a single associated value for each page.
+2. **LIST**: A list of pages which match the query. You can output one field for each page alongside their file links.
 3. **TASK**: A list of tasks that match the given query.
 4. **CALENDAR**: A calendar view displaying each hit via a dot on its referred date.
 
@@ -58,11 +74,11 @@ CALENDAR file.cday
 
 !!! info "Read more about the available types and how to use them [here](./query-types.md)."
 
-### Choose your source
+## Choose your source
 
 Additionally to the Query Types, you have several **Data Commands** available that help you restrict, refine, sort or group your query. One of these query commands is the **FROM** statement, which is a bit special.
 
-!!! info "`FROM` determines which set of notes should be included in your query depending on given [sources](../../reference/sources)"
+!!! info "`FROM` determines which set of notes should be included in your query depending on given [sources](../../reference/sources)."
 
 You can add **zero or one** `FROM` data command to your query, right after your Query Type. You cannot add multiple FROM statements and you cannot add it after other Data Commands.
 
@@ -89,11 +105,13 @@ FROM (#assignment AND "30 School") OR ("30 School/32 Homeworks" AND outgoing([[S
 
 ~~~
 
-### Filter, sort, group or limit results
+!!! info "Read more about `FROM` [here](./data-commands.md#from)."
+
+## Filter, sort, group or limit results
 
 Additionally to the Query Types and the **Data command** `FROM` that's explained above, you have several other **Data Commands** available that help you restrict, refine, sort or group your query. 
 
-All data commands except the `FROM` command can be used multiple times in any order (as long as they come after the Query Type and `FROM`, if a `FROM` is used at all). They'll be excuted in the order they are written.
+All data commands except the `FROM` command can be used **multiple times in any order** (as long as they come after the Query Type and `FROM`, if `FROM` is used at all). They'll be excuted in the order they are written.
 
 Available are:
 
@@ -133,41 +151,9 @@ GROUP BY file.link
 
 !!! info "Find out more about available [data commands](./data-commands.md)."
 
-## General Format of a Query
-
-Every query, independend of the chosen Query Type, follows the same structure.
-
-- exactly one **Query Type** with, depending on your Query type, zero, one or many [fields](../annotation/add-metadata.md) for displaying
-- zero or one **FROM** data command with one to many [sources](../reference/sources.md)
-- zero to many other **data commands** with one to many [expressions](../reference/expressions.md) and/or other infos depending on the data command 
-
-!!! hint "Only the Query Type is mandatory."
-
-The most minimalistic query looks like this:
-
-~~~
-```dataview
-LIST
-```
-~~~
-
-which will list **all files in your vault**. `TABLE` does the same in a different format, `TASK` does the same for all your tasks.
-
-Abstractly speaking, a query conforms the following pattern:
-
-~~~
-```dataview
-<QUERY-TYPE> <fields>
-FROM <source>
-<DATA COMMAND> <expression>
-```
-~~~
-
-The concrete additional informations you can or have to give to Query Types or Data Commands vary. You can read more about them on the respective [Query Type](./query-types.md) and [Data Command](./data-commands.md) page. 
-
 ## Examples
 
-Following some examples of valid query structures. More examples are available [here](../resources/examples.md).
+Following some examples of valid query structures. Find more examples [here](../resources/examples.md).
 
 ~~~
 ```dataview
