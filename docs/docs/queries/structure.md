@@ -1,13 +1,13 @@
 # Structure of a Query
 
-Dataview provides [multiple ways](dql-js-inline.md) to create queries and the way you need to write a query differs for each.
+Dataview offers [multiple ways](dql-js-inline.md) to write queries and the syntax differs for each.
 
 This page provides information on how to write a **Dataview Query Language** (**DQL**) query. If you're interested in how to write Inline Queries, refer to the [inline section on DQL, JS and Inlines](dql-js-inline.md#inline-dql). You'll find more information about **Javascript Queries** on the [Javascript Reference](../api/intro.md).
 
 **DQL** is a SQL like query language for creating different views or calculations on your data. It
 supports:
 
-- Choosing a **output format** of your output (the [Query Type](./query-types.md))
+- Choosing an **output format** of your output (the [Query Type](./query-types.md))
 - Fetch pages **from a certain [source](../reference/sources.md)**, i.e. a tag, folder or link
 - **Filtering pages/data** by simple operations on fields, like comparison, existence checks, and so on
 - **Transforming fields** for displaying, i.e. with calculations or splitting up multi-value fields
@@ -21,8 +21,8 @@ Let's have a look at how  we can put DQL to use.
 
 Every query follows the same structure and consists of
 
-- exactly one **Query Type** with, depending on your Query type, zero, one or many [fields](../annotation/add-metadata.md) for displaying
-- zero or one **FROM** data command with one to many [sources](../reference/sources.md)
+- exactly one **Query Type** with zero, one or many [fields](../annotation/add-metadata.md), depending on query type.
+- zero or one **FROM** data commands with one to many [sources](../reference/sources.md)
 - zero to many other **data commands** with one to many [expressions](../reference/expressions.md) and/or other infos depending on the data command 
 
 Abstractly speaking, a query conforms the following pattern:
@@ -31,31 +31,31 @@ Abstractly speaking, a query conforms the following pattern:
 ```dataview
 <QUERY-TYPE> <fields>
 FROM <source>
-<DATA COMMAND> <expression>
+<DATA-COMMAND> <expression>
+<DATA-COMMAND> <expression>
+          ...
 ```
 ~~~
 
 !!! hint "Only the Query Type is mandatory."
 
-The following sections will walk through the theory in more detail.
+The following sections will explain the theory in further detail.
 
 ## Choose a Output Format
 
-The final output appareance of a query is determined by its **Query Type**. There are four available:
+The output format of a query is determined by its **Query Type**. There are four available:
 
-1. **TABLE**: The traditional view type; one row per result, with several columns of field data.
-2. **LIST**: A list of pages which match the query. You can output one field for each page alongside their file links.
-3. **TASK**: A list of tasks that match the given query.
+1. **TABLE**: A table of results with one row per result and one to many columns of field data.
+2. **LIST**: A bullet point list of pages which match the query. You can output one field for each page alongside their file links.
+3. **TASK**: An interactive task list of tasks that match the given query.
 4. **CALENDAR**: A calendar view displaying each hit via a dot on its referred date.
 
 The Query Type is the **only mandatory command in a query**. Everything else is optional.
 
-~~~
-Lists all pages in your vault as a table with one column containing the page link
-```dataview
-TABLE
-```
+!!! attention "Possibly memory expensive examples"
+    Depending on the size of your vault, executing the following examples can take long and even freeze Obsidian in extreme cases. It's recommended that you specify a `FROM` to restrict the query execution to a specific subset of your vaults' files. See next section.  
 
+~~~
 Lists all pages in your vault as a bullet point list
 ```dataview
 LIST
@@ -70,19 +70,20 @@ Renders a Calendar view where each page is represented as a dot on its creation 
 ```dataview
 CALENDAR file.cday
 ```
+
+Shows a table with all pages of your vault, their field value of due, the files' tags and an average of the values of multi-value field working-hours
+```dataview
+TABLE due, file.tags AS "tags", average(working-hours)
+```
 ~~~
 
 !!! info "Read more about the available types and how to use them [here](./query-types.md)."
 
 ## Choose your source
 
-Additionally to the Query Types, you have several **Data Commands** available that help you restrict, refine, sort or group your query. One of these query commands is the **FROM** statement, which is a bit special.
+Additionally to the Query Types, you have several **Data Commands** available that help you restrict, refine, sort or group your query. One of these query commands is the **FROM** statement. `FROM` takes a [source](../../reference/sources) or a combination of [sources](../../reference/sources) as an argument and restricts the query to a set of pages that match your source.
 
-!!! info "`FROM` determines which set of notes should be included in your query depending on given [sources](../../reference/sources)."
-
-You can add **zero or one** `FROM` data command to your query, right after your Query Type. You cannot add multiple FROM statements and you cannot add it after other Data Commands.
-
-`FROM` takes [sources](../../reference/sources) as argument and **restricts the pages your query will collect to the given sources**.
+It behaves differently from the other Data Commands: You can add **zero or one** `FROM` data command to your query, right after your Query Type. You cannot add multiple FROM statements and you cannot add it after other Data Commands.
 
 ~~~
 Lists all pages inside the folder Books and its sub folders
@@ -109,7 +110,7 @@ FROM (#assignment AND "30 School") OR ("30 School/32 Homeworks" AND outgoing([[S
 
 ## Filter, sort, group or limit results
 
-Additionally to the Query Types and the **Data command** `FROM` that's explained above, you have several other **Data Commands** available that help you restrict, refine, sort or group your query. 
+In addition to the Query Types and the **Data command** `FROM` that's explained above, you have several other **Data Commands** available that help you restrict, refine, sort or group your query results. 
 
 All data commands except the `FROM` command can be used **multiple times in any order** (as long as they come after the Query Type and `FROM`, if `FROM` is used at all). They'll be excuted in the order they are written.
 
@@ -118,19 +119,19 @@ Available are:
 1. **FROM** like explained [above](#choose-your-source).
 2. **WHERE**: Filter notes based on information **inside** notes, the meta data fields.
 3. **SORT**: Sorts your results depending on a field and a direction.
-4. **GROUP BY**: Bundles up several results into one result row.
-5. **LIMIT**: Limits the output of your query to the given (maximum) number.
+4. **GROUP BY**: Bundles up several results into one result row per group.
+5. **LIMIT**: Limits the result count of your query to the given number.
 6. **FLATTEN**: Splits up one result into multiple results based on a field or calculation.
 
 ~~~
 
-Lists all pages that have a metadata field `due` and where `due` is smaller than today
+Lists all pages that have a metadata field `due` and where `due` is before today
 ```dataview
 LIST
 WHERE due AND due < date(today)
 ```
 
-Lists the first 10 pages with the newest creation date and time, that have the tag #status/open
+Lists the 10 most recently created pages in your vault that have the tag #status/open
 ```dataview
 LIST
 FROM #status/open
@@ -153,7 +154,7 @@ GROUP BY file.link
 
 ## Examples
 
-Following some examples of valid query structures. Find more examples [here](../resources/examples.md).
+Following are some examples of valid query structures. Find more examples [here](../resources/examples.md).
 
 ~~~
 ```dataview
