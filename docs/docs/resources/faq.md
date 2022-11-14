@@ -63,4 +63,4 @@ WHERE duration > dur("10h")
 ```
 ~~~
 
-This will give you the Example page back, even though the result doesn't fulfill the `WHERE` clause, because the value you are comparing against is `= this.end - this.start - this.pause` and no duration (yet).
+This will give you the Example page back, even though the result doesn't fulfill the `WHERE` clause, because the value you are comparing against is `= this.end - this.start - this.pause` and is not a duration.

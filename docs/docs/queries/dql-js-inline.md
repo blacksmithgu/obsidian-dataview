@@ -57,7 +57,7 @@ Today is November 07, 2022 - 2 months, 5 days until exams!
 `= [[secondPage]].someMetadataField`
 ~~~
 
-You can use everything available as [expressions](../../reference/expressions) and [literals](../../reference/literals) in a Inline DQL, including [functions](../../reference/functions). Query Types and Data Commands on the other hand are **not available in Inlines.**
+You can use everything available as [expressions](../../reference/expressions) and [literals](../../reference/literals) in an Inline DQL Query, including [functions](../../reference/functions). Query Types and Data Commands on the other hand are **not available in Inlines.**
 
 ~~~markdown
 Assignment due in `= this.due - date(today)`
