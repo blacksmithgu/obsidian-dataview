@@ -25,7 +25,7 @@ Every query follows the same structure and consists of
 - zero or one **FROM** data commands with one to many [sources](../reference/sources.md)
 - zero to many other **data commands** with one to many [expressions](../reference/expressions.md) and/or other infos depending on the data command 
 
-Abstractly speaking, a query conforms the following pattern:
+At a high level, a query conforms to the following pattern:
 
 ~~~
 ```dataview
@@ -139,15 +139,16 @@ SORT file.ctime DESC
 LIMIT 10
 ```
 
-Lists files that have the metadata field `contacts` and where `contacts` is a list (a multi value), as well as contain the page `Mr. L`. Sort after the length (count) of contacts and sort the contacts itself after the contact's age in ascending order.
+Lists the 10 oldest and incompleted tasks of your vault as an interactive task list, grouped by their containing file and sorted from oldest to newest affected file.
 ```dataview
-LIST rows.c
-WHERE typeof(contacts) = "array" AND contains(contacts, [[Mr. L]])
-SORT length(contacts)
-FLATTEN contacts as c
-SORT link(c).age ASC
+TASK
+WHERE !completed
+SORT created ASC
+LIMIT 10
 GROUP BY file.link
+SORT rows.file.ctime ASC
 ```
+
 ~~~
 
 !!! info "Find out more about available [data commands](./data-commands.md)."
@@ -188,21 +189,19 @@ SORT appointment.time
 
 ~~~
 ```dataview
-TASK
-WHERE !completed
-SORT created DESC
-LIMIT 10
-GROUP BY file.link
-SORT file.ctime ASC
-```
-~~~
-
-
-~~~
-```dataview
 TABLE L.text AS "My lists"
 FROM "dailys"
 FLATTEN file.lists AS L
 WHERE contains(L.author, "Surname")
+```
+~~~
+
+~~~
+```dataview
+LIST rows.c
+WHERE typeof(contacts) = "array" AND contains(contacts, [[Mr. L]])
+SORT length(contacts)
+FLATTEN contacts as c
+SORT link(c).age ASC
 ```
 ~~~

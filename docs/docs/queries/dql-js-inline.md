@@ -68,10 +68,6 @@ Final paper due in `= [[Computer Science Theory]].due - date(today)`
 You have `= length(filter(link(dateformat(date(today), "yyyy-MM-dd")).file.tasks, (t) => !t.completed))` tasks to do. `= choice(date(today).weekday > 5, "Take it easy!", "Time to get work done!")` 
 ~~~
 
-
-!!! hint "Saving Inline DQL in metadata fields"
-    You can store a Inline DQL inside a field for reusability with some limitations. Read more about it in [the FAQ](../../resources/faq#can-i-save-the-result-of-a-query-for-reusability).
-
 ## Dataview JS
 
 The dataview [JavaScript API](../../api/intro) gives you the full power of JavaScript and provides a DSL for pulling
