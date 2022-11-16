@@ -15,13 +15,13 @@ supports:
 - **Grouping** results based on fields
 - **Limiting** your result count
 
-Let's have a look at how  we can put DQL to use.
+Let's have a look at how we can put DQL to use.
 
 ## General Format of a DQL Query
 
 Every query follows the same structure and consists of
 
-- exactly one **Query Type** with zero, one or many [fields](../annotation/add-metadata.md), depending on query type.
+- exactly one **Query Type** with zero, one or many [fields](../annotation/add-metadata.md), depending on query type
 - zero or one **FROM** data commands with one to many [sources](../reference/sources.md)
 - zero to many other **data commands** with one to many [expressions](../reference/expressions.md) and/or other infos depending on the data command 
 
@@ -45,14 +45,14 @@ The following sections will explain the theory in further detail.
 
 The output format of a query is determined by its **Query Type**. There are four available:
 
-1. **TABLE**: A table of results with one row per result and one to many columns of field data.
+1. **TABLE**: A table of results with one row per result and one or many columns of field data.
 2. **LIST**: A bullet point list of pages which match the query. You can output one field for each page alongside their file links.
 3. **TASK**: An interactive task list of tasks that match the given query.
 4. **CALENDAR**: A calendar view displaying each hit via a dot on its referred date.
 
 The Query Type is the **only mandatory command in a query**. Everything else is optional.
 
-!!! attention "Possibly memory expensive examples"
+!!! attention "Possibly memory intense examples"
     Depending on the size of your vault, executing the following examples can take long and even freeze Obsidian in extreme cases. It's recommended that you specify a `FROM` to restrict the query execution to a specific subset of your vaults' files. See next section.  
 
 ~~~
@@ -77,7 +77,7 @@ TABLE due, file.tags AS "tags", average(working-hours)
 ```
 ~~~
 
-!!! info "Read more about the available types and how to use them [here](./query-types.md)."
+!!! info "Read more about the available Query Types and how to use them [here](./query-types.md)."
 
 ## Choose your source
 
@@ -139,7 +139,7 @@ SORT file.ctime DESC
 LIMIT 10
 ```
 
-Lists the 10 oldest and incompleted tasks of your vault as an interactive task list, grouped by their containing file and sorted from oldest to newest affected file.
+Lists the 10 oldest and incompleted tasks of your vault as an interactive task list, grouped by their containing file and sorted from oldest to newest file.
 ```dataview
 TASK
 WHERE !completed
@@ -155,7 +155,7 @@ SORT rows.file.ctime ASC
 
 ## Examples
 
-Following are some examples of valid query structures. Find more examples [here](../resources/examples.md).
+Following are some example queries. Find more examples [here](../resources/examples.md).
 
 ~~~
 ```dataview
