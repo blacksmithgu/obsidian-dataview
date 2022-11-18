@@ -144,7 +144,9 @@ gives you back
 
 !!! info "Find more examples [here](resources/examples.md)."
 
-As you can see, dataview doesn't only allow you to aggregate your data swiftly and always up to date, it also can help you with operations to give you new insights on your dataset. Browse through the documentation to find out more on how to interact with your data - have fun exploring your vault! 
+As you can see, dataview doesn't only allow you to aggregate your data swiftly and always up to date, it also can help you with operations to give you new insights on your dataset. Browse through the documentation to find out more on how to interact with your data.
+
+ Have fun exploring your vault in new ways! 
 
 ## Resources and Help
 
