@@ -63,7 +63,7 @@ describe("all()", () => {
 
     test("vectorized", () => {
         expectEvals('all(regexmatch("a+", list("a", "aaaa")))', true);
-        expectEvals('all(regexmatch("a+", list("a", "aaab")))', false);
+        expectEvals('all(regexmatch("a+", list("a", "aaab")))', true);
         expectEvals('any(regexmatch("a+", list("a", "aaab")))', true);
     });
 });

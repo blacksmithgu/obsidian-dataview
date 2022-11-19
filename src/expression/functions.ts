@@ -506,7 +506,6 @@ export namespace DefaultFunctions {
 
     export const regexmatch = new FunctionBuilder("regexmatch")
         .add2("string", "string", (pattern: string, field: string) => {
-            if (!pattern.startsWith("^") && !pattern.endsWith("$")) pattern = "^" + pattern + "$";
             return !!field.match(pattern);
         })
         .add2("null", "*", (_n, _a) => false)

@@ -29,6 +29,8 @@ describe("regexmatch()", () => {
     test("word", () => expect(parseEval('regexmatch("\\w+", "m3me")')).toEqual(true));
     test("whitespace", () => expect(parseEval('regexmatch("\\s+", "  ")')).toEqual(true));
     test("exact", () => expect(parseEval('regexmatch("what", "what")')).toEqual(true));
+    test("not exact", () => expect(parseEval('regexmatch("what", "what are you doing?")')).toEqual(true));
+    test("start & end", () => expect(parseEval('regexmatch("^what$", "what")')).toEqual(true));
 });
 
 // <-- replace() -- >
