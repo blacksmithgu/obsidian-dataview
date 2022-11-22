@@ -504,6 +504,13 @@ export namespace DefaultFunctions {
         .add1("*", e => e)
         .build();
 
+    export const regextest = new FunctionBuilder("regextest")
+        .add2("string", "string", (pattern: string, field: string) => RegExp(pattern).test(field))
+        .add2("null", "*", (_n, _a) => false)
+        .add2("*", "null", (_a, _n) => false)
+        .vectorize(2, [0, 1])
+        .build();
+
     export const regexmatch = new FunctionBuilder("regexmatch")
         .add2("string", "string", (pattern: string, field: string) => {
             if (!pattern.startsWith("^") && !pattern.endsWith("$")) pattern = "^" + pattern + "$";
@@ -784,6 +791,7 @@ export const DEFAULT_FUNCTIONS: Record<string, FunctionImpl> = {
 
     // String operations.
     regexreplace: DefaultFunctions.regexreplace,
+    regextest: DefaultFunctions.regextest,
     regexmatch: DefaultFunctions.regexmatch,
     replace: DefaultFunctions.replace,
     lower: DefaultFunctions.lower,

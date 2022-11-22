@@ -456,14 +456,28 @@ map(["yes", "no"], (x) => x + "?") = ["yes?", "no?"]
 
 ## String Operations
 
-### `regexmatch(pattern, string)`
+### `regextest(pattern, string)`
 
 Checks if the given string matches the given pattern (using the JavaScript regex engine).
+
+```
+regextest("\w+", "hello") = true
+regextest(".", "a") = true
+regextest("yes|no", "maybe") = false
+regextest("what", "what's up dog?") = true
+```
+
+### `regexmatch(pattern, string)` (DEPRECATED)
+
+Checks if the given string matches the given pattern. Note: the pattern gets a `^` 
+prepended and a `$` appended, which means it will only match if the match starts at
+the beginning and end at the end of the string. (using the JavaScript regex engine).
 
 ```
 regexmatch("\w+", "hello") = true
 regexmatch(".", "a") = true
 regexmatch("yes|no", "maybe") = false
+regexmatch("what", "what's up dog?") = false
 ```
 
 ### `regexreplace(string, pattern, replacement)`
