@@ -470,8 +470,8 @@ regextest("what", "what's up dog?") = true
 ### `regexmatch(pattern, string)` (DEPRECATED)
 
 Checks if the given string matches the given pattern. Note: the pattern gets a `^` 
-prepended and a `$` appended, which means it will only match if the match starts at
-the beginning and end at the end of the string. (using the JavaScript regex engine).
+prepended and a `$` appended to it, which means it will only match if the match starts at
+the beginning and ends at the end of the string. (using the JavaScript regex engine).
 
 ```
 regexmatch("\w+", "hello") = true
