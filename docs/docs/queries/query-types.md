@@ -183,61 +183,144 @@ GROUP BY type
 - 1 pages of type recipe
 - 1 pages of type summary
 
-## Table Queries
+## TABLE
 
-Tables support tabular views of page data. You construct a table by giving a comma separated list of the YAML frontmatter fields you want to render, as so:
+The `TABLE` query types outputs page data as a tabular view. You can add zero to multiple meta data fields to your `TABLE` query by adding them as a **comma separated list**. You can not only use plain meta data fields as columns, but specify **calculations** as well. Optionally, you can specify a **table header** via the `AS <header>` syntax. Like all other query types, you can refine your result set for your query with [data commands](data-commands.md).
 
+!!! summary "`TABLE` Query Type"
+    `TABLE` queries render a tabular view of any number of meta data values or calculations. It is possible to specify column headers via `AS <header>`.
+
+~~~
+```dataview
+TABLE
 ```
-TABLE file.day, file.mtime FROM <source>
+~~~
+
+**Output**
+
+| File (7) |
+| ----- |
+| [Classic Cheesecake](#) |
+| [Git Basics](#) |
+| [How to fix Git Cheatsheet](#) |
+| [League of Legends](#) |
+| [Pillars of Eternity 2](#) |
+| [Stardew Valley](#) |
+| [Dashboard](#) |
+
+!!! hint "Changing the first column header name"
+    You can change the name of the first column header (by default "File" or "Group") via the Dataview Settings under Table Settings -> Primary Column Name / Group Column Name.
+    If you want to change the name only for one specific `TABLE` query, have a look at `TABLE WITHOUT ID`.
+
+!!! info "Disabling Result count"
+    The first column always shows the result count. If you do not want to get it displayed, you can use a CSS Snippet to hide it. Head over to the [FAQ](../resources/faq.md#how-can-i-hide-the-result-count-on-table-queries) for more info.
+
+Of course, a `TABLE` is made for specifying one to multiple additional informations:  
+
+~~~
+```dataview
+TABLE started, file.folder, file.etags
+FROM #games
 ```
+~~~
 
-You can choose a heading name to render computed fields by using the `AS` syntax:
+**Output**
 
+| File (3) | started | file.folder | file.etags | 
+| --- | --- | --- | --- |
+| [League of Legends](#)  | 	May 16, 2021 | 	Games	 | - #games/moba  | 
+| [Pillars of Eternity 2](#)  | 	April 21, 2022 | 	Games	 | - #games/crpg | 
+| [Stardew Valley](#) | 	April 04, 2021 | 	Games/finished	 |  - #games/simulation | 
+
+!!! hint "Implicit fields"
+    Curious about `file.folder` and `file.etags`? Learn more about [implicit fields on pages](../annotation/metadata-pages.md).
+
+### Custom Column Headers
+
+You can specify **custom headings** for your columns by using the `AS` syntax:
+
+~~~
+```dataview
+TABLE started, file.folder AS Path, file.etags AS "File Tags"
+FROM #games
 ```
-TABLE (file.mtime + dur(1 day)) AS next_mtime, ... FROM <source>
+~~~
+
+**Output**
+
+| File (3) | started | Path | File Tags | 
+| --- | --- | --- | --- |
+| [League of Legends](#) | 	May 16, 2021 | 	Games	 | - #games/moba  | 
+| [Pillars of Eternity 2](#)  | 	April 21, 2022 | 	Games	 | - #games/crpg | 
+| [Stardew Valley](#) | 	April 04, 2021 | 	Games/finished	 |  - #games/simulation | 
+
+!!! info "Custom headers with spaces"
+    If you want to use a custom header with spaces, like `File Tags`, you need to wrap it into double quotes: `"File Tags"`. 
+
+This is especially useful when you want to use **calculations or expressions as column values**:
+
+~~~
+```dataview
+TABLE 
+default(finished, date(today)) - started AS "Played for", 
+file.folder AS Path, 
+file.etags AS "File Tags"
+FROM #games
 ```
+~~~
 
-An example table query:
+**Output**
 
-=== "Query"
-    ``` sql
-    TABLE
-      time-played AS "Time Played",
-      length AS "Length",
-      rating AS "Rating"
-    FROM #game
-    SORT rating DESC
-    ```
-
-=== "Output"
-    |File|Time Played|Length|Rating|
-    |-|-|-|-|
-    |[Outer Wilds](#)|November 19th - 21st, 2020|15h|9.5|
-    |[Minecraft](#)|All the time.|2000h|9.5|
-    |[Pillars of Eternity 2](#)|August - October 2019|100h|9|
+| File (3) | Played for | Path | File Tags | 
+| --- | --- | --- | --- |
+| [League of Legends](#) | 	1 years, 6 months, 1 weeks | 	Games	 | - #games/moba  | 
+| [Pillars of Eternity 2](#)  | 	7 months, 2 days | 	Games	 | - #games/crpg | 
+| [Stardew Valley](#) | 	4 months, 3 weeks, 3 days | 	Games/finished	 |  - #games/simulation | 
 
 ### TABLE WITHOUT ID
 
-If you don't want the default "File" or "Group" field in your output (either to replace it or because it is unneeded), you can use
-`TABLE WITHOUT ID`:
+If you don't want the first column ("File" or "Group" by default), you can use `TABLE WITHOUT ID`. `TABLE WITHOUT ID` works the same as `TABLE`, but it does not output the file link or group name as a first column if you add additional information.
 
-=== "Query"
-    ``` sql
-    TABLE WITHOUT ID
-      time-played AS "Time Played",
-      length AS "Length",
-      rating AS "Rating"
-    FROM #game
-    SORT rating DESC
-    ```
-=== "Output"
-    |Time Played|Length|Rating|
-    |-|-|-|
-    |November 19th - 21st, 2020|15h|9.5|
-    |All the time.|2000h|9.5|
-    |August - October 2019|100h|9|
+You can use this if you, for example, output another identifying value: 
 
----
+~~~
+```dataview
+TABLE WITHOUT ID
+steamid,
+file.etags AS "File Tags"
+FROM #games
+```
+~~~
+
+**Output**
+
+| steamid (3)  | File Tags | 
+| --- | --- |
+| 560130 |  - #games/crog  | 
+| - |  - #games/moba | 
+| 413150 |   - #games/simulation | 
+
+Also, you can use `TABLE WITHOUT ID` if you want to **rename the first column for one specific query**.
+
+~~~
+```dataview
+TABLE WITHOUT ID
+file.link AS "Game",
+file.etags AS "File Tags"
+FROM #games
+```
+~~~
+
+**Output**
+
+| Game (3) | File Tags | 
+| --- | --- |
+| [League of Legends](#) |  - #games/moba  | 
+| [Pillars of Eternity 2](#)  | - #games/crpg | 
+| [Stardew Valley](#) |  - #games/simulation | 
+
+!!! info "Renaming the first column in general"
+    If you want to rename the first column in all cases, change the name in Dataviews settings under Table Settings.
 
 ## Task Queries
 

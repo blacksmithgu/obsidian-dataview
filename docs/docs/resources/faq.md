@@ -64,3 +64,5 @@ WHERE duration > dur("10h")
 ~~~
 
 This will give you back the example page, even though the result doesn't fulfill the `WHERE` clause, because the value you are comparing against is `= this.end - this.start - this.pause` and is not a duration.
+
+### How can I hide the result count on TABLE Queries?
