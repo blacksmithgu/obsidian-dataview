@@ -277,6 +277,9 @@ FROM #games
 | [Pillars of Eternity 2](#)  | 	7 months, 2 days | 	Games	 | - #games/crpg | 
 | [Stardew Valley](#) | 	4 months, 3 weeks, 3 days | 	Games/finished	 |  - #games/simulation | 
 
+!!! hint "Calculations and expressions"
+    Learn more about the capability of computing expressions and calculations under [expressions](../reference/expressions.md) and [functions](../reference/functions.md).
+
 ### TABLE WITHOUT ID
 
 If you don't want the first column ("File" or "Group" by default), you can use `TABLE WITHOUT ID`. `TABLE WITHOUT ID` works the same as `TABLE`, but it does not output the file link or group name as a first column if you add additional information.
@@ -322,78 +325,79 @@ FROM #games
 !!! info "Renaming the first column in general"
     If you want to rename the first column in all cases, change the name in Dataviews settings under Table Settings.
 
-## Task Queries
+## TASK
 
-Task views render all tasks whose pages match the given predicate.
+The `TASK` Query outputs **a interactive list of all tasks in your vault** that match the given [data commands](data-commands.md) (if any). `TASK` Queries are special compared to the other Query Types because they do give back **Tasks as results and not pages**. This implies that all [data commands](data-commands.md) operate on **Task level** and makes it possible to fine granularly filter your tasks for i.e. their status or a meta data specified on the task itself.  
 
-=== "Syntax"
-    ```
-    TASK FROM <source>
-    ```
-=== "Query"
-    ``` sql
-    TASK FROM "dataview"
-    ```
-=== "Output"
-    - [ ] I am a task.
-    - [ ] I am another task.
-    - [ ] I could be a task, though who knows.
-        - [X] Determine if this is a task.
-    - [X] I'm a finished task.
+Also, `TASK` Queries are the only possibility to **manipulate your files through DQL**. Normally, Dataview does not touch the content of your files; however, if you check a task through a dataview query, it'll get **checked in its original file, too**. In the Dataview Settings under "Task Settings", you can opt-in to automatically set a `completion` meta data field when checking a task in dataview. Mind though that this only works if you check the task inside a dataview block. 
 
-You can filter (`WHERE`), group (`GROUP BY`), sort (`SORT`) tasks in these queries as desired using typical dataview
-statements:
+!!! summary "`TASK` Query Type"
+    `TASK` queries render an interactive list of all tasks in your vault. `TASK` Queries are executed on **task level**, not page level, allowing for task-specific filtering. This is the only command in dataview that modifies your original files if interacted with.
 
-=== "Syntax"
-    ```
-    TASK FROM <source>
-    WHERE <predicate>
-    ...
-    ```
-=== "Query"
-    ```
-    TASK FROM "dataview"
-    WHERE !completed
-    GROUP BY file.folder
-    ```
-=== "Output"
-    Folder 1
+~~~
+```dataview
+TASK
+```
+~~~
 
-    - [ ] I am a task.
-    - [ ] I am another task.
-    - [ ] I am yet another task in another file in the same folder.
+**Output**
 
-    Folder 2
+- [ ] Buy new shoes #shopping
+- [ ] Mail Paul about training schedule 
+- [ ] Finish the math assignment
+    - [x] Finish Paper 1 [due:: 2022-08-13]
+    - [ ] Read again through chapter 3 [due:: 2022-09-01]
+    - [x] Write a cheatsheet [due:: 2022-08-02]
+    - [ ] Write a summary of chapter 1-4 [due:: 2022-09-12]
+- [x] Hand in physics
+- [ ] Get new pillows for mom #shopping
+- [x] Buy some working pencils #shopping
 
-    - [ ] I could be a task, though who knows.
+You can use [data commands](data-commands.md) like for all other Query Types. Data Commands are executed on task level, making [implicit fields on tasks](../annotation/metadata-tasks.md) directly available. 
 
-    Folder 3
+~~~
+```dataview
+TASK
+WHERE !completed AND contains(tags, "#shopping")
+```
+~~~
 
-    - [ ] What even is a task, anyway?
+**Output**
+
+- [ ] Buy new shoes #shopping
+- [ ] Get new pillows for mom #shopping
 
 A common use case for tasks is to group them by their originating file:
 
-=== "Syntax"
-    ```
-    TASK FROM <source>
-    GROUP BY file.link
-    ```
-=== "Query"
-    ``` sql
-    TASK FROM "dataview"
-    GROUP BY file.link
-    ```
-=== "Output"
-    [dataview/Project A](#)
+~~~
+```dataview
+TASK
+WHERE !completed
+GROUP BY file.link
+```
+~~~
 
-    - [ ] I am a task.
-    - [ ] I am another task.
+**Output**
 
-    [dataview/Project A](#)
+[2022-07-30](#) (1)
 
-    - [ ] I could be a task, though who knows.
-        - [X] Determine if this is a task.
-    - [X] I'm a finished task.
+- [ ] Finish the math assignment
+    - [ ] Read again through chapter 3 [due:: 2022-09-01]
+    - [ ] Write a summary of chapter 1-4 [due:: 2022-09-12]
+
+[2022-09-21](#) (2)
+
+- [ ] Buy new shoes #shopping
+- [ ] Mail Paul about training schedule
+
+[2022-09-27](#) (1)
+
+- [ ] Get new pillows for mom #shopping
+
+!!! hint "Counting tasks with subtask"
+    Noticing the (1) on the header of `2022-07-30`? Child tasks belong to their parent task and are not counted separately. Also, they do **behave differently** on filtering.
+
+# TODO FILTER CHILD TASKS
 
 ## Calendar Queries
 
