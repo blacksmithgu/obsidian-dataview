@@ -367,7 +367,7 @@ WHERE !completed AND contains(tags, "#shopping")
 - [ ] Buy new shoes #shopping
 - [ ] Get new pillows for mom #shopping
 
-A common use case for tasks is to group them by their originating file:
+A common use case for tasks is to **group tasks by their originating file**:
 
 ~~~
 ```dataview
@@ -397,23 +397,90 @@ GROUP BY file.link
 !!! hint "Counting tasks with subtask"
     Noticing the (1) on the header of `2022-07-30`? Child tasks belong to their parent task and are not counted separately. Also, they do **behave differently** on filtering.
 
-# TODO FILTER CHILD TASKS
+### Child Tasks
 
-## Calendar Queries
+A task is considered **child task** if it is **intended by a tab** and below a not indented task list item.
 
-Calendar views render all pages which match the query in a calendar view, using
-the given date expression to chose which date to render a page on.
+- [ ] clean up the house
+	- [ ] kitchen
+	- [x] living room
+	- [ ] Bedroom [urgent:: true]
 
-=== "Syntax"
-    ```
-    CALENDAR <date>
-    FROM <source>
-    ```
-=== "Query"
-    ``` sql
-    CALENDAR file.mtime
-    FROM "dataview"
-    ```
-=== "Output"
-The output will be a calendar that displays a dot per file in the dataview
-directory. The dot will be placed on the date that the file was modified on.
+
+!!! info "Childs of a bullet point item"
+    While intended tasks under a bullet point item are strictly speaking also children task, dataview will handle them like normal tasks in most cases.
+
+Child Tasks **belong to their parent**. This means if you're querying for tasks, you'll get child tasks as part of their parent back.
+
+~~~
+```dataview
+TASK
+```
+~~~
+
+**Output**
+
+- [ ] clean up the house
+	- [ ] kitchen
+	- [x] living room
+	- [ ] Bedroom [urgent:: true]
+- [ ] Call the insurance about the car
+- [x] Find out the transaction number
+
+This especially means that child task will be part of your result set **as long as the parent matches the query** - even if the child task itself doesn't.
+
+~~~
+```dataview
+TASK
+WHERE !completed
+```
+~~~
+
+**Output**
+
+- [ ] clean up the house
+	- [ ] kitchen
+	- [x] living room
+	- [ ] Bedroom [urgent:: true]
+- [ ] Call the insurance about the car
+
+Mind that you'll get individual children tasks back, if the child matches your predicate but the parent doesn't:
+
+~~~
+```dataview
+TASK
+WHERE urgent
+```
+~~~
+
+**Output**
+
+- [ ] Bedroom [urgent:: true]
+
+## CALENDAR
+
+The `CALENDAR` Query outputs a monthly based calendar where every result is depicted as a dot on it reffering date. The `CALENDAR` is the only Query Type that requires an additional information. This additional information needs to be a [date](../annotation/types-of-metadata.md#date) (or unset) on all queried pages. 
+
+!!! summary "`CALENDAR` Query Type"
+    The `CALENDAR` Query Types renders a calendar view where every result is represented by a dot on the given meta data field date.
+    
+
+
+~~~
+```dataview
+CALENDAR file.ctime
+```
+~~~
+
+**Output**
+
+![](../assets/calendar_query_type.png)
+
+While it is possible to use `SORT` and `GROUP BY` in combination with `CALENDAR`, it has **no effect**. Additionally, the calendar query does not render if the given meta data field contains something else than a valid [date](../annotation/types-of-metadata.md#date) (but the field can be empty). To make sure you're only taking valid pages into account, you can filter for valid meta data values:
+
+~~~
+```dataview
+CALENDAR due
+WHERE typeof(due) = "date"
+```
+~~~
