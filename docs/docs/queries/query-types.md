@@ -2,7 +2,7 @@
 
 The **Query Type** determines how the output of your dataview query looks like. It is the **first and only mandatory** specification you give to a dataview query. There are four available: `LIST`, `TABLE`, `TASK` and `CALENDAR`.
 
-The Query Type also determine on which **information level** a query is executed.  `LIST`, `TABLE` and `CALENDAR` operate on **page level**, whereas `TASK` queries operate on `file.tasks` level. More on that on the `TASK` Query Type. 
+The Query Type also determines which **information level** a query is executed on. `LIST`, `TABLE` and `CALENDAR` operate at **page level** whereas `TASK` queries operate at the `file.tasks` level. More on that in the `TASK` Query Type. 
 
 You can combine **every Query Type with all available [Data Commands](data-commands.md)** to refine your result set. Read more about the interconnection between Query Types and Data Commands on [How to Use Dataview](../index.md#how-to-use-dataview) and the [structure page](structure.md).
 
@@ -11,7 +11,7 @@ You can combine **every Query Type with all available [Data Commands](data-comma
 
 ## LIST
 
-`LIST` queries output a bullet point list consisting out of your file links or the group name, if you decided to [group](data-commands.md#group-by). You can specify up to **one additional information** to output alongside with your file or group information.
+`LIST` queries output a bullet point list consisting of your file links or the group name, if you decided to [group](data-commands.md#group-by). You can specify up to **one additional information** to output alongside your file or group information.
 
 !!! summary "Query Type `LIST`"
     `LIST` outputs a bullet point list of page links or Group keys. You can specify one additional information to show for each result.
@@ -443,6 +443,8 @@ WHERE !completed
 	- [x] living room
 	- [ ] Bedroom [urgent:: true]
 - [ ] Call the insurance about the car
+
+Here, `living room` does **not match** the query, but is included anyway, because its parent `clean up the house` does match. 
 
 Mind that you'll get individual children tasks back, if the child matches your predicate but the parent doesn't:
 
