@@ -16,7 +16,7 @@ You can combine **every Query Type with all available [Data Commands](data-comma
 !!! summary "Query Type `LIST`"
     `LIST` outputs a bullet point list of page links or Group keys. You can specify one additional information to show for each result.
 
-The most minimal LIST query outputs a bullet point list of all files in your vault:
+The simplest LIST query outputs a bullet point list of all files in your vault:
 
 ~~~
 ```dataview 
@@ -327,7 +327,7 @@ FROM #games
 
 ## TASK
 
-The `TASK` Query outputs **a interactive list of all tasks in your vault** that match the given [data commands](data-commands.md) (if any). `TASK` Queries are special compared to the other Query Types because they do give back **Tasks as results and not pages**. This implies that all [data commands](data-commands.md) operate on **Task level** and makes it possible to fine granularly filter your tasks for i.e. their status or a meta data specified on the task itself.  
+The `TASK` Query outputs **an interactive list of all tasks in your vault** that match the given [data commands](data-commands.md) (if any). `TASK` queries are special compared to the other Query Types because they do give back **Tasks as results and not pages**. This implies that all [data commands](data-commands.md) operate on **Task level** and makes it possible to granularly filter your tasks i.e. for their status or meta data specified on the task itself.  
 
 Also, `TASK` Queries are the only possibility to **manipulate your files through DQL**. Normally, Dataview does not touch the content of your files; however, if you check a task through a dataview query, it'll get **checked in its original file, too**. In the Dataview Settings under "Task Settings", you can opt-in to automatically set a `completion` meta data field when checking a task in dataview. Mind though that this only works if you check the task inside a dataview block. 
 
@@ -395,11 +395,11 @@ GROUP BY file.link
 - [ ] Get new pillows for mom #shopping
 
 !!! hint "Counting tasks with subtask"
-    Noticing the (1) on the header of `2022-07-30`? Child tasks belong to their parent task and are not counted separately. Also, they do **behave differently** on filtering.
+    Noticing the (1) on the header of `2022-07-30`? Child tasks belong to their parent task and are not counted separately. Also, they **behave differently** on filtering.
 
 ### Child Tasks
 
-A task is considered **child task** if it is **intended by a tab** and below a not indented task list item.
+A task is considered a **child task** if it is **indented by a tab** and is below an unindented task.
 
 - [ ] clean up the house
 	- [ ] kitchen
@@ -408,7 +408,7 @@ A task is considered **child task** if it is **intended by a tab** and below a n
 
 
 !!! info "Childs of a bullet point item"
-    While intended tasks under a bullet point item are strictly speaking also children task, dataview will handle them like normal tasks in most cases.
+    While indented tasks under a bulleted list item are, strictly speaking, also child tasks, Dataview will handle them like normal tasks in most cases.
 
 Child Tasks **belong to their parent**. This means if you're querying for tasks, you'll get child tasks as part of their parent back.
 
@@ -427,7 +427,7 @@ TASK
 - [ ] Call the insurance about the car
 - [x] Find out the transaction number
 
-This especially means that child task will be part of your result set **as long as the parent matches the query** - even if the child task itself doesn't.
+This specifically means that child task will be part of your result set **as long as the parent matches the query** - even if the child task itself doesn't.
 
 ~~~
 ```dataview
