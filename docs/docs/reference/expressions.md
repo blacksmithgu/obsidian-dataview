@@ -94,7 +94,7 @@ For the previous frontmatter example, we could also use `episode_metadata.previo
 Index expressions also work on objects which have fields that are not directly supported by the query language.
 A good example is `where`, since it is a keyword.
 If your frontmatter/metadata contains a field `where`, you can reference it via the `row` syntax: `row["where"]`.
-See the [note in the FAQ](faq.md#how-do-i-use-fields-with-the-same-name-as-keywords-like-from-where) and [the corresponding issue](https://github.com/blacksmithgu/obsidian-dataview/issues/1164) for further information.
+See the [note in the FAQ](../resources/faq.md#how-do-i-use-fields-with-the-same-name-as-keywords-like-from-where) and [the corresponding issue](https://github.com/blacksmithgu/obsidian-dataview/issues/1164) for further information.
 
 ### Function Calls
 

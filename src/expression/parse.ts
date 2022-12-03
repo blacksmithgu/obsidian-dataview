@@ -143,12 +143,12 @@ export function chainOpt<T>(base: P.Parser<T>, ...funcs: ((r: T) => P.Parser<T>)
 // Expression Parsing //
 ////////////////////////
 
-type PostfixFragment =
+export type PostfixFragment =
     | { type: "dot"; field: string }
     | { type: "index"; field: Field }
     | { type: "function"; fields: Field[] };
 
-interface ExpressionLanguage {
+export interface ExpressionLanguage {
     number: number;
     string: string;
     escapeCharacter: string;

@@ -2,7 +2,7 @@ import { EXPRESSION } from "expression/parse";
 import { Link } from "data-model/value";
 import { extractInlineFields, setEmojiShorthandCompletionField, setInlineField } from "data-import/inline-field";
 
-// <-- Inline field wierd edge cases -->
+// <-- Inline field weird edge cases -->
 
 test("Parse commas inside inline field", () => {
     expect(EXPRESSION.inlineField.tryParse("[[yes, no, and maybe]]")).toEqual(Link.file("yes, no, and maybe"));

@@ -134,5 +134,9 @@ export function createBinaryOps(linkNormalizer: (x: string) => string): BinaryOp
             .register("null", "*", "null", (_a, _b) => null)
             .register("null", "/", "null", (_a, _b) => null)
             .register("null", "%", "null", (_a, _b) => null)
+            .register("date", "+", "null", (_a, _b) => null)
+            .register("null", "+", "date", (_a, _b) => null)
+            .register("date", "-", "null", (_a, _b) => null)
+            .register("null", "-", "date", (_a, _b) => null)
     );
 }

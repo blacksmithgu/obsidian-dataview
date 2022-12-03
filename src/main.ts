@@ -16,14 +16,15 @@ import { inlinePlugin } from "./ui/lp-render";
 import { Extension } from "@codemirror/state";
 
 export default class DataviewPlugin extends Plugin {
-    /** Plugin-wide default settigns. */
+    /** Plugin-wide default settings. */
     public settings: DataviewSettings;
 
     /** The index that stores all dataview data. */
     public index: FullIndex;
     /** External-facing plugin API. */
     public api: DataviewApi;
-    /** CodeMirror 6 extensions that dataview installs. Tracked via array to allow for dynamic update. */
+
+    /** CodeMirror 6 extensions that dataview installs. Tracked via array to allow for dynamic updates. */
     private cmExtension: Extension[];
 
     async onload() {
@@ -58,6 +59,9 @@ export default class DataviewPlugin extends Plugin {
 
         // Dataview inline queries.
         this.registerPriorityMarkdownPostProcessor(-100, async (el, ctx) => {
+            // Allow for turning off inline queries.
+            if (!this.settings.enableInlineDataview || isDataviewDisabled(ctx.sourcePath)) return;
+
             this.dataviewInline(el, ctx, ctx.sourcePath);
         });
 
@@ -253,6 +257,15 @@ class GeneralSettingsTab extends PluginSettingTab {
     public display(): void {
         this.containerEl.empty();
         this.containerEl.createEl("h2", { text: "General Settings" });
+
+        new Setting(this.containerEl)
+            .setName("Enable Inline Queries")
+            .setDesc("Enable or disable executing regular inline Dataview queries.")
+            .addToggle(toggle =>
+                toggle
+                    .setValue(this.plugin.settings.enableInlineDataview)
+                    .onChange(async value => await this.plugin.updateSettings({ enableInlineDataview: value }))
+            );
 
         new Setting(this.containerEl)
             .setName("Enable JavaScript Queries")
@@ -587,5 +600,14 @@ class GeneralSettingsTab extends PluginSettingTab {
                 'Only available when "Automatic Task Completion Tracking" is enabled and "Use Emoji Shorthand for Completion" is disabled.'
             );
         }
+        new Setting(this.containerEl)
+            .setName("Recursive Sub-Task Completion")
+            // I gotta word this better :/
+            .setDesc("If enabled, completing a task in a DataView will automatically complete its subtasks too.")
+            .addToggle(toggle =>
+                toggle
+                    .setValue(this.plugin.settings.recursiveSubTaskCompletion)
+                    .onChange(async value => await this.plugin.updateSettings({ recursiveSubTaskCompletion: value }))
+            );
     }
 }

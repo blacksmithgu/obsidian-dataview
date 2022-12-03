@@ -1,6 +1,7 @@
 import { SListItem } from "data-model/serialized/markdown";
 import { Grouping, Groupings, Literal, Values, Widgets } from "data-model/value";
 import { DEFAULT_SETTINGS, ExportSettings, QuerySettings } from "settings";
+import { nestItems } from "ui/views/task-view";
 
 ////////////
 // Tables //
@@ -141,17 +142,20 @@ export function markdownTaskList(
         }
         return result;
     } else {
-        let result = "";
-        for (let element of tasks) {
-            result += "    ".repeat(depth) + "- ";
-            if (Groupings.isElementGroup(element)) {
-            } else {
-                if (element.task) {
-                    result += `[${element.status}] ${(element.visual ?? element.text).split("\n").join(" ")}\n`;
-                }
+        // Remove task line duplicates if present to match `taskList()` behavior.
+        const [dedupTasks, _] = nestItems(tasks);
 
-                result += markdownTaskList(element.children, settings, depth + 1);
+        let result = "";
+        for (let element of dedupTasks) {
+            result += "    ".repeat(depth) + "- ";
+
+            if (element.task) {
+                result += `[${element.status}] ${(element.visual ?? element.text).split("\n").join(" ")}\n`;
+            } else {
+                result += `${(element.visual ?? element.text).split("\n").join(" ")}\n`;
             }
+
+            result += markdownTaskList(element.children, settings, depth + 1);
         }
 
         return result;

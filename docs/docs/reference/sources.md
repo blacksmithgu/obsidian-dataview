@@ -19,7 +19,7 @@ You can compose these filters in order to get more advanced sources using `and` 
 - Querying from `#food and !#fastfood` will only return pages that contain `#food` but does not contain `#fastfood`.
 - `[[Food]] or [[Exercise]]` will give any pages which link to `[[Food]]` OR `[[Exercise]]`.
 
-If you have complex queries where grouping or predecence matters, you can use parenthesis to logically group them:
+If you have complex queries where grouping or precedence matters, you can use parenthesis to logically group them:
 
 - `#tag and ("folder" or #other-tag)`
 - `(#tag1 or #tag2) and (#tag3 or #tag4)`

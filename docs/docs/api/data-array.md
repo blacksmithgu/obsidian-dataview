@@ -3,7 +3,7 @@
 The general abstraction for lists of results in Dataview is the `DataArray`, which is a proxied array with additional
 functionality. Data arrays support indexing and iteration (via `for` and `for ... of` loops) as per normal arrays, but
 also include many data manipulation operators like `sort`, `groupBy`, `distinct`, `where`, and so on to make
-mainpulating tabular data easy.
+manipulating tabular data easy.
 
 ## Creation
 
