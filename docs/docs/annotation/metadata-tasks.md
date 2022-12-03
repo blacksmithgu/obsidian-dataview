@@ -62,6 +62,7 @@ As with pages, Dataview adds a number of implicit fields to each task or list it
 | `completed` |  Boolean  | Whether or not this *specific* task has been completed; this does not consider the completionnon-completion of any child tasks. A task is explicitly considered "completed" if it has been marked with an 'x'. If you use a custom status, i.e. `[-]`, `checked` will be true, whereas `completed` will be false. |
 | `fullyCompleted` |  Boolean  | Whether or not this task and **all** of its subtasks are completed. |
 | `text` |  Text  | The plain text of this task, including any metadata field annotations. |
+| `visual` | Text | The text of this task, which is rendered by Dataview. It can be modified to render arbitary text. |
 | `line` |  Number  | The line of the file this task shows up on. |
 | `lineCount` |  Number  | The number of Markdown lines that this task takes up. |
 | `path` |  Text  | The full path of the file this task is in. Equals to `file.path` for [pages](./metadata-pages.md) |
