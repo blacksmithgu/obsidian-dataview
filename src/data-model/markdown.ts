@@ -273,7 +273,7 @@ export class ListItem {
             header: this.section, // @deprecated, use 'item.section' instead.
         };
 
-        if (this.parent) result.parent = this.parent;
+        if (this.parent || this.parent === 0) result.parent = this.parent;
         if (this.blockId) result.blockId = this.blockId;
 
         addFields(this.fields, result);
