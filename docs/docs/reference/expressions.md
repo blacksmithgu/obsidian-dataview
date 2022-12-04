@@ -42,6 +42,7 @@ a >= b              (check if a is greater than or equal to b)
 # Strings
 
 a + b               (string concatenation)
+a * num             (repeat string <num> times)
 
 # Special Operations
 [[Link]].value      (fetch `value` from page `Link`)

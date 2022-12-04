@@ -8,7 +8,7 @@ Most functions can be applied either to single values (like `number`, `string`, 
 values. If a function is applied to a list, it also returns a list after the function is applied to each element
 in the list. For example:
 
-```
+```js
 lower("YES") = "yes"
 lower(["YES", "NO"]) = ["yes", "no"]
 
@@ -25,7 +25,7 @@ Constructors which create values.
 Creates a new object with the given keys and values. Keys and values should alternate in the call, and keys should
 always be strings/text.
 
-```
+```js
 object() => empty object
 object("a", 6) => object which maps "a" to 6
 object("a", 4, "c", "yes") => object which maps a to 4, and c to "yes"
@@ -35,7 +35,7 @@ object("a", 4, "c", "yes") => object which maps a to 4, and c to "yes"
 
 Creates a new list with the given values in it.
 
-```
+```js
 list() => empty list
 list(1, 2, 3) => list with 1, 2, and 3
 list("a", "b", "c") => list with "a", "b", and "c"
@@ -45,7 +45,7 @@ list("a", "b", "c") => list with "a", "b", and "c"
 
 Parses a date from the provided string, date, or link object, if possible, returning null otherwise.
 
-```
+```js
 date("2020-04-18") = <date object representing April 18th, 2020>
 date([[2021-04-16]]) = <date object for the given page, refering to file.day>
 ```
@@ -54,7 +54,7 @@ date([[2021-04-16]]) = <date object for the given page, refering to file.day>
 
 Parses a duration from the provided string or duration, returning null on failure.
 
-```
+```js
 dur(8 minutes) = <8 minutes>
 dur("8 minutes, 4 seconds") = <8 minutes, 4 seconds>
 dur(dur(8 minutes)) = dur(8 minutes) = <8 minutes>
@@ -65,7 +65,7 @@ dur(dur(8 minutes)) = dur(8 minutes) = <8 minutes>
 Pulls the first number out of the given string, returning it if possible. Returns null if there are no numbers in the
 string.
 
-```
+```js
 number("18 years") = 18
 number(34) = 34
 number("hmm") = null
@@ -77,7 +77,7 @@ Converts any value into a "reasonable" string representation. This sometimes pro
 the value in a query - it is mostly useful for coercing dates, durations, numbers, and so on into strings for
 manipulation.
 
-```
+```js
 string(18) = "18"
 string(dur(8 hours)) = "8 hours"
 string(date(2021-08-15)) = "August 15th, 2021"
@@ -88,7 +88,7 @@ string(date(2021-08-15)) = "August 15th, 2021"
 Construct a link object from the given file path or name. If provided with two arguments, the second argument is the
 display name for the link.
 
-```
+```js
 link("Hello") => link to page named 'Hello'
 link("Hello", "Goodbye") => link to page named 'Hello', displays as 'Goodbye'
 ```
@@ -98,7 +98,7 @@ link("Hello", "Goodbye") => link to page named 'Hello', displays as 'Goodbye'
 Convert a link object into an embedded link; support for embedded links is somewhat spotty in Dataview views, though
 embedding of images should work.
 
-```
+```js
 embed(link("Hello.png")) => embedded link to the "Hello.png" image, which will render as an actual image.
 ```
 
@@ -107,7 +107,7 @@ embed(link("Hello.png")) => embedded link to the "Hello.png" image, which will r
 Construct a link to an external url (like `www.google.com`). If provided with two arguments, the second
 argument is the display name for the link.
 
-```
+```js
 elink("www.google.com") => link element to google.com
 elink("www.google.com", "Google") => link element to google.com, displays as "Google"
 ```
@@ -116,7 +116,7 @@ elink("www.google.com", "Google") => link element to google.com, displays as "Go
 
 Get the type of any object for inspection. Can be used in conjunction with other operators to change behavior based on type.
 
-```
+```js
 typeof(8) => "number"
 typeof("text") => "string"
 typeof([1, 2, 3]) => "array"
@@ -134,7 +134,7 @@ typeof(dur(8 minutes)) => "duration"
 Round a number to a given number of digits. If the second argument is not specified, rounds to the nearest whole number;
 otherwise, rounds to the given number of digits.
 
-```
+```js
 round(16.555555) = 7
 round(16.555555, 2) = 16.56
 ```
@@ -143,7 +143,7 @@ round(16.555555, 2) = 16.56
 
 Compute the minimum value of a list of arguments, or an array.
 
-```
+```js
 min(1, 2, 3) = 1
 min([1, 2, 3]) = 1
 
@@ -154,7 +154,7 @@ min("a", "ab", "abc") = "a"
 
 Compute the maximum value of a list of arguments, or an array.
 
-```
+```js
 max(1, 2, 3) = 3
 max([1, 2, 3]) = 3
 
@@ -165,7 +165,7 @@ max("a", "ab", "abc") = "abc"
 
 Sums all numeric values in the array. If you have null values in your average, you can eliminate them via the `nonnull` function.
 
-```
+```js
 sum([1, 2, 3]) = 6
 sum([]) = null
 
@@ -176,7 +176,7 @@ sum(nonnull([null, 1, 8])) = 9
 
 Calculates the product of a list of numbers. If you have null values in your average, you can eliminate them via the `nonnull` function.
 
-```
+```js
 product([1,2,3]) = 6
 product([]) = null
 
@@ -188,7 +188,7 @@ product(nonnull([null, 1, 2, 4])) = 8
 Computes the numeric average of numeric values. If you have null values in your average, you can eliminate them via the
 `nonnull` function.
 
-```
+```js
 average([1, 2, 3]) = 2
 average([]) = null
 
@@ -199,7 +199,7 @@ average(nonnull([null, 1, 2])) = 1.5
 
 Compute the minimum value of an array, using the provided function.
 
-```
+```js
 minby([1, 2, 3], (k) => k) = 1
 minby([1, 2, 3], (k) => 0 - k) => 3
 
@@ -210,7 +210,7 @@ minby(this.file.tasks, (k) => k.due) => (earliest due)
 
 Compute the maximum value of an array, using the provided function.
 
-```
+```js
 maxby([1, 2, 3], (k) => k) = 3
 maxby([1, 2, 3], (k) => 0 - k) => 1
 
@@ -227,7 +227,7 @@ Operations that manipulate values inside of container objects.
 
 For a quick summary, here are some examples:
 
-```
+```js
 contains("Hello", "Lo") = false
 contains("Hello", "lo") = true
 
@@ -438,7 +438,7 @@ join(list()) = ""
 
 Filters elements in an array according to the predicate, returning a new list of the elements which matched.
 
-```
+```js
 filter([1, 2, 3], (x) => x >= 2) = [2, 3]
 filter(["yes", "no", "yas"], (x) => startswith(x, "y")) = ["yes", "yas"]
 ```
@@ -447,7 +447,7 @@ filter(["yes", "no", "yas"], (x) => startswith(x, "y")) = ["yes", "yas"]
 
 Applies the function to each element in the array, returning a list of the mapped results.
 
-```
+```js
 map([1, 2, 3], (x) => x + 2) = [3, 4, 5]
 map(["yes", "no"], (x) => x + "?") = ["yes?", "no?"]
 ```
@@ -458,22 +458,21 @@ map(["yes", "no"], (x) => x + "?") = ["yes?", "no?"]
 
 ### `regextest(pattern, string)`
 
-Checks if the given string matches the given pattern (using the JavaScript regex engine).
+Checks if the given regex pattern can be found in the string (using the JavaScript regex engine).
 
-```
+```js
 regextest("\w+", "hello") = true
 regextest(".", "a") = true
 regextest("yes|no", "maybe") = false
 regextest("what", "what's up dog?") = true
 ```
 
-### `regexmatch(pattern, string)` (DEPRECATED)
+### `regexmatch(pattern, string)`
 
-Checks if the given string matches the given pattern. Note: the pattern gets a `^` 
-prepended and a `$` appended to it, which means it will only match if the match starts at
-the beginning and ends at the end of the string. (using the JavaScript regex engine).
+Checks if the given regex pattern matches the *entire* string, using the JavaScript regex engine.
+This differs from `regextest` in that regextest can match just parts of the text.
 
-```
+```js
 regexmatch("\w+", "hello") = true
 regexmatch(".", "a") = true
 regexmatch("yes|no", "maybe") = false
@@ -485,7 +484,7 @@ regexmatch("what", "what's up dog?") = false
 Replaces all instances where the *regex* `pattern` matches in `string`, with `replacement`. This uses the JavaScript
 replace method under the hood, so you can use special characters like `$1` to refer to the first capture group, and so on.
 
-```
+```js
 regexreplace("yes", "[ys]", "a") = "aea"
 regexreplace("Suite 1000", "\d+", "-") = "Suite -"
 ```
@@ -494,7 +493,7 @@ regexreplace("Suite 1000", "\d+", "-") = "Suite -"
 
 Replace all instances of `pattern` in `string` with `replacement`.
 
-```
+```js
 replace("what", "wh", "h") = "hat"
 replace("The big dog chased the big cat.", "big", "small") = "The small dog chased the small cat."
 replace("test", "test", "no") = "no"
@@ -504,7 +503,7 @@ replace("test", "test", "no") = "no"
 
 Convert a string to all lower case.
 
-```
+```js
 lower("Test") = "test"
 lower("TEST") = "test"
 ```
@@ -513,7 +512,7 @@ lower("TEST") = "test"
 
 Convert a string to all upper case.
 
-```
+```js
 upper("Test") = "TEST"
 upper("test") = "TEST"
 ```
@@ -523,7 +522,7 @@ upper("test") = "TEST"
 Split a string on the given delimiter string. If a third argument is provided, it limits the number of splits that occur. The delimiter string is interpreted as a regular expression. If there are capture groups in the delimiter, matches are spliced into the result array, and non-matching captures are empty strings.
 
 
-```
+```js
 split("hello world", " ") = list("hello", "world")
 split("hello  world", "\s") = list("hello", "world")
 split("hello there world", " ", 2) = list("hello", "there")
@@ -535,7 +534,7 @@ split("hello there world", "( )(x)?") = list("hello", " ", "", "there", " ", "",
 
 Checks if a string starts with the given prefix.
 
-```
+```js
 startswith("yes", "ye") = true
 startswith("path/to/something", "path/") = true
 startswith("yes", "no") = false
@@ -545,7 +544,7 @@ startswith("yes", "no") = false
 
 Checks if a string ends with the given suffix.
 
-```
+```js
 endswith("yes", "es") = true
 endswith("path/to/something", "something") = true
 endswith("yes", "ye") = false
@@ -556,7 +555,7 @@ endswith("yes", "ye") = false
 Pads a string up to the desired length by adding padding on the left side. If you omit the padding character, spaces
 will be used by default.
 
-```
+```js
 padleft("hello", 7) = "  hello"
 padleft("yes", 5, "!") = "!!yes"
 ```
@@ -565,7 +564,7 @@ padleft("yes", 5, "!") = "!!yes"
 
 Equivalent to `padleft`, but pads to the right instead.
 
-```
+```js
 padright("hello", 7) = "hello  "
 padright("yes", 5, "!") = "yes!!"
 ```
@@ -574,7 +573,7 @@ padright("yes", 5, "!") = "yes!!"
 
 Take a slice of a string, starting at `start` and ending at `end` (or the end of the string if unspecified).
 
-```
+```js
 substring("hello", 0, 2) = "he"
 substring("hello", 2, 4) = "ll"
 substring("hello", 2) = "llo"
@@ -586,7 +585,7 @@ substring("hello", 0) = "hello"
 Truncate a string to be at most the given length, including the `suffix` (which defaults to `...`). Generally useful
 to cut off long text in tables.
 
-```
+```js
 truncate("Hello there!", 8) = "Hello..."
 truncate("Hello there!", 8, "/") = "Hello t/"
 truncate("Hello there!", 10) = "Hello t..."
@@ -600,14 +599,14 @@ truncate("Hello there!", 20) = "Hello there!"
 
 If `field` is null, return `value`; otherwise return `field`. Useful for replacing null values with defaults. For example, to show projects which haven't been completed yet, use `"incomplete"` as their default value:
 
-```
+```js
 default(dateCompleted, "incomplete")
 ```
 
 Default is vectorized in both arguments; if you need to use default explicitly on a list argument, use `ldefault`, which
 is the same as default but is not vectorized.
 
-```
+```js
 default(list(1, 2, null), 3) = list(1, 2, 3)
 ldefault(list(1, 2, null), 3) = list(1, 2, null)
 ```
@@ -616,7 +615,7 @@ ldefault(list(1, 2, null), 3) = list(1, 2, null)
 
 A primitive if statement - if the first argument is truthy, returns left; otherwise, returns right.
 
-```
+```js
 choice(true, "yes", "no") = "yes"
 choice(false, "yes", "no") = "no"
 choice(x > 4, y, z) = y if x > 4, else z
@@ -627,7 +626,7 @@ choice(x > 4, y, z) = y if x > 4, else z
 Strip the time component of a date, leaving only the year, month, and day. Good for date comparisons if you don't care
 about the time.
 
-```
+```js
 striptime(file.ctime) = file.cday
 striptime(file.mtime) = file.mday
 ```
@@ -637,7 +636,7 @@ striptime(file.mtime) = file.mday
 Format a Dataview date using a formatting string.
 Uses [Luxon tokens](https://moment.github.io/luxon/#/formatting?id=table-of-tokens).
 
-```
+```js
 dateformat(file.ctime,"yyyy-MM-dd") = "2022-01-05"
 dateformat(file.ctime,"HH:mm:ss") = "12:18:04"
 dateformat(date(now),"x") = "1407287224054"
@@ -659,7 +658,7 @@ There are several properties on the object returned by `meta`:
 
 Get the display text of a link, or null if the link does not have defined display text.
 
-```
+```js
 meta([[2021-11-01|Displayed link text]]).display = "Displayed link text"
 meta([[2021-11-01]]).display = null
 ```
@@ -673,7 +672,7 @@ True or false depending on whether the link is an embed. Those are links that be
 
 Get the path portion of a link.
 
-```
+```js
 meta([[My Project]]).path = "My Project"
 meta([[My Project#Next Actions]]).path = "My Project"
 meta([[My Project#^9bcbe8]]).path = "My Project"
@@ -684,7 +683,7 @@ meta([[My Project#^9bcbe8]]).path = "My Project"
 Get the subpath of a link. For links to a heading within a file the subpath will be the text of the heading. For links
 to a block the subpath will be the block ID. If neither of those cases applies then the subpath will be null.
 
-```
+```js
 meta([[My Project#Next Actions]]).subpath = "Next Actions"
 meta([[My Project#^9bcbe8]]).subpath = "9bcbe8"
 meta([[My Project]]).subpath = null
@@ -704,7 +703,7 @@ where meta(section).subpath = "Next Actions"
 Has the value "file", "header", or "block" depending on whether the link links to an entire file, a heading within
 a file, or to a block within a file.
 
-```
+```js
 meta([[My Project]]).type = "file"
 meta([[My Project#Next Actions]]).type = "header"
 meta([[My Project#^9bcbe8]]).type = "block"
