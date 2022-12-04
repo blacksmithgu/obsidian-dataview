@@ -39,6 +39,10 @@ a != b              (check if a does not equal b)
 a <= b              (check if a is less than or equal to b)
 a >= b              (check if a is greater than or equal to b)
 
+# Strings
+
+a + b               (string concatenation)
+
 # Special Operations
 [[Link]].value      (fetch `value` from page `Link`)
 ```
