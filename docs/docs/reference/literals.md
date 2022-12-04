@@ -1,6 +1,42 @@
 # Literals
 
-Dataview query language *literals* are expressions which represent constant values like `"hello"` or `1337`.
+Dataview query language *literals* are **expressions** which represent constant values like a text (`"Science"`) or a number (`2021`). They can be used as part as [functions](functions.md) or of [expressions like comparison](./expressions.md). Some examples of [Queries](../queries/structure.md) that use **literals**:
+
+~~~
+
+Literal (number) 2022 used in a comparison
+```dataview
+LIST
+WHERE file.day.year = 2022
+```
+
+Literal (text) "Math" used in a function call
+```dataview
+LIST
+WHERE contains(file.name, "Math")
+```
+
+Literal (link) [[Study MOC]] used as a source
+```dataview
+LIST
+FROM [[Study MOC]]
+```
+
+Literal (date) date(yesterday) used in a comparison
+```dataview
+TASK
+WHERE !completed AND file.day = date(yesterday)
+```
+
+Literal (duration) dur(2 days) used in a comparison
+```dataview
+LIST
+WHERE end - start > dur(2 days)
+```
+~~~
+
+!!! summary "Literals"
+    Literals are **static values** that can be used as part of the Dataview Query Language (DQL), i.e. for comparisons.
 
 The following is an extensive, but non-exhaustive list of possible literals in DQL.
 
@@ -8,22 +44,28 @@ The following is an extensive, but non-exhaustive list of possible literals in D
 Literal|Description
 -|-
 `0`|The number zero
-`1337`|A positive number
-`-1337`|A negative number
-`"The quick brown fox jumps over the lazy dog"`|Some text, commonly referred to by programmers as a *string*
-`[[Link]]`|A link to the file named "Link"
-`[[]]`|A link to the current file
+`1337`|The positive number 1337
+`-200`| The negative number -200
+`"The quick brown fox jumps over the lazy dog"`| Text (sometimes reffered to as "string")
+`[[Science]]`|A link to the file named "Science"
+`[[]]`| A link to the current file
 `[1, 2, 3]`|A list of numbers 1, 2, and 3
-`[[1, 2],[3, 4]]`|A list of lists
-`{ a: 1, b: 2 }`|An object|
+`[[1, 2],[3, 4]]`|A list of list [1, 2] and [3, 4]
+`{ a: 1, b: 2 }`| An object with keys a and b, whereas a has value 1, b 2. |
+`date(2021-07-14)`| A date (read more below) |
+`dur(2 days 4 hours)` | A duration (read more below) | 
+
+!!! attention "Literals as field values"
+    Literals are only interpreted this way when used inside a Query, not when used as a meta data value. For possible values and their data types for fields, please refer to [Types of Metadata](../annotation/types-of-metadata.md).
 
 ### Dates
 
-Note that `date()` is also a [function](../functions/#dateany), which can be called on text to extract dates.
+Whenever you use a [field value in Date ISO format](../annotation/types-of-metadata.md#date), you'll need to compare these fields against date objects. Dataview provides some shorthands for common use cases like tomorrow, start of current week etc. Please note that `date()` is also a [function](../functions/#dateany), which can be called on **text** to extract dates.
 
 Literal|Description
 -|-
 `date(2021-11-11)`|A date, November 11th, 2021
+`date(2021-09-20T20:17)`| A date, September 20th, 2021 at 20:17
 `date(today)`|A date representing the current date
 `date(now)`|A date representing the current date and time
 `date(tomorrow)`|A date representing tomorrow's date
@@ -36,6 +78,9 @@ Literal|Description
 `date(eoy)`|A date representing the end of the current year
 
 ### Durations
+
+Durations are representatives of a time span. You can either [define them directly](../annotation/types-of-metadata.md#duration) or create them due to [calculating with dates](../annotation/types-of-metadata.md#duration), and use these for i.e. comparisons.
+
 #### Seconds
 Literal|Description
 -|-
