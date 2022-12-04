@@ -104,7 +104,7 @@ See the [note in the FAQ](../resources/faq.md#how-do-i-use-fields-with-the-same-
 
 Dataview supports various functions for manipulating data, which are described in full in the [functions
 documentation](../functions). They have the general syntax `function(arg1, arg2, ...)` - i.e., `lower("yes")` or
-`regexmatch("text", ".+")`.
+`regextest("text", ".+")`.
 
 ### Lambdas
 

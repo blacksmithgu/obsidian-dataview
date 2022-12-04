@@ -65,6 +65,10 @@ describe("all()", () => {
         expectEvals('all(regexmatch("a+", list("a", "aaaa")))', true);
         expectEvals('all(regexmatch("a+", list("a", "aaab")))', false);
         expectEvals('any(regexmatch("a+", list("a", "aaab")))', true);
+
+        expectEvals('all(regextest("a+", list("a", "aaaa")))', true);
+        expectEvals('all(regextest("a+", list("a", "aaab")))', true);
+        expectEvals('any(regextest("a+", list("a", "aaab")))', true);
     });
 });
 

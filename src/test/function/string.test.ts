@@ -20,6 +20,19 @@ describe("containsword()", () => {
     test("case insensitive 2", () => expect(parseEval('containsword("Hello there, chap!", "HELLO")')).toEqual(true));
 });
 
+// <-- regextest() -->
+
+describe("regextest()", () => {
+    test(".+", () => expect(parseEval('regextest(".+", "stuff")')).toEqual(true));
+    test(".+ empty", () => expect(parseEval('regextest(".+", "")')).toEqual(false));
+    test(".* empty", () => expect(parseEval('regextest(".*", "")')).toEqual(true));
+    test("word", () => expect(parseEval('regextest("\\w+", "m3me")')).toEqual(true));
+    test("whitespace", () => expect(parseEval('regextest("\\s+", "  ")')).toEqual(true));
+    test("exact", () => expect(parseEval('regextest("what", "what")')).toEqual(true));
+    test("not exact", () => expect(parseEval('regextest("what", "what are you doing?")')).toEqual(true));
+    test("start & end", () => expect(parseEval('regextest("^what$", "what")')).toEqual(true));
+});
+
 // <-- regexmatch() -->
 
 describe("regexmatch()", () => {
