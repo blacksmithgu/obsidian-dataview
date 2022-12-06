@@ -131,8 +131,10 @@ function TaskList({ items }: { items: SListItem[] }) {
     );
 }
 
+/** JSX component which returns the result count. */
 function ResultCount(props: { item: SListEntry | STask | GroupElement<SListEntry | STask> }) {
-    return <span class="dataview small-text">{Groupings.count(props.item.rows)}</span>;
+    const {settings} = useContext(DataviewContext);
+    return (settings.showResultCount ?<span class="dataview small-text">{Groupings.count(props.item.rows)}</span> : <Fragment></Fragment>);
 }
 
 /** JSX component which recursively renders grouped tasks. */
