@@ -16,8 +16,10 @@ import { h, Fragment } from "preact";
 import { useContext } from "preact/hooks";
 import { MarkdownRenderChild } from "obsidian";
 
+/** JSX component which returns the result count. */
 function ResultCount(props: { length: number }) {
-    return <span class="dataview small-text">{props.length}</span>;
+    const {settings} = useContext(DataviewContext);
+    return (settings.showResultCount ? <span class="dataview small-text">{props.length}</span>: <Fragment></Fragment>);
 }
 
 /** Simple table over headings and corresponding values. */
