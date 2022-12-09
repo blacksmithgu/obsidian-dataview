@@ -403,26 +403,35 @@ export class DataviewApi {
 
         let query = maybeQuery.value;
         let init = { app: this.app, settings: this.settings, index: this.index, container };
+        let childComponent;
         switch (query.header.type) {
             case "task":
-                component.addChild(createTaskView(init, query as Query, filePath));
+                childComponent = createTaskView(init, query as Query, filePath)
+                childComponent.load()
+                component.addChild(childComponent);
                 break;
             case "list":
-                component.addChild(createListView(init, query as Query, filePath));
+                childComponent = createListView(init, query as Query, filePath)
+                childComponent.load()
+                component.addChild(childComponent);
                 break;
             case "table":
-                component.addChild(createTableView(init, query as Query, filePath));
+                childComponent = createTableView(init, query as Query, filePath)
+                childComponent.load()
+                component.addChild(childComponent);
                 break;
             case "calendar":
+                childComponent = new DataviewCalendarRenderer(
+                    query as Query,
+                    container,
+                    this.index,
+                    filePath,
+                    this.settings,
+                    this.app
+                )
+                childComponent.load()
                 component.addChild(
-                    new DataviewCalendarRenderer(
-                        query as Query,
-                        container,
-                        this.index,
-                        filePath,
-                        this.settings,
-                        this.app
-                    )
+                    childComponent
                 );
                 break;
         }
