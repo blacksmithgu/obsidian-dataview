@@ -85,7 +85,7 @@ export interface LiteralWrapper<T extends LiteralType> {
 }
 
 export namespace Values {
-    /** Convert an arbitary value into a reasonable, Markdown-friendly string if possible. */
+    /** Convert an arbitrary value into a reasonable, Markdown-friendly string if possible. */
     export function toString(
         field: any,
         setting: QuerySettings = DEFAULT_QUERY_SETTINGS,

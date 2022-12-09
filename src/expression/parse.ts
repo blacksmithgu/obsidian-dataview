@@ -143,12 +143,12 @@ export function chainOpt<T>(base: P.Parser<T>, ...funcs: ((r: T) => P.Parser<T>)
 // Expression Parsing //
 ////////////////////////
 
-type PostfixFragment =
+export type PostfixFragment =
     | { type: "dot"; field: string }
     | { type: "index"; field: Field }
     | { type: "function"; fields: Field[] };
 
-interface ExpressionLanguage {
+export interface ExpressionLanguage {
     number: number;
     string: string;
     escapeCharacter: string;
@@ -257,7 +257,7 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
     tag: _ =>
         P.seqMap(
             P.string("#"),
-            P.alt(P.regexp(/[\p{Letter}0-9_/-]/u).desc("text"), P.regexp(EMOJI_REGEX).desc("text")).many(),
+            P.alt(P.regexp(/[^\u2000-\u206F\u2E00-\u2E7F'!"#$%&()*+,.:;<=>?@^`{|}~\[\]\\\s]/).desc("text")).many(),
             (start, rest) => start + rest.join("")
         ).desc("tag ('#hello/stuff')"),
 

@@ -77,6 +77,8 @@ export interface DataviewSettings extends QuerySettings, ExportSettings {
     inlineQueriesInCodeblocks: boolean;
     /** Enable or disable executing DataviewJS queries. */
     enableDataviewJs: boolean;
+    /** Enable or disable regular inline queries. */
+    enableInlineDataview: boolean;
     /** Enable or disable executing inline DataviewJS queries. */
     enableInlineDataviewJs: boolean;
     /** Enable or disable rendering inline fields prettily. */
@@ -91,6 +93,7 @@ export const DEFAULT_SETTINGS: DataviewSettings = {
         inlineQueryPrefix: "=",
         inlineJsQueryPrefix: "$=",
         inlineQueriesInCodeblocks: true,
+        enableInlineDataview: true,
         enableDataviewJs: false,
         enableInlineDataviewJs: false,
         prettyRenderInlineFields: true,

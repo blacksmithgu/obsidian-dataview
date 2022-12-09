@@ -112,8 +112,10 @@ export class PageMetadata {
 
     /** Convert all links in this file to file links. */
     public fileLinks(): Link[] {
-        let distinctPaths = new Set<string>(this.links.map(l => l.path));
-        return Array.from(distinctPaths).map(l => Link.file(l));
+        // We want to make them distinct, but where links are not raw links we
+        // now keep the additional metadata.
+        let distinctLinks = new Set<Link>(this.links);
+        return Array.from(distinctLinks);
     }
 
     /** Map this metadata to a full object; uses the index for additional data lookups.  */
@@ -271,7 +273,7 @@ export class ListItem {
             header: this.section, // @deprecated, use 'item.section' instead.
         };
 
-        if (this.parent) result.parent = this.parent;
+        if (this.parent || this.parent === 0) result.parent = this.parent;
         if (this.blockId) result.blockId = this.blockId;
 
         addFields(this.fields, result);

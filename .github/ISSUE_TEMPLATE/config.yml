@@ -2,10 +2,10 @@ blank_issues_enabled: false
 contact_links:
   - name: Dataview Discussions
     url: https://github.com/blacksmithgu/obsidian-dataview/discussions
-    about: Please ask and answer questions here
+    about: Please ask and answer questions here.
   - name: Obsidian Discord
     url: https://obsidian.md/community
-    about: "Check out the #plugin-advanced channel and open up the #dataview thread to ask and answer questions"
+    about: "Check out the #dataview channel under the Plugins section."
   - name: Dataview Snippet Showcase
     url: https://forum.obsidian.md/t/dataview-plugin-snippet-showcase
     about: Show off your Dataview snippets here!

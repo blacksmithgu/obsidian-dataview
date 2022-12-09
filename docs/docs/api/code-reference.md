@@ -382,7 +382,7 @@ await dv.query("TASK WHERE due") =>
 
 ### ⌛ `dv.tryQuery(source, [file, settings])`
 
-Exactly the same as `dv.query`, but more convienent in short scripts as
+Exactly the same as `dv.query`, but more convenient in short scripts as
 execution failures will be raised as JavaScript exceptions instead of a
 result type.
 

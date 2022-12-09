@@ -109,14 +109,14 @@ modes:
    ~~~
 
 2. **Inline Expressions**: DQL expressions which you can embed directly inside markdown and which will be evaluated in
-   preview mode. See the [documentation](https://blacksmithgu.github.io/obsidian-dataview/query/expressions/) for
+   preview mode. See the [documentation](https://blacksmithgu.github.io/obsidian-dataview/reference/expressions/) for
    allowable queries.
 
    ```markdown
    We are on page `= this.file.name`.
    ```
 
-3. **DataviewJS**: A high-powered JavaScript API which gives full access to the Dataview index and some convienent
+3. **DataviewJS**: A high-powered JavaScript API which gives full access to the Dataview index and some convenient
    rendering utilities. Highly recommended if you know JavaScript, since this is far more powerful than the query
    language. Check the [documentation](https://blacksmithgu.github.io/obsidian-dataview/api/intro/) for more details.
 
@@ -126,7 +126,7 @@ modes:
    ```
    ~~~
 
-4. **Inline JS Expressions**: The JavaScript equivalent to inline expressions, which allow you to execute arbitary JS
+4. **Inline JS Expressions**: The JavaScript equivalent to inline expressions, which allow you to execute arbitrary JS
    inline:
 
    ~~~markdown

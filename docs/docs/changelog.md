@@ -1,3 +1,37 @@
+# 0.5.51 (Beta)
+
+- Allow disabling regular Dataview inline queries via configuration option.
+
+---
+
+# 0.5.50 (Beta)
+
+- Expose dataview EXPRESSION and QUERY parsing to the dataview npm plugin, so others can parse dataview ASTs.
+- Fix documentation issue with `join`.
+
+---
+
+# 0.5.49 (Beta)
+
+- Add the `average` function to compute averages of lists (`average([list of things])`).
+- Added documentation for `average`, `min`, `max`, `minby`, and `maxby` functions.
+- Fixed the broken `nonnull` function and documented it.
+
+---
+
+# 0.5.48 (Beta)
+
+We're back to more regular beta releases while I trial out new functionality!
+
+- Fixed broken list behavior for `dv.markdownTaskList`.
+- @GamerGirlandCo: Better handling of block IDs when checking off tasks!
+- @s-blu and @AB1908: Lots of big documentation upgrades! Nice!
+- @leoccyao: More block ID task checking fixes. Should work after this one.
+- Add expression/query parsing to the dataview NPM package.
+- @charleshan: Fix a missing header level in the dataview `dv.header` example.
+
+---
+
 # 0.5.47
 
 Improves `date + duration` behavior when either the date or duration are null.
@@ -70,7 +104,7 @@ Adds some more documentation about the new markdown functionality.
 # 0.5.38
 
 - Some minor documentation improvements.
-- Fix an issue with inline fields rendering out of order. That was a wierd bug.
+- Fix an issue with inline fields rendering out of order. That was a weird bug.
 
 ---
 
@@ -240,7 +274,7 @@ changes, and has some nice performance improvements that come along with it! Her
   `file.tasks`.
 
 There have been some moderate documentation touch-ups to keep things up to date; I'm still working on a walkthrough for
-common Dataview usecases. This review also includes about ~30-40 bugfixes; some new bugs may arise due to internal
+common Dataview use cases. This review also includes about ~30-40 bugfixes; some new bugs may arise due to internal
 changes, so please flag them if you encounter them.
 
 ---
@@ -380,7 +414,7 @@ links to/from their embedded equivalents.
 
 Iterative beta which adds a few nice QoL features and fixes some more bugs:
 
-- Internally swapped to a React-based renderer; this should not have a noticable perf or usability impact, but makes it
+- Internally swapped to a React-based renderer; this should not have a noticeable perf or usability impact, but makes it
   easier for me to implement complex table/list behaviors.
 - Naming your fields with `AS "Name"` is now optional; Dataview will infer the name from the expression automatically.
   For example, `TABLE 8 + 4, 3 + 6 FROM ...` is now a valid table expression, and the columns will be named `8 + 4` and
@@ -656,7 +690,7 @@ editing easier to do:
 - [ ] Another Task. 🔗
     - [ ] Some Random Subtask. 🔗
 
-You can configure the symbol for the link or disable it alltogether.
+You can configure the symbol for the link or disable it altogether.
 
 ### Improving DataviewJS Posture
 
@@ -727,7 +761,7 @@ similar to existing inline field syntax, but with brackets or parenthesis:
 I would rate this a [rating:: 6]. It was (thoughts:: acceptable).
 ```
 
-Improved rendering for all inline fields is coming in an unpcoming update to improve the visual look of these inline
+Improved rendering for all inline fields is coming in an upcoming update to improve the visual look of these inline
 fields.
 
 
