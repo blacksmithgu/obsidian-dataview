@@ -407,17 +407,16 @@ export class DataviewApi {
         switch (query.header.type) {
             case "task":
                 childComponent = createTaskView(init, query as Query, filePath)
-                childComponent.load()
                 component.addChild(childComponent);
                 break;
             case "list":
                 childComponent = createListView(init, query as Query, filePath)
-                childComponent.load()
                 component.addChild(childComponent);
+
                 break;
             case "table":
                 childComponent = createTableView(init, query as Query, filePath)
-                childComponent.load()
+
                 component.addChild(childComponent);
                 break;
             case "calendar":
@@ -429,12 +428,14 @@ export class DataviewApi {
                     this.settings,
                     this.app
                 )
-                childComponent.load()
+
                 component.addChild(
                     childComponent
                 );
                 break;
         }
+        childComponent.load()
+        childComponent.onload()
     }
 
     /**
