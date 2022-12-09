@@ -442,8 +442,9 @@ export class DataviewApi {
             renderCodeBlock(container, code, "javascript");
             return;
         }
-
-        component.addChild(new DataviewJSRenderer(this, code, container, filePath));
+        const renderer = new DataviewJSRenderer(this, code, container, filePath)
+        renderer.load()
+        component.addChild(renderer);
     }
 
     /** Render a dataview list of the given values. */
