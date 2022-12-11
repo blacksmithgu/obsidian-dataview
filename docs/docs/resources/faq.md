@@ -64,3 +64,15 @@ WHERE duration > dur("10h")
 ~~~
 
 This will give you back the example page, even though the result doesn't fulfill the `WHERE` clause, because the value you are comparing against is `= this.end - this.start - this.pause` and is not a duration.
+
+### How can I hide the result count on TABLE Queries?
+
+There is no built-in Dataview Setting to do so, but you can use a CSS Snippet for that:
+
+```css
+.dataview th:first-of-type .small-text {
+	visibility: hidden;
+}
+```
+
+Create a .css file (i.e. `hide-dataview-count.css`) inside the folder `.obsidian/snippets` in your vault, copy & paste the above code and and activate the snippet in the appareance settings. To read more about CSS Snippets and how to apply them refer to the [official Obsidian documentation](https://help.obsidian.md/How+to/Add+custom+styles).
