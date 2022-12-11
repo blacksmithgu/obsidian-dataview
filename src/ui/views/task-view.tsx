@@ -1,7 +1,7 @@
 import { setEmojiShorthandCompletionField, setInlineField } from "data-import/inline-field";
 import { LIST_ITEM_REGEX } from "data-import/markdown-file";
 import { SListEntry, SListItem, STask } from "data-model/serialized/markdown";
-import { Grouping, Groupings } from "data-model/value";
+import { GroupElement, Grouping, Groupings } from "data-model/value";
 import { DateTime } from "luxon";
 import { MarkdownRenderChild, Platform, Vault } from "obsidian";
 import { Fragment, h } from "preact";
@@ -131,6 +131,16 @@ function TaskList({ items }: { items: SListItem[] }) {
     );
 }
 
+/** JSX component which returns the result count. */
+function ResultCount(props: { item: SListEntry | STask | GroupElement<SListEntry | STask> }) {
+    const { settings } = useContext(DataviewContext);
+    return settings.showResultCount ? (
+        <span class="dataview small-text">{Groupings.count(props.item.rows)}</span>
+    ) : (
+        <Fragment></Fragment>
+    );
+}
+
 /** JSX component which recursively renders grouped tasks. */
 function TaskGrouping({ items, sourcePath }: { items: Grouping<SListItem>; sourcePath: string }) {
     const isGrouping = items.length > 0 && Groupings.isGrouping(items);
@@ -142,7 +152,7 @@ function TaskGrouping({ items, sourcePath }: { items: Grouping<SListItem>; sourc
                     <Fragment key={item.key}>
                         <h4>
                             <Lit value={item.key} sourcePath={sourcePath} />
-                            <span class="dataview small-text">{Groupings.count(item.rows)}</span>
+                            <ResultCount item={item} />
                         </h4>
                         <div class="dataview result-group">
                             <TaskGrouping items={item.rows} sourcePath={sourcePath} />

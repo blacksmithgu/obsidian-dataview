@@ -16,6 +16,12 @@ import { h, Fragment } from "preact";
 import { useContext } from "preact/hooks";
 import { MarkdownRenderChild } from "obsidian";
 
+/** JSX component which returns the result count. */
+function ResultCount(props: { length: number }) {
+    const { settings } = useContext(DataviewContext);
+    return settings.showResultCount ? <span class="dataview small-text">{props.length}</span> : <Fragment></Fragment>;
+}
+
 /** Simple table over headings and corresponding values. */
 export function TableGrouping({
     headings,
@@ -36,7 +42,7 @@ export function TableGrouping({
                         {headings.map((heading, index) => (
                             <th class="table-view-th">
                                 <Markdown sourcePath={sourcePath} content={heading} />
-                                {index == 0 && <span class="dataview small-text">{values.length}</span>}
+                                {index == 0 && <ResultCount length={values.length} />}
                             </th>
                         ))}
                     </tr>
