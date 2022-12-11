@@ -340,7 +340,7 @@ class GeneralSettingsTab extends PluginSettingTab {
 
         new Setting(this.containerEl)
             .setName("Display result count")
-            .setDesc("If toggled off, the small number in the result header will not be displayed.")
+            .setDesc("If toggled off, the small number in the result header of TASK and TABLE Queries will be hidden.")
             .addToggle(toggle =>
                 toggle.setValue(this.plugin.settings.showResultCount).onChange(async value => {
                     await this.plugin.updateSettings({ showResultCount: value });
