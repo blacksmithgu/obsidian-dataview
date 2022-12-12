@@ -109,7 +109,7 @@ modes:
    ~~~
 
 2. **Inline Expressions**: DQL expressions which you can embed directly inside markdown and which will be evaluated in
-   preview mode. See the [documentation](https://blacksmithgu.github.io/obsidian-dataview/query/expressions/) for
+   preview mode. See the [documentation](https://blacksmithgu.github.io/obsidian-dataview/reference/expressions/) for
    allowable queries.
 
    ```markdown

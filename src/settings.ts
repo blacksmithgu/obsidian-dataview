@@ -31,6 +31,8 @@ export interface QuerySettings {
     tableIdColumnName: string;
     /** The name of default ID fields on grouped data ('Group'). */
     tableGroupColumnName: string;
+    /** Include the result count as part of the output. */
+    showResultCount: boolean;
 }
 
 export const DEFAULT_QUERY_SETTINGS: QuerySettings = {
@@ -49,6 +51,7 @@ export const DEFAULT_QUERY_SETTINGS: QuerySettings = {
 
     tableIdColumnName: "File",
     tableGroupColumnName: "Group",
+    showResultCount: true,
 };
 
 /////////////////////

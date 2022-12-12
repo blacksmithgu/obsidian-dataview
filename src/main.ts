@@ -339,6 +339,16 @@ class GeneralSettingsTab extends PluginSettingTab {
         this.containerEl.createEl("h3", { text: "General" });
 
         new Setting(this.containerEl)
+            .setName("Display result count")
+            .setDesc("If toggled off, the small number in the result header of TASK and TABLE Queries will be hidden.")
+            .addToggle(toggle =>
+                toggle.setValue(this.plugin.settings.showResultCount).onChange(async value => {
+                    await this.plugin.updateSettings({ showResultCount: value });
+                    this.plugin.index.touch();
+                })
+            );
+
+        new Setting(this.containerEl)
             .setName("Warn on Empty Result")
             .setDesc("If set, queries which return 0 results will render a warning message.")
             .addToggle(toggle =>

@@ -257,7 +257,7 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
     tag: _ =>
         P.seqMap(
             P.string("#"),
-            P.alt(P.regexp(/[\p{Letter}0-9_/-]/u).desc("text"), P.regexp(EMOJI_REGEX).desc("text")).many(),
+            P.alt(P.regexp(/[^\u2000-\u206F\u2E00-\u2E7F'!"#$%&()*+,.:;<=>?@^`{|}~\[\]\\\s]/).desc("text")).many(),
             (start, rest) => start + rest.join("")
         ).desc("tag ('#hello/stuff')"),
 
