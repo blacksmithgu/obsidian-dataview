@@ -4,7 +4,9 @@ Dataview query language **expressions** are anything that yields a value:
 
 - all [fields](../annotation/add-metadata.md)
 - all [literals](./literals.md) 
-- and computed values (like `field - 9`). 
+- and computed values, like `field - 9` of [function calls](./functions.md). 
+
+Basically, everything that is not a [Query Type](../queries/query-types.md), nor a [data command](../queries/data-commands.md) is an expression.
 
 For a very high level summary, following is considered an **expression** in DQL:
 
@@ -107,20 +109,46 @@ boolean true or false value which can be used in `WHERE` blocks in queries.
 
 ~~~
 ```dataview
+LIST
+FROM "Games"
+WHERE price > 10
+```
+
+```dataview
+TASK
+WHERE due <= date(today)
+```
+
+```dataview
+LIST
+FROM #homework
+WHERE status != "done"
 ```
 ~~~
 
-### Array/Object Indexing
+!!! hint "Comparing different types"
+    Comparing different [data types](../annotation/types-of-metadata.md) with each other can lead to unexpected results. Take the second example: If `due` is not set (neither on page nor task level), it is `null` and `null <= date(today)` returns true, including tasks without any due date. If this is not wanted, add a type check to make sure you're always comparing the same types:
+    ~~~
+    ```dataview
+    TASK
+    WHERE typeof(due) = "date" AND due <= date(today)
+    ```
+    ~~~
+    Most often, it is sufficient to check if the meta data is available via `WHERE due AND due <= date(today)`, but checking the type is the safer way to get forseeable results. 
 
-You can retrieve data from arrays via the index operator `array[<index>]`, where `<index>` is any computed expression.
-Arrays are 0-indexed, so the first element is index 0, the second element is index 1, and so on.
-For example `list(1, 2, 3)[0] = 1`.
+### List/Object Indexing
 
-A similar notation style works for objects.
+You can retrieve data from [lists/arrays](../annotation/types-of-metadata.md#list) via the index operator `list[<index>]`, where `<index>` is any computed expression.
+Lists are 0-indexed, so the first element is index 0, the second element is index 1, and so on.
+For example `list("A", "B", "C")[0] = "A"`.
+
+A similar notation style works for [objects](../annotation/types-of-metadata.md#object).
 You can use `field["nestedfield"]` to reference fields inside an object or otherwise similarly nested.
 For example, in the YAML defined below, we can reference `previous` via `episode_metadata["previous"]`.
 ```yaml
 ---
+aliases:
+  - "ABC"
 current_episode: "S01E03"
 episode_metadata:
   previous: "S01E02"
@@ -139,17 +167,25 @@ See the [note in the FAQ](../resources/faq.md#how-do-i-use-fields-with-the-same-
 
 ~~~
 ```dataview
+TABLE id, episode_metadata.next, aliases[0]
 ```
 ~~~
 
 ### Function Calls
 
 Dataview supports various functions for manipulating data, which are described in full in the [functions
-documentation](../functions). They have the general syntax `function(arg1, arg2, ...)` - i.e., `lower("yes")` or
-`regextest("text", ".+")`.
+documentation](../functions). They have the general syntax `function(arg1, arg2, ...)` - i.e., `lower(file.name)` or
+`regexmatch(file.folder, "A.+")`.
 
 ~~~
 ```dataview
+LIST
+WHERE contains(file.name, "WIP")
+```
+
+```dataview
+LIST
+WHERE string(file.day.year) = split(this.file.name, "-W")[0]
 ```
 ~~~
 
@@ -166,6 +202,7 @@ Lambdas are used in several advanced operators like `reduce` and `map` to allow 
 few examples:
 
 ```
+(x) => x.field                  (return field of x, often used for map)
 (x, y) => x + y                 (sum x and y)
 (x) => 2 * x                    (double x)
 (value) => length(value) = 4    (return true if value is length 4)
@@ -173,6 +210,9 @@ few examples:
 
 ~~~
 ```dataview
+CALENDAR file.day
+FLATTEN all(map(file.tasks, (x) => x.completed)) AS "allCompleted"
+WHERE !allCompleted
 ```
 ~~~
 
