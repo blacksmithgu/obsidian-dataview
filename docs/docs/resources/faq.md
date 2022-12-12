@@ -67,4 +67,4 @@ This will give you back the example page, even though the result doesn't fulfill
 
 ### How can I hide the result count on TABLE Queries?
 
-With dataview 0.5.52, you can hide the result count on TABLE and TASK Queries via a setting. Go to dataview's settings -> Display result count. 
+With Dataview 0.5.52, you can hide the result count on TABLE and TASK Queries via a setting. Go to Dataview's settings -> Display result count. 

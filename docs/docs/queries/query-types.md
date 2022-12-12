@@ -213,7 +213,7 @@ TABLE
     If you want to change the name only for one specific `TABLE` query, have a look at `TABLE WITHOUT ID`.
 
 !!! info "Disabling Result count"
-    The first column always shows the result count. If you do not want to get it displayed, you can disable it in dataviews settings ("Display result count"), available since 0.5.52.
+    The first column always shows the result count. If you do not want to get it displayed, you can disable it in Dataview's settings ("Display result count", available since 0.5.52).
 
 Of course, a `TABLE` is made for specifying one to multiple additional informations:  
 
