@@ -406,16 +406,16 @@ export class DataviewApi {
         let childComponent;
         switch (query.header.type) {
             case "task":
-                childComponent = createTaskView(init, query as Query, filePath)
+                childComponent = createTaskView(init, query as Query, filePath);
                 component.addChild(childComponent);
                 break;
             case "list":
-                childComponent = createListView(init, query as Query, filePath)
+                childComponent = createListView(init, query as Query, filePath);
                 component.addChild(childComponent);
 
                 break;
             case "table":
-                childComponent = createTableView(init, query as Query, filePath)
+                childComponent = createTableView(init, query as Query, filePath);
 
                 component.addChild(childComponent);
                 break;
@@ -427,15 +427,13 @@ export class DataviewApi {
                     filePath,
                     this.settings,
                     this.app
-                )
-
-                component.addChild(
-                    childComponent
                 );
+
+                component.addChild(childComponent);
                 break;
         }
-        childComponent.load()
-        childComponent.onload()
+        childComponent.load();
+        childComponent.onload();
     }
 
     /**
@@ -452,8 +450,8 @@ export class DataviewApi {
             renderCodeBlock(container, code, "javascript");
             return;
         }
-        const renderer = new DataviewJSRenderer(this, code, container, filePath)
-        renderer.load()
+        const renderer = new DataviewJSRenderer(this, code, container, filePath);
+        renderer.load();
         component.addChild(renderer);
     }
 
