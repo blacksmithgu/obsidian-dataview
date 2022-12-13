@@ -25,7 +25,7 @@ const getRollupPlugins = (tsconfig, ...plugins) =>
 const DEV_PLUGIN_CONFIG = {
     ...BASE_CONFIG,
     output: {
-        dir: "../test-vault/.obsidian/plugins/dataview",
+        dir: "test-vault/.obsidian/plugins/dataview",
         sourcemap: "inline",
         format: "cjs",
         exports: "default",
@@ -35,8 +35,8 @@ const DEV_PLUGIN_CONFIG = {
         undefined,
         copy({
             targets: [
-                { src: "manifest.json", dest: "../test-vault/.obsidian/plugins/dataview/" },
-                { src: "styles.css", dest: "../test-vault/.obsidian/plugins/dataview/" },
+                { src: "manifest.json", dest: "test-vault/.obsidian/plugins/dataview/" },
+                { src: "styles.css", dest: "test-vault/.obsidian/plugins/dataview/" },
             ],
         })
     ),
