@@ -53,7 +53,7 @@ export default class DataviewPlugin extends Plugin {
         );
 
         // DataviewJS codeblocks.
-        this.registerPriorityCodeblockPostProcessor("dataviewjs", -100, async (source: string, el, ctx) =>
+        this.registerPriorityCodeblockPostProcessor(this.settings.dataviewJsKeyword, -100, async (source: string, el, ctx) =>
             this.dataviewjs(source, el, ctx, ctx.sourcePath)
         );
 
@@ -297,6 +297,19 @@ class GeneralSettingsTab extends PluginSettingTab {
             );
 
         this.containerEl.createEl("h2", { text: "Codeblock Settings" });
+
+        new Setting(this.containerEl)
+            .setName("DataviewJS Keyword")
+            .setDesc("Keyword for DataviewJS blocks. Defaults to 'dataviewjs'. Reload required for changes to take effect.")
+            .addText(text =>
+                text
+                    .setPlaceholder("dataviewjs")
+                    .setValue(this.plugin.settings.dataviewJsKeyword)
+                    .onChange(async value => {
+                        if (value.length == 0) return;
+                        await this.plugin.updateSettings({ dataviewJsKeyword: value });
+                    })
+            );
 
         new Setting(this.containerEl)
             .setName("Inline Query Prefix")
