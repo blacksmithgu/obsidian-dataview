@@ -53,8 +53,10 @@ export default class DataviewPlugin extends Plugin {
         );
 
         // DataviewJS codeblocks.
-        this.registerPriorityCodeblockPostProcessor(this.settings.dataviewJsKeyword, -100, async (source: string, el, ctx) =>
-            this.dataviewjs(source, el, ctx, ctx.sourcePath)
+        this.registerPriorityCodeblockPostProcessor(
+            this.settings.dataviewJsKeyword,
+            -100,
+            async (source: string, el, ctx) => this.dataviewjs(source, el, ctx, ctx.sourcePath)
         );
 
         // Dataview inline queries.
@@ -300,7 +302,9 @@ class GeneralSettingsTab extends PluginSettingTab {
 
         new Setting(this.containerEl)
             .setName("DataviewJS Keyword")
-            .setDesc("Keyword for DataviewJS blocks. Defaults to 'dataviewjs'. Reload required for changes to take effect.")
+            .setDesc(
+                "Keyword for DataviewJS blocks. Defaults to 'dataviewjs'. Reload required for changes to take effect."
+            )
             .addText(text =>
                 text
                     .setPlaceholder("dataviewjs")
