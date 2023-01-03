@@ -1,3 +1,18 @@
+# 0.5.52
+
+Substantial documentation improvements thanks to @s-blu and @AB1908!
+
+- For people concerned about dataviewjs code execution from copy-pasting, @eyuelt has made it possible to change the
+  dataviewjs codeblock prefix.
+- @sohanglal has added some documentation for `task.visual` for changing the visual text of a task.
+- @Chouffy and @Daryl-Horton have fixed some bad documentation links!
+- @vrtmrz swapped the regex used for parsing tags to better match Obsidian's own parser.
+- @alexfertel has added `regextest`, which allows for matching parts of a string instead of the whole thing.
+- @iamrecursion has added more metadata to file links, so they now include section metadata. This may cause some slight
+  visual changes in link views.
+
+---
+
 # 0.5.51 (Beta)
 
 - Allow disabling regular Dataview inline queries via configuration option.
