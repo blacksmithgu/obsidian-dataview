@@ -1,3 +1,9 @@
+# 0.5.53
+
+- Fix some documentation issues causing docs to not be updated.
+
+---
+
 # 0.5.52
 
 Substantial documentation improvements thanks to @s-blu and @AB1908!
