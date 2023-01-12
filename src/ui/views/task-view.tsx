@@ -20,14 +20,18 @@ import {
 } from "ui/markdown";
 import { asyncTryOrPropogate } from "util/normalize";
 
+/** Function used to test if a given event correspond to a pressed link */
+function wasLinkPressed(evt: preact.JSX.TargetedMouseEvent<HTMLElement>): boolean {
+    return evt.target != null && evt.target != undefined && (evt.target as HTMLElement).tagName == "A"
+}
+
 /** JSX component which renders a task element recursively. */
 function TaskItem({ item }: { item: STask }) {
     let context = useContext(DataviewContext);
 
     // Navigate to the given task on click.
     const onClicked = (evt: preact.JSX.TargetedMouseEvent<HTMLElement>) => {
-        // Skip this event if a link was pressed.
-        if (evt.target != null && evt.target != undefined && (evt.target as HTMLElement).tagName == "A") {
+        if (wasLinkPressed(evt)) {
             return;
         }
 
@@ -111,8 +115,7 @@ function ListItem({ item }: { item: SListEntry }) {
     
     // Navigate to the given task on click.
     const onClicked = (evt: preact.JSX.TargetedMouseEvent<HTMLElement>) => {
-        // Skip this event if a link was pressed.
-        if (evt.target != null && evt.target != undefined && (evt.target as HTMLElement).tagName == "A") {
+        if (wasLinkPressed(evt)) {
             return;
         }
 
