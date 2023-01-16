@@ -20,14 +20,18 @@ import {
 } from "ui/markdown";
 import { asyncTryOrPropogate } from "util/normalize";
 
+/** Function used to test if a given event correspond to a pressed link */
+function wasLinkPressed(evt: preact.JSX.TargetedMouseEvent<HTMLElement>): boolean {
+    return evt.target != null && evt.target != undefined && (evt.target as HTMLElement).tagName == "A";
+}
+
 /** JSX component which renders a task element recursively. */
 function TaskItem({ item }: { item: STask }) {
     let context = useContext(DataviewContext);
 
     // Navigate to the given task on click.
     const onClicked = (evt: preact.JSX.TargetedMouseEvent<HTMLElement>) => {
-        // Skip this event if a link was pressed.
-        if (evt.target != null && evt.target != undefined && (evt.target as HTMLElement).tagName == "A") {
+        if (wasLinkPressed(evt)) {
             return;
         }
 
@@ -107,8 +111,36 @@ function TaskItem({ item }: { item: STask }) {
 
 /** JSX component which renders a plain list item recursively. */
 function ListItem({ item }: { item: SListEntry }) {
+    let context = useContext(DataviewContext);
+
+    // Navigate to the given task on click.
+    const onClicked = (evt: preact.JSX.TargetedMouseEvent<HTMLElement>) => {
+        if (wasLinkPressed(evt)) {
+            return;
+        }
+
+        evt.stopPropagation();
+        const selectionState = {
+            eState: {
+                cursor: {
+                    from: { line: item.line, ch: item.position.start.col },
+                    to: { line: item.line + item.lineCount - 1, ch: item.position.end.col },
+                },
+                line: item.line,
+            },
+        };
+
+        // MacOS interprets the Command key as Meta.
+        context.app.workspace.openLinkText(
+            item.link.toFile().obsidianLink(),
+            item.path,
+            evt.ctrlKey || (evt.metaKey && Platform.isMacOS),
+            selectionState as any
+        );
+    };
+
     return (
-        <li class="dataview task-list-basic-item">
+        <li class="dataview task-list-basic-item" onClick={onClicked}>
             <Markdown inline={true} content={item.visual ?? item.text} sourcePath={item.path} />
             {item.children.length > 0 && <TaskList items={item.children} />}
         </li>
