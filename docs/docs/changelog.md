@@ -1,3 +1,9 @@
+# 0.5.54
+
+- Regular list items are now also clickable in task views, not just task lines! Thanks to @LilaRest.
+
+---
+
 # 0.5.53
 
 - Fix some documentation issues causing docs to not be updated.
