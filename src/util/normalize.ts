@@ -8,7 +8,7 @@ import { QuerySettings } from "settings";
 export function normalizeDuration(dur: Duration) {
     if (dur === undefined || dur === null) return dur;
 
-    return dur.shiftTo("years", "months", "weeks", "days", "hours", "minutes", "seconds", "milliseconds").normalize();
+    return dur.shiftToAll().normalize();
 }
 
 /** Strip the time components of a date time object. */
@@ -144,19 +144,12 @@ export function renderMinimalDate(time: DateTime, settings: QuerySettings, local
 export function renderMinimalDuration(dur: Duration): string {
     dur = normalizeDuration(dur);
 
-    // TODO: Luxon does not have multi-lingual/locale-aware duration rendering.
-    let result = "";
-    if (dur.years) result += `${dur.years} years, `;
-    if (dur.months) result += `${dur.months} months, `;
-    if (dur.weeks) result += `${dur.weeks} weeks, `;
-    if (dur.days) result += `${dur.days} days, `;
-    if (dur.hours) result += `${dur.hours} hours, `;
-    if (dur.minutes) result += `${dur.minutes} minutes, `;
-    if (dur.seconds) result += `${Math.round(dur.seconds)} seconds, `;
-    if (dur.milliseconds) result += `${Math.round(dur.milliseconds)} ms, `;
+    // toHuman outputs zero quantities e.g. "0 seconds"
+    dur = Duration.fromObject(
+        Object.fromEntries(Object.entries(dur.toObject()).filter(([, quantity]) => quantity > 0))
+    );
 
-    if (result.endsWith(", ")) result = result.substring(0, result.length - 2);
-    return result;
+    return dur.toHuman();
 }
 
 /** Determine if two sets are equal in contents. */
