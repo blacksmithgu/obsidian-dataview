@@ -403,29 +403,37 @@ export class DataviewApi {
 
         let query = maybeQuery.value;
         let init = { app: this.app, settings: this.settings, index: this.index, container };
+        let childComponent;
         switch (query.header.type) {
             case "task":
-                component.addChild(createTaskView(init, query as Query, filePath));
+                childComponent = createTaskView(init, query as Query, filePath);
+                component.addChild(childComponent);
                 break;
             case "list":
-                component.addChild(createListView(init, query as Query, filePath));
+                childComponent = createListView(init, query as Query, filePath);
+                component.addChild(childComponent);
+
                 break;
             case "table":
-                component.addChild(createTableView(init, query as Query, filePath));
+                childComponent = createTableView(init, query as Query, filePath);
+
+                component.addChild(childComponent);
                 break;
             case "calendar":
-                component.addChild(
-                    new DataviewCalendarRenderer(
-                        query as Query,
-                        container,
-                        this.index,
-                        filePath,
-                        this.settings,
-                        this.app
-                    )
+                childComponent = new DataviewCalendarRenderer(
+                    query as Query,
+                    container,
+                    this.index,
+                    filePath,
+                    this.settings,
+                    this.app
                 );
+
+                component.addChild(childComponent);
                 break;
         }
+        childComponent.load();
+        childComponent.onload();
     }
 
     /**
@@ -442,8 +450,9 @@ export class DataviewApi {
             renderCodeBlock(container, code, "javascript");
             return;
         }
-
-        component.addChild(new DataviewJSRenderer(this, code, container, filePath));
+        const renderer = new DataviewJSRenderer(this, code, container, filePath);
+        renderer.load();
+        component.addChild(renderer);
     }
 
     /** Render a dataview list of the given values. */
