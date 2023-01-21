@@ -1,3 +1,10 @@
+# 0.5.55
+
+- Durations are now internationalized using luxon's new internationalization support.
+- Dataviews should now properly render inside Canvas and some other contexts. Thanks @GamerGirlandCo!
+
+---
+
 # 0.5.54
 
 - Regular list items are now also clickable in task views, not just task lines! Thanks to @LilaRest.
