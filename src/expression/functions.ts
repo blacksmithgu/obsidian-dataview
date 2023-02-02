@@ -321,13 +321,15 @@ export namespace DefaultFunctions {
 
     /** Format a number using a standard currency format. */
     export const currencyformat = new FunctionBuilder("currencyformat")
-        .add2("number", "string", (num, format) => Intl.NumberFormat(currentLocale(), { style: 'currency', currency: format }).format(num))
+        .add2("number", "string", (num, format) =>
+            Intl.NumberFormat(currentLocale(), { style: "currency", currency: format }).format(num)
+        )
         .add2("null", "string", (_nul, _format) => null)
-        .add1("number", num => Intl.NumberFormat(currentLocale(), { style: 'currency', currency: 'USD' }).format(num))
+        .add1("number", num => Intl.NumberFormat(currentLocale(), { style: "currency", currency: "USD" }).format(num))
         .add1("null", () => null)
         .vectorize(2, [0])
         .build();
-        
+
     /**
      * Convert any value to a reasonable internal string representation. Most useful for dates, strings, numbers, and
      * so on.
@@ -753,7 +755,7 @@ export namespace DefaultFunctions {
         .build();
 
     export const unique = new FunctionBuilder("unique")
-        .add1("array", arr => arr.filter( (v, i, s) => s.indexOf(v) === i ))
+        .add1("array", arr => arr.filter((v, i, s) => s.indexOf(v) === i))
         .add1("null", () => null)
         .build();
 
