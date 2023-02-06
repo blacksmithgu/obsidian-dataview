@@ -22,7 +22,7 @@ Get page information (via `dv.page()`) for the page the script is currently exec
 
 ### `dv.pages(source)`
 
-Take a single string argument, `source`, which is the same form as a [query language source](../../query/sources).
+Take a single string argument, `source`, which is the same form as a [query language source](../../reference/sources).
 Return a [data array](../data-array) of page objects, which are plain objects with all of the page fields as
 values.
 
