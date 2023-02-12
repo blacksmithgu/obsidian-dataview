@@ -1,56 +1,58 @@
+// import { parsePage } from "data-import/markdown-file";
+import { CachedMetadata, FileStats } from "obsidian";
 import { PageMetadata } from "./markdown";
 // import { Link } from "./value";
 
-export type nodeType = "text" | "file"
+export interface BaseCanvas {
 
-export class AbstractCanvasNode {
-    public id: string;
-
-    public x: number;
-    public y: number;
-    public width: number;
-    public height: number;
-    public type: nodeType;
-
-    public constructor(data: any) {
-        this.id = data.id;
-        this.x = data.x;
-        this.y = data.y;
-        this.width = data.width;
-        this.height = data.height;
-        this.type = data.type;
-    }
+    x?: number;
+    y?: number;
+    width?: number;
+    height?: number;
+    type?: "text";
 }
 
-export class CanvasCard extends AbstractCanvasNode {
-    public type: "text";
+export class CanvasCard extends PageMetadata {
+    base: BaseCanvas = {}
+    id: string;
 
-    public text: string;
+    parentPath: string;
 
-    public constructor (data: any) {
-        super(data);
-        this.type = "text"
+    text: string;
+
+    public constructor (data: any, path: string, fstat: FileStats,pmInit?: Partial<PageMetadata>) {
+        super(path, pmInit);
+        console.log("cancard", data)
+        this.id = data.id;
+        this.base = {}
+        this.base.x = data.x;
+        this.base.y = data.y;
+        this.base.width = data.width;
+        this.base.height = data.height;
+        this.base.type = data.type;
+        this.parentPath = path;
         this.text = data.text;
     }
 }
 
+export class CanvasMetadata {
+    path: string;
 
-export class CanvasMetadata extends PageMetadata {
-    public cards: CanvasCard[];
+    originalText: string;
 
-    public path: string;
+    cards: CanvasCard[];
 
-    public constructor(path: string, pminit?: Partial<PageMetadata>, cards?: CanvasCard[]) {
-        super(path, pminit);
-        this.cards = (cards || [])
+    public constructor(path: string, original: string, cards: CanvasCard[]) {
+        console.log("cancon", cards)
+        this.cards = cards;
+        this.originalText = original;
+        this.path = path;
     }
 
-    public addCard(arg: CanvasCard | string): void {
-        if(arg instanceof CanvasCard) {
-            this.cards.push(arg)
-        } else {
-            let data: CanvasCard = new CanvasCard(JSON.parse(arg))
-            this.cards.push(data)
-        }
+}
+
+export type CanvasMetadataIndex = {
+    [k: string]: {
+        [l:string]: CachedMetadata
     }
 }

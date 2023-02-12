@@ -1,15 +1,21 @@
 /** importer for canvas nodes */
 
-import { CanvasMetadata } from "data-model/canvas";
-import { FileStats } from "obsidian";
+// import { CanvasMetadata } from "data-model/canvas";
+import { CanvasCard, CanvasMetadataIndex } from "data-model/canvas";
+import { FileStats /* parseYaml */ } from "obsidian";
 import { parsePage } from "./markdown-file";
 
 
-export function parseCanvasNode(path: string, contents: string, stats: FileStats): CanvasMetadata {
-    const parsedPage = parsePage(path, contents, stats, {});
+export function parseCanvasCard(path: string, id: string, contents: string, stat: FileStats, mindex: CanvasMetadataIndex) {
+    // @ts-expect-error SHUT UP MEG
+    const metadata = mindex[path]?.caches[id]
 
-    const canvas = new CanvasMetadata(path, parsedPage);
+    let data = JSON.parse(contents)
+    console.log("pcc", id, "pth", path, metadata, mindex, data)
+    // @ts-ignore
+    // data.nodes = data.nodes
+    let current = data.nodes[data.nodes.findIndex((a: any) => a.id === id)]
+    const parsedPage = parsePage(path, current.text, stat, metadata)
 
-    return canvas;
-
+    return new CanvasCard(current, path, stat, parsedPage)
 }

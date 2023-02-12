@@ -71,7 +71,7 @@ export class FullIndex extends Component {
         this.persister = new LocalStorageCache(app.appId || "shared", indexVersion);
 
         // Handles asynchronous reloading of files on web workers.
-        this.addChild((this.importer = new FileImporter(2, this.vault, this.metadataCache)));
+        this.addChild((this.importer = new FileImporter(2, this.vault, this.metadataCache, app)));
         // Prefix listens to file creation/deletion/rename, and not modifies, so we let it set up it's own listeners.
         this.addChild((this.prefix = PrefixIndex.create(this.vault, () => this.touch())));
         // The CSV cache also needs to listen to filesystem events for cache invalidation.
@@ -102,7 +102,7 @@ export class FullIndex extends Component {
         // File creation does cause a metadata change, but deletes do not. Clear the caches for this.
         this.registerEvent(
             this.vault.on("delete", af => {
-                if (!(af instanceof TFile) || !PathFilters.markdown(af.path)) return;
+                if (!(af instanceof TFile) || (!PathFilters.markdown(af.path) && !PathFilters.canvas(af.path))) return;
                 let file = af as TFile;
 
                 this.pages.delete(file.path);
@@ -116,14 +116,14 @@ export class FullIndex extends Component {
         );
 
         // Asynchronously initialize actual content in the background.
-        this._initialize(this.vault.getMarkdownFiles());
+        this._initialize(this.vault.getFiles().filter(a => a.extension === "md" || a.extension === "canvas"));
     }
 
     /** Drops the local storage cache and re-indexes all files; this should generally be used if you expect cache issues. */
     public async reinitialize() {
         await this.persister.recreate();
 
-        const files = this.vault.getMarkdownFiles();
+        const files = this.vault.getFiles().filter(a => a.extension === "md" || a.extension === "canvas");
         const start = Date.now();
         let promises = files.map(file => this.reload(file));
 
@@ -164,7 +164,7 @@ export class FullIndex extends Component {
     }
 
     public rename(file: TAbstractFile, oldPath: string) {
-        if (!(file instanceof TFile) || !PathFilters.markdown(file.path)) return;
+        if (!(file instanceof TFile) || (!PathFilters.markdown(file.path) && !PathFilters.canvas(file.path))) return;
 
         if (this.pages.has(oldPath)) {
             const oldMeta = this.pages.get(oldPath);
@@ -185,7 +185,7 @@ export class FullIndex extends Component {
 
     /** Queue a file for reloading; this is done asynchronously in the background and may take a few seconds. */
     public async reload(file: TFile): Promise<{ cached: boolean; skipped: boolean }> {
-        if (!PathFilters.markdown(file.path)) return { cached: false, skipped: true };
+        if (!PathFilters.markdown(file.path) && !PathFilters.canvas(file.path)) return { cached: false, skipped: true };
 
         // The first load of a file is attempted from persisted cache; subsequent loads just use the importer.
         if (this.pages.has(file.path) || this.initialized) {
@@ -296,6 +296,10 @@ export namespace PathFilters {
     export function markdown(path: string): boolean {
         let lcPath = path.toLowerCase();
         return lcPath.endsWith(".md") || lcPath.endsWith(".markdown");
+    }
+    export function canvas(path: string): boolean {
+        let lcPath = path.toLowerCase();
+        return lcPath.endsWith(".canvas")
     }
 }
 
