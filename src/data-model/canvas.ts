@@ -28,7 +28,6 @@ export class CanvasCard extends PageMetadata {
 
     public constructor (data: any, path: string, fstat: FileStats,pmInit?: Partial<PageMetadata>) {
         super(path, pmInit);
-        console.log("cancard", data)
         this.id = data.id;
         this.base = {}
         this.base.x = data.x;

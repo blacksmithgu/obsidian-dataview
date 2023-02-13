@@ -98,7 +98,6 @@ export class FileImporter extends Component {
             if(file.path.endsWith(".canvas")) {
                 const data = JSON.parse(c)
                 return data.nodes.filter((a:any) => a.type === "text").forEach((b: any) => {
-                    console.log("bbb", b)
                     this.workers[workerId].postMessage({
                         path: file.path,
                         contents: c,

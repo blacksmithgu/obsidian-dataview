@@ -353,7 +353,6 @@ export function setTaskCompletion(
 
     let parts = originalText.split(/\r?\n/u);
     const matches = blockIdRegex.exec(parts[parts.length - 1]);
-    console.debug("matchreg", matches);
 
     let processedPart = parts[parts.length - 1].split(blockIdRegex).join(""); // last part without block id
     if (useEmojiShorthand) {

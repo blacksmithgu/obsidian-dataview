@@ -21,7 +21,6 @@ export function runImport(
                 return parseCanvasCard(path, a.id, contents, stats, mindex)
             })
         , stats))
-        console.log("cmmooo", [...cm][0])
         return cm
     }
     return parsePage(path, contents, stats, metadata);

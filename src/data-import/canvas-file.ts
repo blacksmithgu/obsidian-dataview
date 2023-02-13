@@ -11,7 +11,6 @@ export function parseCanvasCard(path: string, id: string, contents: string, stat
     const metadata = mindex[path]?.caches[id]
 
     let data = JSON.parse(contents)
-    console.log("pcc", id, "pth", path, metadata, mindex, data)
     // @ts-ignore
     // data.nodes = data.nodes
     let current = data.nodes[data.nodes.findIndex((a: any) => a.id === id)]
