@@ -9,6 +9,7 @@ export class FileImporter {
     public async reload<T>(file: TFile): Promise<T> {
         let contents = await this.vault.read(file);
         let metadata = await this.metadataCache.getFileCache(file);
-        return runImport(file.path, contents, file.stat, metadata as CachedMetadata) as any as T;
+        // @ts-ignore it exists!!!! please stop bothering me.
+        return runImport(file.path, contents, file.stat, metadata as CachedMetadata, window.app.fileManager.linkUpdaters.canvas.canvas.index.index) as any as T;
     }
 }
