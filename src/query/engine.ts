@@ -10,7 +10,8 @@ import { Result } from "api/result";
 import { Field, Fields } from "expression/field";
 import { QuerySettings } from "settings";
 import { DateTime } from "luxon";
-import { SListItem } from "data-model/serialized/markdown";
+import { SListItem, SMarkdownPage, STask } from "data-model/serialized/markdown";
+import { SCanvas } from "data-model/serialized/canvas";
 
 function iden<T>(x: T): T {
     return x;
@@ -392,16 +393,28 @@ export async function executeTask(
     settings: QuerySettings
 ): Promise<Result<TaskExecution, string>> {
     let fileset = matchingSourcePaths(query.source, index, origin);
+    console.log("mfs", query.source, fileset, origin)
     if (!fileset.successful) return Result.failure(fileset.error);
 
     // Collect tasks from pages which match.
     let incomingTasks: Pagerow[] = [];
     for (let path of fileset.value) {
-        let page = index.pages.get(path);
+			let page = index.pages.get(path);
+			console.log("pa", page)
         if (!page) continue;
 
         let pageData = page.serialize(index);
-        let pageTasks = pageData.file.tasks.map(t => {
+        let intermediatePageTasks;
+				
+        if((pageData as any).file.cards) {
+            intermediatePageTasks = (pageData as SCanvas).file.cards.map(a => a.tasks).flat()
+        } else {
+            intermediatePageTasks = (pageData as SMarkdownPage).file.tasks
+        }
+        console.log("ipat", pageData, intermediatePageTasks)
+        let pageTasks = intermediatePageTasks.map((t: STask) => {
+            console.debug("tttt", origin, t)
+
             const tcopy = Values.deepCopy(t);
 
             // Add page data to this copy.

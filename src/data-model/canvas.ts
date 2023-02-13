@@ -43,7 +43,6 @@ export class CanvasCard extends PageMetadata {
 
 export class CanvasMetadata implements Iterable<CanvasCard> {
     public path: string;
-    public originalText: string;
     public ctime: DateTime;
     public mtime: DateTime;
     public fields: any;
@@ -52,10 +51,16 @@ export class CanvasMetadata implements Iterable<CanvasCard> {
 
     public cards: CanvasCard[];
 
-    public constructor(path: string, original: string, cards: CanvasCard[], stat: FileStats) {
-        console.log("cancon", cards)
+    public static genfrom(data: any) {
+
+    }
+
+    public constructor(path: string, cards: CanvasCard[], stat: FileStats, partdata?: any) {
+        if(partdata) {
+            Object.assign(this, partdata)
+        }
+
         this.cards = cards;
-        this.originalText = original;
         this.path = path;
         this.stats = stat;
         this.ctime = cards[0].ctime
@@ -83,7 +88,7 @@ export class CanvasMetadata implements Iterable<CanvasCard> {
                 size: this.stats.size,
                 starred: index.starred.starred(this.path),
                 ext: "canvas",
-                cards: this.cards.map(a =>{
+                cards: [...this].map(a =>{
                     let realCache = cache ?? new ListSerializationCache(a.lists);
                     return {
                         frontmatter: Values.deepCopy(a.frontmatter),

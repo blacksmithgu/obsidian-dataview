@@ -3,6 +3,7 @@ import { Result } from "api/result";
 import { parseCsv } from "data-import/csv";
 import { LocalStorageCache } from "data-import/persister";
 import { FileImporter } from "data-import/web-worker/import-manager";
+import { CanvasCard, CanvasMetadata } from "data-model/canvas";
 import { PageMetadata } from "data-model/markdown";
 import { DataObject } from "data-model/value";
 import { DateTime } from "luxon";
@@ -27,7 +28,7 @@ export class FullIndex extends Component {
     public persister: LocalStorageCache;
 
     /* Maps path -> markdown metadata for all markdown pages. */
-    public pages: Map<string, PageMetadata>;
+    public pages: Map<string, (PageMetadata | CanvasMetadata)>;
 
     /** Map files -> tags in that file, and tags -> files. This version includes subtags. */
     public tags: ValueCaseInsensitiveIndexMap;
@@ -214,24 +215,33 @@ export class FullIndex extends Component {
 
     /** Import a file directly from disk, skipping the cache. */
     private async import(file: TFile): Promise<void> {
-        return this.importer.reload<Partial<PageMetadata>>(file).then(r => {
+        return this.importer.reload<CanvasMetadata | Partial<PageMetadata>>(file).then(r => {
             this.finish(file, r);
             this.persister.storeFile(file.path, r);
         });
     }
 
     /** Finish the reloading of file metadata by adding it to in memory indexes. */
-    private finish(file: TFile, parsed: Partial<PageMetadata>) {
-        let meta = PageMetadata.canonicalize(parsed, link => {
-            let realPath = this.metadataCache.getFirstLinkpathDest(link.path, file.path);
-            if (realPath) return link.withPath(realPath.path);
-            else return link;
-        });
+    private finish(file: TFile, parsed: CanvasMetadata | Partial<PageMetadata>) {
+        let meta;
+        if((parsed as CanvasMetadata).cards) {
+            meta = new CanvasMetadata(file.path, (parsed as CanvasMetadata).cards.map(a => new CanvasCard(a, a.path, file.stat, a)), file.stat, parsed)
+            this.tags.set(file.path, new Set([...meta].map(a => Array.from(a.fullTags())).flat()))
+            this.etags.set(file.path, new Set([...meta].map(a => Array.from(a.tags)).flat()))
+            this.pages.set(file.path, meta)
+            this.links.set(file.path, new Set<string>([...meta].map(l => l.path)));
+        } else {
+            meta = PageMetadata.canonicalize((parsed as Partial<PageMetadata>), link => {
+                let realPath = this.metadataCache.getFirstLinkpathDest(link.path, file.path);
+                if (realPath) return link.withPath(realPath.path);
+                else return link;
+            });
+            this.pages.set(file.path, meta);
+            this.tags.set(file.path, meta.fullTags());
+            this.etags.set(file.path, meta.tags);
+            this.links.set(file.path, new Set<string>(meta.links.map(l => l.path)));
+		}
 
-        this.pages.set(file.path, meta);
-        this.tags.set(file.path, meta.fullTags());
-        this.etags.set(file.path, meta.tags);
-        this.links.set(file.path, new Set<string>(meta.links.map(l => l.path)));
 
         this.touch();
         this.trigger("update", file);
@@ -300,6 +310,10 @@ export namespace PathFilters {
     export function canvas(path: string): boolean {
         let lcPath = path.toLowerCase();
         return lcPath.endsWith(".canvas")
+    }
+    export function markdownOrCanvas(path: string): boolean {
+        let lcPath = path.toLowerCase();
+        return lcPath.endsWith(".canvas") || lcPath.endsWith(".md") || lcPath.endsWith(".markdown");
     }
 }
 

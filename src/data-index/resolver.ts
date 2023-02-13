@@ -24,13 +24,15 @@ export function matchingSourcePaths(
         case "folder":
             // Prefer loading from the folder at the given path.
             if (index.prefix.nodeExists(source.folder))
-                return Result.success(index.prefix.get(source.folder, PathFilters.markdown));
+                return Result.success(index.prefix.get(source.folder, PathFilters.markdownOrCanvas));
 
             // But allow for loading individual files if they exist.
             if (index.prefix.pathExists(source.folder)) return Result.success(new Set([source.folder]));
             else if (index.prefix.pathExists(source.folder + ".md"))
                 return Result.success(new Set([source.folder + ".md"]));
-
+            // allow for querying of canvas files
+            else if (index.prefix.pathExists(source.folder + ".canvas"))
+                return Result.success(new Set([source.folder + ".canvas"]));
             // For backwards-compat, return an empty result even if the folder does not exist.
             return Result.success(new Set());
         case "link":

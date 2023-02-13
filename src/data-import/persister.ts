@@ -1,3 +1,4 @@
+import { CanvasMetadata } from "data-model/canvas";
 import { PageMetadata } from "data-model/markdown";
 import { Transferable } from "data-model/transferable";
 import localforage from "localforage";
@@ -36,16 +37,16 @@ export class LocalStorageCache {
     }
 
     /** Load file metadata by path. */
-    public async loadFile(path: string): Promise<Cached<Partial<PageMetadata>> | null | undefined> {
+    public async loadFile(path: string): Promise<Cached<Partial<PageMetadata> | CanvasMetadata> | null | undefined> {
         return this.persister.getItem(this.fileKey(path)).then(raw => {
-            let result = raw as any as Cached<Partial<PageMetadata>>;
+            let result = raw as any as Cached<Partial<PageMetadata> | CanvasMetadata>;
             if (result) result.data = Transferable.value(result.data);
             return result;
         });
     }
 
     /** Store file metadata by path. */
-    public async storeFile(path: string, data: Partial<PageMetadata>): Promise<void> {
+    public async storeFile(path: string, data: Partial<PageMetadata | CanvasMetadata>): Promise<void> {
         await this.persister.setItem(this.fileKey(path), {
             version: this.version,
             time: Date.now(),
