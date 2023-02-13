@@ -1,16 +1,22 @@
 // import { parsePage } from "data-import/markdown-file";
+import { DateTime, FullIndex } from "index";
 import { CachedMetadata, FileStats } from "obsidian";
-import { PageMetadata } from "./markdown";
+import { getFileTitle, getParentFolder, stripTime } from "util/normalize";
+import { ListSerializationCache, PageMetadata } from "./markdown";
+import { SCanvas } from "./serialized/canvas";
+import { SListItem, STask } from "./serialized/markdown";
+import { Link, Values } from "./value";
 // import { Link } from "./value";
 
 export interface BaseCanvas {
-
     x?: number;
     y?: number;
     width?: number;
     height?: number;
     type?: "text";
 }
+
+
 
 export class CanvasCard extends PageMetadata {
     base: BaseCanvas = {}
@@ -35,18 +41,61 @@ export class CanvasCard extends PageMetadata {
     }
 }
 
-export class CanvasMetadata {
-    path: string;
+export class CanvasMetadata implements Iterable<CanvasCard> {
+    public path: string;
+    public originalText: string;
+    public ctime: DateTime;
+    public mtime: DateTime;
+    public fields: any;
 
-    originalText: string;
+    public stats: FileStats
 
-    cards: CanvasCard[];
+    public cards: CanvasCard[];
 
-    public constructor(path: string, original: string, cards: CanvasCard[]) {
+    public constructor(path: string, original: string, cards: CanvasCard[], stat: FileStats) {
         console.log("cancon", cards)
         this.cards = cards;
         this.originalText = original;
         this.path = path;
+        this.stats = stat;
+        this.ctime = cards[0].ctime
+        this.mtime = cards[0].mtime
+    }
+
+    public *[Symbol.iterator]() {
+        yield* this.cards
+    }
+
+    public serialize(index: FullIndex, cache?: ListSerializationCache): SCanvas {
+
+        let result: SCanvas = {
+            file: {
+                path: this.path,
+                folder: getFileTitle(this.path),
+                name: getParentFolder(this.path),
+                link: Link.file(this.path),
+                outlinks: this.cards.map(a => a.fileLinks()).flat(),
+                inlinks: Array.from(index.links.getInverse(this.path)).map(l => Link.file(l)),
+                ctime: this.ctime,
+                cday: stripTime(this.ctime),
+                mtime: this.mtime,
+                mday: stripTime(this.mtime),
+                size: this.stats.size,
+                starred: index.starred.starred(this.path),
+                ext: "canvas",
+                cards: this.cards.map(a =>{
+                    let realCache = cache ?? new ListSerializationCache(a.lists);
+                    return {
+                        frontmatter: Values.deepCopy(a.frontmatter),
+                        etags: Array.from(a.tags),
+                        tags: Array.from(a.fullTags()),
+                        lists: a.lists.map(l => realCache.get(l.line) as SListItem),
+                        tasks: a.lists.filter(l => !!l.task).map(l => realCache.get(l.line) as STask),
+                    }
+                })
+            }
+        }
+        return result
     }
 
 }
