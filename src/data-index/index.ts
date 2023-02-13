@@ -79,6 +79,16 @@ export class FullIndex extends Component {
         this.addChild((this.csv = new CsvCache(this.vault)));
         // The starred cache fetches starred entries semi-regularly via an interval.
         this.addChild((this.starred = new StarredCache(this.app, () => this.touch())));
+        /** this is needed because though canvas files will also fire the `modify` event,
+            dataview can't already pick up on that. so we need to add the hook manually for canvases.
+         */
+        this.registerEvent(
+            this.vault.on("modify", async file => {
+                if (file instanceof TFile && PathFilters.canvas(file.path)) {
+                    await this.reload(file)
+                }
+            })
+        );
     }
 
     /** Trigger a metadata event on the metadata cache. */
