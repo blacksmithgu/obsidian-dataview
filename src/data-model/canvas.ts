@@ -48,8 +48,6 @@ export class CanvasMetadata implements Iterable<CanvasCard> {
 
     public cards: CanvasCard[];
 
-    public static genfrom(data: any) {}
-
     public constructor(path: string, cards: CanvasCard[], stat: FileStats, partdata?: any) {
         if (partdata) {
             Object.assign(this, partdata);
