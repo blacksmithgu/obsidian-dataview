@@ -5,7 +5,13 @@ import { Transferable } from "data-model/transferable";
 import { CachedMetadata, FileStats } from "obsidian";
 
 /** An import which can fail and raise an exception, which will be caught by the handler. */
-function failableImport(path: string, contents: string, stat: FileStats, mindex: CanvasMetadataIndex, metadata?: CachedMetadata) {
+function failableImport(
+    path: string,
+    contents: string,
+    stat: FileStats,
+    mindex: CanvasMetadataIndex,
+    metadata?: CachedMetadata
+) {
     if (metadata === undefined || metadata === null) {
         throw Error(`Cannot index file, since it has no Obsidian file metadata.`);
     }

@@ -398,19 +398,18 @@ export async function executeTask(
     // Collect tasks from pages which match.
     let incomingTasks: Pagerow[] = [];
     for (let path of fileset.value) {
-		let page = index.pages.get(path);
+        let page = index.pages.get(path);
         if (!page) continue;
 
         let pageData = page.serialize(index);
         let intermediatePageTasks;
 
-        if((pageData as any).file.cards) {
-            intermediatePageTasks = (pageData as SCanvas).file.cards.map(a => a.tasks).flat()
+        if ((pageData as any).file.cards) {
+            intermediatePageTasks = (pageData as SCanvas).file.cards.map(a => a.tasks).flat();
         } else {
-            intermediatePageTasks = (pageData as SMarkdownPage).file.tasks
+            intermediatePageTasks = (pageData as SMarkdownPage).file.tasks;
         }
         let pageTasks = intermediatePageTasks.map((t: STask) => {
-
             const tcopy = Values.deepCopy(t);
 
             // Add page data to this copy.

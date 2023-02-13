@@ -1,13 +1,9 @@
-
 ```dataview
 CALENDAR thoughtOfDate
 FROM
 "recipes"
-```
-
-
-```dataview
+``````dataview
 CALENDAR file.mtime
 FROM
 "recipes"
-```
+```;

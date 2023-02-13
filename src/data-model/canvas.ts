@@ -16,20 +16,18 @@ export interface BaseCanvas {
     type?: "text";
 }
 
-
-
 export class CanvasCard extends PageMetadata {
-    base: BaseCanvas = {}
+    base: BaseCanvas = {};
     id: string;
 
     parentPath: string;
 
     text: string;
 
-    public constructor (data: any, path: string, fstat: FileStats,pmInit?: Partial<PageMetadata>) {
+    public constructor(data: any, path: string, fstat: FileStats, pmInit?: Partial<PageMetadata>) {
         super(path, pmInit);
         this.id = data.id;
-        this.base = {}
+        this.base = {};
         this.base.x = data.x;
         this.base.y = data.y;
         this.base.width = data.width;
@@ -46,32 +44,29 @@ export class CanvasMetadata implements Iterable<CanvasCard> {
     public mtime: DateTime;
     public fields: any;
 
-    public stats: FileStats
+    public stats: FileStats;
 
     public cards: CanvasCard[];
 
-    public static genfrom(data: any) {
-
-    }
+    public static genfrom(data: any) {}
 
     public constructor(path: string, cards: CanvasCard[], stat: FileStats, partdata?: any) {
-        if(partdata) {
-            Object.assign(this, partdata)
+        if (partdata) {
+            Object.assign(this, partdata);
         }
 
         this.cards = cards;
         this.path = path;
         this.stats = stat;
-        this.ctime = cards[0].ctime
-        this.mtime = cards[0].mtime
+        this.ctime = cards[0].ctime;
+        this.mtime = cards[0].mtime;
     }
 
     public *[Symbol.iterator]() {
-        yield* this.cards
+        yield* this.cards;
     }
 
     public serialize(index: FullIndex, cache?: ListSerializationCache): SCanvas {
-
         let result: SCanvas = {
             file: {
                 path: this.path,
@@ -87,7 +82,7 @@ export class CanvasMetadata implements Iterable<CanvasCard> {
                 size: this.stats.size,
                 starred: index.starred.starred(this.path),
                 ext: "canvas",
-                cards: [...this].map(a =>{
+                cards: [...this].map(a => {
                     let realCache = cache ?? new ListSerializationCache(a.lists);
                     return {
                         frontmatter: Values.deepCopy(a.frontmatter),
@@ -95,17 +90,16 @@ export class CanvasMetadata implements Iterable<CanvasCard> {
                         tags: Array.from(a.fullTags()),
                         lists: a.lists.map(l => realCache.get(l.line) as SListItem),
                         tasks: a.lists.filter(l => !!l.task).map(l => realCache.get(l.line) as STask),
-                    }
-                })
-            }
-        }
-        return result
+                    };
+                }),
+            },
+        };
+        return result;
     }
-
 }
 
 export type CanvasMetadataIndex = {
     [k: string]: {
-        [l:string]: CachedMetadata
-    }
-}
+        [l: string]: CachedMetadata;
+    };
+};

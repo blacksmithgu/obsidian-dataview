@@ -85,7 +85,12 @@ export function matchingSourcePaths(
             return matchingSourcePaths(source.child, index, originFile).map(child => {
                 // TODO: This is obviously very inefficient. Can be improved by complicating the
                 // return type of this function & optimizing 'and' / 'or'.
-                let allFiles = new Set<string>(index.vault.getFiles().filter(a => a.extension === "md" || a.extension === "canvas").map(f => f.path));
+                let allFiles = new Set<string>(
+                    index.vault
+                        .getFiles()
+                        .filter(a => a.extension === "md" || a.extension === "canvas")
+                        .map(f => f.path)
+                );
                 child.forEach(f => allFiles.delete(f));
                 return allFiles;
             });

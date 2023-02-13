@@ -26,7 +26,7 @@ export interface SCanvas {
         ext: string;
         starred: boolean;
         day?: DateTime;
-        cards: SCard[]
+        cards: SCard[];
     };
 
     /** Additional fields added by field data. */
