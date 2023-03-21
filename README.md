@@ -189,7 +189,7 @@ to the main branch.
 To allow for easy doc contribution within GitHub, docs are formatted on release. If you have cloned dataview locally,
 you can format your modified files with Prettier.
 
-```
+```console
 foo@bar:~/obsidian-dataview$ npx prettier --write docs/path/to/file.md
 ```
 

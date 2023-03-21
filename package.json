@@ -13,7 +13,7 @@
     "check-format": "npx prettier --check src",
     "dev": "npx rollup --config rollup.config.js -w",
     "format": "npx prettier --write src",
-    "format-docs": "npx prettier --write docs",
+    "format-docs": "npx prettier --write *.md docs",
     "lib": "npx rollup --config rollup.config.js --environment BUILD:lib",
     "test": "npx jest"
   },
