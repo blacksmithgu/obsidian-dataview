@@ -433,7 +433,6 @@ export class DataviewApi {
                 break;
         }
         childComponent.load();
-        childComponent.onload();
     }
 
     /**
