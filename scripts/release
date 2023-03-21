@@ -23,6 +23,9 @@ rm -f CHANGELOG-TEMP.md
 # Overwrite the documentation changelog.
 cp -f CHANGELOG.md docs/docs/changelog.md
 
+# Format docs (done on release to allow doc PRs exclusively from GitHub UIs)
+npm run format-docs
+
 # Delete old files if they exist
 rm -f package.tmp.json
 rm -f manifest.tmp.json

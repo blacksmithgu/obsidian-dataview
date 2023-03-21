@@ -186,6 +186,13 @@ This will start a local web server rendering the documentation in `docs/docs`, w
 Documentation changes are automatically pushed to `blacksmithgu.github.io/obsidian-dataview` once they are merged
 to the main branch.
 
+To allow for easy doc contribution within GitHub, docs are formatted on release. If you have cloned dataview locally,
+you can format your modified files with Prettier.
+
+```
+foo@bar:~/obsidian-dataview$ npx prettier --write docs/path/to/file.md
+```
+
 #### Using Dataview Types In Your Own Plugin
 
 Dataview publishes TypeScript typings for all of its APIs onto NPM (as `blacksmithgu/obsidian-dataview`). For
