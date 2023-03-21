@@ -2,8 +2,6 @@ name: Bug Report (desktop)
 description: "File a bug report for Dataview on desktop Obsidian"
 title: "Bug report"
 labels: ["bug", "needs-investigation"]
-assignees:
-  - blacksmithgu
 body:
   - type: markdown
     attributes:

@@ -2,8 +2,6 @@ name: Bug Report (mobile)
 description: "File a bug report for Dataview on mobile Obsidian"
 title: "Bug report"
 labels: ["bug", "needs-investigation", "mobile"]
-assignees:
-  - blacksmithgu
 body:
   - type: markdown
     attributes:
