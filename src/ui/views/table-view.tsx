@@ -60,7 +60,7 @@ export function TableGrouping({
                 </tbody>
             </table>
             {settings.warnOnEmptyResult && values.length == 0 && (
-                <ErrorMessage message="Dataview: No results to show for table query." />
+                <ErrorMessage message={settings.onEmptyResultMessage} />
             )}
         </Fragment>
     );

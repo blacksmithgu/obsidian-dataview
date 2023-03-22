@@ -151,7 +151,7 @@ function ListItem({ item }: { item: SListEntry }) {
 function TaskList({ items }: { items: SListItem[] }) {
     const settings = useContext(DataviewContext).settings;
     if (items.length == 0 && settings.warnOnEmptyResult)
-        return <ErrorMessage message="Dataview: No results to show for task query." />;
+        return <ErrorMessage message={settings.onEmptyResultMessage} />;
 
     let [nest, _mask] = nestItems(items);
     return (

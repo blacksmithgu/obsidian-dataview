@@ -17,6 +17,8 @@ export interface QuerySettings {
     recursiveSubTaskCompletion: boolean;
     /** If true, render a modal which shows no results were returned. */
     warnOnEmptyResult: boolean;
+    /** The default message for when there are no results */
+    onEmptyResultMessage: string;
     /** Whether or not automatic view refreshing is enabled. */
     refreshEnabled: boolean;
     /** The interval that views are refreshed, by default. */
@@ -43,6 +45,7 @@ export const DEFAULT_QUERY_SETTINGS: QuerySettings = {
     taskCompletionDateFormat: "yyyy-MM-dd",
     recursiveSubTaskCompletion: false,
     warnOnEmptyResult: true,
+    onEmptyResultMessage: "Dataview: No results for the query.",
     refreshEnabled: true,
     refreshInterval: 2500,
     defaultDateFormat: "MMMM dd, yyyy",

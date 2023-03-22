@@ -376,6 +376,21 @@ class GeneralSettingsTab extends PluginSettingTab {
             );
 
         new Setting(this.containerEl)
+            .setName("Message to Display on Empty Result")
+            .setDesc("This is the message to display if rendering a warning about 0 results.")
+            .addText(text =>
+                text
+                    .setPlaceholder(DEFAULT_QUERY_SETTINGS.onEmptyResultMessage)
+                    .setValue(this.plugin.settings.onEmptyResultMessage)
+                    .onChange(async value => {
+                        let message = value.trim();
+                        if (message.length == 0) message = DEFAULT_QUERY_SETTINGS.onEmptyResultMessage;
+                        await this.plugin.updateSettings({ onEmptyResultMessage: message });
+                        this.plugin.index.touch();
+                    })
+                );
+
+        new Setting(this.containerEl)
             .setName("Render Null As")
             .setDesc("What null/non-existent should show up as in tables, by default. This supports Markdown notation.")
             .addText(text =>

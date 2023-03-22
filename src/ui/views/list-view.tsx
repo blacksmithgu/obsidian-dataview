@@ -67,7 +67,7 @@ export function ListView({ query, sourcePath }: { query: Query; sourcePath: stri
         );
 
     if (items.items.length == 0 && context.settings.warnOnEmptyResult)
-        return <ErrorMessage message="Dataview: No results to show for list query." />;
+        return <ErrorMessage message={context.settings.onEmptyResultMessage} />;
 
     return <ListGrouping items={items.items} sourcePath={sourcePath} />;
 }

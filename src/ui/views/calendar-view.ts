@@ -38,7 +38,7 @@ export class DataviewCalendarRenderer extends DataviewRefreshableRenderer {
             renderErrorPre(this.container, "Dataview: " + maybeResult.error);
             return;
         } else if (maybeResult.value.data.length == 0 && this.settings.warnOnEmptyResult) {
-            renderErrorPre(this.container, "Dataview: Query returned 0 results.");
+            renderErrorPre(this.container, this.settings.onEmptyResultMessage);
             return;
         }
         let dateMap = new Map<string, CalendarFile[]>();
