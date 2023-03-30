@@ -276,6 +276,14 @@ export namespace DefaultFunctions {
 
             return null;
         })
+        .add2("string", "string", (d, f) => {
+            let parsedDate = DateTime.fromFormat(d, f)
+ 
+            if (parsedDate.isValid) return parsedDate
+            else { throw Error(`Can't handle format (${ f }) on date string (${ d })`) }
+
+            return null;
+        })
         .add1("null", () => null)
         .vectorize(1, [0])
         .build();

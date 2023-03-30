@@ -62,6 +62,16 @@ date("2020-04-18") = <date object representing April 18th, 2020>
 date([[2021-04-16]]) = <date object for the given page, refering to file.day>
 ```
 
+### `date(text, format)`
+
+Parses a date from text to luxon `DateTime` with the specified format. Note localised formats might not work. 
+Uses [Luxon tokens](https://moment.github.io/luxon/#/formatting?id=table-of-tokens).
+
+```js
+date("12/31/2022", "MM/dd/yyyy") => DateTime for Decemeber 31th, 2022
+date("210331", "yyMMdd") => DateTime for March 13th, 2023
+```
+
 ### `dur(any)`
 
 Parses a duration from the provided string or duration, returning null on failure.
