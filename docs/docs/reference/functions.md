@@ -466,8 +466,9 @@ map(["yes", "no"], (x) => x + "?") = ["yes?", "no?"]
 
 ### `flat(array, [depth])`
 
-The `flat()` concatenates levels of the array to the desired depth. Default is 1 level, but it can
-concatenate multiple levels. This can be used to reduce array depth on `rows` after doing `GROUP BY`.
+Concatenates sub-levels of the array to the desired depth. Default is 1 level, but it can
+concatenate multiple levels. E.g. Can be used to reduce array depth on `rows` lists after
+doing `GROUP BY`.
 
 ```js
 flat(list(1, 2, 3, list(4, 5), 6)) => list(1, 2, 3, 4, 5, 6)
