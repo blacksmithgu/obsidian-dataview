@@ -69,7 +69,8 @@ Uses [Luxon tokens](https://moment.github.io/luxon/#/formatting?id=table-of-toke
 
 ```js
 date("12/31/2022", "MM/dd/yyyy") => DateTime for Decemeber 31th, 2022
-date("210331", "yyMMdd") => DateTime for March 13th, 2023
+date("210313", "yyMMdd") => DateTime for March 13th, 2021
+date("946778645000", "x") => DateTime for "2000-01-02T03:04:05"
 ```
 
 ### `dur(any)`

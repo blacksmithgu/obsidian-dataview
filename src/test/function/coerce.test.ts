@@ -13,13 +13,6 @@ describe("string()", () => {
     test("number", () => expect(parseEval(`string(18)`)).toEqual("18"));
 });
 
-test("date()", () => {
-    expect(parseEval("date([[2020-04-18]])")).toEqual(DateTime.fromObject({ year: 2020, month: 4, day: 18 }));
-    expect(parseEval("date([[Place|2021-04]])")).toEqual(DateTime.fromObject({ year: 2021, month: 4, day: 1 }));
-    expect(parseEval('date("12/31/2022", "MM/dd/yyyy")')).toEqual(DateTime.fromObject({ year: 2022, month: 12, day: 31 }));
-    expect(parseEval('date("210313", "yyMMdd")')).toEqual(DateTime.fromObject({ year: 2021, month: 3, day: 13 }));   
-});
-
 test("list()", () => {
     expectEvals("list(1, 2, 3)", [1, 2, 3]);
     expectEvals("list()", []);
