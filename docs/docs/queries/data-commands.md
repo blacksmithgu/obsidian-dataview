@@ -71,7 +71,7 @@ GROUP BY (computed_field) AS name
 ```
 
 In order to make working with the `rows` array easier, Dataview supports field "swizzling". If you want the field `test` from every object in the `rows` array, then `rows.test` will automatically fetch the `test` field from every object in `rows`, yielding a new array.
-You can then apply aggregation operators like `sum()` over the resulting array.
+You can then apply aggregation operators like `sum()` or `flat()` over the resulting array.
 
 ## FLATTEN
 
