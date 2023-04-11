@@ -1,9 +1,9 @@
 # Data Arrays
 
-The general abstraction for lists of results in Dataview is the `DataArray`, which is a proxied array with additional
-functionality. Data arrays support indexing and iteration (via `for` and `for ... of` loops) as per normal arrays, but
+The general representation of result lists in Dataview is the `DataArray`, which is a [proxied](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy) version of the JavaScript array with expanded
+functionality. Data arrays support indexing and iteration (via `for` and `for ... of` loops), like normal arrays do, but
 also include many data manipulation operators like `sort`, `groupBy`, `distinct`, `where`, and so on to make
-manipulating tabular data easy.
+manipulating tabular data easier.
 
 ## Creation
 
