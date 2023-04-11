@@ -27,6 +27,7 @@ nav:
     - Structure of a Query: 'queries/structure.md'
     - Query Types: 'queries/query-types.md'
     - Data Commands: 'queries/data-commands.md'
+    - Differences to SQL: 'queries/differences-to-sql.md'
     - Sources: 'reference/sources.md'
     - Expressions: 'reference/expressions.md'
     - Literals: 'reference/literals.md'
