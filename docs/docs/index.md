@@ -74,7 +74,7 @@ You can access **indexed data** with the help of **Queries**.
 
 There are **three different ways** you can write a Query: With help of the [Dataview Query Language](queries/dql-js-inline/#dataview-query-language-dql), as an [inline statement](queries/dql-js-inline#inline-dql) or in the most flexible but most complex way: as a [Javascript Query](queries/dql-js-inline#dataview-js). 
 
-The **Dataview Query Language** (**DQL**) gives you a broad and powerful toolbelt to query, display and operate on your data. An [**inline query**](queries/dql-js-inline#inline-dql) gives you the possibility to display exactly one indexed value anywhere in your note. You can also do calculations this way. With **DQL** at your hands, you'll be probably fine without any Javascript throurough your data journey.
+The **Dataview Query Language** (**DQL**) gives you a broad and powerful toolbelt to query, display and operate on your data. An [**inline query**](queries/dql-js-inline#inline-dql) gives you the possibility to display exactly one indexed value anywhere in your note. You can also do calculations this way. With **DQL** at your hands, you'll be probably fine without any Javascript through your data journey.
 
 A DQL Query consists of several parts:
 
