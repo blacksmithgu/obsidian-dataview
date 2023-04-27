@@ -7,6 +7,8 @@ simply use:
 npm install -D obsidian-dataview
 ```
 
+**Note**: If [Git](http://git-scm.com/) is not already installed on your local system, you will need to install it first. You may need to restart your device to complete the Git installation before you can install the Dataview API.
+
 ##### Accessing the Dataview API
 
 You can use the `getAPI()` function to obtain the Dataview Plugin API; this returns a `DataviewApi` object which
