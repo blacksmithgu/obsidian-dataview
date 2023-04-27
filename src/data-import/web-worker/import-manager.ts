@@ -109,9 +109,7 @@ export class FileImporter extends Component {
                             contents: c,
                             stat: file.stat,
                             metadata:
-                                // @ts-expect-error SHUT UP MEG
                                 this.app.fileManager.linkUpdaters.canvas.canvas.index.index[file.path].caches[b.id],
-                            // @ts-expect-error SHUT UP MEG
                             mindex: this.app.fileManager.linkUpdaters.canvas.canvas.index.index,
                         });
                     });

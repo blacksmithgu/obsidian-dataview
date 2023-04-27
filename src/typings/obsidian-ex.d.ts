@@ -9,8 +9,8 @@ declare module "obsidian" {
 
     interface FileManager {
         linkUpdaters: {
-            [key: string]: any
-        }
+            [key: string]: any;
+        };
     }
     interface App {
         appId?: string;
