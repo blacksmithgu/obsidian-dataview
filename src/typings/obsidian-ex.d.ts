@@ -14,12 +14,12 @@ declare module "obsidian" {
                     index: {
                         index: {
                             [path: string]: {
-                                caches: CachedMetadata
-                            }
-                        }
-                    }
-                }
-            }
+                                caches: CachedMetadata;
+                            };
+                        };
+                    };
+                };
+            };
         };
     }
     interface App {
