@@ -104,8 +104,7 @@ export class FileImporter extends Component {
                     path: file.path,
                     contents: c,
                     stat: file.stat,
-                    metadata:
-                        this.app.fileManager.linkUpdaters.canvas.canvas.index.index[file.path].caches,
+                    metadata: this.app.fileManager.linkUpdaters.canvas.canvas.index.index[file.path].caches,
                     mindex: this.app.fileManager.linkUpdaters.canvas.canvas.index.index,
                 });
             } else {
