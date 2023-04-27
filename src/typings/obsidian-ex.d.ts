@@ -7,6 +7,11 @@ declare module "obsidian" {
         trigger(name: string, ...data: any[]): void;
     }
 
+    interface FileManager {
+        linkUpdaters: {
+            [key: string]: any
+        }
+    }
     interface App {
         appId?: string;
         plugins: {
