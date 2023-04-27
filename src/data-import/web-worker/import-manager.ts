@@ -100,19 +100,14 @@ export class FileImporter extends Component {
 
         this.vault.cachedRead(file).then(c => {
             if (file.path.endsWith(".canvas")) {
-                const data = JSON.parse(c);
-                return data.nodes
-                    .filter((a: any) => a.type === "text")
-                    .forEach((b: any) => {
-                        this.workers[workerId].postMessage({
-                            path: file.path,
-                            contents: c,
-                            stat: file.stat,
-                            metadata:
-                                this.app.fileManager.linkUpdaters.canvas.canvas.index.index[file.path].caches[b.id],
-                            mindex: this.app.fileManager.linkUpdaters.canvas.canvas.index.index,
-                        });
-                    });
+                return this.workers[workerId].postMessage({
+                    path: file.path,
+                    contents: c,
+                    stat: file.stat,
+                    metadata:
+                        this.app.fileManager.linkUpdaters.canvas.canvas.index.index[file.path].caches,
+                    mindex: this.app.fileManager.linkUpdaters.canvas.canvas.index.index,
+                });
             } else {
                 return this.workers[workerId].postMessage({
                     path: file.path,
