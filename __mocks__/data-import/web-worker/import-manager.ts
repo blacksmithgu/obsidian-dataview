@@ -1,6 +1,6 @@
 /** A mock for `FileImporter` which runs on the same thread. */
 
-import { runImport } from "data-import/web-worker/import-impl";
+import { runImport } from "../../../src/data-import/web-worker/import-impl";
 import { CachedMetadata, MetadataCache, TFile, Vault } from "obsidian";
 
 export class FileImporter {
