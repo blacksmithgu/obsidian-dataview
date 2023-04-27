@@ -14,7 +14,7 @@ declare module "obsidian" {
                     index: {
                         index: {
                             [path: string]: {
-                                caches: MetadataCache
+                                caches: CachedMetadata
                             }
                         }
                     }
