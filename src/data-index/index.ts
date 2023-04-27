@@ -82,7 +82,7 @@ export class FullIndex extends Component {
         /** this is needed because though canvas files will also fire the `modify` event,
             dataview can't already pick up on that. so we need to add the hook manually for canvases.
          */
-        this.initialize()
+        this.initialize();
     }
 
     /** Trigger a metadata event on the metadata cache. */
@@ -119,14 +119,15 @@ export class FullIndex extends Component {
                 this.trigger("delete", file);
             })
         );
-
-        this.registerEvent(
-            this.vault.on("modify", async file => {
-                if (file instanceof TFile && PathFilters.canvas(file.path)) {
-                    await this.reload(file);
-                }
-            })
-        );
+        // @ts-ignore
+        const reloadCallback = file => {
+            if (file instanceof TFile && PathFilters.canvas(file.path)) {
+                this.reload(file);
+            }
+        };
+        this.registerEvent(this.vault.on("modify", reloadCallback));
+        this.registerEvent(this.metadataCache.on("changed", reloadCallback));
+        this.registerEvent(this.metadataCache.on("resolved", () => this._initialize(this.vault.getFiles().filter(a => a.extension === "md" || a.extension === "canvas"))))
         // Asynchronously initialize actual content in the background.
         this._initialize(this.vault.getFiles().filter(a => a.extension === "md" || a.extension === "canvas"));
     }
