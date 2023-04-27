@@ -127,7 +127,11 @@ export class FullIndex extends Component {
         };
         this.registerEvent(this.vault.on("modify", reloadCallback));
         this.registerEvent(this.metadataCache.on("changed", reloadCallback));
-        this.registerEvent(this.metadataCache.on("resolved", () => this._initialize(this.vault.getFiles().filter(a => a.extension === "md" || a.extension === "canvas"))))
+        this.registerEvent(
+            this.metadataCache.on("resolved", () =>
+                this._initialize(this.vault.getFiles().filter(a => a.extension === "md" || a.extension === "canvas"))
+            )
+        );
         // Asynchronously initialize actual content in the background.
         this._initialize(this.vault.getFiles().filter(a => a.extension === "md" || a.extension === "canvas"));
     }
