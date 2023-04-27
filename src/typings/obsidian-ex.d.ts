@@ -9,7 +9,17 @@ declare module "obsidian" {
 
     interface FileManager {
         linkUpdaters: {
-            [key: string]: any;
+            canvas: {
+                canvas: {
+                    index: {
+                        index: {
+                            [path: string]: {
+                                caches: MetadataCache
+                            }
+                        }
+                    }
+                }
+            }
         };
     }
     interface App {
