@@ -104,4 +104,4 @@ WHERE any(file.tasks, (t) => !t.fullyCompleted)
 ```
 ~~~
 
-This'll give you back all file links that have unfinished tasks inside. We get back a list of tasks on page level and thus need to use a [list function](../reference/functions.md/#anyarray) to look at each element. 
+This'll give you back all file links that have unfinished tasks inside. We get back a list of tasks on page level and thus need to use a [list function](../reference/functions.md) to look at each element. 

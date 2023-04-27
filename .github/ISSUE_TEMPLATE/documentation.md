@@ -3,7 +3,6 @@ name: Documentation
 about: Suggest improvements to documentation
 title: ''
 labels: documentation
-assignees: blacksmithgu
 
 ---
 
