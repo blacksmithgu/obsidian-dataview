@@ -82,6 +82,7 @@ export class FullIndex extends Component {
         /** this is needed because though canvas files will also fire the `modify` event,
             dataview can't already pick up on that. so we need to add the hook manually for canvases.
          */
+        this.initialize()
     }
 
     /** Trigger a metadata event on the metadata cache. */
