@@ -103,7 +103,7 @@ create JS inline queries via inline code blocks:
 In inline DataviewJS, you have access to the `dv` variable, as in `dataviewjs` codeblocks, and can make all of the same calls. The result
 should be something which evaluates to a JavaScript value, which Dataview will automatically render appropriately.
 
-Unline Inline DQL queries, Inline JS queries do have access to everything a Dataview JS Query has available and can hence query and output multiple pages.
+Unlike Inline DQL queries, Inline JS queries do have access to everything a Dataview JS Query has available and can hence query and output multiple pages.
 
 !!! info "Change of Inline JS prefix"
     You can change the `$=` to another token (like `dvjs:` or `$~`) in Dataviews' settings under "Codeblock Settings" > "Javascript Inline Query Prefix"
