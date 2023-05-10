@@ -128,7 +128,13 @@ function getCssClasses(nodeName: string): string[] {
     return classes;
 }
 
-function inlineRender(view: EditorView, index: FullIndex, dvSettings: DataviewSettings, api: DataviewApi) {
+function inlineRender(
+    view: EditorView,
+    index: FullIndex,
+    dvSettings: DataviewSettings,
+    api: DataviewApi,
+    component: Component
+) {
     // still doesn't work as expected for tables and callouts
     if (!index.initialized) return;
     const currentFile = app.workspace.getActiveFile();
@@ -165,6 +171,9 @@ function inlineRender(view: EditorView, index: FullIndex, dvSettings: DataviewSe
                 if (selectionAndRangeOverlap(selection, start - 1, end + 1)) return;
 
                 const text = view.state.doc.sliceString(start, end);
+                const notNormalCode =
+                    text.startsWith(dvSettings.inlineQueryPrefix) || text.startsWith(dvSettings.inlineJsQueryPrefix);
+                if (!notNormalCode) return;
                 let code: string = "";
                 let result: Literal = "";
                 const el = createSpan({
@@ -192,7 +201,7 @@ function inlineRender(view: EditorView, index: FullIndex, dvSettings: DataviewSe
                         } else {
                             const { value } = intermediateResult;
                             result = value;
-                            renderValue(result, el, currentFile.path, null as unknown as Component, dvSettings);
+                            renderValue(result, el, currentFile.path, component, dvSettings);
                         }
                     }
                 } else if (
@@ -204,27 +213,16 @@ function inlineRender(view: EditorView, index: FullIndex, dvSettings: DataviewSe
                         try {
                             // for setting the correct context for dv/dataview
                             const myEl = createDiv();
-                            const dvInlineApi = new DataviewInlineApi(
-                                api,
-                                null as unknown as Component,
-                                myEl,
-                                currentFile.path
-                            );
+                            const dvInlineApi = new DataviewInlineApi(api, component, myEl, currentFile.path);
                             if (code.includes("await")) {
                                 (evalInContext("(async () => { " + PREAMBLE + code + " })()") as Promise<any>).then(
                                     (result: any) => {
-                                        renderValue(
-                                            result,
-                                            el,
-                                            currentFile.path,
-                                            null as unknown as Component,
-                                            dvSettings
-                                        );
+                                        renderValue(result, el, currentFile.path, component, dvSettings);
                                     }
                                 );
                             } else {
                                 result = evalInContext(PREAMBLE + code);
-                                renderValue(result, el, currentFile.path, null as unknown as Component, dvSettings);
+                                renderValue(result, el, currentFile.path, component, dvSettings);
                             }
 
                             function evalInContext(script: string): any {
@@ -264,9 +262,12 @@ export function inlinePlugin(index: FullIndex, settings: DataviewSettings, api: 
     return ViewPlugin.fromClass(
         class {
             decorations: DecorationSet;
+            component: Component;
 
             constructor(view: EditorView) {
-                this.decorations = inlineRender(view, index, settings, api) ?? Decoration.none;
+                this.component = new Component();
+                this.component.load();
+                this.decorations = inlineRender(view, index, settings, api, this.component) ?? Decoration.none;
             }
 
             update(update: ViewUpdate) {
@@ -276,9 +277,17 @@ export function inlinePlugin(index: FullIndex, settings: DataviewSettings, api: 
                     this.decorations = Decoration.none;
                     return;
                 }
-                if (update.docChanged || update.viewportChanged || update.selectionSet) {
-                    this.decorations = inlineRender(update.view, index, settings, api) ?? Decoration.none;
+                if (update.docChanged) {
+                    this.decorations = this.decorations.map(update.changes);
+                    return;
+                } else if (update.viewportChanged || update.selectionSet) {
+                    this.decorations =
+                        inlineRender(update.view, index, settings, api, this.component) ?? Decoration.none;
                 }
+            }
+
+            destroy() {
+                this.component.unload();
             }
         },
         { decorations: v => v.decorations }
