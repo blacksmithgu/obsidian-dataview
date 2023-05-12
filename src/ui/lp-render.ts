@@ -128,136 +128,6 @@ function getCssClasses(nodeName: string): string[] {
     return classes;
 }
 
-function inlineRender(
-    view: EditorView,
-    index: FullIndex,
-    dvSettings: DataviewSettings,
-    api: DataviewApi,
-    component: Component
-) {
-    // still doesn't work as expected for tables and callouts
-    if (!index.initialized) return;
-    const currentFile = app.workspace.getActiveFile();
-    if (!currentFile) return;
-
-    const widgets: Range<Decoration>[] = [];
-    const selection = view.state.selection;
-    /* before:
-     *     em for italics
-     *     highlight for highlight
-     * after:
-     *     strong for bold
-     *     strikethrough for strikethrough
-     */
-    const regex = new RegExp(".*?_?inline-code_?.*");
-    const PREAMBLE: string = "const dataview=this;const dv=this;";
-
-    for (const { from, to } of view.visibleRanges) {
-        syntaxTree(view.state).iterate({
-            from,
-            to,
-            enter: ({ node }) => {
-                const type = node.type;
-                // markdown formatting symbols
-                if (type.name.includes("formatting")) return;
-                // current node is not inline code
-                if (!regex.test(type.name)) return;
-
-                // contains the position of inline code
-                const start = node.from;
-                const end = node.to;
-                // don't continue if current cursor position and inline code node (including formatting
-                // symbols) overlap
-                if (selectionAndRangeOverlap(selection, start - 1, end + 1)) return;
-
-                const text = view.state.doc.sliceString(start, end);
-                const notNormalCode =
-                    text.startsWith(dvSettings.inlineQueryPrefix) || text.startsWith(dvSettings.inlineJsQueryPrefix);
-                if (!notNormalCode) return;
-                let code: string = "";
-                let result: Literal = "";
-                const el = createSpan({
-                    cls: ["dataview", "dataview-inline"],
-                });
-                /* If the query result is predefined text (e.g. in the case of errors), set innerText to it.
-                 * Otherwise, pass on an empty element and fill it in later.
-                 * This is necessary because {@link InlineWidget.toDOM} is synchronous but some rendering
-                 * asynchronous.
-                 */
-                if (dvSettings.inlineQueryPrefix.length > 0 && text.startsWith(dvSettings.inlineQueryPrefix)) {
-                    code = text.substring(dvSettings.inlineQueryPrefix.length).trim();
-                    const field = tryOrPropogate(() => parseField(code));
-                    if (!field.successful) {
-                        result = `Dataview (inline field '${code}'): ${field.error}`;
-                        el.innerText = result;
-                    } else {
-                        const fieldValue = field.value;
-                        const intermediateResult = tryOrPropogate(() =>
-                            executeInline(fieldValue, currentFile.path, index, dvSettings)
-                        );
-                        if (!intermediateResult.successful) {
-                            result = `Dataview (for inline query '${fieldValue}'): ${intermediateResult.error}`;
-                            el.innerText = result;
-                        } else {
-                            const { value } = intermediateResult;
-                            result = value;
-                            renderValue(result, el, currentFile.path, component, dvSettings);
-                        }
-                    }
-                } else if (
-                    dvSettings.inlineJsQueryPrefix.length > 0 &&
-                    text.startsWith(dvSettings.inlineJsQueryPrefix)
-                ) {
-                    if (dvSettings.enableInlineDataviewJs) {
-                        code = text.substring(dvSettings.inlineJsQueryPrefix.length).trim();
-                        try {
-                            // for setting the correct context for dv/dataview
-                            const myEl = createDiv();
-                            const dvInlineApi = new DataviewInlineApi(api, component, myEl, currentFile.path);
-                            if (code.includes("await")) {
-                                (evalInContext("(async () => { " + PREAMBLE + code + " })()") as Promise<any>).then(
-                                    (result: any) => {
-                                        renderValue(result, el, currentFile.path, component, dvSettings);
-                                    }
-                                );
-                            } else {
-                                result = evalInContext(PREAMBLE + code);
-                                renderValue(result, el, currentFile.path, component, dvSettings);
-                            }
-
-                            function evalInContext(script: string): any {
-                                return function () {
-                                    return eval(script);
-                                }.call(dvInlineApi);
-                            }
-                        } catch (e) {
-                            result = `Dataview (for inline JS query '${code}'): ${e}`;
-                            el.innerText = result;
-                        }
-                    } else {
-                        result = "(disabled; enable in settings)";
-                        el.innerText = result;
-                    }
-                } else {
-                    return;
-                }
-
-                const classes = getCssClasses(type.name);
-
-                widgets.push(
-                    Decoration.replace({
-                        widget: new InlineWidget(classes, code, el, view),
-                        inclusive: false,
-                        block: false,
-                    }).range(start - 1, end + 1)
-                );
-            },
-        });
-    }
-
-    return Decoration.set(widgets, true);
-}
-
 export function inlinePlugin(index: FullIndex, settings: DataviewSettings, api: DataviewApi) {
     return ViewPlugin.fromClass(
         class {
@@ -267,7 +137,7 @@ export function inlinePlugin(index: FullIndex, settings: DataviewSettings, api: 
             constructor(view: EditorView) {
                 this.component = new Component();
                 this.component.load();
-                this.decorations = inlineRender(view, index, settings, api, this.component) ?? Decoration.none;
+                this.decorations = this.inlineRender(view) ?? Decoration.none;
             }
 
             update(update: ViewUpdate) {
@@ -281,11 +151,141 @@ export function inlinePlugin(index: FullIndex, settings: DataviewSettings, api: 
                     this.decorations = this.decorations.map(update.changes);
                     return;
                 } else if (update.viewportChanged || update.selectionSet) {
-                    this.decorations =
-                        inlineRender(update.view, index, settings, api, this.component) ?? Decoration.none;
+                    this.decorations = this.inlineRender(update.view) ?? Decoration.none;
                 }
             }
 
+            inlineRender(view: EditorView) {
+                // still doesn't work as expected for tables and callouts
+                if (!index.initialized) return;
+                const currentFile = app.workspace.getActiveFile();
+                if (!currentFile) return;
+
+                const widgets: Range<Decoration>[] = [];
+                const selection = view.state.selection;
+                /* before:
+                 *     em for italics
+                 *     highlight for highlight
+                 * after:
+                 *     strong for bold
+                 *     strikethrough for strikethrough
+                 */
+                const regex = new RegExp(".*?_?inline-code_?.*");
+                const PREAMBLE: string = "const dataview=this;const dv=this;";
+
+                for (const { from, to } of view.visibleRanges) {
+                    syntaxTree(view.state).iterate({
+                        from,
+                        to,
+                        enter: ({ node }) => {
+                            const type = node.type;
+                            // markdown formatting symbols
+                            if (type.name.includes("formatting")) return;
+                            // current node is not inline code
+                            if (!regex.test(type.name)) return;
+
+                            // contains the position of inline code
+                            const start = node.from;
+                            const end = node.to;
+                            // don't continue if current cursor position and inline code node (including formatting
+                            // symbols) overlap
+                            if (selectionAndRangeOverlap(selection, start - 1, end + 1)) return;
+
+                            const text = view.state.doc.sliceString(start, end);
+                            const notNormalCode =
+                                text.startsWith(settings.inlineQueryPrefix) ||
+                                text.startsWith(settings.inlineJsQueryPrefix);
+                            if (!notNormalCode) return;
+                            let code: string = "";
+                            let result: Literal = "";
+                            const el = createSpan({
+                                cls: ["dataview", "dataview-inline"],
+                            });
+                            /* If the query result is predefined text (e.g. in the case of errors), set innerText to it.
+                             * Otherwise, pass on an empty element and fill it in later.
+                             * This is necessary because {@link InlineWidget.toDOM} is synchronous but some rendering
+                             * asynchronous.
+                             */
+                            if (settings.inlineQueryPrefix.length > 0 && text.startsWith(settings.inlineQueryPrefix)) {
+                                code = text.substring(settings.inlineQueryPrefix.length).trim();
+                                const field = tryOrPropogate(() => parseField(code));
+                                if (!field.successful) {
+                                    result = `Dataview (inline field '${code}'): ${field.error}`;
+                                    el.innerText = result;
+                                } else {
+                                    const fieldValue = field.value;
+                                    const intermediateResult = tryOrPropogate(() =>
+                                        executeInline(fieldValue, currentFile.path, index, settings)
+                                    );
+                                    if (!intermediateResult.successful) {
+                                        result = `Dataview (for inline query '${fieldValue}'): ${intermediateResult.error}`;
+                                        el.innerText = result;
+                                    } else {
+                                        const { value } = intermediateResult;
+                                        result = value;
+                                        renderValue(result, el, currentFile.path, this.component, settings);
+                                    }
+                                }
+                            } else if (
+                                settings.inlineJsQueryPrefix.length > 0 &&
+                                text.startsWith(settings.inlineJsQueryPrefix)
+                            ) {
+                                if (settings.enableInlineDataviewJs) {
+                                    code = text.substring(settings.inlineJsQueryPrefix.length).trim();
+                                    try {
+                                        // for setting the correct context for dv/dataview
+                                        const myEl = createDiv();
+                                        const dvInlineApi = new DataviewInlineApi(
+                                            api,
+                                            this.component,
+                                            myEl,
+                                            currentFile.path
+                                        );
+                                        if (code.includes("await")) {
+                                            (
+                                                evalInContext(
+                                                    "(async () => { " + PREAMBLE + code + " })()"
+                                                ) as Promise<any>
+                                            ).then((result: any) => {
+                                                renderValue(result, el, currentFile.path, this.component, settings);
+                                            });
+                                        } else {
+                                            result = evalInContext(PREAMBLE + code);
+                                            renderValue(result, el, currentFile.path, this.component, settings);
+                                        }
+
+                                        function evalInContext(script: string): any {
+                                            return function () {
+                                                return eval(script);
+                                            }.call(dvInlineApi);
+                                        }
+                                    } catch (e) {
+                                        result = `Dataview (for inline JS query '${code}'): ${e}`;
+                                        el.innerText = result;
+                                    }
+                                } else {
+                                    result = "(disabled; enable in settings)";
+                                    el.innerText = result;
+                                }
+                            } else {
+                                return;
+                            }
+
+                            const classes = getCssClasses(type.name);
+
+                            widgets.push(
+                                Decoration.replace({
+                                    widget: new InlineWidget(classes, code, el, view),
+                                    inclusive: false,
+                                    block: false,
+                                }).range(start - 1, end + 1)
+                            );
+                        },
+                    });
+                }
+
+                return Decoration.set(widgets, true);
+            }
             destroy() {
                 this.component.unload();
             }
