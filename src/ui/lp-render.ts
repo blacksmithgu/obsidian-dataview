@@ -32,7 +32,7 @@ import { EditorSelection, Range } from "@codemirror/state";
 import { syntaxTree, tokenClassNodeProp } from "@codemirror/language";
 import { DataviewSettings } from "../settings";
 import { FullIndex } from "../data-index";
-import { Component, editorEditorField, editorLivePreviewField, editorViewField } from "obsidian";
+import { Component, editorEditorField, editorLivePreviewField, editorViewField, TFile } from "obsidian";
 import { DataviewApi } from "../api/plugin-api";
 import { tryOrPropogate } from "../util/normalize";
 import { parseField } from "../expression/parse";
@@ -208,101 +208,97 @@ export function inlinePlugin(index: FullIndex, settings: DataviewSettings, api: 
                         to,
                         enter: ({ node }) => {
                             if (!this.renderNode(view, node)) return;
-                            const type = node.type;
-                            // contains the position of inline code
-                            const start = node.from;
-                            const end = node.to;
-                            const text = view.state.doc.sliceString(start, end);
-                            let code: string = "";
-                            let result: Literal = "";
-                            const el = createSpan({
-                                cls: ["dataview", "dataview-inline"],
-                            });
-                            /* If the query result is predefined text (e.g. in the case of errors), set innerText to it.
-                             * Otherwise, pass on an empty element and fill it in later.
-                             * This is necessary because {@link InlineWidget.toDOM} is synchronous but some rendering
-                             * asynchronous.
-                             */
-                            if (settings.inlineQueryPrefix.length > 0 && text.startsWith(settings.inlineQueryPrefix)) {
-                                code = text.substring(settings.inlineQueryPrefix.length).trim();
-                                const field = tryOrPropogate(() => parseField(code));
-                                if (!field.successful) {
-                                    result = `Dataview (inline field '${code}'): ${field.error}`;
-                                    el.innerText = result;
-                                } else {
-                                    const fieldValue = field.value;
-                                    const intermediateResult = tryOrPropogate(() =>
-                                        executeInline(fieldValue, currentFile.path, index, settings)
-                                    );
-                                    if (!intermediateResult.successful) {
-                                        result = `Dataview (for inline query '${fieldValue}'): ${intermediateResult.error}`;
-                                        el.innerText = result;
-                                    } else {
-                                        const { value } = intermediateResult;
-                                        result = value;
-                                        renderValue(result, el, currentFile.path, this.component, settings);
-                                    }
-                                }
-                            } else if (
-                                settings.inlineJsQueryPrefix.length > 0 &&
-                                text.startsWith(settings.inlineJsQueryPrefix)
-                            ) {
-                                if (settings.enableInlineDataviewJs) {
-                                    code = text.substring(settings.inlineJsQueryPrefix.length).trim();
-                                    try {
-                                        // for setting the correct context for dv/dataview
-                                        const myEl = createDiv();
-                                        const dvInlineApi = new DataviewInlineApi(
-                                            api,
-                                            this.component,
-                                            myEl,
-                                            currentFile.path
-                                        );
-                                        if (code.includes("await")) {
-                                            (
-                                                evalInContext(
-                                                    "(async () => { " + PREAMBLE + code + " })()"
-                                                ) as Promise<any>
-                                            ).then((result: any) => {
-                                                renderValue(result, el, currentFile.path, this.component, settings);
-                                            });
-                                        } else {
-                                            result = evalInContext(PREAMBLE + code);
-                                            renderValue(result, el, currentFile.path, this.component, settings);
-                                        }
-
-                                        function evalInContext(script: string): any {
-                                            return function () {
-                                                return eval(script);
-                                            }.call(dvInlineApi);
-                                        }
-                                    } catch (e) {
-                                        result = `Dataview (for inline JS query '${code}'): ${e}`;
-                                        el.innerText = result;
-                                    }
-                                } else {
-                                    result = "(disabled; enable in settings)";
-                                    el.innerText = result;
-                                }
-                            } else {
-                                return;
+                            const widget = this.renderWidget(node, view, currentFile, PREAMBLE);
+                            if (widget) {
+                                widgets.push(widget);
                             }
-
-                            const classes = getCssClasses(type.name);
-
-                            widgets.push(
-                                Decoration.replace({
-                                    widget: new InlineWidget(classes, code, el, view),
-                                    inclusive: false,
-                                    block: false,
-                                }).range(start - 1, end + 1)
-                            );
                         },
                     });
                 }
 
                 return Decoration.set(widgets, true);
             }
+
+            renderWidget(node: SyntaxNode, view: EditorView, currentFile: TFile, PREAMBLE: string) {
+                const type = node.type;
+                // contains the position of inline code
+                const start = node.from;
+                const end = node.to;
+                const text = view.state.doc.sliceString(start, end);
+                let code: string = "";
+                let result: Literal = "";
+                const el = createSpan({
+                    cls: ["dataview", "dataview-inline"],
+                });
+                /* If the query result is predefined text (e.g. in the case of errors), set innerText to it.
+                 * Otherwise, pass on an empty element and fill it in later.
+                 * This is necessary because {@link InlineWidget.toDOM} is synchronous but some rendering
+                 * asynchronous.
+                 */
+                if (settings.inlineQueryPrefix.length > 0 && text.startsWith(settings.inlineQueryPrefix)) {
+                    code = text.substring(settings.inlineQueryPrefix.length).trim();
+                    const field = tryOrPropogate(() => parseField(code));
+                    if (!field.successful) {
+                        result = `Dataview (inline field '${code}'): ${field.error}`;
+                        el.innerText = result;
+                    } else {
+                        const fieldValue = field.value;
+                        const intermediateResult = tryOrPropogate(() =>
+                            executeInline(fieldValue, currentFile.path, index, settings)
+                        );
+                        if (!intermediateResult.successful) {
+                            result = `Dataview (for inline query '${fieldValue}'): ${intermediateResult.error}`;
+                            el.innerText = result;
+                        } else {
+                            const { value } = intermediateResult;
+                            result = value;
+                            renderValue(result, el, currentFile.path, this.component, settings);
+                        }
+                    }
+                } else if (settings.inlineJsQueryPrefix.length > 0 && text.startsWith(settings.inlineJsQueryPrefix)) {
+                    if (settings.enableInlineDataviewJs) {
+                        code = text.substring(settings.inlineJsQueryPrefix.length).trim();
+                        try {
+                            // for setting the correct context for dv/dataview
+                            const myEl = createDiv();
+                            const dvInlineApi = new DataviewInlineApi(api, this.component, myEl, currentFile.path);
+                            if (code.includes("await")) {
+                                (evalInContext("(async () => { " + PREAMBLE + code + " })()") as Promise<any>).then(
+                                    (result: any) => {
+                                        renderValue(result, el, currentFile.path, this.component, settings);
+                                    }
+                                );
+                            } else {
+                                result = evalInContext(PREAMBLE + code);
+                                renderValue(result, el, currentFile.path, this.component, settings);
+                            }
+
+                            function evalInContext(script: string): any {
+                                return function () {
+                                    return eval(script);
+                                }.call(dvInlineApi);
+                            }
+                        } catch (e) {
+                            result = `Dataview (for inline JS query '${code}'): ${e}`;
+                            el.innerText = result;
+                        }
+                    } else {
+                        result = "(disabled; enable in settings)";
+                        el.innerText = result;
+                    }
+                } else {
+                    return;
+                }
+
+                const classes = getCssClasses(type.name);
+
+                return Decoration.replace({
+                    widget: new InlineWidget(classes, code, el, view),
+                    inclusive: false,
+                    block: false,
+                }).range(start - 1, end + 1);
+            }
+
             destroy() {
                 this.component.unload();
             }
