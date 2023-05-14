@@ -150,10 +150,6 @@ export function inlinePlugin(app: App, index: FullIndex, settings: DataviewSetti
                 }
                 if (update.selectionSet) {
                     this.updateTree(update.view);
-                }
-                if (update.docChanged) {
-                    this.decorations = this.decorations.map(update.changes);
-                    return;
                 } else if (update.viewportChanged /*|| update.selectionSet*/) {
                     this.decorations = this.inlineRender(update.view) ?? Decoration.none;
                 }
