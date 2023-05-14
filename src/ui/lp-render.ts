@@ -109,21 +109,21 @@ class InlineWidget extends WidgetType {
     }
 }
 
-function getCssClasses(nodeName: string): string[] {
+function getCssClasses(props: Set<string>): string[] {
     const classes: string[] = [];
-    if (nodeName.includes("strong")) {
+    if (props.has("strong")) {
         classes.push("cm-strong");
     }
-    if (nodeName.includes("em")) {
+    if (props.has("em")) {
         classes.push("cm-em");
     }
-    if (nodeName.includes("highlight")) {
+    if (props.has("highlight")) {
         classes.push("cm-highlight");
     }
-    if (nodeName.includes("strikethrough")) {
+    if (props.has("strikethrough")) {
         classes.push("cm-strikethrough");
     }
-    if (nodeName.includes("comment")) {
+    if (props.has("comment")) {
         classes.push("cm-comment");
     }
     return classes;
@@ -346,7 +346,9 @@ export function inlinePlugin(app: App, index: FullIndex, settings: DataviewSetti
                     return;
                 }
 
-                const classes = getCssClasses(type.name);
+                const tokenProps = type.prop<String>(tokenClassNodeProp);
+                const props = new Set(tokenProps?.split(" "));
+                const classes = getCssClasses(props);
 
                 return Decoration.replace({
                     widget: new InlineWidget(classes, code, el, view),
