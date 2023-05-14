@@ -148,7 +148,10 @@ export function inlinePlugin(app: App, index: FullIndex, settings: DataviewSetti
                     this.decorations = Decoration.none;
                     return;
                 }
-                if (update.selectionSet) {
+                if (update.docChanged) {
+                    this.decorations = this.decorations.map(update.changes);
+                    this.updateTree(update.view);
+                } else if (update.selectionSet) {
                     this.updateTree(update.view);
                 } else if (update.viewportChanged /*|| update.selectionSet*/) {
                     this.decorations = this.inlineRender(update.view) ?? Decoration.none;
