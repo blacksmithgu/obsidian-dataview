@@ -34,7 +34,7 @@
     "@zerollup/ts-transform-paths": "^1.7.18",
     "compare-versions": "^4.1.1",
     "jest": "^27.1.0",
-    "obsidian": "^0.15.4",
+    "obsidian": "^1.2.8",
     "prettier": "2.3.2",
     "rollup": "^2.67.2",
     "rollup-jest": "^1.1.3",

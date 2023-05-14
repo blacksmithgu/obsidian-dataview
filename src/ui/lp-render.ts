@@ -32,7 +32,7 @@ import { EditorSelection, Range } from "@codemirror/state";
 import { syntaxTree, tokenClassNodeProp } from "@codemirror/language";
 import { DataviewSettings } from "../settings";
 import { FullIndex } from "../data-index";
-import { App, Component, editorEditorField, editorLivePreviewField, editorViewField, TFile } from "obsidian";
+import { App, Component, editorInfoField, editorLivePreviewField, TFile } from "obsidian";
 import { DataviewApi } from "../api/plugin-api";
 import { tryOrPropogate } from "../util/normalize";
 import { parseField } from "../expression/parse";
@@ -98,9 +98,10 @@ class InlineWidget extends WidgetType {
             if ((event as MouseEvent).shiftKey) {
                 // Set the cursor after the element so that it doesn't select starting from the last cursor position.
                 if (currentPos) {
-                    //@ts-ignore
-                    const { editor } = this.view.state.field(editorEditorField).state.field(editorViewField);
-                    editor.setCursor(editor.offsetToPos(currentPos));
+                    const { editor } = this.view.state.field(editorInfoField);
+                    if (editor) {
+                        editor.setCursor(editor.offsetToPos(currentPos));
+                    }
                 }
                 return false;
             }
