@@ -274,6 +274,10 @@ export function inlinePlugin(app: App, index: FullIndex, settings: DataviewSetti
                 // contains the position of inline code
                 const start = node.from;
                 const end = node.to;
+                // safety net against unclosed inline code
+                if (view.state.doc.sliceString(end, end + 1) === "\n") {
+                    return;
+                }
                 const text = view.state.doc.sliceString(start, end);
                 let code: string = "";
                 let result: Literal = "";
@@ -286,27 +290,32 @@ export function inlinePlugin(app: App, index: FullIndex, settings: DataviewSetti
                  * This is necessary because {@link InlineWidget.toDOM} is synchronous but some rendering
                  * asynchronous.
                  */
-                if (settings.inlineQueryPrefix.length > 0 && text.startsWith(settings.inlineQueryPrefix)) {
-                    code = text.substring(settings.inlineQueryPrefix.length).trim();
-                    const field = tryOrPropogate(() => parseField(code));
-                    if (!field.successful) {
-                        result = `Dataview (inline field '${code}'): ${field.error}`;
-                        el.innerText = result;
-                    } else {
-                        const fieldValue = field.value;
-                        const intermediateResult = tryOrPropogate(() =>
-                            executeInline(fieldValue, currentFile.path, index, settings)
-                        );
-                        if (!intermediateResult.successful) {
-                            result = `Dataview (for inline query '${fieldValue}'): ${intermediateResult.error}`;
+                if (text.startsWith(settings.inlineQueryPrefix)) {
+                    if (settings.enableInlineDataview) {
+                        code = text.substring(settings.inlineQueryPrefix.length).trim();
+                        const field = tryOrPropogate(() => parseField(code));
+                        if (!field.successful) {
+                            result = `Dataview (inline field '${code}'): ${field.error}`;
                             el.innerText = result;
                         } else {
-                            const { value } = intermediateResult;
-                            result = value;
-                            renderValue(result, el, currentFile.path, this.component, settings);
+                            const fieldValue = field.value;
+                            const intermediateResult = tryOrPropogate(() =>
+                                executeInline(fieldValue, currentFile.path, index, settings)
+                            );
+                            if (!intermediateResult.successful) {
+                                result = `Dataview (for inline query '${fieldValue}'): ${intermediateResult.error}`;
+                                el.innerText = result;
+                            } else {
+                                const { value } = intermediateResult;
+                                result = value;
+                                renderValue(result, el, currentFile.path, this.component, settings);
+                            }
                         }
+                    } else {
+                        result = "(disabled; enable in settings)";
+                        el.innerText = result;
                     }
-                } else if (settings.inlineJsQueryPrefix.length > 0 && text.startsWith(settings.inlineJsQueryPrefix)) {
+                } else if (text.startsWith(settings.inlineJsQueryPrefix)) {
                     if (settings.enableInlineDataviewJs) {
                         code = text.substring(settings.inlineJsQueryPrefix.length).trim();
                         try {
