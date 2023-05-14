@@ -198,9 +198,7 @@ export function inlinePlugin(app: App, index: FullIndex, settings: DataviewSetti
                     const newDeco = this.renderWidget(node, view, currentFile)?.value;
                     if (newDeco) {
                         this.decorations = this.decorations.update({
-                            filterFrom: from,
-                            filterTo: to,
-                            /*filter: (from, to, newDeco) => true, */ add: [{ from: from, to: to, value: newDeco }],
+                            add: [{ from: from, to: to, value: newDeco }],
                         });
                     }
                 }
