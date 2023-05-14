@@ -32,7 +32,7 @@ import { EditorSelection, Range } from "@codemirror/state";
 import { syntaxTree, tokenClassNodeProp } from "@codemirror/language";
 import { DataviewSettings } from "../settings";
 import { FullIndex } from "../data-index";
-import { Component, editorEditorField, editorLivePreviewField, editorViewField, TFile } from "obsidian";
+import { App, Component, editorEditorField, editorLivePreviewField, editorViewField, TFile } from "obsidian";
 import { DataviewApi } from "../api/plugin-api";
 import { tryOrPropogate } from "../util/normalize";
 import { parseField } from "../expression/parse";
@@ -129,7 +129,7 @@ function getCssClasses(nodeName: string): string[] {
     return classes;
 }
 
-export function inlinePlugin(index: FullIndex, settings: DataviewSettings, api: DataviewApi) {
+export function inlinePlugin(app: App, index: FullIndex, settings: DataviewSettings, api: DataviewApi) {
     return ViewPlugin.fromClass(
         class {
             decorations: DecorationSet;
@@ -143,16 +143,69 @@ export function inlinePlugin(index: FullIndex, settings: DataviewSettings, api: 
 
             update(update: ViewUpdate) {
                 // only activate in LP and not source mode
-                //@ts-ignore
                 if (!update.state.field(editorLivePreviewField)) {
                     this.decorations = Decoration.none;
                     return;
                 }
+                if (update.selectionSet) {
+                    this.updateTree(update.view);
+                }
                 if (update.docChanged) {
                     this.decorations = this.decorations.map(update.changes);
                     return;
-                } else if (update.viewportChanged || update.selectionSet) {
+                } else if (update.viewportChanged /*|| update.selectionSet*/) {
                     this.decorations = this.inlineRender(update.view) ?? Decoration.none;
+                }
+            }
+
+            updateTree(view: EditorView) {
+                for (const { from, to } of view.visibleRanges) {
+                    syntaxTree(view.state).iterate({
+                        from,
+                        to,
+                        enter: ({ node }) => {
+                            const { render, isQuery } = this.renderNode(view, node);
+                            if (!render && isQuery) {
+                                this.removeDeco(node, view);
+                                return;
+                            } else if (!render) {
+                                return;
+                            } else if (render) {
+                                this.addDeco(node, view);
+                            }
+                        },
+                    });
+                }
+            }
+
+            removeDeco(node: SyntaxNode, view: EditorView) {
+                this.decorations.between(node.from - 1, node.to + 1, (from, to, value) => {
+                    this.decorations = this.decorations.update({
+                        filterFrom: from,
+                        filterTo: to,
+                        filter: (from, to, value) => false,
+                    });
+                });
+            }
+
+            addDeco(node: SyntaxNode, view: EditorView) {
+                const from = node.from - 1;
+                const to = node.to + 1;
+                let exists = false;
+                this.decorations.between(from, to, (from, to, value) => {
+                    exists = true;
+                });
+                if (!exists) {
+                    const currentFile = app.workspace.getActiveFile();
+                    if (!currentFile) return;
+                    const newDeco = this.renderWidget(node, view, currentFile)?.value;
+                    if (newDeco) {
+                        this.decorations = this.decorations.update({
+                            filterFrom: from,
+                            filterTo: to,
+                            /*filter: (from, to, newDeco) => true, */ add: [{ from: from, to: to, value: newDeco }],
+                        });
+                    }
                 }
             }
 
@@ -170,13 +223,16 @@ export function inlinePlugin(index: FullIndex, settings: DataviewSettings, api: 
                     // symbols) overlap
                     const selection = view.state.selection;
                     if (selectionAndRangeOverlap(selection, start - 1, end + 1)) {
-                        // TODO: from stored decorations, remove this one
-                        return false;
+                        if (this.isInlineQuery(view, start, end)) {
+                            return { render: false, isQuery: true };
+                        } else {
+                            return { render: false, isQuery: false };
+                        }
                     } else if (this.isInlineQuery(view, start, end)) {
-                        return true;
+                        return { render: true, isQuery: true };
                     }
                 }
-                return false;
+                return { render: false, isQuery: false };
             }
 
             isInlineQuery(view: EditorView, start: number, end: number) {
@@ -200,15 +256,14 @@ export function inlinePlugin(index: FullIndex, settings: DataviewSettings, api: 
                  *     strong for bold
                  *     strikethrough for strikethrough
                  */
-                const PREAMBLE: string = "const dataview=this;const dv=this;";
 
                 for (const { from, to } of view.visibleRanges) {
                     syntaxTree(view.state).iterate({
                         from,
                         to,
                         enter: ({ node }) => {
-                            if (!this.renderNode(view, node)) return;
-                            const widget = this.renderWidget(node, view, currentFile, PREAMBLE);
+                            if (!this.renderNode(view, node).render) return;
+                            const widget = this.renderWidget(node, view, currentFile);
                             if (widget) {
                                 widgets.push(widget);
                             }
@@ -219,7 +274,7 @@ export function inlinePlugin(index: FullIndex, settings: DataviewSettings, api: 
                 return Decoration.set(widgets, true);
             }
 
-            renderWidget(node: SyntaxNode, view: EditorView, currentFile: TFile, PREAMBLE: string) {
+            renderWidget(node: SyntaxNode, view: EditorView, currentFile: TFile) {
                 const type = node.type;
                 // contains the position of inline code
                 const start = node.from;
@@ -227,6 +282,7 @@ export function inlinePlugin(index: FullIndex, settings: DataviewSettings, api: 
                 const text = view.state.doc.sliceString(start, end);
                 let code: string = "";
                 let result: Literal = "";
+                const PREAMBLE: string = "const dataview=this;const dv=this;";
                 const el = createSpan({
                     cls: ["dataview", "dataview-inline"],
                 });
