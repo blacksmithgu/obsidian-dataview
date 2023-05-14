@@ -29,7 +29,7 @@
 
 import { Decoration, DecorationSet, EditorView, ViewPlugin, ViewUpdate, WidgetType } from "@codemirror/view";
 import { EditorSelection, Range } from "@codemirror/state";
-import { syntaxTree } from "@codemirror/language";
+import { syntaxTree, tokenClassNodeProp } from "@codemirror/language";
 import { DataviewSettings } from "../settings";
 import { FullIndex } from "../data-index";
 import { Component, editorEditorField, editorLivePreviewField, editorViewField } from "obsidian";
@@ -170,7 +170,6 @@ export function inlinePlugin(index: FullIndex, settings: DataviewSettings, api: 
                  *     strong for bold
                  *     strikethrough for strikethrough
                  */
-                const regex = new RegExp(".*?_?inline-code_?.*");
                 const PREAMBLE: string = "const dataview=this;const dv=this;";
 
                 for (const { from, to } of view.visibleRanges) {
@@ -179,10 +178,12 @@ export function inlinePlugin(index: FullIndex, settings: DataviewSettings, api: 
                         to,
                         enter: ({ node }) => {
                             const type = node.type;
-                            // markdown formatting symbols
-                            if (type.name.includes("formatting")) return;
                             // current node is not inline code
-                            if (!regex.test(type.name)) return;
+                            const tokenProps = type.prop<String>(tokenClassNodeProp);
+                            const props = new Set(tokenProps?.split(" "));
+                            if (!props.has("inline-code") && props.has("formatting")) {
+                                return;
+                            }
 
                             // contains the position of inline code
                             const start = node.from;
