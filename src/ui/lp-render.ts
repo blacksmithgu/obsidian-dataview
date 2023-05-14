@@ -40,6 +40,7 @@ import { executeInline } from "../query/engine";
 import { Literal } from "../data-model/value";
 import { DataviewInlineApi } from "../api/inline-api";
 import { renderValue } from "./render";
+import { SyntaxNode } from "@lezer/common";
 
 function selectionAndRangeOverlap(selection: EditorSelection, rangeFrom: number, rangeTo: number) {
     for (const range of selection.ranges) {
@@ -155,6 +156,36 @@ export function inlinePlugin(index: FullIndex, settings: DataviewSettings, api: 
                 }
             }
 
+            // checks whether a node should get rendered/unrendered
+            renderNode(view: EditorView, node: SyntaxNode) {
+                const type = node.type;
+                // current node is inline code
+                const tokenProps = type.prop<String>(tokenClassNodeProp);
+                const props = new Set(tokenProps?.split(" "));
+                if (props.has("inline-code") && !props.has("formatting")) {
+                    // contains the position of inline code
+                    const start = node.from;
+                    const end = node.to;
+                    // don't continue if current cursor position and inline code node (including formatting
+                    // symbols) overlap
+                    const selection = view.state.selection;
+                    if (selectionAndRangeOverlap(selection, start - 1, end + 1)) {
+                        // TODO: from stored decorations, remove this one
+                        return false;
+                    } else if (this.isInlineQuery(view, start, end)) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            isInlineQuery(view: EditorView, start: number, end: number) {
+                const text = view.state.doc.sliceString(start, end);
+                const isInlineQuery =
+                    text.startsWith(settings.inlineQueryPrefix) || text.startsWith(settings.inlineJsQueryPrefix);
+                return isInlineQuery;
+            }
+
             inlineRender(view: EditorView) {
                 // still doesn't work as expected for tables and callouts
                 if (!index.initialized) return;
@@ -162,7 +193,6 @@ export function inlinePlugin(index: FullIndex, settings: DataviewSettings, api: 
                 if (!currentFile) return;
 
                 const widgets: Range<Decoration>[] = [];
-                const selection = view.state.selection;
                 /* before:
                  *     em for italics
                  *     highlight for highlight
@@ -177,26 +207,12 @@ export function inlinePlugin(index: FullIndex, settings: DataviewSettings, api: 
                         from,
                         to,
                         enter: ({ node }) => {
+                            if (!this.renderNode(view, node)) return;
                             const type = node.type;
-                            // current node is not inline code
-                            const tokenProps = type.prop<String>(tokenClassNodeProp);
-                            const props = new Set(tokenProps?.split(" "));
-                            if (!props.has("inline-code") && props.has("formatting")) {
-                                return;
-                            }
-
                             // contains the position of inline code
                             const start = node.from;
                             const end = node.to;
-                            // don't continue if current cursor position and inline code node (including formatting
-                            // symbols) overlap
-                            if (selectionAndRangeOverlap(selection, start - 1, end + 1)) return;
-
                             const text = view.state.doc.sliceString(start, end);
-                            const notNormalCode =
-                                text.startsWith(settings.inlineQueryPrefix) ||
-                                text.startsWith(settings.inlineJsQueryPrefix);
-                            if (!notNormalCode) return;
                             let code: string = "";
                             let result: Literal = "";
                             const el = createSpan({
