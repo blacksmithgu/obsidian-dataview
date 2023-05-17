@@ -382,13 +382,13 @@ though will always be an object with a `type` denoting the return type. This ver
 
 ```javascript
 await dv.query("LIST FROM #tag") =>
-    Success { type: "list", values: [value1, value2, ...] }
+    { successful: true, value: { type: "list", values: [value1, value2, ...] } }
 
 await dv.query(`TABLE WITHOUT ID file.name, value FROM "path"`) =>
-    Success { type: "table", headers: ["file.name", "value"], values: [["A", 1], ["B", 2]] }
+    { successful: true, value: { type: "table", headers: ["file.name", "value"], values: [["A", 1], ["B", 2]] } }
 
 await dv.query("TASK WHERE due") =>
-    Success { type: "task", values: [task1, task2, ...]}
+    { successful: true, value: { type: "task", values: [task1, task2, ...] } }
 ```
 
 `dv.query` accepts two additional, optional arguments:
@@ -408,7 +408,7 @@ Equivalent to `dv.query()`, but returns rendered Markdown.
 
 ```js
 await dv.queryMarkdown("LIST FROM #tag") =>
-    Success { "- [[Page 1]]\n- [[Page 2]]" }
+    { successfult: true, value: { "- [[Page 1]]\n- [[Page 2]]" } }
 ```
 
 ### ⌛ `dv.tryQueryMarkdown(source, [file], [settings])`
