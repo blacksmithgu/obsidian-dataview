@@ -778,6 +778,18 @@ export namespace DefaultFunctions {
             type: link.type,
         }))
         .build();
+
+    // Concatenates sub-array elements into a new array
+    export const flat = new FunctionBuilder("flat")
+    .add1("array", a => {
+        return a.flat()
+    })
+    .add2("array", "number", (a, n) => {
+        // @ts-ignore
+        return a.flat(n)
+    })
+    .add1("null", () => null)
+    .build();
 }
 
 /** Default function implementations for the expression evaluator. */
@@ -830,6 +842,7 @@ export const DEFAULT_FUNCTIONS: Record<string, FunctionImpl> = {
     containsword: DefaultFunctions.containsword,
     reverse: DefaultFunctions.reverse,
     sort: DefaultFunctions.sort,
+    flat: DefaultFunctions.flat,
 
     // Aggregation operations like reduce.
     reduce: DefaultFunctions.reduce,

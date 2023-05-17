@@ -475,6 +475,18 @@ map([1, 2, 3], (x) => x + 2) = [3, 4, 5]
 map(["yes", "no"], (x) => x + "?") = ["yes?", "no?"]
 ```
 
+### `flat(array, [depth])`
+
+Concatenates sub-levels of the array to the desired depth. Default is 1 level, but it can
+concatenate multiple levels. E.g. Can be used to reduce array depth on `rows` lists after
+doing `GROUP BY`.
+
+```js
+flat(list(1, 2, 3, list(4, 5), 6)) => list(1, 2, 3, 4, 5, 6)
+flat(list(1, list(21, 22), list(list (311, 312, 313))), 4) => list(1, 21, 22, 311, 312, 313)
+flat(rows.file.outlinks)) => All the file outlinks at first level in output
+```
+
 ---
 
 ## String Operations

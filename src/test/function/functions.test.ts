@@ -59,6 +59,14 @@ test("Evaluate reverse(list)", () => {
     expect(parseEval('reverse(list("a", "b", "c"))')).toEqual(parseEval('list("c", "b", "a")'));
 });
 
+// <-- flat() -->
+
+test("Evaluate flat()", () => {
+    expect(parseEval("flat(list(1, 2, 3, list(11, 12)))")).toEqual(parseEval("list(1,2,3,11,12)"));
+    expect(parseEval("flat(list(1, list(21, list(221, 222)), 3, list(11, 12)))")).toEqual(parseEval("list(1,21,list(221,222),3,11,12)")); // flat(...)
+    expect(parseEval("flat(list(1, list(2, list(3, list(4, list(5))))), 3)")).toEqual(parseEval("list(1,2,3,4,list(5))")); // flat(..., 3)
+    expect(parseEval("flat(list(1, list(2, list(3, list(4, list(5))))), 10)")).toEqual(parseEval("list(1,2,3,4,5)")); // flat(..., 10)
+})
 // <-- sort() -->
 
 describe("sort()", () => {
