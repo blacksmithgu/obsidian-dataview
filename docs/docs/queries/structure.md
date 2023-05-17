@@ -15,6 +15,9 @@ supports:
 - **Grouping** results based on fields
 - **Limiting** your result count
 
+!!! warning Differences to SQL
+    If you are familiar with SQL, please read [Differences to SQL](../../queries/differences-to-sql) to avoid confusing DQL with SQL.
+
 Let's have a look at how we can put DQL to use.
 
 ## General Format of a DQL Query
