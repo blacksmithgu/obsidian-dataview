@@ -276,6 +276,21 @@ export namespace DefaultFunctions {
 
             return null;
         })
+        .add2("string", "string", (d, f) => {
+            if (f === "x" || f==="X") {
+                let match = NUMBER_REGEX.exec(d)
+                if (match) return DateTime.fromMillis(Number.parseInt(match[0]) * ( f==="X" ? 1000 : 1))
+                else {
+                    throw Error("Not a number for format( (${ f }): ${ d }")
+                }
+            } else {
+                let parsedDate = DateTime.fromFormat(d, f)
+                if (parsedDate.isValid) return parsedDate
+                else { throw Error(`Can't handle format (${ f }) on date string (${ d })`) }    
+            } 
+
+            return null;
+        })
         .add1("null", () => null)
         .vectorize(1, [0])
         .build();
