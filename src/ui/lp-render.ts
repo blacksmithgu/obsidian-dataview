@@ -166,7 +166,7 @@ export function inlinePlugin(app: App, index: FullIndex, settings: DataviewSetti
                         enter: ({ node }) => {
                             const { render, isQuery } = this.renderNode(view, node);
                             if (!render && isQuery) {
-                                this.removeDeco(node, view);
+                                this.removeDeco(node);
                                 return;
                             } else if (!render) {
                                 return;
@@ -178,7 +178,7 @@ export function inlinePlugin(app: App, index: FullIndex, settings: DataviewSetti
                 }
             }
 
-            removeDeco(node: SyntaxNode, view: EditorView) {
+            removeDeco(node: SyntaxNode) {
                 this.decorations.between(node.from - 1, node.to + 1, (from, to, value) => {
                     this.decorations = this.decorations.update({
                         filterFrom: from,
