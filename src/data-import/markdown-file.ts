@@ -327,6 +327,9 @@ export function parseFrontmatter(value: any): Literal {
             }
 
             return result;
+        } else if (value instanceof Date) {
+            let dateParse = DateTime.fromJSDate(value)
+            return dateParse;
         } else {
             let object = value as Record<string, any>;
             let result: Record<string, Literal> = {};
