@@ -168,10 +168,26 @@ dv.taskList(dv.pages("#project").file.tasks
 
 ### `dv.table(headers, elements)`
 
-Render a dataview table with the given list of headers and 2D array of elements.
+Renders a dataview table. `headers` is an array of column headers. `elements` is an array of rows. Each row is itself an array of columns. Inside a row, every column which is an array will be rendered with bullet points.
 
 ```js
-// Render a simple table of book info sorted by rating.
+dv.table(
+	["Col1", "Col2", "Col3"],
+		[
+			["Row1", "Dummy", "Dummy"],
+			["Row2", 
+				["Bullet1",
+				 "Bullet2",
+				 "Bullet3"],
+			 "Dummy"],
+			["Row3", "Dummy", "Dummy"]
+		]
+	);
+```
+
+An example of how to render a simple table of book info sorted by rating.
+
+```js
 dv.table(["File", "Genre", "Time Read", "Rating"], dv.pages("#book")
     .sort(b => b.rating)
     .map(b => [b.file.link, b.genre, b["time-read"], b.rating]))
