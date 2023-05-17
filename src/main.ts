@@ -86,8 +86,10 @@ export default class DataviewPlugin extends Plugin {
         });
 
         // editor extension for inline queries
-        this.cmExtension = [inlinePlugin(this.index, this.settings, this.api)];
-        this.registerEditorExtension(this.cmExtension);
+        if (this.settings.enableInlineDataview || this.settings.enableInlineDataviewJs) {
+            this.cmExtension = [inlinePlugin(this.app, this.index, this.settings, this.api)];
+            this.registerEditorExtension(this.cmExtension);
+        }
 
         // Dataview "force refresh" operation.
         this.addCommand({
