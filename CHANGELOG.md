@@ -1,3 +1,12 @@
+# 0.5.56
+
+- Includes some performance fixes on recent versions of Obsidian 1.3+ due to some API changes. Thanks @kometenstaub.
+- Documentation cleanups and improvements by @mocsa, @protofarer, @seanlzx, and @somidad.
+- Adds the new `flat(array)` method for flattening nested arrays, as well as parsing dates using arbitrary formats using
+  `date(text, "format")`. Thanks @holroy!
+
+---
+
 # 0.5.55
 
 - Durations are now internationalized using luxon's new internationalization support.
