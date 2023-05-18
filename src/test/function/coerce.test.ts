@@ -1,4 +1,3 @@
-import { DateTime } from "luxon";
 import { expectEvals, parseEval } from "test/common";
 
 test("number()", () => {
