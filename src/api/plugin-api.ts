@@ -358,16 +358,26 @@ export class DataviewApi {
      * execution via `result.successful` and obtain `result.value` or `result.error` resultingly. If
      * you'd rather this method throw on an error, use `dv.tryEvaluate`.
      */
-    public evaluate(expression: string, context?: DataObject): Result<Literal, string> {
+    public evaluate(
+        expression: string,
+        context?: DataObject,
+        originFile?: string): Result<Literal, string> {
         let field = EXPRESSION.field.parse(expression);
         if (!field.status) return Result.failure(`Failed to parse expression "${expression}"`);
 
-        return this.evaluationContext.evaluate(field.value, context);
+        let evaluationContext = originFile
+            ? new Context(defaultLinkHandler(this.index, originFile), this.settings)
+            : this.evaluationContext
+
+        return evaluationContext.evaluate(field.value, context);
     }
 
     /** Error-throwing version of `dv.evaluate`. */
-    public tryEvaluate(expression: string, context?: DataObject): Literal {
-        return this.evaluate(expression, context).orElseThrow();
+    public tryEvaluate(
+        expression: string,
+        context?: DataObject,
+        originFile?: string): Literal {
+        return this.evaluate(expression, context, originFile).orElseThrow();
     }
 
     ///////////////
