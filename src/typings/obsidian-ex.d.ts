@@ -7,6 +7,21 @@ declare module "obsidian" {
         trigger(name: string, ...data: any[]): void;
     }
 
+    interface FileManager {
+        linkUpdaters: {
+            canvas: {
+                canvas: {
+                    index: {
+                        index: {
+                            [path: string]: {
+                                caches: CachedMetadata;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+    }
     interface App {
         appId?: string;
         plugins: {

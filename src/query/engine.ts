@@ -10,7 +10,8 @@ import { Result } from "api/result";
 import { Field, Fields } from "expression/field";
 import { QuerySettings } from "settings";
 import { DateTime } from "luxon";
-import { SListItem } from "data-model/serialized/markdown";
+import { SListItem, SMarkdownPage, STask } from "data-model/serialized/markdown";
+import { SCanvas } from "data-model/serialized/canvas";
 
 function iden<T>(x: T): T {
     return x;
@@ -401,7 +402,14 @@ export async function executeTask(
         if (!page) continue;
 
         let pageData = page.serialize(index);
-        let pageTasks = pageData.file.tasks.map(t => {
+        let intermediatePageTasks;
+
+        if ((pageData as any).file.cards) {
+            intermediatePageTasks = (pageData as SCanvas).file.cards.map(a => a.tasks).flat();
+        } else {
+            intermediatePageTasks = (pageData as SMarkdownPage).file.tasks;
+        }
+        let pageTasks = intermediatePageTasks.map((t: STask) => {
             const tcopy = Values.deepCopy(t);
 
             // Add page data to this copy.

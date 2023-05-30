@@ -2,7 +2,7 @@
 
 import { Transferable } from "data-model/transferable";
 import DataviewImportWorker from "web-worker:./import-entry.ts";
-import { Component, MetadataCache, TFile, Vault } from "obsidian";
+import { App, Component, MetadataCache, TFile, Vault } from "obsidian";
 
 /** Callback when a file is resolved. */
 type FileCallback = (p: any) => void;
@@ -21,7 +21,12 @@ export class FileImporter extends Component {
     /** Paths -> promises for file reloads which have not yet been queued. */
     callbacks: Map<string, [FileCallback, FileCallback][]>;
 
-    public constructor(public numWorkers: number, public vault: Vault, public metadataCache: MetadataCache) {
+    public constructor(
+        public numWorkers: number,
+        public vault: Vault,
+        public metadataCache: MetadataCache,
+        public app: App
+    ) {
         super();
         this.workers = [];
         this.busy = [];
@@ -93,14 +98,24 @@ export class FileImporter extends Component {
     private send(file: TFile, workerId: number) {
         this.busy[workerId] = true;
 
-        this.vault.cachedRead(file).then(c =>
-            this.workers[workerId].postMessage({
-                path: file.path,
-                contents: c,
-                stat: file.stat,
-                metadata: this.metadataCache.getFileCache(file),
-            })
-        );
+        this.vault.cachedRead(file).then(c => {
+            if (file.path.endsWith(".canvas")) {
+                return this.workers[workerId].postMessage({
+                    path: file.path,
+                    contents: c,
+                    stat: file.stat,
+                    metadata: this.app.fileManager.linkUpdaters.canvas.canvas.index.index[file.path].caches,
+                    mindex: this.app.fileManager.linkUpdaters.canvas.canvas.index.index,
+                });
+            } else {
+                return this.workers[workerId].postMessage({
+                    path: file.path,
+                    contents: c,
+                    stat: file.stat,
+                    metadata: this.metadataCache.getFileCache(file),
+                });
+            }
+        });
     }
 
     /** Find the next available, non-busy worker; return undefined if all workers are busy. */

@@ -63,7 +63,6 @@ export function parsePage(path: string, contents: string, stat: FileStats, metad
     // Strip "position" from frontmatter since it is Obsidian determined.
     const frontmatter = metadata.frontmatter || ({} as Record<string, any>);
     if (frontmatter && "position" in frontmatter) delete frontmatter["position"];
-
     return new PageMetadata(path, {
         tags,
         aliases,

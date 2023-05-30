@@ -3,6 +3,7 @@ import { Result } from "api/result";
 import { parseCsv } from "data-import/csv";
 import { LocalStorageCache } from "data-import/persister";
 import { FileImporter } from "data-import/web-worker/import-manager";
+import { CanvasCard, CanvasMetadata } from "data-model/canvas";
 import { PageMetadata } from "data-model/markdown";
 import { DataObject } from "data-model/value";
 import { DateTime } from "luxon";
@@ -27,7 +28,7 @@ export class FullIndex extends Component {
     public persister: LocalStorageCache;
 
     /* Maps path -> markdown metadata for all markdown pages. */
-    public pages: Map<string, PageMetadata>;
+    public pages: Map<string, PageMetadata | CanvasMetadata>;
 
     /** Map files -> tags in that file, and tags -> files. This version includes subtags. */
     public tags: ValueCaseInsensitiveIndexMap;
@@ -71,13 +72,17 @@ export class FullIndex extends Component {
         this.persister = new LocalStorageCache(app.appId || "shared", indexVersion);
 
         // Handles asynchronous reloading of files on web workers.
-        this.addChild((this.importer = new FileImporter(2, this.vault, this.metadataCache)));
+        this.addChild((this.importer = new FileImporter(2, this.vault, this.metadataCache, app)));
         // Prefix listens to file creation/deletion/rename, and not modifies, so we let it set up it's own listeners.
         this.addChild((this.prefix = PrefixIndex.create(this.vault, () => this.touch())));
         // The CSV cache also needs to listen to filesystem events for cache invalidation.
         this.addChild((this.csv = new CsvCache(this.vault)));
         // The starred cache fetches starred entries semi-regularly via an interval.
         this.addChild((this.starred = new StarredCache(this.app, () => this.touch())));
+        /** this is needed because though canvas files will also fire the `modify` event,
+            dataview can't already pick up on that. so we need to add the hook manually for canvases.
+         */
+        this.initialize();
     }
 
     /** Trigger a metadata event on the metadata cache. */
@@ -102,7 +107,7 @@ export class FullIndex extends Component {
         // File creation does cause a metadata change, but deletes do not. Clear the caches for this.
         this.registerEvent(
             this.vault.on("delete", af => {
-                if (!(af instanceof TFile) || !PathFilters.markdown(af.path)) return;
+                if (!(af instanceof TFile) || (!PathFilters.markdown(af.path) && !PathFilters.canvas(af.path))) return;
                 let file = af as TFile;
 
                 this.pages.delete(file.path);
@@ -114,16 +119,28 @@ export class FullIndex extends Component {
                 this.trigger("delete", file);
             })
         );
-
+        // @ts-ignore
+        const reloadCallback = file => {
+            if (file instanceof TFile && PathFilters.canvas(file.path)) {
+                this.reload(file);
+            }
+        };
+        this.registerEvent(this.vault.on("modify", reloadCallback));
+        this.registerEvent(this.metadataCache.on("changed", reloadCallback));
+        this.registerEvent(
+            this.metadataCache.on("resolved", () =>
+                this._initialize(this.vault.getFiles().filter(a => a.extension === "md" || a.extension === "canvas"))
+            )
+        );
         // Asynchronously initialize actual content in the background.
-        this._initialize(this.vault.getMarkdownFiles());
+        this._initialize(this.vault.getFiles().filter(a => a.extension === "md" || a.extension === "canvas"));
     }
 
     /** Drops the local storage cache and re-indexes all files; this should generally be used if you expect cache issues. */
     public async reinitialize() {
         await this.persister.recreate();
 
-        const files = this.vault.getMarkdownFiles();
+        const files = this.vault.getFiles().filter(a => a.extension === "md" || a.extension === "canvas");
         const start = Date.now();
         let promises = files.map(file => this.reload(file));
 
@@ -164,7 +181,7 @@ export class FullIndex extends Component {
     }
 
     public rename(file: TAbstractFile, oldPath: string) {
-        if (!(file instanceof TFile) || !PathFilters.markdown(file.path)) return;
+        if (!(file instanceof TFile) || (!PathFilters.markdown(file.path) && !PathFilters.canvas(file.path))) return;
 
         if (this.pages.has(oldPath)) {
             const oldMeta = this.pages.get(oldPath);
@@ -185,7 +202,7 @@ export class FullIndex extends Component {
 
     /** Queue a file for reloading; this is done asynchronously in the background and may take a few seconds. */
     public async reload(file: TFile): Promise<{ cached: boolean; skipped: boolean }> {
-        if (!PathFilters.markdown(file.path)) return { cached: false, skipped: true };
+        if (!PathFilters.markdown(file.path) && !PathFilters.canvas(file.path)) return { cached: false, skipped: true };
 
         // The first load of a file is attempted from persisted cache; subsequent loads just use the importer.
         if (this.pages.has(file.path) || this.initialized) {
@@ -214,24 +231,37 @@ export class FullIndex extends Component {
 
     /** Import a file directly from disk, skipping the cache. */
     private async import(file: TFile): Promise<void> {
-        return this.importer.reload<Partial<PageMetadata>>(file).then(r => {
+        return this.importer.reload<CanvasMetadata | Partial<PageMetadata>>(file).then(r => {
             this.finish(file, r);
             this.persister.storeFile(file.path, r);
         });
     }
 
     /** Finish the reloading of file metadata by adding it to in memory indexes. */
-    private finish(file: TFile, parsed: Partial<PageMetadata>) {
-        let meta = PageMetadata.canonicalize(parsed, link => {
-            let realPath = this.metadataCache.getFirstLinkpathDest(link.path, file.path);
-            if (realPath) return link.withPath(realPath.path);
-            else return link;
-        });
-
-        this.pages.set(file.path, meta);
-        this.tags.set(file.path, meta.fullTags());
-        this.etags.set(file.path, meta.tags);
-        this.links.set(file.path, new Set<string>(meta.links.map(l => l.path)));
+    private finish(file: TFile, parsed: CanvasMetadata | Partial<PageMetadata>) {
+        let meta;
+        if ((parsed as CanvasMetadata).cards) {
+            meta = new CanvasMetadata(
+                file.path,
+                (parsed as CanvasMetadata).cards.map(a => new CanvasCard(a, a.path, file.stat, a)),
+                file.stat,
+                parsed
+            );
+            this.tags.set(file.path, new Set([...meta].map(a => Array.from(a.fullTags())).flat()));
+            this.etags.set(file.path, new Set([...meta].map(a => Array.from(a.tags)).flat()));
+            this.pages.set(file.path, meta);
+            this.links.set(file.path, new Set<string>([...meta].map(l => l.path)));
+        } else {
+            meta = PageMetadata.canonicalize(parsed as Partial<PageMetadata>, link => {
+                let realPath = this.metadataCache.getFirstLinkpathDest(link.path, file.path);
+                if (realPath) return link.withPath(realPath.path);
+                else return link;
+            });
+            this.pages.set(file.path, meta);
+            this.tags.set(file.path, meta.fullTags());
+            this.etags.set(file.path, meta.tags);
+            this.links.set(file.path, new Set<string>(meta.links.map(l => l.path)));
+        }
 
         this.touch();
         this.trigger("update", file);
@@ -296,6 +326,14 @@ export namespace PathFilters {
     export function markdown(path: string): boolean {
         let lcPath = path.toLowerCase();
         return lcPath.endsWith(".md") || lcPath.endsWith(".markdown");
+    }
+    export function canvas(path: string): boolean {
+        let lcPath = path.toLowerCase();
+        return lcPath.endsWith(".canvas");
+    }
+    export function markdownOrCanvas(path: string): boolean {
+        let lcPath = path.toLowerCase();
+        return lcPath.endsWith(".canvas") || lcPath.endsWith(".md") || lcPath.endsWith(".markdown");
     }
 }
 

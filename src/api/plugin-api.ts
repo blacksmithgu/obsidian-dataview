@@ -34,6 +34,7 @@ import { Query } from "query/query";
 import { DataviewCalendarRenderer } from "ui/views/calendar-view";
 import { DataviewJSRenderer } from "ui/views/js-view";
 import { markdownList, markdownTable, markdownTaskList } from "ui/export/markdown";
+import { SCanvas } from "data-model/serialized/canvas";
 
 /** Asynchronous API calls related to file / system IO. */
 export class DataviewIOApi {
@@ -158,7 +159,7 @@ export class DataviewApi {
     }
 
     /** Remaps important metadata to add data arrays.  */
-    private _addDataArrays(pageObject: SMarkdownPage): SMarkdownPage {
+    private _addDataArrays(pageObject: SMarkdownPage | SCanvas): SMarkdownPage | SCanvas {
         // Remap the "file" metadata entries to be data arrays.
         for (let [key, value] of Object.entries(pageObject.file)) {
             if (Array.isArray(value)) (pageObject.file as any)[key] = DataArray.wrap<any>(value, this.settings);

@@ -8,7 +8,7 @@ import { QuerySettings } from "settings";
 export function normalizeDuration(dur: Duration) {
     if (dur === undefined || dur === null) return dur;
 
-    return dur.shiftToAll().normalize();
+    return dur.shiftTo().normalize();
 }
 
 /** Strip the time components of a date time object. */
