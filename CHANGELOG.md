@@ -1,3 +1,7 @@
+# Unreleased
+
+- DQL: Adds new `durationformat(duration, string)` function.
+
 # 0.5.56
 
 - Includes some performance fixes on recent versions of Obsidian 1.3+ due to some API changes. Thanks @kometenstaub.
