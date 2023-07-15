@@ -678,6 +678,30 @@ dateformat(date(now),"x") = "1407287224054"
 dateformat(file.mtime,"ffff") = "Wednesday, August 6, 2014, 1:07 PM Eastern Daylight Time"
 ```
 
+### `durationformat(duration, string)`
+
+Format a Dataview duration using a formatting string.
+Anything inside single quotes will not be treated as a token and
+instead will be shown in the output as written. See examples.
+
+You may use these tokens:
+
+- `S` for milliseconds
+- `s` for seconds
+- `m` for minutes
+- `h` for hours
+- `d` for days
+- `w` for weeks
+- `M` for months
+- `y` for years
+
+```js
+durationformat(dur("3 days 7 hours 43 seconds"), "ddd'd' hh'h' ss's'") = "003d 07h 43s"
+durationformat(dur("365 days 5 hours 49 minutes"), "yyyy ddd hh mm ss") = "0001 000 05 49 00"
+durationformat(dur("2000 years"), "M months") = "24000 months"
+durationformat(dur("14d"), "s 'seconds'") = "1209600 seconds"
+```
+
 ### `localtime(date)`
 
 Converts a date in a fixed timezone to a date in the current timezone.
