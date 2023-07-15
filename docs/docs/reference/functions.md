@@ -186,7 +186,7 @@ floor(-0.837764) = -1
 ### `ceil(number)`
 
 Always rounds up and returns the smallest integer greater than or equal to a given number.
-This means negative numbers become less negative
+This means negative numbers become less negative.
 
 ```js
 ceil(12.937) = 13
