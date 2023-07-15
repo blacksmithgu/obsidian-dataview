@@ -10,7 +10,7 @@ Functions are another form of [expression](expressions.md) and can be used every
 functionname(parameter1, parameter2)
 ```
 
-Parameters are again [expressions](expressions.md) and you can use literals, meta data fields, or even another function as parameter. You'll find out which [data type](../annotation/types-of-metadata.md) your parameters need to have on the documentation of this page. Pay attention to the information inside the function brackets. Parameters in square brackets, i.e. `link(path, [display])` means they are *optional* and can be omitted. Find out more about the default behaviour of each function on their explanation.
+Parameters are again [expressions](expressions.md) and you can use literals, meta data fields, or even another function as parameter. You'll find out which [data type](../annotation/types-of-metadata.md) your parameters need to have on the documentation of this page. Pay attention to the information inside the function brackets. Parameters in square brackets, i.e. `link(path, [display])` means they are *optional* and can be omitted. Find out more about the default behaviour of each function on their explanation. 
 
 ## Calling functions on lists of values
 
@@ -26,7 +26,7 @@ replace("yes", "e", "a") = "yas"
 replace(["yes", "ree"], "e", "a") = ["yas", "raa"]
 ```
 
-This so-called "function vectorization" will not be mentioned explicitly on the following definitions and is possible for a wide range of these functionalities implicitly.
+This so-called "function vectorization" will not be mentioned explicitly on the following definitions and is possible for a wide range of these functionalities implicitly. 
 
 ## Constructors
 
@@ -64,7 +64,7 @@ date([[2021-04-16]]) = <date object for the given page, refering to file.day>
 
 ### `date(text, format)`
 
-Parses a date from text to luxon `DateTime` with the specified format. Note localised formats might not work.
+Parses a date from text to luxon `DateTime` with the specified format. Note localised formats might not work. 
 Uses [Luxon tokens](https://moment.github.io/luxon/#/formatting?id=table-of-tokens).
 
 ```js
