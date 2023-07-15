@@ -353,6 +353,21 @@ export namespace DefaultFunctions {
         .vectorize(2, [0])
         .build();
 
+    export const trunc = new FunctionBuilder("trunc")
+        .add1("number", n => Math.trunc(n))
+        .add1("null", () => null)
+        .build();
+
+    export const floor = new FunctionBuilder("floor")
+        .add1("number", n => Math.floor(n))
+        .add1("null", () => null)
+        .build();
+
+    export const ceil = new FunctionBuilder("ceil")
+        .add1("number", n => Math.ceil(n))
+        .add1("null", () => null)
+        .build();
+
     export const min: FunctionImpl = new FunctionBuilder("min")
         .add2("*", "null", (a, _n) => a)
         .add2("null", "*", (_n, a) => a)
@@ -811,6 +826,9 @@ export const DEFAULT_FUNCTIONS: Record<string, FunctionImpl> = {
 
     // Math Operations.
     round: DefaultFunctions.round,
+    trunc: DefaultFunctions.trunc,
+    floor: DefaultFunctions.floor,
+    ceil: DefaultFunctions.ceil,
     min: DefaultFunctions.min,
     max: DefaultFunctions.max,
     minby: DefaultFunctions.minby,

@@ -10,7 +10,7 @@ Functions are another form of [expression](expressions.md) and can be used every
 functionname(parameter1, parameter2)
 ```
 
-Parameters are again [expressions](expressions.md) and you can use literals, meta data fields, or even another function as parameter. You'll find out which [data type](../annotation/types-of-metadata.md) your parameters need to have on the documentation of this page. Pay attention to the information inside the function brackets. Parameters in square brackets, i.e. `link(path, [display])` means they are *optional* and can be omitted. Find out more about the default behaviour of each function on their explanation. 
+Parameters are again [expressions](expressions.md) and you can use literals, meta data fields, or even another function as parameter. You'll find out which [data type](../annotation/types-of-metadata.md) your parameters need to have on the documentation of this page. Pay attention to the information inside the function brackets. Parameters in square brackets, i.e. `link(path, [display])` means they are *optional* and can be omitted. Find out more about the default behaviour of each function on their explanation.
 
 ## Calling functions on lists of values
 
@@ -26,7 +26,7 @@ replace("yes", "e", "a") = "yas"
 replace(["yes", "ree"], "e", "a") = ["yas", "raa"]
 ```
 
-This so-called "function vectorization" will not be mentioned explicitly on the following definitions and is possible for a wide range of these functionalities implicitly. 
+This so-called "function vectorization" will not be mentioned explicitly on the following definitions and is possible for a wide range of these functionalities implicitly.
 
 ## Constructors
 
@@ -64,7 +64,7 @@ date([[2021-04-16]]) = <date object for the given page, refering to file.day>
 
 ### `date(text, format)`
 
-Parses a date from text to luxon `DateTime` with the specified format. Note localised formats might not work. 
+Parses a date from text to luxon `DateTime` with the specified format. Note localised formats might not work.
 Uses [Luxon tokens](https://moment.github.io/luxon/#/formatting?id=table-of-tokens).
 
 ```js
@@ -160,6 +160,38 @@ otherwise, rounds to the given number of digits.
 ```js
 round(16.555555) = 7
 round(16.555555, 2) = 16.56
+```
+
+### `trunc(number)`
+
+Truncates ("cuts off") the decimal point from a number.
+
+```js
+trunc(12.937) = 12
+trunc(-93.33333) = -93
+trunc(-0.837764) = 0
+```
+
+### `floor(number)`
+
+Always rounds down and returns the largest integer less than or equal to a given number.
+This means that negative numbers become more negative.
+
+```js
+floor(12.937) = 12
+floor(-93.33333) = -94
+floor(-0.837764) = -1
+```
+
+### `ceil(number)`
+
+Always rounds up and returns the smallest integer greater than or equal to a given number.
+This means negative numbers become less negative
+
+```js
+ceil(12.937) = 13
+ceil(-93.33333) = -93
+ceil(-0.837764) = 0
 ```
 
 ### `min(a, b, ..)`
