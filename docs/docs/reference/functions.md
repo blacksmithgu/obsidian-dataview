@@ -1,6 +1,6 @@
 # Functions
 
-Dataview functions provide more advanced ways to manipulate data. You can use functions **in [data commands](../queries/data-commands.md)** (except FROM) to filter or group or use them **as [additional informations](../queries/query-types.md)** like TABLE columns or extra output for LIST queries to see your data in a new light.
+Dataview functions provide more advanced ways to manipulate data. You can use functions **in [data commands](../queries/data-commands.md)** (except FROM) to filter or group or use them **as [additional information](../queries/query-types.md)** like TABLE columns or extra output for LIST queries to see your data in a new light.
 
 ## How functions work
 
@@ -59,7 +59,7 @@ Parses a date from the provided string, date, or link object, if possible, retur
 
 ```js
 date("2020-04-18") = <date object representing April 18th, 2020>
-date([[2021-04-16]]) = <date object for the given page, refering to file.day>
+date([[2021-04-16]]) = <date object for the given page, referring to file.day>
 ```
 
 ### `date(text, format)`

@@ -215,7 +215,7 @@ TABLE
 !!! info "Disabling Result count"
     The first column always shows the result count. If you do not want to get it displayed, you can disable it in Dataview's settings ("Display result count", available since 0.5.52).
 
-Of course, a `TABLE` is made for specifying one to multiple additional informations:  
+Of course, a `TABLE` is made for specifying one to multiple additional information:  
 
 ~~~
 ```dataview
@@ -461,7 +461,7 @@ WHERE urgent
 
 ## CALENDAR
 
-The `CALENDAR` Query outputs a monthly based calendar where every result is depicted as a dot on it reffering date. The `CALENDAR` is the only Query Type that requires an additional information. This additional information needs to be a [date](../annotation/types-of-metadata.md#date) (or unset) on all queried pages. 
+The `CALENDAR` Query outputs a monthly based calendar where every result is depicted as a dot on it referring date. The `CALENDAR` is the only Query Type that requires an additional information. This additional information needs to be a [date](../annotation/types-of-metadata.md#date) (or unset) on all queried pages. 
 
 !!! summary "`CALENDAR` Query Type"
     The `CALENDAR` Query Types renders a calendar view where every result is represented by a dot on the given meta data field date.

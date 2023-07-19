@@ -106,7 +106,7 @@ Like you can see in the table, if you are using **spaces or capitalized letters*
 
 **Keys with spaces** cannot be used in a query as-is. You have two possibilities here: Either use the sanitized name, that is always all lowercase and with dashes instead of spaces or use the **row** variable syntax. Find out more [in the FAQ](../resources/faq.md).
 
-**Keys with capitalized letters** can be used as-is, if you wish. The sanitized version allows you to query for a key independent of its capitalization and makes it easier to use: You can query the same field thats, for example, in one file named `someMetadata` and in another `someMetaData` when using the sanitized key `somemetadata`. 
+**Keys with capitalized letters** can be used as-is, if you wish. The sanitized version allows you to query for a key independent of its capitalization and makes it easier to use: You can query the same field that's, for example, in one file named `someMetadata` and in another `someMetaData` when using the sanitized key `somemetadata`. 
 
 In addition, the **bold field key is missing its formatting tokens**. Even though the `**` used to make it appear bold are part of the key name in the file, they are left out when indexing your note. The same goes for all other built-in formatting, like strike through or italic. This means formatted keys can only be queried without their formatting. This allows you to format the key in context of the note without worrying that you might create different keys for the same type of information. 
 

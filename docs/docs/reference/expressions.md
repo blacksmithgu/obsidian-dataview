@@ -134,7 +134,7 @@ WHERE status != "done"
     WHERE typeof(due) = "date" AND due <= date(today)
     ```
     ~~~
-    Most often, it is sufficient to check if the meta data is available via `WHERE due AND due <= date(today)`, but checking the type is the safer way to get forseeable results. 
+    Most often, it is sufficient to check if the meta data is available via `WHERE due AND due <= date(today)`, but checking the type is the safer way to get foreseeable results. 
 
 ### List/Object Indexing
 
