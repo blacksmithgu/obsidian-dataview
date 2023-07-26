@@ -332,6 +332,7 @@ export class DataviewInlineApi {
 
         let contents = await this.app.vault.read(viewFile);
         if (contents.contains("await")) contents = "(async () => { " + contents + " })()";
+        contents += `\n//# sourceURL=${viewFile.path}`;
         let func = new Function("dv", "input", contents);
 
         try {
