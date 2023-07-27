@@ -360,6 +360,7 @@ export class DataviewInlineApi {
         if (!cssFile) return;
 
         let cssContents = await this.app.vault.read(cssFile);
+        cssContents += `\n/*# sourceURL=${location.origin}/${cssFile.path} */`
         this.container.createEl("style", { text: cssContents, attr: { scope: " " } });
     }
 
