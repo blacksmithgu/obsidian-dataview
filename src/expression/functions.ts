@@ -356,16 +356,19 @@ export namespace DefaultFunctions {
     export const trunc = new FunctionBuilder("trunc")
         .add1("number", n => Math.trunc(n))
         .add1("null", () => null)
+        .vectorize(1, [0])
         .build();
 
     export const floor = new FunctionBuilder("floor")
         .add1("number", n => Math.floor(n))
         .add1("null", () => null)
+        .vectorize(1, [0])
         .build();
 
     export const ceil = new FunctionBuilder("ceil")
         .add1("number", n => Math.ceil(n))
         .add1("null", () => null)
+        .vectorize(1, [0])
         .build();
 
     export const min: FunctionImpl = new FunctionBuilder("min")
