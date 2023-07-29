@@ -62,6 +62,12 @@ function stripNewlines(text: string): string {
         .join("");
 }
 
+/** Given `parser`, return the parser that returns `if_empty()` if EOF is found,
+ * otherwise `parser` preceded by (non-optional) whitespace */
+function precededByWhitespaceIfNotEof<T>(if_eof: (_: undefined) => T, parser: P.Parser<T>): P.Parser<T> {
+    return P.eof.map(if_eof).or(P.whitespace.then(parser));
+}
+
 /** A parsimmon-powered parser-combinator implementation of the query language. */
 export const QUERY_LANGUAGE = P.createLanguage<QueryLanguageTypes>({
     // Simple atom parsing, like words, identifiers, numbers.
@@ -98,45 +104,53 @@ export const QUERY_LANGUAGE = P.createLanguage<QueryLanguageTypes>({
 
     headerClause: q =>
         q.queryType
-            .skip(P.whitespace)
-            .chain(qtype => {
-                switch (qtype) {
-                    case "table":
-                        return P.seqMap(
-                            P.regexp(/WITHOUT\s+ID/i)
-                                .skip(P.optWhitespace)
-                                .atMost(1),
-                            P.sepBy(q.namedField, P.string(",").trim(P.optWhitespace)),
-                            (withoutId, fields) => {
-                                return { type: "table", fields, showId: withoutId.length == 0 } as QueryHeader;
-                            }
+            .chain(type => {
+                switch (type) {
+                    case "table": {
+                        return precededByWhitespaceIfNotEof(
+                            () => ({ type, fields: [], showId: true }),
+                            P.seqMap(
+                                P.regexp(/WITHOUT\s+ID/i)
+                                    .skip(P.optWhitespace)
+                                    .atMost(1),
+                                P.sepBy(q.namedField, P.string(",").trim(P.optWhitespace)),
+                                (withoutId, fields) => {
+                                    return { type, fields, showId: withoutId.length == 0 };
+                                }
+                            )
                         );
+                    }
                     case "list":
-                        return P.seqMap(
-                            P.regexp(/WITHOUT\s+ID/i)
-                                .skip(P.optWhitespace)
-                                .atMost(1),
-                            EXPRESSION.field.atMost(1),
-                            (withoutId, format) => {
-                                return {
-                                    type: "list",
-                                    format: format.length == 1 ? format[0] : undefined,
-                                    showId: withoutId.length == 0,
-                                } as QueryHeader;
-                            }
+                        return precededByWhitespaceIfNotEof(
+                            () => ({ type, format: undefined, showId: true }),
+                            P.seqMap(
+                                P.regexp(/WITHOUT\s+ID/i)
+                                    .skip(P.optWhitespace)
+                                    .atMost(1),
+                                EXPRESSION.field.atMost(1),
+                                (withoutId, format) => {
+                                    return {
+                                        type,
+                                        format: format.length == 1 ? format[0] : undefined,
+                                        showId: withoutId.length == 0,
+                                    };
+                                }
+                            )
                         );
                     case "task":
-                        return P.succeed({ type: "task" } as QueryHeader);
+                        return P.succeed({ type });
                     case "calendar":
-                        return P.seqMap(q.namedField, field => {
-                            return {
-                                type: "calendar",
-                                showId: true,
-                                field,
-                            } as QueryHeader;
-                        });
+                        return P.whitespace.then(
+                            P.seqMap(q.namedField, field => {
+                                return {
+                                    type,
+                                    showId: true,
+                                    field,
+                                } as QueryHeader;
+                            })
+                        );
                     default:
-                        return P.fail(`Unrecognized query type '${qtype}'`);
+                        return P.fail(`Unrecognized query type '${type}'`);
                 }
             })
             .desc("TABLE or LIST or TASK or CALENDAR"),
