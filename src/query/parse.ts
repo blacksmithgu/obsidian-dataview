@@ -62,7 +62,7 @@ function stripNewlines(text: string): string {
         .join("");
 }
 
-/** Given `parser`, return the parser that returns `if_empty()` if EOF is found,
+/** Given `parser`, return the parser that returns `if_eof()` if EOF is found,
  * otherwise `parser` preceded by (non-optional) whitespace */
 function precededByWhitespaceIfNotEof<T>(if_eof: (_: undefined) => T, parser: P.Parser<T>): P.Parser<T> {
     return P.eof.map(if_eof).or(P.whitespace.then(parser));
