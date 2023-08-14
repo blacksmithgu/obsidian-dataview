@@ -11,8 +11,8 @@ export class DataviewJSRenderer extends DataviewRefreshableRenderer {
     }
 
     async render() {
-        this.container.innerHTML = "";
         if (!this.settings.enableDataviewJs) {
+            this.container.innerHTML = "";
             this.containerEl.innerHTML = "";
             renderErrorPre(
                 this.container,
@@ -23,11 +23,19 @@ export class DataviewJSRenderer extends DataviewRefreshableRenderer {
 
         // Assume that the code is javascript, and try to eval it.
         try {
+            const dummyHTML = this.container.cloneNode() as HTMLElement;
             await asyncEvalInContext(
                 DataviewJSRenderer.PREAMBLE + this.script,
-                new DataviewInlineApi(this.api, this, this.container, this.origin)
+                new DataviewInlineApi(this.api, this, dummyHTML, this.origin)
             );
+            if (dummyHTML.innerHTML != this.container.innerHTML) {
+                this.container.innerHTML = "";
+                while (dummyHTML.firstChild) {
+                    this.container.appendChild(dummyHTML.firstChild);
+                }
+            }
         } catch (e) {
+            this.container.innerHTML = "";
             this.containerEl.innerHTML = "";
             renderErrorPre(this.container, "Evaluation Error: " + e.stack);
         }
