@@ -408,7 +408,7 @@ Equivalent to `dv.query()`, but returns rendered Markdown.
 
 ```js
 await dv.queryMarkdown("LIST FROM #tag") =>
-    { successfult: true, value: { "- [[Page 1]]\n- [[Page 2]]" } }
+    { successful: true, value: { "- [[Page 1]]\n- [[Page 2]]" } }
 ```
 
 ### ⌛ `dv.tryQueryMarkdown(source, [file], [settings])`
