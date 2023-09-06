@@ -43,7 +43,7 @@ export function parsePage(path: string, contents: string, stat: FileStats, metad
         }
     }
 
-  // Links in metadata.
+    // Links in metadata.
     const linksByLine: Record<number, Link[]> = {};
     for (let rawLink of metadata.links || []) {
         const link = Link.infer(rawLink.link, false, rawLink.displayText);
