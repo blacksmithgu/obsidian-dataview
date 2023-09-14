@@ -233,7 +233,7 @@ dv.paragraph(markdown);
 
 ### `dv.array(value)`
 
-Convert a given value or array into a Dataview [data array](data-array). If the value is already a data array, returns
+Convert a given value or array into a Dataview [data array](../data-array). If the value is already a data array, returns
 it unchanged.
 
 ```js
