@@ -46,7 +46,7 @@ Literal|Description
 `0`|The number zero
 `1337`|The positive number 1337
 `-200`| The negative number -200
-`"The quick brown fox jumps over the lazy dog"`| Text (sometimes reffered to as "string")
+`"The quick brown fox jumps over the lazy dog"`| Text (sometimes referred to as "string")
 `[[Science]]`|A link to the file named "Science"
 `[[]]`| A link to the current file
 `[1, 2, 3]`|A list of numbers 1, 2, and 3

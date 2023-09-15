@@ -54,7 +54,7 @@ export interface DataArray<T> {
     /** Limit the total number of entries in the array to the given value. */
     limit(count: number): DataArray<T>;
     /**
-     * Take a slice of the array. If `start` is undefined, it is assumed to be 0; if `end` is undefined, it is assumbed
+     * Take a slice of the array. If `start` is undefined, it is assumed to be 0; if `end` is undefined, it is assumed
      * to be the end of the array.
      */
     slice(start?: number, end?: number): DataArray<T>;
@@ -109,7 +109,7 @@ export interface DataArray<T> {
     to(key: string): DataArray<any>;
     /**
      * Recursively expand the given key, flattening a tree structure based on the key into a flat array. Useful for handling
-     * heirarchical data like tasks with 'subtasks'.
+     * hierarchical data like tasks with 'subtasks'.
      */
     expand(key: string): DataArray<any>;
 
