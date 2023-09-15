@@ -14,6 +14,7 @@ const BASE_CONFIG = {
         warn(warning);
     },
 };
+
 const getRollupPlugins = (tsconfig, ...plugins) =>
     [
         typescript2(tsconfig),
