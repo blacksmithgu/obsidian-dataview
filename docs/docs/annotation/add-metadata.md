@@ -34,7 +34,7 @@ With this your note has metadata fields named `alias`, `last-reviewed`, and `tho
 - `last-reviewed` is a [date](../types-of-metadata/#date), because it follows the ISO date format
 - `thoughts` is a [object](../types-of-metadata/#object) field, because it uses the YAML Frontmatter object syntax
 
-You could i.e. query for this note with the following query, because `thoughts` is a object with the value `rating`:
+You could query for this note with the following query:
 
 ~~~
 ```dataview
