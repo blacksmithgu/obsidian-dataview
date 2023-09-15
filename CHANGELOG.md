@@ -1,3 +1,7 @@
+# Unreleased
+
+- DQL: New math rounding functions, `trunc(number)`, `floor(number)`, `ceil(number)`.
+
 # 0.5.56
 
 - Includes some performance fixes on recent versions of Obsidian 1.3+ due to some API changes. Thanks @kometenstaub.

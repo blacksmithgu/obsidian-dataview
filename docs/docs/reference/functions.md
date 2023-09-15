@@ -162,6 +162,38 @@ round(16.555555) = 7
 round(16.555555, 2) = 16.56
 ```
 
+### `trunc(number)`
+
+Truncates ("cuts off") the decimal point from a number.
+
+```js
+trunc(12.937) = 12
+trunc(-93.33333) = -93
+trunc(-0.837764) = 0
+```
+
+### `floor(number)`
+
+Always rounds down and returns the largest integer less than or equal to a given number.
+This means that negative numbers become more negative.
+
+```js
+floor(12.937) = 12
+floor(-93.33333) = -94
+floor(-0.837764) = -1
+```
+
+### `ceil(number)`
+
+Always rounds up and returns the smallest integer greater than or equal to a given number.
+This means negative numbers become less negative.
+
+```js
+ceil(12.937) = 13
+ceil(-93.33333) = -93
+ceil(-0.837764) = 0
+```
+
 ### `min(a, b, ..)`
 
 Compute the minimum value of a list of arguments, or an array.
