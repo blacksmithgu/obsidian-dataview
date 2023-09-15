@@ -314,6 +314,12 @@ export namespace DefaultFunctions {
         .vectorize(2, [0])
         .build();
 
+    export const durationformat = new FunctionBuilder("durationformat")
+        .add2("duration", "string", (dur, format) => dur.toFormat(format))
+        .add2("null", "string", (_nul, _format) => null)
+        .vectorize(2, [0])
+        .build();
+
     export const localtime = new FunctionBuilder("localtime")
         .add1("date", d => d.toLocal())
         .add1("null", () => null)
