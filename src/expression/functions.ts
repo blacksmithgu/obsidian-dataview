@@ -340,6 +340,17 @@ export namespace DefaultFunctions {
         .vectorize(1, [0])
         .build();
 
+    /** Format a number using a standard currency format. */
+    export const currencyformat = new FunctionBuilder("currencyformat")
+        .add2("number", "string", (num, format) =>
+            Intl.NumberFormat(currentLocale(), { style: "currency", currency: format }).format(num)
+        )
+        .add2("null", "string", (_nul, _format) => null)
+        .add1("number", num => Intl.NumberFormat(currentLocale(), { style: "currency", currency: "USD" }).format(num))
+        .add1("null", () => null)
+        .vectorize(2, [0])
+        .build();
+
     /**
      * Convert any value to a reasonable internal string representation. Most useful for dates, strings, numbers, and
      * so on.
@@ -782,6 +793,11 @@ export namespace DefaultFunctions {
         .add2("null", "*", () => null)
         .build();
 
+    export const unique = new FunctionBuilder("unique")
+        .add1("array", arr => arr.filter((v, i, s) => s.indexOf(v) === i))
+        .add1("null", () => null)
+        .build();
+
     export const map = new FunctionBuilder("map")
         .add2("array", "function", (arr, f, ctx) => arr.map(v => f(ctx, v)))
         .add2("null", "*", () => null)
@@ -829,6 +845,7 @@ export const DEFAULT_FUNCTIONS: Record<string, FunctionImpl> = {
     dateformat: DefaultFunctions.dateformat,
     localtime: DefaultFunctions.localtime,
     number: DefaultFunctions.number,
+    currencyformat: DefaultFunctions.currencyformat,
     string: DefaultFunctions.string,
     object: DefaultFunctions.object,
     typeof: DefaultFunctions.typeOf,
@@ -881,6 +898,7 @@ export const DEFAULT_FUNCTIONS: Record<string, FunctionImpl> = {
     any: DefaultFunctions.any,
     none: DefaultFunctions.none,
     filter: DefaultFunctions.filter,
+    unique: DefaultFunctions.unique,
     map: DefaultFunctions.map,
     nonnull: DefaultFunctions.nonnull,
 
