@@ -23,7 +23,7 @@
 }
 
 .table-view-table > tbody > tr:hover {
-    background-color: var(--text-selection) !important;
+    background-color: var(--table-row-background-hover);
 }
 
 .table-view-table > thead > tr > th {
