@@ -8,6 +8,7 @@ import { Context } from "./context";
 import { Fields } from "./field";
 import { EXPRESSION } from "./parse";
 import { escapeRegex } from "util/normalize";
+import { DataArray } from "api/data-array";
 
 /**
  * A function implementation which takes in a function context and a variable number of arguments. Throws an error if an
@@ -794,7 +795,7 @@ export namespace DefaultFunctions {
         .build();
 
     export const unique = new FunctionBuilder("unique")
-        .add1("array", arr => arr.filter((v, i, s) => s.indexOf(v) === i))
+        .add1("array", (arr, ctx) => DataArray.wrap(arr, ctx.settings).distinct().array())
         .add1("null", () => null)
         .build();
 
@@ -843,6 +844,7 @@ export const DEFAULT_FUNCTIONS: Record<string, FunctionImpl> = {
     date: DefaultFunctions.date,
     dur: DefaultFunctions.dur,
     dateformat: DefaultFunctions.dateformat,
+    durationformat: DefaultFunctions.durationformat,
     localtime: DefaultFunctions.localtime,
     number: DefaultFunctions.number,
     currencyformat: DefaultFunctions.currencyformat,

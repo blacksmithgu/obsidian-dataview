@@ -383,7 +383,11 @@ export class CsvCache extends Component {
     }
 }
 
-export type StarredEntry = { type: "group"; items: StarredEntry[]; title: string } | { type: "file"; path: string; title: string } | { type: "folder" } | { type: "query" };
+export type StarredEntry =
+    | { type: "group"; items: StarredEntry[]; title: string }
+    | { type: "file"; path: string; title: string }
+    | { type: "folder" }
+    | { type: "query" };
 
 /** Optional connector to the Obsidian 'Starred' plugin which allows for efficiently querying if a file is starred or not. */
 export class StarredCache extends Component {
@@ -425,17 +429,19 @@ export class StarredCache extends Component {
 
         // Retrieve all grouped (nested) items, returning a flat array
         const flattenItems = (items: StarredEntry[]): StarredEntry[] => {
-          let children: StarredEntry[] = [];
-        
-          return items.map(i => {
-            if (i.type == "group" && i.items && i.items.length) {
-              children = [...children, ...i.items];
-            }
-            return i;
-          }).concat(children.length ? flattenItems(children) : children);
+            let children: StarredEntry[] = [];
+
+            return items
+                .map(i => {
+                    if (i.type == "group" && i.items && i.items.length) {
+                        children = [...children, ...i.items];
+                    }
+                    return i;
+                })
+                .concat(children.length ? flattenItems(children) : children);
         };
 
-        items = flattenItems(items)
+        items = flattenItems(items);
 
         return new Set(
             items.filter((l): l is { type: "file"; path: string; title: string } => l.type === "file").map(l => l.path)

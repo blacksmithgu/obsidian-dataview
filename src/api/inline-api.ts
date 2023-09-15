@@ -326,7 +326,10 @@ export class DataviewInlineApi {
         }
 
         if (!viewFile) {
-            renderErrorPre(this.container, `Dataview: custom view not found for '${simpleViewPath}' or '${complexViewPath}'.`);
+            renderErrorPre(
+                this.container,
+                `Dataview: custom view not found for '${simpleViewPath}' or '${complexViewPath}'.`
+            );
             return;
         }
 
@@ -360,7 +363,7 @@ export class DataviewInlineApi {
         if (!cssFile) return;
 
         let cssContents = await this.app.vault.read(cssFile);
-        cssContents += `\n/*# sourceURL=${location.origin}/${cssFile.path} */`
+        cssContents += `\n/*# sourceURL=${location.origin}/${cssFile.path} */`;
         this.container.createEl("style", { text: cssContents, attr: { scope: " " } });
     }
 
