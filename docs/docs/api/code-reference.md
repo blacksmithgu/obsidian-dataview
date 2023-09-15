@@ -135,6 +135,46 @@ views/custom
 View scripts have access to the `dv` object (the API object), and an `input` object which is exactly whatever the second
 argument of `dv.view()` was.
 
+Bear in mind, `dv.view()` cannot read from directories starting with a dot, like `.views`. Example of an incorrect usage:
+
+```js
+await dv.view(".views/view1", { arg1: 'a', arg2: 'b' });
+```
+Attempting this will yield the following exception:
+
+```
+Dataview: custom view not found for '.views/view1/view.js' or '.views/view1.js'.
+```
+
+Also note, directory paths always originate from the vault root.
+
+#### Example
+In this example, we have a custom script file named `view1.js` in the `scripts` directory. 
+
+**File:** `scripts/view1.js`
+```js
+console.log(`Loading view1`);
+
+function foo(...args) {
+  console.log('foo is called with args', ...args);
+}
+foo(input)
+```
+
+And we have an Obsidian document located under `projects`. We'll call `dv.view()` from this document using the `scripts/view1.js` path.
+
+**Document:** `projects/customViews.md`
+```js
+await dv.view("scripts/view1", { arg1: 'a', arg2: 'b' }) 
+```
+
+When the above script is executed, it will print the following:
+
+```
+Loading view1
+foo is called with args {arg1: 'a', arg2: 'b'}
+```
+
 ## Dataviews
 
 ### `dv.list(elements)`
