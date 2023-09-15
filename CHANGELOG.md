@@ -1,3 +1,9 @@
+# 0.5.57
+
+Maintenance patch which bumps many internal dependency versions and which includes approximately ~20 community-contributed PRs which add some new functions, fix some Dataview interactions with properties, and more!
+
+---
+
 # Unreleased
 
 - DQL: Adds new `durationformat(duration, string)` function.
