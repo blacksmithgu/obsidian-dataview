@@ -146,7 +146,7 @@ export function renderMinimalDuration(dur: Duration): string {
 
     // toHuman outputs zero quantities e.g. "0 seconds"
     dur = Duration.fromObject(
-        Object.fromEntries(Object.entries(dur.toObject()).filter(([, quantity]) => quantity > 0))
+        Object.fromEntries(Object.entries(dur.toObject()).filter(([, quantity]) => quantity != 0))
     );
 
     return dur.toHuman();
