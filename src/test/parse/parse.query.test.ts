@@ -1,8 +1,25 @@
-import { TableQuery, ListQuery, CalendarQuery, SortByStep, QueryFields } from "query/query";
+import { TableQuery, ListQuery, CalendarQuery, SortByStep, QueryFields, Query } from "query/query";
 import { QUERY_LANGUAGE, parseQuery } from "query/parse";
 import { Sources } from "data-index/source";
 import { DEFAULT_QUERY_SETTINGS } from "settings";
 import { Fields } from "expression/field";
+
+function testQueryTypeAlone(name: string) {
+    const upper = name.toUpperCase();
+    const lower = name.toLowerCase();
+
+    function expectQ(q: Query) {
+        expect(q.header.type).toBe(lower);
+    }
+
+    const tests = [upper, lower].flatMap(type => ["", " ", "\n", " \n", "\n "].map(suffix => type + suffix));
+
+    test(`Just ${upper}`, () => {
+        for (const test of tests) {
+            expectQ(parseQuery(test).orElseThrow());
+        }
+    });
+}
 
 test("Parse Query Type", () => {
     let unknown = QUERY_LANGUAGE.queryType.parse("vehicle");
@@ -56,14 +73,20 @@ test("Sort Fields", () => {
 
 // <-- Full Queries -->
 
-test("Task query with no fields", () => {
-    let q = parseQuery("task from #games").orElseThrow();
-    expect(typeof q).toBe("object");
-    expect(q.header.type).toBe("task");
-    expect(q.source).toEqual(Sources.tag("#games"));
+describe("Task Queries", () => {
+    testQueryTypeAlone("task");
+
+    test("Task query with no fields", () => {
+        let q = parseQuery("task from #games").orElseThrow();
+        expect(typeof q).toBe("object");
+        expect(q.header.type).toBe("task");
+        expect(q.source).toEqual(Sources.tag("#games"));
+    });
 });
 
 describe("List Queries", () => {
+    testQueryTypeAlone("list");
+
     test("With Format", () => {
         let query = parseQuery("LIST file.name FROM #games").orElseThrow();
         expect(query.header.type).toBe("list");
@@ -79,6 +102,8 @@ describe("List Queries", () => {
 });
 
 describe("Table Queries", () => {
+    testQueryTypeAlone("table");
+
     test("Minimal Query", () => {
         let simple = parseQuery("TABLE time-played, rating, length FROM #games").orElseThrow();
         expect(simple.header.type).toBe("table");

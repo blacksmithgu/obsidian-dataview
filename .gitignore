@@ -12,10 +12,20 @@ node_modules
 # build
 build/
 
-test-vault/.obsidian/workspace
-test-vault/.obsidian/plugins/dataview/*.css
-test-vault/.obsidian/plugins/dataview/*.js
-test-vault/.obsidian/plugins/dataview/*.json
+# Ignore .obsidian
+# No one will commit these files, they just spam 'git status'
+test-vault/.obsidian/*
+# Tells obsidian what plugins are enabled
+!test-vault/.obsidian/community-plugins.json
+# This plugin should still be tracked by git.
+# It might need updated at some point
+!test-vault/.obsidian/hot-reload-master/*
+
+# Don't track this folder. For random things to try.
+# If its import to test though, add it somewhere where other
+# people can test it too.
+test-vault/untracked/*
+!test-vault/untracked/README.md
 
 lib
 yarn.lock

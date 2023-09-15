@@ -35,6 +35,14 @@ export function parsePage(path: string, contents: string, stat: FileStats, metad
         }
     }
 
+    // Add frontmatter links to links.
+    if (metadata.frontmatterLinks) {
+        for (let rawLink of metadata.frontmatterLinks || []) {
+            const link = Link.infer(rawLink.link, false, rawLink.displayText);
+            links.push(link);
+        }
+    }
+
     // Links in metadata.
     const linksByLine: Record<number, Link[]> = {};
     for (let rawLink of metadata.links || []) {

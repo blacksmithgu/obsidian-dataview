@@ -115,7 +115,7 @@ FROM (#assignment AND "30 School") OR ("30 School/32 Homeworks" AND outgoing([[S
 
 In addition to the Query Types and the **Data command** `FROM` that's explained above, you have several other **Data Commands** available that help you restrict, refine, sort or group your query results. 
 
-All data commands except the `FROM` command can be used **multiple times in any order** (as long as they come after the Query Type and `FROM`, if `FROM` is used at all). They'll be excuted in the order they are written.
+All data commands except the `FROM` command can be used **multiple times in any order** (as long as they come after the Query Type and `FROM`, if `FROM` is used at all). They'll be executed in the order they are written.
 
 Available are:
 

@@ -1,6 +1,7 @@
 # Unreleased
 
 - DQL: Adds new `durationformat(duration, string)` function.
+- DQL: New math rounding functions, `trunc(number)`, `floor(number)`, `ceil(number)`.
 
 # 0.5.56
 

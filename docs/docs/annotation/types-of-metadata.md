@@ -25,7 +25,7 @@ Most of the time you do not need to worry too much about the type of your fields
 
     | File (1) | date1 | date2 |
     | -------- | ----- | ----- |
-    | Untitled 2 | 3:15 PM - Februar 26, 2021 | 2021-04-17 18:00 |
+    | Untitled 2 | 3:15 PM - February 26, 2021 | 2021-04-17 18:00 |
 
     `date1` is recognized as a **Date** while `date2` is a normal **Text** to dataview, that's why `date1` is parsed differently for you. Find out more on [Dates below](#date). 
 
@@ -121,7 +121,7 @@ WHERE birthday.month = date(now).month
 gives you back all birthdays happening this month. Curious about `date(now)`? Read more about it under [literals](./../../reference/literals/#dates).
 
 !!! info "Displaying of date objects"
-    Dataview renders date objects in a human readable format, i.e. `3:15 PM - Februar 26, 2021`. You can adjust how this format looks like in Dataview's Setting under "General" with "Date Format" and "Date + Time Format". If you want to adjust the format in a specific query only, use the [dateformat function](../../reference/functions/#dateformatdatedatetime-string).
+    Dataview renders date objects in a human readable format, i.e. `3:15 PM - February 26, 2021`. You can adjust how this format looks like in Dataview's Setting under "General" with "Date Format" and "Date + Time Format". If you want to adjust the format in a specific query only, use the [dateformat function](../../reference/functions/#dateformatdatedatetime-string).
 
 ### Duration
 
