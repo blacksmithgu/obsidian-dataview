@@ -27,7 +27,7 @@ Dataview automatically adds a large amount of metadata to each page. These impli
 | `file.lists` | List | A list of all list elements in the file (including tasks); these elements are effectively tasks and can be rendered in task views. |
 | `file.frontmatter` | List | Contains the raw values of all frontmatter in form of `key | value` text values; mainly useful for checking raw frontmatter values or for dynamically listing frontmatter keys. |
 | `file.day` | Date | Only available if the file has a date inside its file name (of form `yyyy-mm-dd` or `yyyymmdd`), or has a `Date` field/inline field. |
-| `file.starred` | Boolean | if this file has been starred via the Obsidian Core Plugin "Starred Files". |
+| `file.starred` | Boolean | If this file has been bookmarked via the Obsidian Core Plugin "Bookmarks". |
 
 ## Example page
 
