@@ -28,7 +28,7 @@ export class DataviewJSRenderer extends DataviewRefreshableRenderer {
                 DataviewJSRenderer.PREAMBLE + this.script,
                 new DataviewInlineApi(this.api, this, dummyHTML, this.origin)
             );
-            if (dummyHTML.innerHTML != this.container.innerHTML) {
+            if (!this.settings.checkHTMLBeforeRerender || dummyHTML.innerHTML != this.container.innerHTML) {
                 this.container.innerHTML = "";
                 while (dummyHTML.firstChild) {
                     this.container.appendChild(dummyHTML.firstChild);
