@@ -1,3 +1,9 @@
+# 0.5.59
+
+- Fix an issue with the plugin failing to run on iOS due to an esoteric regex issue.
+
+---
+
 # 0.5.58
 
 - Negative durations will now be properly rendered.
