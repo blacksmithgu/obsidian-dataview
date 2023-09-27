@@ -65,7 +65,7 @@ const LIBRARY_CONFIG = {
         name: "Dataview (Library)",
     },
     plugins: getRollupPlugins(
-        "tsconfig-lib.json",
+        { tsconfig: "tsconfig-lib.json" },
         copy({ targets: [{ src: "src/typings/*.d.ts", dest: "lib/typings" }] })
     ),
 };
