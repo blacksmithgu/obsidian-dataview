@@ -374,6 +374,12 @@ export class DataviewApi {
         return this.evaluate(expression, context, originFile).orElseThrow();
     }
 
+    /** Execute a single field inline a file, returning the evaluated result. */
+    executeInline(field, originFile, index, settings) {
+      index = index || this.index;
+      return executeInline(parseField(field).value, originFile, index, settings);
+    }
+
     ///////////////
     // Rendering //
     ///////////////
