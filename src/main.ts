@@ -11,6 +11,7 @@ import { currentLocale } from "util/locale";
 import { DateTime } from "luxon";
 import { DataviewInlineApi } from "api/inline-api";
 import { replaceInlineFields } from "ui/views/inline-field";
+import { inlineFieldsField, replaceInlineFieldsInLivePreview } from "./ui/views/inline-field-live-preview";
 import { DataviewInit } from "ui/markdown";
 import { inlinePlugin } from "./ui/lp-render";
 import { Extension } from "@codemirror/state";
@@ -119,6 +120,9 @@ export default class DataviewPlugin extends Plugin {
         // Not required anymore, though holding onto it for backwards-compatibility.
         this.app.metadataCache.trigger("dataview:api-ready", this.api);
         console.log(`Dataview: version ${this.manifest.version} (requires obsidian ${this.manifest.minAppVersion})`);
+
+        this.registerEditorExtension(inlineFieldsField);
+        this.registerEditorExtension(replaceInlineFieldsInLivePreview(this.app, this));
     }
 
     private debouncedRefresh: () => void = () => null;
