@@ -122,7 +122,7 @@ export default class DataviewPlugin extends Plugin {
         console.log(`Dataview: version ${this.manifest.version} (requires obsidian ${this.manifest.minAppVersion})`);
 
         this.registerEditorExtension(inlineFieldsField);
-        this.registerEditorExtension(replaceInlineFieldsInLivePreview(this.app, this));
+        this.registerEditorExtension(replaceInlineFieldsInLivePreview(this.app));
     }
 
     private debouncedRefresh: () => void = () => null;

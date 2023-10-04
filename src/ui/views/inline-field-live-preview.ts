@@ -37,7 +37,7 @@ export const inlineFieldsField = StateField.define<RangeSet<InlineFieldValue>>({
     }
 });
 
-export const replaceInlineFieldsInLivePreview = (app: App, parentComponent: Component) => ViewPlugin.fromClass(
+export const replaceInlineFieldsInLivePreview = (app: App) => ViewPlugin.fromClass(
     class implements PluginValue {
         decorations: DecorationSet;
         overlappingIndices: number[];
@@ -63,7 +63,13 @@ export const replaceInlineFieldsInLivePreview = (app: App, parentComponent: Comp
         }
 
         buildDecoration(view: EditorView): DecorationSet {
-            const file = view.state.field(editorInfoField).file;
+            const markdownView = view.state.field(editorInfoField);
+            if (!(markdownView instanceof Component)) {
+                // For a canvas, editorInfoField is not MarkdownView, which inherits from the Component class
+                return Decoration.none;
+            }
+
+            const file = markdownView.file;
             if (!file) return Decoration.none;
 
             const info = view.state.field(inlineFieldsField);
@@ -79,7 +85,7 @@ export const replaceInlineFieldsInLivePreview = (app: App, parentComponent: Comp
                             start,
                             end,
                             Decoration.replace({
-                                widget: new InlineFieldWidget(app, field, x++, file.path, parentComponent),
+                                widget: new InlineFieldWidget(app, field, x++, file.path, markdownView),
                             })
                         );
                     }
