@@ -1,18 +1,13 @@
+import { App, Component, MarkdownRenderer, editorInfoField } from "obsidian";
 import { EditorState, RangeSet, RangeSetBuilder, RangeValue, StateField } from "@codemirror/state";
 import { Decoration, DecorationSet, EditorView, PluginValue, ViewPlugin, ViewUpdate, WidgetType } from "@codemirror/view";
 import { InlineField, extractInlineFields } from "data-import/inline-field";
-import { App, Component, MarkdownRenderer, editorInfoField } from "obsidian";
 import { canonicalizeVarName } from "util/normalize";
 
 
 class InlineFieldValue extends RangeValue {
-
     constructor(public field: InlineField) {
         super();
-    }
-
-    eq(other: InlineFieldValue): boolean {
-        return JSON.stringify(this.field) == JSON.stringify(other.field);
     }
 }
 
@@ -29,7 +24,7 @@ function buildInlineFields(state: EditorState): RangeSet<InlineFieldValue> {
     return builder.finish();
 }
 
-
+/** A state field that stores the inline fields and their positions as a range set. */
 export const inlineFieldsField = StateField.define<RangeSet<InlineFieldValue>>({
     create: buildInlineFields,
     update(oldFields, tr) {
@@ -37,6 +32,7 @@ export const inlineFieldsField = StateField.define<RangeSet<InlineFieldValue>>({
     }
 });
 
+/** Create a view plugin that renders inline fields in live preview just as in the reading view. */
 export const replaceInlineFieldsInLivePreview = (app: App) => ViewPlugin.fromClass(
     class implements PluginValue {
         decorations: DecorationSet;
@@ -48,6 +44,10 @@ export const replaceInlineFieldsInLivePreview = (app: App) => ViewPlugin.fromCla
         }
 
         update(update: ViewUpdate): void {
+            // To reduce the total number of updating the decorations, we only update if 
+            // the state of overlapping (i.e. which inline field is overlapping with the cursor) has changed
+            // except when the document has changed or the viewport has changed.
+
             const oldIndices = this.overlappingIndices;
             const newIndices = this.getOverlappingIndices(update.state);
 
@@ -65,7 +65,8 @@ export const replaceInlineFieldsInLivePreview = (app: App) => ViewPlugin.fromCla
         buildDecoration(view: EditorView): DecorationSet {
             const markdownView = view.state.field(editorInfoField);
             if (!(markdownView instanceof Component)) {
-                // For a canvas, editorInfoField is not MarkdownView, which inherits from the Component class
+                // For a canvas, editorInfoField is not MarkdownView, which inherits from the Component class.
+                // A component object is required to pass to MarkdownRenderer.render.
                 return Decoration.none;
             }
 
@@ -73,13 +74,13 @@ export const replaceInlineFieldsInLivePreview = (app: App) => ViewPlugin.fromCla
             if (!file) return Decoration.none;
 
             const info = view.state.field(inlineFieldsField);
-
             const builder = new RangeSetBuilder<Decoration>();
             const selection = view.state.selection.main;
 
             let x = 0;
             for (const { from, to } of view.visibleRanges) {
                 info.between(from, to, (start, end, { field }) => {
+                    // If the inline field is not overlapping with the cursor, we replace it with a widget.
                     if (start > selection.to || end < selection.from) {
                         builder.add(
                             start,
@@ -112,13 +113,16 @@ export const replaceInlineFieldsInLivePreview = (app: App) => ViewPlugin.fromCla
     decorations: instance => instance.decorations,
 });
 
-
+/** A widget which inline fields are replaced with. */
 class InlineFieldWidget extends WidgetType {
     constructor(public app: App, public field: InlineField, public id: number, public sourcePath: string, public parentComponent: Component) {
         super();
     }
 
     toDOM() {
+        // A large part of this method was taken from replaceInlineFields() in src/ui/views/inline-field.tsx.
+        // It will be better to extract the common part as a function...
+
         const renderContainer = createSpan({
             cls: ["dataview", "inline-field"],
         });
@@ -159,9 +163,7 @@ class InlineFieldWidget extends WidgetType {
     }
 }
 
-/**
- * Easy-to-use version of MarkdownRenderer.render.
- */
+/** Easy-to-use version of MarkdownRenderer.render. Returns only the child nodes intead of a container block. */
 export async function renderMarkdown(app: App, markdown: string, sourcePath: string, component: Component): Promise<NodeList | null> {
     const el = createSpan();
     await MarkdownRenderer.render(app, markdown, el, sourcePath, component);
