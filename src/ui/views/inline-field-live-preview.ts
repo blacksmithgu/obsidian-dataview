@@ -65,7 +65,8 @@ export const replaceInlineFieldsInLivePreview = (app: App) => ViewPlugin.fromCla
         buildDecoration(view: EditorView): DecorationSet {
             const markdownView = view.state.field(editorInfoField);
             if (!(markdownView instanceof Component)) {
-                // For a canvas, editorInfoField is not MarkdownView, which inherits from the Component class.
+                // For a canvas card not assosiated with a note in the vault, 
+                // editorInfoField is not MarkdownView, which inherits from the Component class.
                 // A component object is required to pass to MarkdownRenderer.render.
                 return Decoration.none;
             }
