@@ -13,6 +13,7 @@ import { Context } from "expression/context";
 import {
     defaultLinkHandler,
     executeCalendar,
+    executeInline,
     executeList,
     executeTable,
     executeTask,
@@ -21,7 +22,7 @@ import {
 import { DateTime, Duration } from "luxon";
 import * as Luxon from "luxon";
 import { compare, CompareOperator, satisfies } from "compare-versions";
-import { DataviewSettings, ExportSettings, QuerySettings } from "settings";
+import { DataviewSettings, ExportSettings } from "settings";
 import { parseFrontmatter } from "data-import/markdown-file";
 import { SListItem, SMarkdownPage } from "data-model/serialized/markdown";
 import { createFixedTaskView, createTaskView, nestGroups } from "ui/views/task-view";
@@ -374,20 +375,12 @@ export class DataviewApi {
         return this.evaluate(expression, context, originFile).orElseThrow();
     }
 
-    /** Execute a single field inline a file, returning the evaluated result. */
-    executeInline(expression, origin, index, settings) {
+    /** Evaluate an expression in the context of the given file. */
+    public evaluateInline(expression: string, origin: string): Result<Literal, string> {
         let field = EXPRESSION.field.parse(expression);
-        if (!field.status) {
-            return Result.failure(`Failed to parse expression "${expression}"`);
-        } else {
-            index = index || this.index;
-            let result = executeInline(field.value, origin, index, settings);
-            if (!result.successful) {
-                return Result.failure(result.error);
-            } else {
-                return Result.success(result.value);
-            }
-        }
+        if (!field.status) return Result.failure(`Failed to parse expression "${expression}"`);
+
+        return executeInline(field.value, origin, this.index, this.settings);
     }
 
     ///////////////
