@@ -1,3 +1,10 @@
+# 0.5.60
+
+- @RyotaUshio: Add explicit rendering of inline fields in live preview. They are much more visually distinct now!
+- @MarioRicalde: Adds `PluginApi#evaluateInline(expression, path)` to the plugin API, which evaluate expressions as if you were on the given page.
+
+---
+
 # 0.5.59
 
 - Fix an issue with the plugin failing to run on iOS due to an esoteric regex issue.
