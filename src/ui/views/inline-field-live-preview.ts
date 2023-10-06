@@ -1,9 +1,16 @@
 import { App, Component, MarkdownRenderer, editorInfoField } from "obsidian";
 import { EditorState, RangeSet, RangeSetBuilder, RangeValue, StateField } from "@codemirror/state";
-import { Decoration, DecorationSet, EditorView, PluginValue, ViewPlugin, ViewUpdate, WidgetType } from "@codemirror/view";
+import {
+    Decoration,
+    DecorationSet,
+    EditorView,
+    PluginValue,
+    ViewPlugin,
+    ViewUpdate,
+    WidgetType,
+} from "@codemirror/view";
 import { InlineField, extractInlineFields } from "data-import/inline-field";
 import { canonicalizeVarName } from "util/normalize";
-
 
 class InlineFieldValue extends RangeValue {
     constructor(public field: InlineField) {
@@ -18,7 +25,7 @@ function buildInlineFields(state: EditorState): RangeSet<InlineFieldValue> {
         const line = state.doc.line(lineNumber);
         const inlineFields = extractInlineFields(line.text);
         for (const field of inlineFields) {
-            builder.add(line.from + field.start, line.from + field.end, new InlineFieldValue(field))
+            builder.add(line.from + field.start, line.from + field.end, new InlineFieldValue(field));
         }
     }
     return builder.finish();
@@ -29,94 +36,103 @@ export const inlineFieldsField = StateField.define<RangeSet<InlineFieldValue>>({
     create: buildInlineFields,
     update(oldFields, tr) {
         return tr.docChanged ? buildInlineFields(tr.state) : oldFields;
-    }
+    },
 });
 
 /** Create a view plugin that renders inline fields in live preview just as in the reading view. */
-export const replaceInlineFieldsInLivePreview = (app: App) => ViewPlugin.fromClass(
-    class implements PluginValue {
-        decorations: DecorationSet;
-        overlappingIndices: number[];
+export const replaceInlineFieldsInLivePreview = (app: App) =>
+    ViewPlugin.fromClass(
+        class implements PluginValue {
+            decorations: DecorationSet;
+            overlappingIndices: number[];
 
-        constructor(view: EditorView) {
-            this.decorations = this.buildDecoration(view);
-            this.overlappingIndices = this.getOverlappingIndices(view.state);
-        }
-
-        update(update: ViewUpdate): void {
-            // To reduce the total number of updating the decorations, we only update if 
-            // the state of overlapping (i.e. which inline field is overlapping with the cursor) has changed
-            // except when the document has changed or the viewport has changed.
-
-            const oldIndices = this.overlappingIndices;
-            const newIndices = this.getOverlappingIndices(update.state);
-
-            let overlapChanged = 
-                update.startState.field(inlineFieldsField).size != update.state.field(inlineFieldsField).size
-                || JSON.stringify(oldIndices) != JSON.stringify(newIndices)
-            
-            this.overlappingIndices = newIndices;
-
-            if (update.docChanged || update.viewportChanged || overlapChanged) {
-                this.decorations = this.buildDecoration(update.view);
-            }
-        }
-
-        buildDecoration(view: EditorView): DecorationSet {
-            const markdownView = view.state.field(editorInfoField);
-            if (!(markdownView instanceof Component)) {
-                // For a canvas card not assosiated with a note in the vault, 
-                // editorInfoField is not MarkdownView, which inherits from the Component class.
-                // A component object is required to pass to MarkdownRenderer.render.
-                return Decoration.none;
+            constructor(view: EditorView) {
+                this.decorations = this.buildDecoration(view);
+                this.overlappingIndices = this.getOverlappingIndices(view.state);
             }
 
-            const file = markdownView.file;
-            if (!file) return Decoration.none;
+            update(update: ViewUpdate): void {
+                // To reduce the total number of updating the decorations, we only update if
+                // the state of overlapping (i.e. which inline field is overlapping with the cursor) has changed
+                // except when the document has changed or the viewport has changed.
 
-            const info = view.state.field(inlineFieldsField);
-            const builder = new RangeSetBuilder<Decoration>();
-            const selection = view.state.selection.main;
+                const oldIndices = this.overlappingIndices;
+                const newIndices = this.getOverlappingIndices(update.state);
 
-            let x = 0;
-            for (const { from, to } of view.visibleRanges) {
-                info.between(from, to, (start, end, { field }) => {
-                    // If the inline field is not overlapping with the cursor, we replace it with a widget.
-                    if (start > selection.to || end < selection.from) {
-                        builder.add(
-                            start,
-                            end,
-                            Decoration.replace({
-                                widget: new InlineFieldWidget(app, field, x++, file.path, markdownView),
-                            })
-                        );
-                    }
-                });
-            }
-            return builder.finish();
-        }
+                let overlapChanged =
+                    update.startState.field(inlineFieldsField).size != update.state.field(inlineFieldsField).size ||
+                    JSON.stringify(oldIndices) != JSON.stringify(newIndices);
 
-        getOverlappingIndices(state: EditorState): number[] {
-            const selection = state.selection.main;
-            const cursor = state.field(inlineFieldsField).iter();
-            const indices: number[] = [];
-            let i = 0;
-            while (cursor.value) {
-                if (cursor.from <= selection.to && cursor.to >= selection.from) {
-                    indices.push(i);
+                this.overlappingIndices = newIndices;
+
+                if (update.docChanged || update.viewportChanged || overlapChanged) {
+                    this.decorations = this.buildDecoration(update.view);
                 }
-                cursor.next();
-                i++;
             }
-            return indices;
+
+            buildDecoration(view: EditorView): DecorationSet {
+                const markdownView = view.state.field(editorInfoField);
+                if (!(markdownView instanceof Component)) {
+                    // For a canvas card not assosiated with a note in the vault,
+                    // editorInfoField is not MarkdownView, which inherits from the Component class.
+                    // A component object is required to pass to MarkdownRenderer.render.
+                    return Decoration.none;
+                }
+
+                const file = markdownView.file;
+                if (!file) return Decoration.none;
+
+                const info = view.state.field(inlineFieldsField);
+                const builder = new RangeSetBuilder<Decoration>();
+                const selection = view.state.selection.main;
+
+                let x = 0;
+                for (const { from, to } of view.visibleRanges) {
+                    info.between(from, to, (start, end, { field }) => {
+                        // If the inline field is not overlapping with the cursor, we replace it with a widget.
+                        if (start > selection.to || end < selection.from) {
+                            builder.add(
+                                start,
+                                end,
+                                Decoration.replace({
+                                    widget: new InlineFieldWidget(app, field, x++, file.path, markdownView),
+                                })
+                            );
+                        }
+                    });
+                }
+                return builder.finish();
+            }
+
+            getOverlappingIndices(state: EditorState): number[] {
+                const selection = state.selection.main;
+                const cursor = state.field(inlineFieldsField).iter();
+                const indices: number[] = [];
+                let i = 0;
+                while (cursor.value) {
+                    if (cursor.from <= selection.to && cursor.to >= selection.from) {
+                        indices.push(i);
+                    }
+                    cursor.next();
+                    i++;
+                }
+                return indices;
+            }
+        },
+        {
+            decorations: instance => instance.decorations,
         }
-    }, {
-    decorations: instance => instance.decorations,
-});
+    );
 
 /** A widget which inline fields are replaced with. */
 class InlineFieldWidget extends WidgetType {
-    constructor(public app: App, public field: InlineField, public id: number, public sourcePath: string, public parentComponent: Component) {
+    constructor(
+        public app: App,
+        public field: InlineField,
+        public id: number,
+        public sourcePath: string,
+        public parentComponent: Component
+    ) {
         super();
     }
 
@@ -159,13 +175,17 @@ class InlineFieldWidget extends WidgetType {
 
     async renderMarkdown(el: HTMLElement, source: string) {
         const children = await renderMarkdown(this.app, source, this.sourcePath, this.parentComponent);
-        if (children)
-            el.replaceChildren(...children);
+        if (children) el.replaceChildren(...children);
     }
 }
 
 /** Easy-to-use version of MarkdownRenderer.render. Returns only the child nodes intead of a container block. */
-export async function renderMarkdown(app: App, markdown: string, sourcePath: string, component: Component): Promise<NodeList | null> {
+export async function renderMarkdown(
+    app: App,
+    markdown: string,
+    sourcePath: string,
+    component: Component
+): Promise<NodeList | null> {
     const el = createSpan();
     await MarkdownRenderer.render(app, markdown, el, sourcePath, component);
     for (const child of el.children) {
@@ -173,5 +193,5 @@ export async function renderMarkdown(app: App, markdown: string, sourcePath: str
             return child.childNodes;
         }
     }
-    return null
+    return null;
 }
