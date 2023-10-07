@@ -187,10 +187,7 @@ export default class DataviewPlugin extends Plugin {
         this.cmExtension.push(inlinePlugin(this.app, this.index, this.settings, this.api));
         // editor extension for rendering inline fields in live preview
         if (this.settings.prettyRenderInlineFields) {
-            this.cmExtension.push(
-                inlineFieldsField,
-                replaceInlineFieldsInLivePreview(this.app, this.settings),
-            )
+            this.cmExtension.push(inlineFieldsField, replaceInlineFieldsInLivePreview(this.app, this.settings));
         }
         this.app.workspace.updateOptions();
     }
@@ -336,12 +333,10 @@ class GeneralSettingsTab extends PluginSettingTab {
             .setName("Enable Inline Field Highlighting")
             .setDesc("Enables or disables visual highlighting / pretty rendering for inline fields.")
             .addToggle(toggle =>
-                toggle
-                    .setValue(this.plugin.settings.prettyRenderInlineFields)
-                    .onChange(async value => {
-                        await this.plugin.updateSettings({ prettyRenderInlineFields: value });
-                        this.plugin.updateEditorExtensions();
-                    })
+                toggle.setValue(this.plugin.settings.prettyRenderInlineFields).onChange(async value => {
+                    await this.plugin.updateSettings({ prettyRenderInlineFields: value });
+                    this.plugin.updateEditorExtensions();
+                })
             );
 
         this.containerEl.createEl("h2", { text: "Codeblock Settings" });
