@@ -13,7 +13,6 @@ export class DataviewJSRenderer extends DataviewRefreshableRenderer {
     async render() {
         if (!this.settings.enableDataviewJs) {
             this.container.innerHTML = "";
-            this.containerEl.innerHTML = "";
             renderErrorPre(
                 this.container,
                 "Dataview JS queries are disabled. You can enable them in the Dataview settings."
@@ -23,20 +22,31 @@ export class DataviewJSRenderer extends DataviewRefreshableRenderer {
 
         // Assume that the code is javascript, and try to eval it.
         try {
-            const dummyHTML = this.container.cloneNode() as HTMLElement;
-            await asyncEvalInContext(
-                DataviewJSRenderer.PREAMBLE + this.script,
-                new DataviewInlineApi(this.api, this, dummyHTML, this.origin)
-            );
-            if (!this.settings.checkHTMLBeforeRerender || dummyHTML.innerHTML != this.container.innerHTML) {
-                this.container.innerHTML = "";
-                while (dummyHTML.firstChild) {
-                    this.container.appendChild(dummyHTML.firstChild);
+            // If diffing, render into a new container, diff against current, and replace.
+            if (this.settings.checkHTMLBeforeRerender) {
+                const dummy = document.createElement("div");
+                await asyncEvalInContext(
+                    DataviewJSRenderer.PREAMBLE + this.script,
+                    new DataviewInlineApi(this.api, this, dummy, this.origin)
+                );
+
+                if (dummy.innerHTML != this.container.innerHTML) {
+                    this.container.innerHTML = "";
+                    while (dummy.firstChild) {
+                        this.container.appendChild(dummy.firstChild);
+                    }
                 }
+            } else {
+                this.container.innerHTML = "";
+
+                // Otherwise, just reset the view and render into it.
+                await asyncEvalInContext(
+                    DataviewJSRenderer.PREAMBLE + this.script,
+                    new DataviewInlineApi(this.api, this, this.container, this.origin)
+                );
             }
         } catch (e) {
             this.container.innerHTML = "";
-            this.containerEl.innerHTML = "";
             renderErrorPre(this.container, "Evaluation Error: " + e.stack);
         }
     }
