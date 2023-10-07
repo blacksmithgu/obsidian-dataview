@@ -1,5 +1,6 @@
 import type { DataviewApi } from "api/plugin-api";
 import "obsidian";
+import { EditorView } from "@codemirror/view";
 
 declare module "obsidian" {
     interface MetadataCache {
@@ -22,6 +23,13 @@ declare module "obsidian" {
     interface Workspace {
         /** Sent to rendered dataview components to tell them to possibly refresh */
         on(name: "dataview:refresh-views", callback: () => void, ctx?: any): EventRef;
+    }
+
+    interface Editor {
+        /**
+		 * CodeMirror editor instance
+		 */
+		cm?: EditorView;
     }
 }
 

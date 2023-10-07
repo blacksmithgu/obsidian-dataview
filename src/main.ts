@@ -1,4 +1,4 @@
-import { App, Component, debounce, MarkdownPostProcessorContext, Plugin, PluginSettingTab, Setting } from "obsidian";
+import { App, Component, debounce, MarkdownPostProcessorContext, MarkdownView, Plugin, PluginSettingTab, Setting } from "obsidian";
 import { renderErrorPre } from "ui/render";
 import { FullIndex } from "data-index/index";
 import { parseField } from "expression/parse";
@@ -11,7 +11,7 @@ import { currentLocale } from "util/locale";
 import { DateTime } from "luxon";
 import { DataviewInlineApi } from "api/inline-api";
 import { replaceInlineFields } from "ui/views/inline-field";
-import { inlineFieldsField, replaceInlineFieldsInLivePreview } from "./ui/views/inline-field-live-preview";
+import { inlineFieldsField, replaceInlineFieldsInLivePreview, workspaceLayoutChangeEffect } from "./ui/views/inline-field-live-preview";
 import { DataviewInit } from "ui/markdown";
 import { inlinePlugin } from "./ui/lp-render";
 import { Extension } from "@codemirror/state";
@@ -121,8 +121,20 @@ export default class DataviewPlugin extends Plugin {
         this.app.metadataCache.trigger("dataview:api-ready", this.api);
         console.log(`Dataview: version ${this.manifest.version} (requires obsidian ${this.manifest.minAppVersion})`);
 
+        // Mainly intended to detect when the user switches between live preview and source mode.
+        this.registerEvent(
+            this.app.workspace.on("layout-change", () => {
+                this.app.workspace.iterateAllLeaves((leaf) => {
+                    if (leaf.view instanceof MarkdownView && leaf.view.editor.cm) {
+                        leaf.view.editor.cm.dispatch({
+                            effects: workspaceLayoutChangeEffect.of(null)
+                        })
+                    }
+                })
+            })
+        )
         this.registerEditorExtension(inlineFieldsField);
-        this.registerEditorExtension(replaceInlineFieldsInLivePreview(this.app));
+        this.registerEditorExtension(replaceInlineFieldsInLivePreview(this.app, this.settings));
     }
 
     private debouncedRefresh: () => void = () => null;

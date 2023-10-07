@@ -1,5 +1,5 @@
-import { App, Component, MarkdownRenderer, editorInfoField } from "obsidian";
-import { EditorState, RangeSet, RangeSetBuilder, RangeValue, StateField } from "@codemirror/state";
+import { App, Component, MarkdownRenderer, editorInfoField, editorLivePreviewField } from "obsidian";
+import { EditorState, RangeSet, RangeSetBuilder, RangeValue, StateEffect, StateField } from "@codemirror/state";
 import {
     Decoration,
     DecorationSet,
@@ -9,8 +9,10 @@ import {
     ViewUpdate,
     WidgetType,
 } from "@codemirror/view";
-import { InlineField, extractInlineFields } from "data-import/inline-field";
+import { InlineField, extractInlineFields, parseInlineValue } from "data-import/inline-field";
 import { canonicalizeVarName } from "util/normalize";
+import { renderValue } from "ui/render";
+import { DataviewSettings } from "settings";
 
 class InlineFieldValue extends RangeValue {
     constructor(public field: InlineField) {
@@ -40,7 +42,7 @@ export const inlineFieldsField = StateField.define<RangeSet<InlineFieldValue>>({
 });
 
 /** Create a view plugin that renders inline fields in live preview just as in the reading view. */
-export const replaceInlineFieldsInLivePreview = (app: App) =>
+export const replaceInlineFieldsInLivePreview = (app: App, settings: DataviewSettings) =>
     ViewPlugin.fromClass(
         class implements PluginValue {
             decorations: DecorationSet;
@@ -59,18 +61,31 @@ export const replaceInlineFieldsInLivePreview = (app: App) =>
                 const oldIndices = this.overlappingIndices;
                 const newIndices = this.getOverlappingIndices(update.state);
 
-                let overlapChanged =
+                const overlapChanged =
                     update.startState.field(inlineFieldsField).size != update.state.field(inlineFieldsField).size ||
                     JSON.stringify(oldIndices) != JSON.stringify(newIndices);
 
                 this.overlappingIndices = newIndices;
 
-                if (update.docChanged || update.viewportChanged || overlapChanged) {
-                    this.decorations = this.buildDecoration(update.view);
+                const layoutChanged = update.transactions.some(
+                    transaction => transaction.effects.some(
+                        effect => effect.is(workspaceLayoutChangeEffect)
+                    )
+                );
+
+                if (update.state.field(editorLivePreviewField)) {
+                    if (update.docChanged || update.viewportChanged || layoutChanged || overlapChanged) {
+                        this.decorations = this.buildDecoration(update.view);
+                    }    
+                } else {
+                    this.decorations = Decoration.none;
                 }
             }
 
             buildDecoration(view: EditorView): DecorationSet {
+                // Disable in the source mode
+                if (!view.state.field(editorLivePreviewField)) return Decoration.none;
+
                 const markdownView = view.state.field(editorInfoField);
                 if (!(markdownView instanceof Component)) {
                     // For a canvas card not assosiated with a note in the vault,
@@ -95,7 +110,7 @@ export const replaceInlineFieldsInLivePreview = (app: App) =>
                                 start,
                                 end,
                                 Decoration.replace({
-                                    widget: new InlineFieldWidget(app, field, x++, file.path, markdownView),
+                                    widget: new InlineFieldWidget(app, field, x++, file.path, markdownView, settings),
                                 })
                             );
                         }
@@ -131,7 +146,8 @@ class InlineFieldWidget extends WidgetType {
         public field: InlineField,
         public id: number,
         public sourcePath: string,
-        public parentComponent: Component
+        public parentComponent: Component,
+        public settings: DataviewSettings
     ) {
         super();
     }
@@ -161,13 +177,27 @@ class InlineFieldWidget extends WidgetType {
                 cls: ["dataview", "inline-field-value"],
                 attr: { id: "dataview-inline-field-" + this.id },
             });
-            this.renderMarkdown(value, this.field.value);
+            renderValue(
+                parseInlineValue(this.field.value),
+                value, 
+                this.sourcePath,
+                this.parentComponent,
+                this.settings,
+                false
+            );
         } else {
             const value = renderContainer.createSpan({
                 cls: ["dataview", "inline-field-standalone-value"],
                 attr: { id: "dataview-inline-field-" + this.id },
             });
-            this.renderMarkdown(value, this.field.value);
+            renderValue(
+                parseInlineValue(this.field.value),
+                value, 
+                this.sourcePath,
+                this.parentComponent,
+                this.settings,
+                false
+            );
         }
 
         return renderContainer;
@@ -195,3 +225,9 @@ export async function renderMarkdown(
     }
     return null;
 }
+
+/** 
+ * A state effect that represents the workspace's layout change.
+ * Mainly intended to detect when the user switches between live preview and source mode.
+ */
+export const workspaceLayoutChangeEffect = StateEffect.define<null>();
