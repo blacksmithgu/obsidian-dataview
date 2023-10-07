@@ -12,16 +12,15 @@ export async function renderCompactMarkdown(
     sourcePath: string,
     component: Component
 ) {
-    let subcontainer = container.createSpan();
-    await MarkdownRenderer.renderMarkdown(markdown, subcontainer, sourcePath, component);
+    const tmpContainer = createSpan();
+    await MarkdownRenderer.renderMarkdown(markdown, tmpContainer, sourcePath, component);
 
-    let paragraph = subcontainer.querySelector(":scope > p");
-    if (subcontainer.children.length == 1 && paragraph) {
-        while (paragraph.firstChild) {
-            subcontainer.appendChild(paragraph.firstChild);
-        }
-        subcontainer.removeChild(paragraph);
+    let paragraph = tmpContainer.querySelector(":scope > p");
+    if (tmpContainer.childNodes.length == 1 && paragraph) {
+        container.replaceChildren(...paragraph.childNodes);
     }
+
+    tmpContainer.remove();
 }
 
 /** Render a pre block with an error in it; returns the element to allow for dynamic updating. */

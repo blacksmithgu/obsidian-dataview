@@ -1,4 +1,4 @@
-import { App, Component, MarkdownRenderer, editorInfoField, editorLivePreviewField } from "obsidian";
+import { App, Component, editorInfoField, editorLivePreviewField } from "obsidian";
 import { EditorState, RangeSet, RangeSetBuilder, RangeValue, StateEffect, StateField } from "@codemirror/state";
 import {
     Decoration,
@@ -11,7 +11,7 @@ import {
 } from "@codemirror/view";
 import { InlineField, extractInlineFields, parseInlineValue } from "data-import/inline-field";
 import { canonicalizeVarName } from "util/normalize";
-import { renderValue } from "ui/render";
+import { renderCompactMarkdown, renderValue } from "ui/render";
 import { DataviewSettings } from "settings";
 
 class InlineFieldValue extends RangeValue {
@@ -168,8 +168,12 @@ class InlineFieldWidget extends WidgetType {
                 },
             });
 
-            // Explicitly set the inner HTML to respect any key formatting that we should carry over.
-            this.renderMarkdown(key, this.field.key);
+            renderCompactMarkdown(
+                this.field.key,
+                key,
+                this.sourcePath,
+                this.parentComponent
+            );
 
             const value = renderContainer.createSpan({
                 cls: ["dataview", "inline-field-value"],
@@ -200,28 +204,6 @@ class InlineFieldWidget extends WidgetType {
 
         return renderContainer;
     }
-
-    async renderMarkdown(el: HTMLElement, source: string) {
-        const children = await renderMarkdown(this.app, source, this.sourcePath, this.parentComponent);
-        if (children) el.replaceChildren(...children);
-    }
-}
-
-/** Easy-to-use version of MarkdownRenderer.render. Returns only the child nodes intead of a container block. */
-export async function renderMarkdown(
-    app: App,
-    markdown: string,
-    sourcePath: string,
-    component: Component
-): Promise<NodeList | null> {
-    const el = createSpan();
-    await MarkdownRenderer.render(app, markdown, el, sourcePath, component);
-    for (const child of el.children) {
-        if (child.tagName == "P") {
-            return child.childNodes;
-        }
-    }
-    return null;
 }
 
 /**
