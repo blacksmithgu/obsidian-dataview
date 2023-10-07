@@ -447,6 +447,19 @@ class GeneralSettingsTab extends PluginSettingTab {
                     })
             );
 
+        new Setting(this.containerEl)
+            .setName("Check Changes Before Re-Rendering")
+            .setDesc(
+                "If enabled, JS views will only re-render when the generated HTML is changed. This may fix flickering" +
+                    " issues, but also break complicated views with interactive elements."
+            )
+            .addToggle(toggle =>
+                toggle.setValue(this.plugin.settings.checkHTMLBeforeRerender).onChange(async value => {
+                    await this.plugin.updateSettings({ checkHTMLBeforeRerender: value });
+                    this.plugin.index.touch();
+                })
+            );
+
         let dformat = new Setting(this.containerEl)
             .setName("Date Format")
             .setDesc(
