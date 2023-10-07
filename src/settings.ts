@@ -21,8 +21,6 @@ export interface QuerySettings {
     refreshEnabled: boolean;
     /** The interval that views are refreshed, by default. */
     refreshInterval: number;
-    /** Whether or not views should only re-render when underlying HTML is changed */
-    checkHTMLBeforeRerender: boolean;
     /** The default format that dates are rendered in (using luxon's moment-like formatting). */
     defaultDateFormat: string;
     /** The default format that date-times are rendered in (using luxons moment-like formatting). */
@@ -47,7 +45,6 @@ export const DEFAULT_QUERY_SETTINGS: QuerySettings = {
     warnOnEmptyResult: true,
     refreshEnabled: true,
     refreshInterval: 2500,
-    checkHTMLBeforeRerender: false,
     defaultDateFormat: "MMMM dd, yyyy",
     defaultDateTimeFormat: "h:mm a - MMMM dd, yyyy",
     maxRecursiveRenderDepth: 4,
