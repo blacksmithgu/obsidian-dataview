@@ -1,4 +1,4 @@
-import { App, Component, MarkdownRenderer, editorInfoField, editorLivePreviewField } from "obsidian";
+import { App, Component, MarkdownRenderer, TFile, editorInfoField, editorLivePreviewField } from "obsidian";
 import { EditorState, RangeSet, RangeSetBuilder, RangeValue, StateEffect, StateField } from "@codemirror/state";
 import {
     Decoration,
@@ -13,10 +13,15 @@ import { InlineField, extractInlineFields, parseInlineValue } from "data-import/
 import { canonicalizeVarName } from "util/normalize";
 import { renderValue } from "ui/render";
 import { DataviewSettings } from "settings";
+import { selectionAndRangeOverlap } from "ui/lp-render";
 
 class InlineFieldValue extends RangeValue {
     constructor(public field: InlineField) {
         super();
+    }
+
+    eq(other: InlineFieldValue): boolean {
+        return this.field.key == other.field.key && this.field.value == other.field.value;
     }
 }
 
@@ -46,69 +51,38 @@ export const replaceInlineFieldsInLivePreview = (app: App, settings: DataviewSet
     ViewPlugin.fromClass(
         class implements PluginValue {
             decorations: DecorationSet;
-            overlappingIndices: number[];
+            component: Component;
 
             constructor(view: EditorView) {
-                this.decorations = this.buildDecoration(view);
-                this.overlappingIndices = this.getOverlappingIndices(view.state);
+                this.component = new Component();
+                this.component.load();
+                this.decorations = this.buildDecorations(view);
             }
 
-            update(update: ViewUpdate): void {
-                // To reduce the total number of updating the decorations, we only update if
-                // the state of overlapping (i.e. which inline field is overlapping with the cursor) has changed
-                // except when the document has changed or the viewport has changed.
-
-                const oldIndices = this.overlappingIndices;
-                const newIndices = this.getOverlappingIndices(update.state);
-
-                const overlapChanged =
-                    update.startState.field(inlineFieldsField).size != update.state.field(inlineFieldsField).size ||
-                    JSON.stringify(oldIndices) != JSON.stringify(newIndices);
-
-                this.overlappingIndices = newIndices;
-
-                const layoutChanged = update.transactions.some(transaction =>
-                    transaction.effects.some(effect => effect.is(workspaceLayoutChangeEffect))
-                );
-
-                if (update.state.field(editorLivePreviewField)) {
-                    if (update.docChanged || update.viewportChanged || layoutChanged || overlapChanged) {
-                        this.decorations = this.buildDecoration(update.view);
-                    }
-                } else {
-                    this.decorations = Decoration.none;
-                }
+            destroy() {
+                this.component.unload();
             }
 
-            buildDecoration(view: EditorView): DecorationSet {
+            buildDecorations(view: EditorView): DecorationSet {
                 // Disable in the source mode
                 if (!view.state.field(editorLivePreviewField)) return Decoration.none;
 
-                const markdownView = view.state.field(editorInfoField);
-                if (!(markdownView instanceof Component)) {
-                    // For a canvas card not assosiated with a note in the vault,
-                    // editorInfoField is not MarkdownView, which inherits from the Component class.
-                    // A component object is required to pass to MarkdownRenderer.render.
-                    return Decoration.none;
-                }
-
-                const file = markdownView.file;
+                const file = view.state.field(editorInfoField).file;
                 if (!file) return Decoration.none;
 
                 const info = view.state.field(inlineFieldsField);
                 const builder = new RangeSetBuilder<Decoration>();
-                const selection = view.state.selection.main;
+                const selection = view.state.selection;
 
-                let x = 0;
                 for (const { from, to } of view.visibleRanges) {
                     info.between(from, to, (start, end, { field }) => {
                         // If the inline field is not overlapping with the cursor, we replace it with a widget.
-                        if (start > selection.to || end < selection.from) {
+                        if (selectionAndRangeOverlap(selection, start, end)) {
                             builder.add(
                                 start,
                                 end,
                                 Decoration.replace({
-                                    widget: new InlineFieldWidget(app, field, x++, file.path, markdownView, settings),
+                                    widget: new InlineFieldWidget(app, field, file.path, this.component, settings),
                                 })
                             );
                         }
@@ -117,19 +91,78 @@ export const replaceInlineFieldsInLivePreview = (app: App, settings: DataviewSet
                 return builder.finish();
             }
 
-            getOverlappingIndices(state: EditorState): number[] {
-                const selection = state.selection.main;
-                const cursor = state.field(inlineFieldsField).iter();
-                const indices: number[] = [];
-                let i = 0;
-                while (cursor.value) {
-                    if (cursor.from <= selection.to && cursor.to >= selection.from) {
-                        indices.push(i);
-                    }
-                    cursor.next();
-                    i++;
+            update(update: ViewUpdate) {
+                // only activate in LP and not source mode
+                if (!update.state.field(editorLivePreviewField)) {
+                    this.decorations = Decoration.none;
+                    return;
                 }
-                return indices;
+
+                const layoutChanged = update.transactions.some(transaction =>
+                    transaction.effects.some(effect => effect.is(workspaceLayoutChangeEffect))
+                );
+
+                if (update.docChanged) {
+                    this.decorations = this.decorations.map(update.changes);
+                    this.updateDecorations(update.view);
+                } else if (update.selectionSet) {
+                    this.updateDecorations(update.view);
+                } else if (update.viewportChanged || layoutChanged) {
+                    this.decorations = this.buildDecorations(update.view);
+                }
+            }
+
+            updateDecorations(view: EditorView) {
+                const file = view.state.field(editorInfoField).file;
+                if (!file) {
+                    this.decorations = Decoration.none;
+                    return;
+                }
+
+                const inlineFields = view.state.field(inlineFieldsField);
+                const selection = view.state.selection;
+
+                for (const { from, to } of view.visibleRanges) {
+                    inlineFields.between(from, to, (start, end, { field }) => {
+                        const overlap = selectionAndRangeOverlap(selection, start, end);
+                        if (overlap) {
+                            this.removeDeco(start, end);
+                            return;
+                        } else {
+                            this.addDeco(start, end, field, file);
+                        }
+                    });
+                }
+            }
+
+            removeDeco(start: number, end: number) {
+                this.decorations.between(start, end, (from, to) => {
+                    this.decorations = this.decorations.update({
+                        filterFrom: from,
+                        filterTo: to,
+                        filter: () => false,
+                    });
+                });
+            }
+
+            addDeco(start: number, end: number, field: InlineField, file: TFile) {
+                let exists = false;
+                this.decorations.between(start, end, () => {
+                    exists = true;
+                });
+                if (!exists) {
+                    this.decorations = this.decorations.update({
+                        add: [
+                            {
+                                from: start,
+                                to: end,
+                                value: Decoration.replace({
+                                    widget: new InlineFieldWidget(app, field, file.path, this.component, settings),
+                                }),
+                            },
+                        ],
+                    });
+                }
             }
         },
         {
@@ -142,12 +175,15 @@ class InlineFieldWidget extends WidgetType {
     constructor(
         public app: App,
         public field: InlineField,
-        public id: number,
         public sourcePath: string,
         public parentComponent: Component,
         public settings: DataviewSettings
     ) {
         super();
+    }
+
+    eq(other: InlineFieldWidget): boolean {
+        return this.field.key == other.field.key && this.field.value == other.field.value;
     }
 
     toDOM() {
@@ -173,7 +209,6 @@ class InlineFieldWidget extends WidgetType {
 
             const value = renderContainer.createSpan({
                 cls: ["dataview", "inline-field-value"],
-                attr: { id: "dataview-inline-field-" + this.id },
             });
             renderValue(
                 parseInlineValue(this.field.value),
@@ -186,7 +221,6 @@ class InlineFieldWidget extends WidgetType {
         } else {
             const value = renderContainer.createSpan({
                 cls: ["dataview", "inline-field-standalone-value"],
-                attr: { id: "dataview-inline-field-" + this.id },
             });
             renderValue(
                 parseInlineValue(this.field.value),
