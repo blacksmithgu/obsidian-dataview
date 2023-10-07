@@ -1,3 +1,9 @@
+# 0.5.61
+
+- @RyotaUshio: Fix several bugs related to the new inline field rendering, including source mode and fixing date formatting.
+
+---
+
 # 0.5.60
 
 - @RyotaUshio: Add explicit rendering of inline fields in live preview. They are much more visually distinct now!
