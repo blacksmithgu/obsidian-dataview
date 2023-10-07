@@ -27,9 +27,9 @@ declare module "obsidian" {
 
     interface Editor {
         /**
-		 * CodeMirror editor instance
-		 */
-		cm?: EditorView;
+         * CodeMirror editor instance
+         */
+        cm?: EditorView;
     }
 }
 

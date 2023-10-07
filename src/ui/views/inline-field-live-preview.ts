@@ -67,16 +67,14 @@ export const replaceInlineFieldsInLivePreview = (app: App, settings: DataviewSet
 
                 this.overlappingIndices = newIndices;
 
-                const layoutChanged = update.transactions.some(
-                    transaction => transaction.effects.some(
-                        effect => effect.is(workspaceLayoutChangeEffect)
-                    )
+                const layoutChanged = update.transactions.some(transaction =>
+                    transaction.effects.some(effect => effect.is(workspaceLayoutChangeEffect))
                 );
 
                 if (update.state.field(editorLivePreviewField)) {
                     if (update.docChanged || update.viewportChanged || layoutChanged || overlapChanged) {
                         this.decorations = this.buildDecoration(update.view);
-                    }    
+                    }
                 } else {
                     this.decorations = Decoration.none;
                 }
@@ -179,7 +177,7 @@ class InlineFieldWidget extends WidgetType {
             });
             renderValue(
                 parseInlineValue(this.field.value),
-                value, 
+                value,
                 this.sourcePath,
                 this.parentComponent,
                 this.settings,
@@ -192,7 +190,7 @@ class InlineFieldWidget extends WidgetType {
             });
             renderValue(
                 parseInlineValue(this.field.value),
-                value, 
+                value,
                 this.sourcePath,
                 this.parentComponent,
                 this.settings,
@@ -226,7 +224,7 @@ export async function renderMarkdown(
     return null;
 }
 
-/** 
+/**
  * A state effect that represents the workspace's layout change.
  * Mainly intended to detect when the user switches between live preview and source mode.
  */
