@@ -249,7 +249,7 @@ export function inlinePlugin(app: App, index: FullIndex, settings: DataviewSetti
             inlineRender(view: EditorView) {
                 // still doesn't work as expected for tables and callouts
                 if (!index.initialized) return;
-                const currentFile = app.workspace.getActiveFile();
+                const currentFile = view.state.field(editorInfoField).file;
                 if (!currentFile) return;
 
                 const widgets: Range<Decoration>[] = [];
