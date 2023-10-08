@@ -196,10 +196,10 @@ export function inlinePlugin(app: App, index: FullIndex, settings: DataviewSetti
                     exists = true;
                 });
                 if (!exists) {
-                    /** 
+                    /**
                      * In a note embedded in a Canvas, app.workspace.getActiveFile() returns
-                     * the canvas file, not the note file. On the other hand, 
-                     * view.state.field(editorInfoField).file returns the note file itself, 
+                     * the canvas file, not the note file. On the other hand,
+                     * view.state.field(editorInfoField).file returns the note file itself,
                      * which is more suitable here.
                      */
                     const currentFile = view.state.field(editorInfoField).file;
