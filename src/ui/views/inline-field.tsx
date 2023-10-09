@@ -1,4 +1,5 @@
-import { extractInlineFields, parseInlineValue } from "data-import/inline-field";
+import { InlineField, extractInlineFields, parseInlineValue } from "data-import/inline-field";
+import { Values } from "data-model/value";
 import { MarkdownPostProcessorContext, MarkdownRenderChild } from "obsidian";
 import { h, render } from "preact";
 import { DataviewContext, DataviewInit, Lit } from "ui/markdown";
@@ -8,6 +9,12 @@ import { canonicalizeVarName } from "util/normalize";
 export async function replaceInlineFields(ctx: MarkdownPostProcessorContext, init: DataviewInit): Promise<void> {
     let inlineFields = extractInlineFields(init.container.innerHTML);
     if (inlineFields.length == 0) return;
+
+    const text = ctx.getSectionInfo(init.container)?.text;
+    let inlineFieldsFromText: InlineField[] | null = null;
+    if (text) {
+        inlineFieldsFromText = extractInlineFields(text);
+    }
 
     let component = new MarkdownRenderChild(init.container);
     ctx.addChild(component);
@@ -59,9 +66,21 @@ export async function replaceInlineFields(ctx: MarkdownPostProcessorContext, ini
         if (!box) continue;
 
         const context = Object.assign({}, init, { container: box, component: component });
+
+        let parsedValue;
+        if (inlineFieldsFromText && inlineFieldsFromText[index].key == inlineFields[index].key) {
+            const parsedValueFromText = parseInlineValue(inlineFieldsFromText[index].value);
+            if (Values.isString(parsedValueFromText)) {
+                parsedValue = parsedValueFromText;
+            }
+        }
+        if (parsedValue === undefined) {
+            parsedValue = parseInlineValue(inlineFields[index].value);
+        }
+
         render(
             <DataviewContext.Provider value={context}>
-                <Lit value={parseInlineValue(inlineFields[index].value)} inline={true} sourcePath={ctx.sourcePath} />
+                <Lit value={parsedValue} inline={true} sourcePath={ctx.sourcePath} />
             </DataviewContext.Provider>,
             box
         );
