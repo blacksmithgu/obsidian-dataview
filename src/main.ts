@@ -99,11 +99,10 @@ export default class DataviewPlugin extends Plugin {
             }
         });
 
-        // editor extension for inline queries
-        if (this.settings.enableInlineDataview || this.settings.enableInlineDataviewJs) {
-            this.cmExtension = [inlinePlugin(this.app, this.index, this.settings, this.api)];
-            this.registerEditorExtension(this.cmExtension);
-        }
+        // editor extensions
+        this.cmExtension = [];
+        this.registerEditorExtension(this.cmExtension);
+        this.updateEditorExtensions();
 
         // Dataview "force refresh" operation.
         this.addCommand({
@@ -146,8 +145,6 @@ export default class DataviewPlugin extends Plugin {
                 });
             })
         );
-        this.registerEditorExtension(inlineFieldsField);
-        this.registerEditorExtension(replaceInlineFieldsInLivePreview(this.app, this.settings));
     }
 
     private debouncedRefresh: () => void = () => null;
@@ -181,6 +178,18 @@ export default class DataviewPlugin extends Plugin {
     ) {
         let registered = this.registerMarkdownCodeBlockProcessor(language, processor);
         registered.sortOrder = priority;
+    }
+
+    public updateEditorExtensions() {
+        // Don't create a new array, keep the same reference
+        this.cmExtension.length = 0;
+        // editor extension for inline queries: enabled regardless of settings (enableInlineDataview/enableInlineDataviewJS)
+        this.cmExtension.push(inlinePlugin(this.app, this.index, this.settings, this.api));
+        // editor extension for rendering inline fields in live preview
+        if (this.settings.prettyRenderInlineFields) {
+            this.cmExtension.push(inlineFieldsField, replaceInlineFieldsInLivePreview(this.app, this.settings));
+        }
+        this.app.workspace.updateOptions();
     }
 
     /**
@@ -324,9 +333,10 @@ class GeneralSettingsTab extends PluginSettingTab {
             .setName("Enable Inline Field Highlighting")
             .setDesc("Enables or disables visual highlighting / pretty rendering for inline fields.")
             .addToggle(toggle =>
-                toggle
-                    .setValue(this.plugin.settings.prettyRenderInlineFields)
-                    .onChange(async value => await this.plugin.updateSettings({ prettyRenderInlineFields: value }))
+                toggle.setValue(this.plugin.settings.prettyRenderInlineFields).onChange(async value => {
+                    await this.plugin.updateSettings({ prettyRenderInlineFields: value });
+                    this.plugin.updateEditorExtensions();
+                })
             );
 
         this.containerEl.createEl("h2", { text: "Codeblock Settings" });
