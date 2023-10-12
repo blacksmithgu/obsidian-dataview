@@ -77,7 +77,7 @@ export const replaceInlineFieldsInLivePreview = (app: App, settings: DataviewSet
                 for (const { from, to } of view.visibleRanges) {
                     info.between(from, to, (start, end, { field }) => {
                         // If the inline field is not overlapping with the cursor, we replace it with a widget.
-                        if (selectionAndRangeOverlap(selection, start, end)) {
+                        if (!selectionAndRangeOverlap(selection, start, end)) {
                             builder.add(
                                 start,
                                 end,
