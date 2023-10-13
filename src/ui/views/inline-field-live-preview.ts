@@ -82,7 +82,7 @@ export const replaceInlineFieldsInLivePreview = (app: App, settings: DataviewSet
                                 start,
                                 end,
                                 Decoration.replace({
-                                    widget: new InlineFieldWidget(app, field, file.path, this.component, settings, view),
+                                    widget: new InlineFieldWidget(app, start, field, file.path, this.component, settings, view),
                                 })
                             );
                         }
@@ -157,7 +157,7 @@ export const replaceInlineFieldsInLivePreview = (app: App, settings: DataviewSet
                                 from: start,
                                 to: end,
                                 value: Decoration.replace({
-                                    widget: new InlineFieldWidget(app, field, file.path, this.component, settings, view),
+                                    widget: new InlineFieldWidget(app, start, field, file.path, this.component, settings, view),
                                 }),
                             },
                         ],
@@ -174,6 +174,7 @@ export const replaceInlineFieldsInLivePreview = (app: App, settings: DataviewSet
 class InlineFieldWidget extends WidgetType {
     constructor(
         public app: App,
+        public start: number,
         public field: InlineField,
         public sourcePath: string,
         public parentComponent: Component,
@@ -247,7 +248,7 @@ class InlineFieldWidget extends WidgetType {
             if (event instanceof MouseEvent) {
                 const rect = key.getBoundingClientRect();
                 const relativePos = (event.x - rect.x) / rect.width;
-                const clickedPos = Math.round(this.field.start + (this.field.startValue - 2 - this.field.start) * relativePos); // 2 is the length of "::"
+                const clickedPos = Math.round(this.start + (this.field.startValue - 2 - this.field.start) * relativePos); // 2 is the length of "::"
                 this.view.dispatch({ selection: { anchor: clickedPos } });
             }
         });
@@ -258,7 +259,7 @@ class InlineFieldWidget extends WidgetType {
             if (event instanceof MouseEvent) {
                 const rect = value.getBoundingClientRect();
                 const relativePos = (event.x - rect.x) / rect.width;
-                const clickedPos = Math.round(this.field.startValue + (this.field.end - this.field.startValue) * relativePos);
+                const clickedPos = Math.round(this.start + (this.field.startValue - this.field.start) + (this.field.end - this.field.startValue) * relativePos);
                 this.view.dispatch({ selection: { anchor: clickedPos } });
             }
         });
