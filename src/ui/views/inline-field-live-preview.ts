@@ -84,7 +84,6 @@ export const replaceInlineFieldsInLivePreview = (app: App, settings: DataviewSet
                                 Decoration.replace({
                                     widget: new InlineFieldWidget(
                                         app,
-                                        start,
                                         field,
                                         file.path,
                                         this.component,
@@ -167,7 +166,6 @@ export const replaceInlineFieldsInLivePreview = (app: App, settings: DataviewSet
                                 value: Decoration.replace({
                                     widget: new InlineFieldWidget(
                                         app,
-                                        start,
                                         field,
                                         file.path,
                                         this.component,
@@ -190,7 +188,6 @@ export const replaceInlineFieldsInLivePreview = (app: App, settings: DataviewSet
 class InlineFieldWidget extends WidgetType {
     constructor(
         public app: App,
-        public start: number,
         public field: InlineField,
         public sourcePath: string,
         public parentComponent: Component,
@@ -236,8 +233,8 @@ class InlineFieldWidget extends WidgetType {
                 false
             );
 
-            this.addKeyClickHandlerr(key);
-            this.addValueClickHandlerr(value);
+            this.addKeyClickHandlerr(key, renderContainer);
+            this.addValueClickHandlerr(value, renderContainer);
         } else {
             const value = renderContainer.createSpan({
                 cls: ["dataview", "inline-field-standalone-value"],
@@ -250,7 +247,7 @@ class InlineFieldWidget extends WidgetType {
                 this.settings,
                 false
             );
-            this.addValueClickHandlerr(value);
+            this.addValueClickHandlerr(value, renderContainer);
         }
 
         return renderContainer;
@@ -258,26 +255,28 @@ class InlineFieldWidget extends WidgetType {
 
     // https://github.com/blacksmithgu/obsidian-dataview/issues/2101
     // When the user clicks on a rendered inline field, move the cursor to the clicked position.
-    addKeyClickHandlerr(key: HTMLElement) {
+    addKeyClickHandlerr(key: HTMLElement, renderContainer: HTMLElement) {
         key.addEventListener("click", event => {
             if (event instanceof MouseEvent) {
                 const rect = key.getBoundingClientRect();
                 const relativePos = (event.x - rect.x) / rect.width;
+                const startPos = this.view.posAtCoords(renderContainer.getBoundingClientRect(), false);
                 const clickedPos = Math.round(
-                    this.start + (this.field.startValue - 2 - this.field.start) * relativePos
+                    startPos + (this.field.startValue - 2 - this.field.start) * relativePos
                 ); // 2 is the length of "::"
                 this.view.dispatch({ selection: { anchor: clickedPos } });
             }
         });
     }
 
-    addValueClickHandlerr(value: HTMLElement) {
+    addValueClickHandlerr(value: HTMLElement, renderContainer: HTMLElement) {
         value.addEventListener("click", event => {
             if (event instanceof MouseEvent) {
                 const rect = value.getBoundingClientRect();
                 const relativePos = (event.x - rect.x) / rect.width;
+                const startPos = this.view.posAtCoords(renderContainer.getBoundingClientRect(), false);
                 const clickedPos = Math.round(
-                    this.start +
+                    startPos +
                         (this.field.startValue - this.field.start) +
                         (this.field.end - this.field.startValue) * relativePos
                 );
