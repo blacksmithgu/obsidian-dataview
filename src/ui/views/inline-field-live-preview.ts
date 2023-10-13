@@ -261,9 +261,7 @@ class InlineFieldWidget extends WidgetType {
                 const rect = key.getBoundingClientRect();
                 const relativePos = (event.x - rect.x) / rect.width;
                 const startPos = this.view.posAtCoords(renderContainer.getBoundingClientRect(), false);
-                const clickedPos = Math.round(
-                    startPos + (this.field.startValue - 2 - this.field.start) * relativePos
-                ); // 2 is the length of "::"
+                const clickedPos = Math.round(startPos + (this.field.startValue - 2 - this.field.start) * relativePos); // 2 is the length of "::"
                 this.view.dispatch({ selection: { anchor: clickedPos } });
             }
         });
