@@ -233,8 +233,8 @@ class InlineFieldWidget extends WidgetType {
                 false
             );
 
-            this.addKeyClickHandlerr(key, renderContainer);
-            this.addValueClickHandlerr(value, renderContainer);
+            this.addKeyClickHandler(key, renderContainer);
+            this.addValueClickHandler(value, renderContainer);
         } else {
             const value = renderContainer.createSpan({
                 cls: ["dataview", "inline-field-standalone-value"],
@@ -247,7 +247,7 @@ class InlineFieldWidget extends WidgetType {
                 this.settings,
                 false
             );
-            this.addValueClickHandlerr(value, renderContainer);
+            this.addValueClickHandler(value, renderContainer);
         }
 
         return renderContainer;
@@ -255,7 +255,7 @@ class InlineFieldWidget extends WidgetType {
 
     // https://github.com/blacksmithgu/obsidian-dataview/issues/2101
     // When the user clicks on a rendered inline field, move the cursor to the clicked position.
-    addKeyClickHandlerr(key: HTMLElement, renderContainer: HTMLElement) {
+    addKeyClickHandler(key: HTMLElement, renderContainer: HTMLElement) {
         key.addEventListener("click", event => {
             if (event instanceof MouseEvent) {
                 const rect = key.getBoundingClientRect();
@@ -267,7 +267,7 @@ class InlineFieldWidget extends WidgetType {
         });
     }
 
-    addValueClickHandlerr(value: HTMLElement, renderContainer: HTMLElement) {
+    addValueClickHandler(value: HTMLElement, renderContainer: HTMLElement) {
         value.addEventListener("click", event => {
             if (event instanceof MouseEvent) {
                 const rect = value.getBoundingClientRect();
