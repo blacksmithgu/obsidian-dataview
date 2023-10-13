@@ -77,12 +77,12 @@ export const replaceInlineFieldsInLivePreview = (app: App, settings: DataviewSet
                 for (const { from, to } of view.visibleRanges) {
                     info.between(from, to, (start, end, { field }) => {
                         // If the inline field is not overlapping with the cursor, we replace it with a widget.
-                        if (selectionAndRangeOverlap(selection, start, end)) {
+                        if (!selectionAndRangeOverlap(selection, start, end)) {
                             builder.add(
                                 start,
                                 end,
                                 Decoration.replace({
-                                    widget: new InlineFieldWidget(app, field, file.path, this.component, settings),
+                                    widget: new InlineFieldWidget(app, field, file.path, this.component, settings, view),
                                 })
                             );
                         }
@@ -129,7 +129,7 @@ export const replaceInlineFieldsInLivePreview = (app: App, settings: DataviewSet
                             this.removeDeco(start, end);
                             return;
                         } else {
-                            this.addDeco(start, end, field, file);
+                            this.addDeco(start, end, field, file, view);
                         }
                     });
                 }
@@ -145,7 +145,7 @@ export const replaceInlineFieldsInLivePreview = (app: App, settings: DataviewSet
                 });
             }
 
-            addDeco(start: number, end: number, field: InlineField, file: TFile) {
+            addDeco(start: number, end: number, field: InlineField, file: TFile, view: EditorView) {
                 let exists = false;
                 this.decorations.between(start, end, () => {
                     exists = true;
@@ -157,7 +157,7 @@ export const replaceInlineFieldsInLivePreview = (app: App, settings: DataviewSet
                                 from: start,
                                 to: end,
                                 value: Decoration.replace({
-                                    widget: new InlineFieldWidget(app, field, file.path, this.component, settings),
+                                    widget: new InlineFieldWidget(app, field, file.path, this.component, settings, view),
                                 }),
                             },
                         ],
@@ -177,7 +177,8 @@ class InlineFieldWidget extends WidgetType {
         public field: InlineField,
         public sourcePath: string,
         public parentComponent: Component,
-        public settings: DataviewSettings
+        public settings: DataviewSettings,
+        public view: EditorView
     ) {
         super();
     }
@@ -217,6 +218,10 @@ class InlineFieldWidget extends WidgetType {
                 this.settings,
                 false
             );
+
+            this.addKeyClickHandlerr(key);
+            this.addValueClickHandlerr(value);
+
         } else {
             const value = renderContainer.createSpan({
                 cls: ["dataview", "inline-field-standalone-value"],
@@ -229,9 +234,34 @@ class InlineFieldWidget extends WidgetType {
                 this.settings,
                 false
             );
+            this.addValueClickHandlerr(value);
         }
 
         return renderContainer;
+    }
+
+    // https://github.com/blacksmithgu/obsidian-dataview/issues/2101
+    // When the user clicks on a rendered inline field, move the cursor to the clicked position.
+    addKeyClickHandlerr(key: HTMLElement) {
+        key.addEventListener("click", (event) => {
+            if (event instanceof MouseEvent) {
+                const rect = key.getBoundingClientRect();
+                const relativePos = (event.x - rect.x) / rect.width;
+                const clickedPos = Math.round(this.field.start + (this.field.startValue - 2 - this.field.start) * relativePos); // 2 is the length of "::"
+                this.view.dispatch({ selection: { anchor: clickedPos } });
+            }
+        });
+    }
+
+    addValueClickHandlerr(value: HTMLElement) {
+        value.addEventListener("click", (event) => {
+            if (event instanceof MouseEvent) {
+                const rect = value.getBoundingClientRect();
+                const relativePos = (event.x - rect.x) / rect.width;
+                const clickedPos = Math.round(this.field.startValue + (this.field.end - this.field.startValue) * relativePos);
+                this.view.dispatch({ selection: { anchor: clickedPos } });
+            }
+        });
     }
 }
 
