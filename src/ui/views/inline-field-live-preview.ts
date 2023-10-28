@@ -82,7 +82,14 @@ export const replaceInlineFieldsInLivePreview = (app: App, settings: DataviewSet
                                 start,
                                 end,
                                 Decoration.replace({
-                                    widget: new InlineFieldWidget(app, field, file.path, this.component, settings),
+                                    widget: new InlineFieldWidget(
+                                        app,
+                                        field,
+                                        file.path,
+                                        this.component,
+                                        settings,
+                                        view
+                                    ),
                                 })
                             );
                         }
@@ -129,7 +136,7 @@ export const replaceInlineFieldsInLivePreview = (app: App, settings: DataviewSet
                             this.removeDeco(start, end);
                             return;
                         } else {
-                            this.addDeco(start, end, field, file);
+                            this.addDeco(start, end, field, file, view);
                         }
                     });
                 }
@@ -145,7 +152,7 @@ export const replaceInlineFieldsInLivePreview = (app: App, settings: DataviewSet
                 });
             }
 
-            addDeco(start: number, end: number, field: InlineField, file: TFile) {
+            addDeco(start: number, end: number, field: InlineField, file: TFile, view: EditorView) {
                 let exists = false;
                 this.decorations.between(start, end, () => {
                     exists = true;
@@ -157,7 +164,14 @@ export const replaceInlineFieldsInLivePreview = (app: App, settings: DataviewSet
                                 from: start,
                                 to: end,
                                 value: Decoration.replace({
-                                    widget: new InlineFieldWidget(app, field, file.path, this.component, settings),
+                                    widget: new InlineFieldWidget(
+                                        app,
+                                        field,
+                                        file.path,
+                                        this.component,
+                                        settings,
+                                        view
+                                    ),
                                 }),
                             },
                         ],
@@ -177,7 +191,8 @@ class InlineFieldWidget extends WidgetType {
         public field: InlineField,
         public sourcePath: string,
         public parentComponent: Component,
-        public settings: DataviewSettings
+        public settings: DataviewSettings,
+        public view: EditorView
     ) {
         super();
     }
@@ -217,6 +232,9 @@ class InlineFieldWidget extends WidgetType {
                 this.settings,
                 false
             );
+
+            this.addKeyClickHandler(key, renderContainer);
+            this.addValueClickHandler(value, renderContainer);
         } else {
             const value = renderContainer.createSpan({
                 cls: ["dataview", "inline-field-standalone-value"],
@@ -229,9 +247,40 @@ class InlineFieldWidget extends WidgetType {
                 this.settings,
                 false
             );
+            this.addValueClickHandler(value, renderContainer);
         }
 
         return renderContainer;
+    }
+
+    // https://github.com/blacksmithgu/obsidian-dataview/issues/2101
+    // When the user clicks on a rendered inline field, move the cursor to the clicked position.
+    addKeyClickHandler(key: HTMLElement, renderContainer: HTMLElement) {
+        key.addEventListener("click", event => {
+            if (event instanceof MouseEvent) {
+                const rect = key.getBoundingClientRect();
+                const relativePos = (event.x - rect.x) / rect.width;
+                const startPos = this.view.posAtCoords(renderContainer.getBoundingClientRect(), false);
+                const clickedPos = Math.round(startPos + (this.field.startValue - 2 - this.field.start) * relativePos); // 2 is the length of "::"
+                this.view.dispatch({ selection: { anchor: clickedPos } });
+            }
+        });
+    }
+
+    addValueClickHandler(value: HTMLElement, renderContainer: HTMLElement) {
+        value.addEventListener("click", event => {
+            if (event instanceof MouseEvent) {
+                const rect = value.getBoundingClientRect();
+                const relativePos = (event.x - rect.x) / rect.width;
+                const startPos = this.view.posAtCoords(renderContainer.getBoundingClientRect(), false);
+                const clickedPos = Math.round(
+                    startPos +
+                        (this.field.startValue - this.field.start) +
+                        (this.field.end - this.field.startValue) * relativePos
+                );
+                this.view.dispatch({ selection: { anchor: clickedPos } });
+            }
+        });
     }
 }
 
