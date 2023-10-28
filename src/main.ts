@@ -186,7 +186,7 @@ export default class DataviewPlugin extends Plugin {
         // editor extension for inline queries: enabled regardless of settings (enableInlineDataview/enableInlineDataviewJS)
         this.cmExtension.push(inlinePlugin(this.app, this.index, this.settings, this.api));
         // editor extension for rendering inline fields in live preview
-        if (this.settings.prettyRenderInlineFields) {
+        if (this.settings.prettyRenderInlineFieldsInLivePreview) {
             this.cmExtension.push(inlineFieldsField, replaceInlineFieldsInLivePreview(this.app, this.settings));
         }
         this.app.workspace.updateOptions();
@@ -330,11 +330,20 @@ class GeneralSettingsTab extends PluginSettingTab {
             );
 
         new Setting(this.containerEl)
-            .setName("Enable Inline Field Highlighting")
-            .setDesc("Enables or disables visual highlighting / pretty rendering for inline fields.")
+            .setName("Enable Inline Field Highlighting in Reading View")
+            .setDesc("Enables or disables visual highlighting / pretty rendering for inline fields in Reading View.")
             .addToggle(toggle =>
-                toggle.setValue(this.plugin.settings.prettyRenderInlineFields).onChange(async value => {
-                    await this.plugin.updateSettings({ prettyRenderInlineFields: value });
+                toggle
+                    .setValue(this.plugin.settings.prettyRenderInlineFields)
+                    .onChange(async value => await this.plugin.updateSettings({ prettyRenderInlineFields: value }))
+            );
+
+        new Setting(this.containerEl)
+            .setName("Enable Inline Field Highlighting in Live Preview")
+            .setDesc("Enables or disables visual highlighting / pretty rendering for inline fields in Live Preview.")
+            .addToggle(toggle =>
+                toggle.setValue(this.plugin.settings.prettyRenderInlineFieldsInLivePreview).onChange(async value => {
+                    await this.plugin.updateSettings({ prettyRenderInlineFieldsInLivePreview: value });
                     this.plugin.updateEditorExtensions();
                 })
             );
