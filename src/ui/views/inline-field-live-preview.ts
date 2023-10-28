@@ -14,6 +14,7 @@ import { canonicalizeVarName } from "util/normalize";
 import { renderCompactMarkdown, renderValue } from "ui/render";
 import { DataviewSettings } from "settings";
 import { selectionAndRangeOverlap } from "ui/lp-render";
+import { syntaxTree } from "@codemirror/language";
 
 class InlineFieldValue extends RangeValue {
     constructor(public field: InlineField) {
@@ -27,12 +28,27 @@ class InlineFieldValue extends RangeValue {
 
 function buildInlineFields(state: EditorState): RangeSet<InlineFieldValue> {
     const builder = new RangeSetBuilder<InlineFieldValue>();
+    const tree = syntaxTree(state);
 
     for (let lineNumber = 1; lineNumber <= state.doc.lines; lineNumber++) {
         const line = state.doc.line(lineNumber);
-        const inlineFields = extractInlineFields(line.text);
-        for (const field of inlineFields) {
-            builder.add(line.from + field.start, line.from + field.end, new InlineFieldValue(field));
+        let isInsideCodeBlock = false;
+        tree.iterate({
+            from: line.from,
+            to: line.to,
+            enter: node => {
+                // ignore code blocks
+                if (node.name.startsWith("HyperMD-codeblock")) {
+                    isInsideCodeBlock = true;
+                }
+                return node.name == "Document";
+            },
+        });
+        if (!isInsideCodeBlock) {
+            const inlineFields = extractInlineFields(line.text);
+            for (const field of inlineFields) {
+                builder.add(line.from + field.start, line.from + field.end, new InlineFieldValue(field));
+            }
         }
     }
     return builder.finish();
