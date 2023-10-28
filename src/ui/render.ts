@@ -12,16 +12,42 @@ export async function renderCompactMarkdown(
     sourcePath: string,
     component: Component
 ) {
-    let subcontainer = container.createSpan();
-    await MarkdownRenderer.renderMarkdown(markdown, subcontainer, sourcePath, component);
+    const tmpContainer = createSpan();
+    await MarkdownRenderer.renderMarkdown(markdown, tmpContainer, sourcePath, component);
 
-    let paragraph = subcontainer.querySelector(":scope > p");
-    if (subcontainer.children.length == 1 && paragraph) {
-        while (paragraph.firstChild) {
-            subcontainer.appendChild(paragraph.firstChild);
-        }
-        subcontainer.removeChild(paragraph);
+    let paragraph = tmpContainer.querySelector(":scope > p");
+    if (tmpContainer.childNodes.length == 1 && paragraph) {
+        container.replaceChildren(...paragraph.childNodes);
+    } else {
+        /**
+         * In most cases, the condition above will be true.
+         * However, it is not always true, for example:
+         * ```dataviewjs
+         * dv.paragraph(`
+         * - list item 1
+         * - list item 2
+         * 
+         * 1. list item 3
+         * 2. list item 4
+         * `)
+         * ```
+         * MarkdownRenderer.renderMarkdown will render it as:
+         * <span>
+         *   <ul>
+         *     <li>list item 1</li>
+         *     <li>list item 2</li>
+         *   </ul>
+         *   <ol>
+         *     <li>list item 3</li>
+         *     <li>list item 4</li>
+         *   </ol>
+         * </span>
+         * Notice that there is no <p> tag.
+         */
+        container.replaceChildren(...tmpContainer.childNodes);
     }
+
+    tmpContainer.remove();
 }
 
 /** Render a pre block with an error in it; returns the element to allow for dynamic updating. */
