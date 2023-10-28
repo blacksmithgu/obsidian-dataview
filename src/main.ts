@@ -333,12 +333,12 @@ class GeneralSettingsTab extends PluginSettingTab {
             .setName("Enable Inline Field Highlighting in Reading View")
             .setDesc("Enables or disables visual highlighting / pretty rendering for inline fields in Reading View.")
             .addToggle(toggle =>
-                toggle.setValue(this.plugin.settings.prettyRenderInlineFields).onChange(async value => 
-                    await this.plugin.updateSettings({ prettyRenderInlineFields: value })
-                )
+                toggle
+                    .setValue(this.plugin.settings.prettyRenderInlineFields)
+                    .onChange(async value => await this.plugin.updateSettings({ prettyRenderInlineFields: value }))
             );
 
-            new Setting(this.containerEl)
+        new Setting(this.containerEl)
             .setName("Enable Inline Field Highlighting in Live Preview")
             .setDesc("Enables or disables visual highlighting / pretty rendering for inline fields in Live Preview.")
             .addToggle(toggle =>
