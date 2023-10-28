@@ -84,8 +84,10 @@ export interface DataviewSettings extends QuerySettings, ExportSettings {
     enableInlineDataview: boolean;
     /** Enable or disable executing inline DataviewJS queries. */
     enableInlineDataviewJs: boolean;
-    /** Enable or disable rendering inline fields prettily. */
+    /** Enable or disable rendering inline fields prettily in Reading View. */
     prettyRenderInlineFields: boolean;
+    /** Enable or disable rendering inline fields prettily in Live Preview. */
+    prettyRenderInlineFieldsInLivePreview: boolean;
     /** The keyword for DataviewJS blocks. */
     dataviewJsKeyword: string;
 }
@@ -102,6 +104,7 @@ export const DEFAULT_SETTINGS: DataviewSettings = {
         enableDataviewJs: false,
         enableInlineDataviewJs: false,
         prettyRenderInlineFields: true,
+        prettyRenderInlineFieldsInLivePreview: true,
         dataviewJsKeyword: "dataviewjs",
     },
 };
