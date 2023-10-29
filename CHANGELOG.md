@@ -1,3 +1,15 @@
+# 0.5.63
+
+- More bugfixes from @RyotaUshio for rendering Markdown paragraphs and other blocks in DataviewJS.
+
+---
+
+# 0.5.62
+
+Several more inline field fixes from @RyotaUshio, including more configuration options, fixing inline fields being rendered inside codeblocks, and more. Thanks!
+
+---
+
 # 0.5.61
 
 - @RyotaUshio: Fix several bugs related to the new inline field rendering, including source mode and fixing date formatting.
