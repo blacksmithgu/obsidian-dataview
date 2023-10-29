@@ -4,6 +4,7 @@ import { QuerySettings } from "settings";
 import { currentLocale } from "util/locale";
 import { renderMinimalDate, renderMinimalDuration } from "util/normalize";
 import { Literal, Values, Widgets } from "data-model/value";
+import { InlineFieldLivePreviewComponent } from "./views/inline-field-live-preview";
 
 /** Render simple fields compactly, removing wrapping content like paragraph and span. */
 export async function renderCompactMarkdown(
@@ -12,42 +13,56 @@ export async function renderCompactMarkdown(
     sourcePath: string,
     component: Component
 ) {
-    const tmpContainer = createSpan();
-    await MarkdownRenderer.renderMarkdown(markdown, tmpContainer, sourcePath, component);
+    // check if the call is from the CM6 view plugin defined in src/ui/views/inline-field-live-preview.ts
+    if (component instanceof InlineFieldLivePreviewComponent) {
+        const tmpContainer = createSpan();
+        await MarkdownRenderer.renderMarkdown(markdown, tmpContainer, sourcePath, component);
 
-    let paragraph = tmpContainer.querySelector(":scope > p");
-    if (tmpContainer.childNodes.length == 1 && paragraph) {
-        container.replaceChildren(...paragraph.childNodes);
+        let paragraph = tmpContainer.querySelector(":scope > p");
+        if (tmpContainer.childNodes.length == 1 && paragraph) {
+            container.replaceChildren(...paragraph.childNodes);
+        } else {
+            /**
+             * In most cases, the condition above will be true.
+             * However, it is not always true, for example:
+             * ```dataviewjs
+             * dv.paragraph(`
+             * - list item 1
+             * - list item 2
+             *
+             * 1. list item 3
+             * 2. list item 4
+             * `)
+             * ```
+             * MarkdownRenderer.renderMarkdown will render it as:
+             * <span>
+             *   <ul>
+             *     <li>list item 1</li>
+             *     <li>list item 2</li>
+             *   </ul>
+             *   <ol>
+             *     <li>list item 3</li>
+             *     <li>list item 4</li>
+             *   </ol>
+             * </span>
+             * Notice that there is no <p> tag.
+             */
+            container.replaceChildren(...tmpContainer.childNodes);
+        }
+
+        tmpContainer.remove();
     } else {
-        /**
-         * In most cases, the condition above will be true.
-         * However, it is not always true, for example:
-         * ```dataviewjs
-         * dv.paragraph(`
-         * - list item 1
-         * - list item 2
-         *
-         * 1. list item 3
-         * 2. list item 4
-         * `)
-         * ```
-         * MarkdownRenderer.renderMarkdown will render it as:
-         * <span>
-         *   <ul>
-         *     <li>list item 1</li>
-         *     <li>list item 2</li>
-         *   </ul>
-         *   <ol>
-         *     <li>list item 3</li>
-         *     <li>list item 4</li>
-         *   </ol>
-         * </span>
-         * Notice that there is no <p> tag.
-         */
-        container.replaceChildren(...tmpContainer.childNodes);
-    }
+        let subcontainer = container.createSpan();
+        await MarkdownRenderer.renderMarkdown(markdown, subcontainer, sourcePath, component);
 
-    tmpContainer.remove();
+        let paragraph = subcontainer.querySelector(":scope > p");
+        if (subcontainer.children.length == 1 && paragraph) {
+            while (paragraph.firstChild) {
+                subcontainer.appendChild(paragraph.firstChild);
+            }
+            subcontainer.removeChild(paragraph);
+        }
+    }
 }
 
 /** Render a pre block with an error in it; returns the element to allow for dynamic updating. */

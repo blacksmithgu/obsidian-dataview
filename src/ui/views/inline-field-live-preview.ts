@@ -16,6 +16,8 @@ import { DataviewSettings } from "settings";
 import { selectionAndRangeOverlap } from "ui/lp-render";
 import { syntaxTree } from "@codemirror/language";
 
+export class InlineFieldLivePreviewComponent extends Component {}
+
 class InlineFieldValue extends RangeValue {
     constructor(public field: InlineField) {
         super();
@@ -67,10 +69,10 @@ export const replaceInlineFieldsInLivePreview = (app: App, settings: DataviewSet
     ViewPlugin.fromClass(
         class implements PluginValue {
             decorations: DecorationSet;
-            component: Component;
+            component: InlineFieldLivePreviewComponent;
 
             constructor(view: EditorView) {
-                this.component = new Component();
+                this.component = new InlineFieldLivePreviewComponent();
                 this.component.load();
                 this.decorations = this.buildDecorations(view);
             }
