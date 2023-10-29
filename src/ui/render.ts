@@ -18,6 +18,33 @@ export async function renderCompactMarkdown(
     let paragraph = tmpContainer.querySelector(":scope > p");
     if (tmpContainer.childNodes.length == 1 && paragraph) {
         container.replaceChildren(...paragraph.childNodes);
+    } else {
+        /**
+         * In most cases, the condition above will be true.
+         * However, it is not always true, for example:
+         * ```dataviewjs
+         * dv.paragraph(`
+         * - list item 1
+         * - list item 2
+         *
+         * 1. list item 3
+         * 2. list item 4
+         * `)
+         * ```
+         * MarkdownRenderer.renderMarkdown will render it as:
+         * <span>
+         *   <ul>
+         *     <li>list item 1</li>
+         *     <li>list item 2</li>
+         *   </ul>
+         *   <ol>
+         *     <li>list item 3</li>
+         *     <li>list item 4</li>
+         *   </ol>
+         * </span>
+         * Notice that there is no <p> tag.
+         */
+        container.replaceChildren(...tmpContainer.childNodes);
     }
 
     tmpContainer.remove();
