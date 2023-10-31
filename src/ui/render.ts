@@ -1,4 +1,4 @@
-import { Component, MarkdownRenderer, Notice } from "obsidian";
+import { Component, MarkdownRenderer } from "obsidian";
 import { DataArray } from "api/data-array";
 import { QuerySettings } from "settings";
 import { currentLocale } from "util/locale";
@@ -13,45 +13,9 @@ export async function renderCompactMarkdown(
     component: Component,
     isInlineFieldLivePreview: boolean = false
 ) {
-    new Notice(`${markdown}: ${isInlineFieldLivePreview}`);
     // check if the call is from the CM6 view plugin defined in src/ui/views/inline-field-live-preview.ts
     if (isInlineFieldLivePreview) {
-        const tmpContainer = createSpan();
-        await MarkdownRenderer.renderMarkdown(markdown, tmpContainer, sourcePath, component);
-
-        let paragraph = tmpContainer.querySelector(":scope > p");
-        if (tmpContainer.childNodes.length == 1 && paragraph) {
-            container.replaceChildren(...paragraph.childNodes);
-        } else {
-            /**
-             * In most cases, the condition above will be true.
-             * However, it is not always true, for example:
-             * ```dataviewjs
-             * dv.paragraph(`
-             * - list item 1
-             * - list item 2
-             *
-             * 1. list item 3
-             * 2. list item 4
-             * `)
-             * ```
-             * MarkdownRenderer.renderMarkdown will render it as:
-             * <span>
-             *   <ul>
-             *     <li>list item 1</li>
-             *     <li>list item 2</li>
-             *   </ul>
-             *   <ol>
-             *     <li>list item 3</li>
-             *     <li>list item 4</li>
-             *   </ol>
-             * </span>
-             * Notice that there is no <p> tag.
-             */
-            container.replaceChildren(...tmpContainer.childNodes);
-        }
-
-        tmpContainer.remove();
+        await renderCompactMarkdownForInlineFieldLivePreview(markdown, container, sourcePath, component);
     } else {
         let subcontainer = container.createSpan();
         await MarkdownRenderer.renderMarkdown(markdown, subcontainer, sourcePath, component);
@@ -64,6 +28,25 @@ export async function renderCompactMarkdown(
             subcontainer.removeChild(paragraph);
         }
     }
+}
+
+async function renderCompactMarkdownForInlineFieldLivePreview(
+    markdown: string,
+    container: HTMLElement,
+    sourcePath: string,
+    component: Component
+) {
+    const tmpContainer = createSpan();
+    await MarkdownRenderer.renderMarkdown(markdown, tmpContainer, sourcePath, component);
+
+    let paragraph = tmpContainer.querySelector(":scope > p");
+    if (tmpContainer.childNodes.length == 1 && paragraph) {
+        container.replaceChildren(...paragraph.childNodes);
+    } else {
+        container.replaceChildren(...tmpContainer.childNodes);
+    }
+
+    tmpContainer.remove();
 }
 
 /** Render a pre block with an error in it; returns the element to allow for dynamic updating. */
