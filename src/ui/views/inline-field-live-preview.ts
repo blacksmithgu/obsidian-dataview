@@ -16,8 +16,6 @@ import { DataviewSettings } from "settings";
 import { selectionAndRangeOverlap } from "ui/lp-render";
 import { syntaxTree } from "@codemirror/language";
 
-export class InlineFieldLivePreviewComponent extends Component {}
-
 class InlineFieldValue extends RangeValue {
     constructor(public field: InlineField) {
         super();
@@ -69,10 +67,10 @@ export const replaceInlineFieldsInLivePreview = (app: App, settings: DataviewSet
     ViewPlugin.fromClass(
         class implements PluginValue {
             decorations: DecorationSet;
-            component: InlineFieldLivePreviewComponent;
+            component: Component;
 
             constructor(view: EditorView) {
-                this.component = new InlineFieldLivePreviewComponent();
+                this.component = new Component();
                 this.component.load();
                 this.decorations = this.buildDecorations(view);
             }
@@ -208,7 +206,7 @@ class InlineFieldWidget extends WidgetType {
         public app: App,
         public field: InlineField,
         public sourcePath: string,
-        public parentComponent: Component,
+        public component: Component,
         public settings: DataviewSettings,
         public view: EditorView
     ) {
@@ -237,7 +235,7 @@ class InlineFieldWidget extends WidgetType {
                 },
             });
 
-            renderCompactMarkdown(this.field.key, key, this.sourcePath, this.parentComponent);
+            renderCompactMarkdown(this.field.key, key, this.sourcePath, this.component, true);
 
             const value = renderContainer.createSpan({
                 cls: ["dataview", "inline-field-value"],
@@ -246,9 +244,12 @@ class InlineFieldWidget extends WidgetType {
                 parseInlineValue(this.field.value),
                 value,
                 this.sourcePath,
-                this.parentComponent,
+                this.component,
                 this.settings,
-                false
+                false,
+                undefined,
+                undefined,
+                true
             );
 
             this.addKeyClickHandler(key, renderContainer);
@@ -261,9 +262,12 @@ class InlineFieldWidget extends WidgetType {
                 parseInlineValue(this.field.value),
                 value,
                 this.sourcePath,
-                this.parentComponent,
+                this.component,
                 this.settings,
-                false
+                false,
+                undefined,
+                undefined,
+                true
             );
             this.addValueClickHandler(value, renderContainer);
         }
