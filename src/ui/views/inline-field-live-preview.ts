@@ -206,7 +206,7 @@ class InlineFieldWidget extends WidgetType {
         public app: App,
         public field: InlineField,
         public sourcePath: string,
-        public parentComponent: Component,
+        public component: Component,
         public settings: DataviewSettings,
         public view: EditorView
     ) {
@@ -235,7 +235,7 @@ class InlineFieldWidget extends WidgetType {
                 },
             });
 
-            renderCompactMarkdown(this.field.key, key, this.sourcePath, this.parentComponent);
+            renderCompactMarkdown(this.field.key, key, this.sourcePath, this.component, true);
 
             const value = renderContainer.createSpan({
                 cls: ["dataview", "inline-field-value"],
@@ -244,9 +244,12 @@ class InlineFieldWidget extends WidgetType {
                 parseInlineValue(this.field.value),
                 value,
                 this.sourcePath,
-                this.parentComponent,
+                this.component,
                 this.settings,
-                false
+                false,
+                undefined,
+                undefined,
+                true
             );
 
             this.addKeyClickHandler(key, renderContainer);
@@ -259,9 +262,12 @@ class InlineFieldWidget extends WidgetType {
                 parseInlineValue(this.field.value),
                 value,
                 this.sourcePath,
-                this.parentComponent,
+                this.component,
                 this.settings,
-                false
+                false,
+                undefined,
+                undefined,
+                true
             );
             this.addValueClickHandler(value, renderContainer);
         }
