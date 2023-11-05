@@ -1,3 +1,10 @@
+# 0.5.64
+
+More bug fixes for inline field rendering.
+
+
+---
+
 # 0.5.63
 
 - More bugfixes from @RyotaUshio for rendering Markdown paragraphs and other blocks in DataviewJS.
