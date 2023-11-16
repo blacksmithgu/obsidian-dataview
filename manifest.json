@@ -6,5 +6,6 @@
   "description": "Complex data views for the data-obsessed.",
   "author": "Michael Brenan <blacksmithgu@gmail.com>",
   "authorUrl": "https://github.com/blacksmithgu",
+  "helpUrl": "https://blacksmithgu.github.io/obsidian-dataview/",
   "isDesktopOnly": false
 }
