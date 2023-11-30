@@ -25,6 +25,7 @@ Dataview automatically adds a large amount of metadata to each page. These impli
 | `file.aliases` | List | A list of all aliases for the note as defined via the [YAML frontmatter](https://help.obsidian.md/How+to/Add+aliases+to+note). |
 | `file.tasks` | List | A list of all tasks (I.e., `| [ ] some task`) in this file. |
 | `file.lists` | List | A list of all list elements in the file (including tasks); these elements are effectively tasks and can be rendered in task views. |
+| `file.tables` | List | A list of all table in this file. |
 | `file.frontmatter` | List | Contains the raw values of all frontmatter in form of `key | value` text values; mainly useful for checking raw frontmatter values or for dynamically listing frontmatter keys. |
 | `file.day` | Date | Only available if the file has a date inside its file name (of form `yyyy-mm-dd` or `yyyymmdd`), or has a `Date` field/inline field. |
 | `file.starred` | Boolean | If this file has been bookmarked via the Obsidian Core Plugin "Bookmarks". |

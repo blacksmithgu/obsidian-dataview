@@ -17,6 +17,7 @@ export interface SMarkdownPage {
         aliases: string[];
         lists: SListItem[];
         tasks: STask[];
+        tables: Map<string, any>[];
         ctime: DateTime;
         cday: DateTime;
         mtime: DateTime;

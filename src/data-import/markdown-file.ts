@@ -78,6 +78,7 @@ export function parsePage(path: string, contents: string, stat: FileStats, metad
         links,
         lists: markdownData.lists,
         fields: finalizeInlineFields(fields),
+        tables: markdownData.tables,
         frontmatter: frontmatter,
         ctime: DateTime.fromMillis(stat.ctime),
         mtime: DateTime.fromMillis(stat.mtime),
@@ -136,11 +137,13 @@ export function parseMarkdown(
     contents: string[],
     metadata: CachedMetadata,
     linksByLine: Record<number, Link[]>
-): { fields: Map<string, Literal[]>; lists: ListItem[] } {
+): { fields: Map<string, Literal[]>; lists: ListItem[], tables: Map<string, any>[] } {
     let fields: Map<string, Literal[]> = new Map();
 
     // Extract task data and append the global data extracted from them to our fields.
     let [lists, extraData] = parseLists(path, contents, metadata, linksByLine);
+    let tables = parseTables(contents, metadata);
+
     for (let [key, values] of extraData.entries()) {
         if (!fields.has(key)) fields.set(key, values);
         else fields.set(key, fields.get(key)!!.concat(values));
@@ -176,7 +179,7 @@ export function parseMarkdown(
         }
     }
 
-    return { fields, lists };
+    return { fields, lists, tables };
 }
 
 // TODO: Consider using an actual parser in leiu of a more expensive regex.
@@ -302,6 +305,42 @@ export function parseLists(
     }
 
     return [Object.values(cache), literals];
+}
+
+/**
+ * Parse table from content and meta data. The implementation will not include column spans. It only work for
+ * one column/one cell value.
+ */
+export function parseTables(
+    content: string[],
+    metadata: CachedMetadata,
+): Map<string, any>[] {
+    const result: Map<string, any>[] = [];
+    metadata.sections?.forEach(section => {
+        if (section.type === 'table') {
+            const headers = content[section.position.start.line]
+                .split('|')
+                .map(header => header.trim())
+                .filter(header => header);
+            let rows = content
+                .slice(section.position.start.line + 2, section.position.end.line + 1)
+                .map(row => row
+                    .split('|')
+                    .map(val => val.trim())
+                    .filter(row => row));
+            // don't support expand column at the moment.
+            if (rows.length === headers.length) {
+                rows.forEach(row => {
+                    const record = headers.reduce((prev, key, index) => {
+                        prev[key] = row[index];
+                        return prev;
+                    }, {} as any);
+                    result.push(record);
+                });
+            }
+        }
+    });
+    return result;
 }
 
 /** Attempt to find a date associated with the given page from metadata or filenames. */
