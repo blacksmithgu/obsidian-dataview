@@ -33,7 +33,7 @@ export class PageMetadata {
     /** The raw frontmatter for this document. */
     public frontmatter: Record<string, Literal>;
 
-    public tables: Map<string, any>[];
+    public tables: TableItem[];
 
     public constructor(path: string, init?: Partial<PageMetadata>) {
         this.path = path;
@@ -302,6 +302,38 @@ export class ListItem {
         }
 
         return result as SListItem;
+    }
+}
+
+/** A table item to represent the table */
+export class TableItem {
+    headers: string[];
+    rows: any[][];
+
+    constructor(init?: Partial<TableItem>) {
+        Object.assign(this, init);
+
+        this.headers = init?.headers || [];
+        this.rows = init?.rows || [];
+    }
+
+    public toJson(): Map<string, any>[] {
+        const headers = this.headers;
+        const rows = this.rows;
+
+        const result: Map<string, any>[] = [];
+        rows.forEach(row => {
+            if (row.length === headers.length) {
+                // only include for row that has the same amount of column
+                const record = headers.reduce((prev, key, index) => {
+                    prev[key] = row[index];
+                    return prev;
+                }, {} as any);
+                result.push(record);
+            }
+        });
+
+        return result;
     }
 }
 

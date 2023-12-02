@@ -17,7 +17,7 @@ export interface SMarkdownPage {
         aliases: string[];
         lists: SListItem[];
         tasks: STask[];
-        tables: Map<string, any>[];
+        tables: STableItem[];
         ctime: DateTime;
         cday: DateTime;
         mtime: DateTime;
@@ -119,4 +119,9 @@ export interface STask extends SListItemBase {
     start?: Literal;
     /** If present, then the day that work on this task is scheduled. */
     scheduled?: Literal;
+}
+
+export interface STableItem {
+    headers: Literal[];
+    rows: Literal[];
 }

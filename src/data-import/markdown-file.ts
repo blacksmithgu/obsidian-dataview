@@ -1,7 +1,7 @@
 /** Importer for markdown documents. */
 
 import { extractFullLineField, extractInlineFields, parseInlineValue, InlineField } from "data-import/inline-field";
-import { ListItem, PageMetadata } from "data-model/markdown";
+import { ListItem, PageMetadata, TableItem } from "data-model/markdown";
 import { Literal, Link, Values } from "data-model/value";
 import { EXPRESSION } from "expression/parse";
 import { DateTime } from "luxon";
@@ -137,7 +137,7 @@ export function parseMarkdown(
     contents: string[],
     metadata: CachedMetadata,
     linksByLine: Record<number, Link[]>
-): { fields: Map<string, Literal[]>; lists: ListItem[], tables: Map<string, any>[] } {
+): { fields: Map<string, Literal[]>; lists: ListItem[], tables: TableItem[] } {
     let fields: Map<string, Literal[]> = new Map();
 
     // Extract task data and append the global data extracted from them to our fields.
@@ -314,30 +314,25 @@ export function parseLists(
 export function parseTables(
     content: string[],
     metadata: CachedMetadata,
-): Map<string, any>[] {
-    const result: Map<string, any>[] = [];
+): TableItem[] {
+    const result: TableItem[] = [];
     metadata.sections?.forEach(section => {
         if (section.type === 'table') {
-            const headers = content[section.position.start.line]
+            const startLine = section.position.start.line;
+            const endLine = section.position.end.line;
+
+            const headers = content[startLine]
                 .split('|')
+                .slice(1, -1)
                 .map(header => header.trim())
-                .filter(header => header);
             let rows = content
-                .slice(section.position.start.line + 2, section.position.end.line + 1)
+                .slice(startLine + 2, endLine + 1)
                 .map(row => row
                     .split('|')
-                    .map(val => val.trim())
-                    .filter(row => row));
-            // don't support expand column at the moment.
-            if (rows.length === headers.length) {
-                rows.forEach(row => {
-                    const record = headers.reduce((prev, key, index) => {
-                        prev[key] = row[index];
-                        return prev;
-                    }, {} as any);
-                    result.push(record);
-                });
-            }
+                    .slice(1, -1)
+                    .map(val => val.trim()));
+
+            result.push(new TableItem({ headers, rows }))
         }
     });
     return result;
