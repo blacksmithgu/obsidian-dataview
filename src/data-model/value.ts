@@ -1,6 +1,7 @@
 import { DateTime, Duration } from "luxon";
 import { DEFAULT_QUERY_SETTINGS, QuerySettings } from "settings";
 import { getFileTitle, normalizeHeaderForLink, renderMinimalDuration } from "util/normalize";
+import { TableItem } from "./markdown";
 
 /** Shorthand for a mapping from keys to values. */
 export type DataObject = { [key: string]: Literal };
@@ -345,6 +346,10 @@ export namespace Values {
 
     export function isLink(val: any): val is Link {
         return val instanceof Link;
+    }
+
+    export function isTableItem(val: any): val is TableItem {
+        return val?.json.length > 0;
     }
 
     export function isWidget(val: any): val is Widget {

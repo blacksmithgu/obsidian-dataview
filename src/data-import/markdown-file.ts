@@ -325,14 +325,16 @@ export function parseTables(
                 .split('|')
                 .slice(1, -1)
                 .map(header => header.trim())
-            let rows = content
+            const rows = content
                 .slice(startLine + 2, endLine + 1)
                 .map(row => row
                     .split('|')
                     .slice(1, -1)
                     .map(val => val.trim()));
 
-            result.push(new TableItem({ headers, rows }))
+            const json = TableItem.serialize(headers, rows);
+
+            result.push(new TableItem({ headers, rows, json }))
         }
     });
     return result;

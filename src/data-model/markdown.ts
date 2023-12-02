@@ -309,17 +309,25 @@ export class ListItem {
 export class TableItem {
     headers: string[];
     rows: any[][];
+    json: Map<string, any>[];
 
     constructor(init?: Partial<TableItem>) {
         Object.assign(this, init);
 
         this.headers = init?.headers || [];
         this.rows = init?.rows || [];
+        this.json = init?.json || [];
     }
 
-    public toJson(): Map<string, any>[] {
-        const headers = this.headers;
-        const rows = this.rows;
+    // make table data into array of object
+    public static serialize(headers: string[], rows: any[][]): Map<string, any>[] {
+        // show header to empty value for empty rows.
+        if (rows.length === 0) {
+            return [{
+                headers,
+                rows,
+            }] as any;
+        }
 
         const result: Map<string, any>[] = [];
         rows.forEach(row => {
