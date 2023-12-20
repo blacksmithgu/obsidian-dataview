@@ -1,7 +1,7 @@
 /** Collect data matching a source query. */
 
-import { FullIndex, PathFilters } from "data-index/index";
-import { Result } from "api/result";
+import { FullIndex, PathFilters } from "../data-index/index";
+import { Result } from "../api/result";
 import { Source } from "./source";
 import { DataObject, Link, Literal } from "../data-model/value";
 

@@ -1,6 +1,6 @@
 import { DateTime, Duration } from "luxon";
-import { DEFAULT_QUERY_SETTINGS, QuerySettings } from "settings";
-import { getFileTitle, normalizeHeaderForLink, renderMinimalDuration } from "util/normalize";
+import { DEFAULT_QUERY_SETTINGS, QuerySettings } from "../settings";
+import { getFileTitle, normalizeHeaderForLink, renderMinimalDuration } from "../util/normalize";
 
 /** Shorthand for a mapping from keys to values. */
 export type DataObject = { [key: string]: Literal };

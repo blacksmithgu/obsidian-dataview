@@ -1,9 +1,9 @@
 /** Provides a global dispatch table for evaluating binary operators, including comparison. */
-import { LiteralRepr, LiteralType, Literal, Values } from "data-model/value";
-import { normalizeDuration } from "util/normalize";
-import { Result } from "api/result";
-import { BinaryOp } from "expression/field";
-import type { Context } from "expression/context";
+import { LiteralRepr, LiteralType, Literal, Values } from "../data-model/value";
+import { normalizeDuration } from "../util/normalize";
+import { Result } from "../api/result";
+import { BinaryOp } from "../expression/field";
+import type { Context } from "../expression/context";
 
 /** A literal type or a catch-all '*'. */
 export type LiteralTypeOrAll = LiteralType | "*";

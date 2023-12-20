@@ -1,4 +1,4 @@
-import { STask } from "data-model/serialized/markdown";
+import { STask } from "../data-model/serialized/markdown";
 
 /** A general function for deciding how to check a task given it's current state. */
 export type TaskStatusSelector = (task: STask) => Promise<string>;

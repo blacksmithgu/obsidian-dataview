@@ -1,9 +1,9 @@
-import { InlineField, extractInlineFields, parseInlineValue } from "data-import/inline-field";
-import { Values } from "data-model/value";
+import { InlineField, extractInlineFields, parseInlineValue } from "../../data-import/inline-field";
+import { Values } from "../../data-model/value";
 import { MarkdownPostProcessorContext, MarkdownRenderChild } from "obsidian";
 import { h, render } from "preact";
-import { DataviewContext, DataviewInit, Lit } from "ui/markdown";
-import { canonicalizeVarName } from "util/normalize";
+import { DataviewContext, DataviewInit, Lit } from "../../ui/markdown";
+import { canonicalizeVarName } from "../../util/normalize";
 
 /** Replaces raw textual inline fields in text containers with pretty HTML equivalents. */
 export async function replaceInlineFields(ctx: MarkdownPostProcessorContext, init: DataviewInit): Promise<void> {

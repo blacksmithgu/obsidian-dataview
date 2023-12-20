@@ -1,15 +1,15 @@
 /** The general, externally accessible plugin API (available at `app.plugins.plugins.dataview.api` or as global `DataviewAPI`). */
 
 import { App, Component, MarkdownPostProcessorContext, TFile } from "obsidian";
-import { FullIndex } from "data-index/index";
-import { matchingSourcePaths } from "data-index/resolver";
-import { Sources } from "data-index/source";
-import { DataObject, Grouping, Groupings, Link, Literal, Values, Widgets } from "data-model/value";
-import { EXPRESSION } from "expression/parse";
-import { renderCodeBlock, renderErrorPre, renderValue } from "ui/render";
+import { FullIndex } from "../data-index/index";
+import { matchingSourcePaths } from "../data-index/resolver";
+import { Sources } from "../data-index/source";
+import { DataObject, Grouping, Groupings, Link, Literal, Values, Widgets } from "../data-model/value";
+import { EXPRESSION } from "../expression/parse";
+import { renderCodeBlock, renderErrorPre, renderValue } from "../ui/render";
 import { DataArray } from "./data-array";
-import { BoundFunctionImpl, DEFAULT_FUNCTIONS, Functions } from "expression/functions";
-import { Context } from "expression/context";
+import { BoundFunctionImpl, DEFAULT_FUNCTIONS, Functions } from "../expression/functions";
+import { Context } from "../expression/context";
 import {
     defaultLinkHandler,
     executeCalendar,
@@ -18,23 +18,23 @@ import {
     executeTable,
     executeTask,
     IdentifierMeaning,
-} from "query/engine";
+} from "../query/engine";
 import { DateTime, Duration } from "luxon";
 import * as Luxon from "luxon";
 import { compare, CompareOperator, satisfies } from "compare-versions";
-import { DataviewSettings, ExportSettings } from "settings";
-import { parseFrontmatter } from "data-import/markdown-file";
-import { SListItem, SMarkdownPage } from "data-model/serialized/markdown";
-import { createFixedTaskView, createTaskView, nestGroups } from "ui/views/task-view";
-import { createFixedListView, createListView } from "ui/views/list-view";
-import { createFixedTableView, createTableView } from "ui/views/table-view";
-import { Result } from "api/result";
-import { parseQuery } from "query/parse";
-import { tryOrPropogate } from "util/normalize";
-import { Query } from "query/query";
-import { DataviewCalendarRenderer } from "ui/views/calendar-view";
-import { DataviewJSRenderer } from "ui/views/js-view";
-import { markdownList, markdownTable, markdownTaskList } from "ui/export/markdown";
+import { DataviewSettings, ExportSettings } from "../settings";
+import { parseFrontmatter } from "../data-import/markdown-file";
+import { SListItem, SMarkdownPage } from "../data-model/serialized/markdown";
+import { createFixedTaskView, createTaskView, nestGroups } from "../ui/views/task-view";
+import { createFixedListView, createListView } from "../ui/views/list-view";
+import { createFixedTableView, createTableView } from "../ui/views/table-view";
+import { Result } from "../api/result";
+import { parseQuery } from "../query/parse";
+import { tryOrPropogate } from "../util/normalize";
+import { Query } from "../query/query";
+import { DataviewCalendarRenderer } from "../ui/views/calendar-view";
+import { DataviewJSRenderer } from "../ui/views/js-view";
+import { markdownList, markdownTable, markdownTaskList } from "../ui/export/markdown";
 
 /** Asynchronous API calls related to file / system IO. */
 export class DataviewIOApi {

@@ -1,7 +1,7 @@
-import { Literal } from "data-model/value";
-import { executeTable } from "query/engine";
-import { Query } from "query/query";
-import { asyncTryOrPropogate } from "util/normalize";
+import { Literal } from "../../data-model/value";
+import { executeTable } from "../../query/engine";
+import { Query } from "../../query/query";
+import { asyncTryOrPropogate } from "../../util/normalize";
 import {
     DataviewContext,
     DataviewInit,
@@ -11,7 +11,7 @@ import {
     Markdown,
     ReactRenderer,
     useIndexBackedState,
-} from "ui/markdown";
+} from "../../ui/markdown";
 import { h, Fragment } from "preact";
 import { useContext } from "preact/hooks";
 import { MarkdownRenderChild } from "obsidian";

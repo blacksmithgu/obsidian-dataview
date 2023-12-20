@@ -8,24 +8,24 @@ import {
     PluginSettingTab,
     Setting,
 } from "obsidian";
-import { renderErrorPre } from "ui/render";
-import { FullIndex } from "data-index/index";
-import { parseField } from "expression/parse";
-import { tryOrPropogate } from "util/normalize";
-import { DataviewApi, isDataviewDisabled } from "api/plugin-api";
-import { DataviewSettings, DEFAULT_QUERY_SETTINGS, DEFAULT_SETTINGS } from "settings";
-import { DataviewInlineRenderer } from "ui/views/inline-view";
-import { DataviewInlineJSRenderer } from "ui/views/js-view";
-import { currentLocale } from "util/locale";
+import { renderErrorPre } from "./ui/render";
+import { FullIndex } from "./data-index/index";
+import { parseField } from "./expression/parse";
+import { tryOrPropogate } from "./util/normalize";
+import { DataviewApi, isDataviewDisabled } from "./api/plugin-api";
+import { DataviewSettings, DEFAULT_QUERY_SETTINGS, DEFAULT_SETTINGS } from "./settings";
+import { DataviewInlineRenderer } from "./ui/views/inline-view";
+import { DataviewInlineJSRenderer } from "./ui/views/js-view";
+import { currentLocale } from "./util/locale";
 import { DateTime } from "luxon";
-import { DataviewInlineApi } from "api/inline-api";
-import { replaceInlineFields } from "ui/views/inline-field";
+import { DataviewInlineApi } from "./api/inline-api";
+import { replaceInlineFields } from "./ui/views/inline-field";
 import {
     inlineFieldsField,
     replaceInlineFieldsInLivePreview,
     workspaceLayoutChangeEffect,
 } from "./ui/views/inline-field-live-preview";
-import { DataviewInit } from "ui/markdown";
+import { DataviewInit } from "./ui/markdown";
 import { inlinePlugin } from "./ui/lp-render";
 import { Extension } from "@codemirror/state";
 

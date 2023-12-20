@@ -1,9 +1,9 @@
-import { extractSubtags, getExtension, getFileTitle, getParentFolder, stripTime } from "util/normalize";
+import { extractSubtags, getExtension, getFileTitle, getParentFolder, stripTime } from "../util/normalize";
 import { DateTime } from "luxon";
-import type { FullIndex } from "data-index/index";
-import { Literal, Link, Values } from "data-model/value";
-import { DataObject } from "index";
-import { SListItem, SMarkdownPage } from "data-model/serialized/markdown";
+import type { FullIndex } from "../data-index/index";
+import { Literal, Link, Values } from "../data-model/value";
+import { DataObject } from "../index";
+import { SListItem, SMarkdownPage } from "../data-model/serialized/markdown";
 import { Pos } from "obsidian";
 
 /** All extracted markdown file metadata obtained from a file. */

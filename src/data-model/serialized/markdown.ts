@@ -1,6 +1,6 @@
 /** Serialized / API facing data types for Dataview objects. */
 
-import { Link, Literal } from "data-model/value";
+import { Link, Literal } from "../../data-model/value";
 import { DateTime } from "luxon";
 import { Pos } from "obsidian";
 

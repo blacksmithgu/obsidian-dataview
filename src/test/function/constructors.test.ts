@@ -1,5 +1,5 @@
 import { Duration } from "luxon";
-import { parseEval } from "test/common";
+import { parseEval } from "../../test/common";
 
 describe("dur()", () => {
     test("8 minutes", () => expect(parseEval(`dur("8 minutes")`)).toEqual(Duration.fromObject({ minutes: 8 })));

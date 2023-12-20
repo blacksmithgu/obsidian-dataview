@@ -1,6 +1,6 @@
 /** Controls and creates Dataview file importers, allowing for asynchronous loading and parsing of files. */
 
-import { Transferable } from "data-model/transferable";
+import { Transferable } from "../../data-model/transferable";
 import DataviewImportWorker from "web-worker:./import-entry.ts";
 import { Component, MetadataCache, TFile, Vault } from "obsidian";
 

@@ -1,4 +1,4 @@
-import { Link } from "data-model/value";
+import { Link } from "../data-model/value";
 
 export const IMAGE_EXTENSIONS = Object.freeze(
     new Set([

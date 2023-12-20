@@ -1,6 +1,6 @@
 /** Common utilities for extracting tags, links, and other business from metadata. */
 
-import { EXPRESSION } from "expression/parse";
+import { EXPRESSION } from "../expression/parse";
 
 const POTENTIAL_TAG_MATCHER = /#[^\s,;\.:!\?'"`()\[\]\{\}]+/giu;
 

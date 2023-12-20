@@ -1,5 +1,5 @@
-import { Literal } from "data-model/value";
-import { parseEval } from "test/common";
+import { Literal } from "../../data-model/value";
+import { parseEval } from "../../test/common";
 
 describe("Single List Argument", () => {
     test("replace(list, string, string)", () => check('replace(list("yes", "re"), "e", "a")', ["yas", "ra"]));
