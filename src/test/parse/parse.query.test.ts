@@ -42,6 +42,39 @@ test("Link Source", () => {
     });
 });
 
+// <-- Comments -->
+describe("Comments", () => {
+    test("Valid Comments", () => {
+        let commentWithSpace = QUERY_LANGUAGE.comment.tryParse("// This is a comment");
+        expect(commentWithSpace).toEqual("This is a comment");
+
+        let commentNoSpace = QUERY_LANGUAGE.comment.tryParse("//This is a comment");
+        expect(commentNoSpace).toEqual("This is a comment");
+
+        let empty = QUERY_LANGUAGE.comment.tryParse("//");
+        expect(empty).toEqual("");
+
+        let emptyWithSpace = QUERY_LANGUAGE.comment.tryParse("// ");
+        expect(emptyWithSpace).toEqual("");
+    });
+
+    test("Invalid comment in quotes", () => {
+        let commentSolo = QUERY_LANGUAGE.comment.parse('"// This is not a comment"');
+        if (!commentSolo.status) {
+            expect(commentSolo.expected).toEqual(["Not a comment"]);
+        } else {
+            fail("Solo comment should not have parsed");
+        }
+
+        let commentMiddle = QUERY_LANGUAGE.comment.parse('"The is before the comment // This is not a comment"');
+        if (!commentMiddle.status) {
+            expect(commentMiddle.expected).toEqual(["Not a comment"]);
+        } else {
+            fail("Comment in the middle of a string should not have parsed");
+        }
+    });
+});
+
 // <-- Fields -->
 
 describe("Named Fields", () => {
@@ -127,6 +160,27 @@ describe("Table Queries", () => {
         expect((fat.header as TableQuery).fields.length).toBe(3);
         expect(fat.source).toEqual(Sources.binaryOp(Sources.tag("#games"), "|", Sources.tag("#gaming")));
         expect((fat.operations[1] as SortByStep).fields.length).toBe(2);
+    });
+
+    test("Commented Query", () => {
+        let commented = parseQuery(
+            "// This is a comment at the beginning\n" +
+                "TABLE (time-played + 100) as long, rating as rate, length\n" +
+                "// This is a comment\n" +
+                "// This is a second comment\n" +
+                "FROM #games or #gaming  // This is an inline comment\n" +
+                "// This is a third comment\n" +
+                "WHERE long > 150 and rate - 10 < 40\n" +
+                "// This is a fourth comment\n" +
+                "\n" +
+                "   // This is a comment with whitespace prior\n" +
+                "SORT length + 8 + 4 DESCENDING, long ASC\n" +
+                "// This is a comment at the end"
+        ).orElseThrow();
+        expect(commented.header.type).toBe("table");
+        expect((commented.header as TableQuery).fields.length).toBe(3);
+        expect(commented.source).toEqual(Sources.binaryOp(Sources.tag("#games"), "|", Sources.tag("#gaming")));
+        expect((commented.operations[1] as SortByStep).fields.length).toBe(2);
     });
 
     test("WITHOUT ID", () => {

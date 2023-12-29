@@ -5,6 +5,9 @@ import { Field } from "expression/field";
 /** The supported query types (corresponding to view types). */
 export type QueryType = "list" | "table" | "task" | "calendar";
 
+/** A single-line comment. */
+export type Comment = string;
+
 /** Fields used in the query portion. */
 export interface NamedField {
     /** The effective name of this field. */

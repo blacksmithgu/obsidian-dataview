@@ -13,6 +13,7 @@ import {
     QueryType,
     SortByStep,
     WhereStep,
+    Comment,
 } from "./query";
 import { Source, Sources } from "data-index/source";
 import { DEFAULT_QUERY_SETTINGS } from "settings";
@@ -25,6 +26,7 @@ import { Result } from "api/result";
 /** Typings for the outputs of all of the parser combinators. */
 interface QueryLanguageTypes {
     queryType: QueryType;
+    comment: Comment;
 
     explicitNamedField: NamedField;
     namedField: NamedField;
@@ -82,6 +84,16 @@ export const QUERY_LANGUAGE = P.createLanguage<QueryLanguageTypes>({
             EXPRESSION.identifier.or(EXPRESSION.string),
             (field, _as, ident) => QueryFields.named(ident, field)
         ),
+    comment: () =>
+        P.Parser((input, i) => {
+            // Parse a comment, which is a line starting with //.
+            let line = input.substring(i);
+            if (!line.startsWith("//")) return P.makeFailure(i, "Not a comment");
+            // The comment ends at the end of the line.
+            line = line.split("\n")[0];
+            let comment = line.substring(2).trim();
+            return P.makeSuccess(i + line.length, comment);
+        }),
     namedField: q =>
         P.alt<NamedField>(
             q.explicitNamedField,
@@ -184,9 +196,9 @@ export const QUERY_LANGUAGE = P.createLanguage<QueryLanguageTypes>({
     clause: q => P.alt(q.fromClause, q.whereClause, q.sortByClause, q.limitClause, q.groupByClause, q.flattenClause),
     query: q =>
         P.seqMap(
-            q.headerClause.trim(P.optWhitespace),
-            q.fromClause.trim(P.optWhitespace).atMost(1),
-            q.clause.trim(P.optWhitespace).many(),
+            q.headerClause.trim(optionalWhitespaceOrComment),
+            q.fromClause.trim(optionalWhitespaceOrComment).atMost(1),
+            q.clause.trim(optionalWhitespaceOrComment).many(),
             (header, from, clauses) => {
                 return {
                     header,
@@ -197,6 +209,14 @@ export const QUERY_LANGUAGE = P.createLanguage<QueryLanguageTypes>({
             }
         ),
 });
+
+/**
+ * A parser for optional whitespace or comments. This is used to exclude whitespace and comments from other parsers.
+ */
+const optionalWhitespaceOrComment: P.Parser<string> = P.alt(P.whitespace, QUERY_LANGUAGE.comment)
+    .many() // Use many() since there may be zero whitespaces or comments.
+    // Transform the many to a single result.
+    .map(arr => arr.join(""));
 
 /**
  * Attempt to parse a query from the given query text, returning a string error
