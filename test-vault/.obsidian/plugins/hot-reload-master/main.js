@@ -1,19 +1,34 @@
-const {Plugin, Notice} = require("obsidian");
+const {Plugin, Notice, debounce} = require("obsidian");
 const fs = require("fs");
 
 const watchNeeded = window.process.platform !== "darwin" && window.process.platform !== "win32";
 
 module.exports = class HotReload extends Plugin {
 
-    onload() { this.app.workspace.onLayoutReady( this._onload.bind(this) ); }
+    statCache = new Map();  // path -> Stat
+    queue = Promise.resolve();
 
-    async _onload() {
-        this.pluginReloaders = {};
-        this.inProgress = null;
-        await this.getPluginNames();
-        this.reindexPlugins = this.debouncedMethod(500, this.getPluginNames);
-        this.registerEvent( this.app.vault.on("raw", this.onFileChange.bind(this)) );
-        this.watch(".obsidian/plugins");
+    run(val, err) {
+        return this.queue = this.queue.then(val, err);
+    }
+
+    reindexPlugins = debounce(() => this.run(() => this.getPluginNames()), 500, true);
+    requestScan    = debounce(() => this.run(() => this.checkVersions()),  250, true);
+
+    onload() {
+        app.workspace.onLayoutReady(async ()=> {
+            this.pluginReloaders = {};
+            this.inProgress = null;
+            await this.getPluginNames();
+            this.registerEvent( this.app.vault.on("raw", this.requestScan));
+            this.watch(".obsidian/plugins");
+            this.requestScan();
+            this.addCommand({
+                id: "scan-for-changes",
+                name: "Check plugins for changes and reload them",
+                callback: () => this.requestScan()
+            })
+        });
     }
 
     watch(path) {
@@ -22,6 +37,22 @@ module.exports = class HotReload extends Plugin {
         const lstat = fs.lstatSync(realPath);
         if (lstat && (watchNeeded || lstat.isSymbolicLink()) && fs.statSync(realPath).isDirectory()) {
             this.app.vault.adapter.startWatchPath(path, false);
+        }
+    }
+
+    async checkVersions() {
+        const base = this.app.plugins.getPluginFolder();
+        for (const dir of Object.keys(this.pluginNames)) {
+            for (const file of ["manifest.json", "main.js", "styles.css", ".hotreload"]) {
+                const path = `${base}/${dir}/${file}`;
+                const stat = await app.vault.adapter.stat(path);
+                if (stat) {
+                    if (this.statCache.has(path) && stat.mtime !== this.statCache.get(path).mtime) {
+                        this.onFileChange(path);
+                    }
+                    this.statCache.set(path, stat);
+                }
+            }
         }
     }
 
@@ -50,34 +81,30 @@ module.exports = class HotReload extends Plugin {
         if (base !== "main.js" && base !== "styles.css") return;
         if (!this.enabledPlugins.has(plugin)) return;
         const reloader = this.pluginReloaders[plugin] || (
-            this.pluginReloaders[plugin] = this.debouncedMethod(750, this.requestReload, plugin)
+            this.pluginReloaders[plugin] = debounce(() => this.run(() => this.reload(plugin), console.error), 750, true)
         );
         reloader();
     }
 
-    requestReload(plugin) {
-        const next = this.inProgress = this.reload(plugin, this.inProgress);
-        next.finally(() => {if (this.inProgress === next) this.inProgress = null;})
-    }
+    async reload(plugin) {
+        const plugins = app.plugins;
 
-    async reload(plugin, previous) {
-        const plugins = this.app.plugins;
+        // Don't reload disabled plugins
+        if (!plugins.enabledPlugins.has(plugin)) return;
+
+        await plugins.disablePlugin(plugin);
+        console.debug("disabled", plugin);
+
+        // Ensure sourcemaps are loaded (Obsidian 14+)
+        const oldDebug = localStorage.getItem("debug-plugin");
+        localStorage.setItem("debug-plugin", "1");
         try {
-            // Wait for any other queued/in-progress reloads to finish
-            await previous;
-            await plugins.disablePlugin(plugin);
-            console.debug("disabled", plugin);
             await plugins.enablePlugin(plugin);
-            console.debug("enabled", plugin);
-            new Notice(`Plugin "${plugin}" has been reloaded`);
-        } catch(e) {}
-    }
-
-    debouncedMethod(ms, func, ...args) {
-        var timeout;
-        return () => {
-            if (timeout) clearTimeout(timeout);
-            timeout = setTimeout( () => { timeout = null; func.apply(this, args); }, ms);
+        } finally {
+            // Restore previous setting
+            if (oldDebug === null) localStorage.removeItem("debug-plugin"); else localStorage.setItem("debug-plugin", oldDebug);
         }
+        console.debug("enabled", plugin);
+        new Notice(`Plugin "${plugin}" has been reloaded`);
     }
 }
