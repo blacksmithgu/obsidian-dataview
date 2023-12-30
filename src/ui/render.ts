@@ -1,9 +1,9 @@
 import { Component, MarkdownRenderer } from "obsidian";
-import { DataArray } from "api/data-array";
-import { QuerySettings } from "settings";
-import { currentLocale } from "util/locale";
-import { renderMinimalDate, renderMinimalDuration } from "util/normalize";
-import { Literal, Values, Widgets } from "data-model/value";
+import { DataArray } from "../api/data-array";
+import { QuerySettings } from "../settings";
+import { currentLocale } from "../util/locale";
+import { renderMinimalDate, renderMinimalDuration } from "../util/normalize";
+import { Literal, Values, Widgets } from "../data-model/value";
 
 /** Render simple fields compactly, removing wrapping content like paragraph and span. */
 export async function renderCompactMarkdown(

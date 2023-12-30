@@ -1,7 +1,7 @@
 /** Parse inline fields and other embedded metadata in a line. */
 
-import { EXPRESSION } from "expression/parse";
-import { Literal } from "data-model/value";
+import { EXPRESSION } from "../expression/parse";
+import { Literal } from "../data-model/value";
 import * as P from "parsimmon";
 import emojiRegex from "emoji-regex";
 

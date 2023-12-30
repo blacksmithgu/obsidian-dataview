@@ -2,8 +2,8 @@
 // <-- Function vectorization -->
 
 import { DateTime } from "luxon";
-import { DefaultFunctions } from "expression/functions";
-import { parseEval, simpleContext } from "test/common";
+import { DefaultFunctions } from "../../expression/functions";
+import { parseEval, simpleContext } from "../../test/common";
 
 test("Evaluate lower(list)", () => {
     expect(parseEval('lower(list("A", "B"))')).toEqual(["a", "b"]);

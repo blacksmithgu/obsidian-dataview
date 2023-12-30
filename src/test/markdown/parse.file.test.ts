@@ -1,5 +1,5 @@
-import { extractTags } from "data-import/markdown-file";
-import * as common from "data-import/common";
+import { extractTags } from "../../data-import/markdown-file";
+import * as common from "../../data-import/common";
 import { FrontMatterCache } from "obsidian";
 
 describe("Frontmatter Tags", () => {

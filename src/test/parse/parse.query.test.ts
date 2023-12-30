@@ -1,8 +1,8 @@
-import { TableQuery, ListQuery, CalendarQuery, SortByStep, QueryFields, Query } from "query/query";
-import { QUERY_LANGUAGE, parseQuery } from "query/parse";
-import { Sources } from "data-index/source";
-import { DEFAULT_QUERY_SETTINGS } from "settings";
-import { Fields } from "expression/field";
+import { TableQuery, ListQuery, CalendarQuery, SortByStep, QueryFields, Query } from "../../query/query";
+import { QUERY_LANGUAGE, parseQuery } from "../../query/parse";
+import { Sources } from "../../data-index/source";
+import { DEFAULT_QUERY_SETTINGS } from "../../settings";
+import { Fields } from "../../expression/field";
 
 function testQueryTypeAlone(name: string) {
     const upper = name.toUpperCase();

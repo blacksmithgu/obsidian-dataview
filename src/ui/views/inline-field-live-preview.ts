@@ -9,11 +9,11 @@ import {
     ViewUpdate,
     WidgetType,
 } from "@codemirror/view";
-import { InlineField, extractInlineFields, parseInlineValue } from "data-import/inline-field";
-import { canonicalizeVarName } from "util/normalize";
-import { renderCompactMarkdown, renderValue } from "ui/render";
-import { DataviewSettings } from "settings";
-import { selectionAndRangeOverlap } from "ui/lp-render";
+import { InlineField, extractInlineFields, parseInlineValue } from "../../data-import/inline-field";
+import { canonicalizeVarName } from "../../util/normalize";
+import { renderCompactMarkdown, renderValue } from "../../ui/render";
+import { DataviewSettings } from "../../settings";
+import { selectionAndRangeOverlap } from "../../ui/lp-render";
 import { syntaxTree } from "@codemirror/language";
 
 class InlineFieldValue extends RangeValue {

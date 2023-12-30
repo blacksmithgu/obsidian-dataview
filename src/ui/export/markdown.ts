@@ -1,7 +1,7 @@
-import { SListItem } from "data-model/serialized/markdown";
-import { Grouping, Groupings, Literal, Values, Widgets } from "data-model/value";
-import { DEFAULT_SETTINGS, ExportSettings, QuerySettings } from "settings";
-import { nestItems } from "ui/views/task-view";
+import { SListItem } from "../../data-model/serialized/markdown";
+import { Grouping, Groupings, Literal, Values, Widgets } from "../../data-model/value";
+import { DEFAULT_SETTINGS, ExportSettings, QuerySettings } from "../../settings";
+import { nestItems } from "../../ui/views/task-view";
 
 ////////////
 // Tables //

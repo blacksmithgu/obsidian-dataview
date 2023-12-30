@@ -1,4 +1,4 @@
-import { Values, Link } from "data-model/value";
+import { Values, Link } from "../../data-model/value";
 
 describe("Links", () => {
     describe("Comparisons", () => {

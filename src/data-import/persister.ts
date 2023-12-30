@@ -1,5 +1,5 @@
-import { PageMetadata } from "data-model/markdown";
-import { Transferable } from "data-model/transferable";
+import { PageMetadata } from "../data-model/markdown";
+import { Transferable } from "../data-model/transferable";
 import localforage from "localforage";
 
 /** A piece of data that has been cached for a specific version and time. */
