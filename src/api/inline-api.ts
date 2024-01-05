@@ -271,6 +271,38 @@ export class DataviewInlineApi {
         return this.compare(a, b) == 0;
     }
 
+    /**
+     * Extracts a string representing the JavaScript code blocks from a markdown file.
+     * This is used to extract the JavaScript code blocks from a markdown file that is used as a view.
+     */
+    private extractJavaScriptCodeBlocks(markdown: string): string {
+        const codeBlockRegex = /```(?:js|javascript)\n([\s\S]*?)```/g;
+        let match;
+        let result = '';
+
+        while ((match = codeBlockRegex.exec(markdown)) !== null) {
+            result += match[1] + '\n\n'; // Appends the code block content with a newline
+        }
+
+        return result.trim();
+    }
+
+    /**
+     * Extracts a string representing the CSS code blocks from a markdown file.
+     * This is used to extract the CSS code blocks from a markdown file that is used as a view.
+     */
+    private extractCSSCodeBlocks(markdown: string): string {
+        const codeBlockRegex = /```css\n([\s\S]*?)```/g;
+        let match;
+        let result = '';
+
+        while ((match = codeBlockRegex.exec(markdown)) !== null) {
+            result += match[1] + '\n\n'; // Appends the code block content with a newline
+        }
+
+        return result.trim();
+    }
+
     /////////////////////////
     // Rendering Functions //
     /////////////////////////
@@ -315,12 +347,22 @@ export class DataviewInlineApi {
      * Takes a filename and arbitrary input data.
      */
     public async view(viewName: string, input: any) {
-        // Look for `${viewName}.js` first, then for `${viewName}/view.js`.
+        // Look for `${viewName}.md` first, then for `${viewName}.js`, then for `${viewName}/view.js`.
+        const markdownViewPath = `${viewName}.md`;
         const simpleViewPath = `${viewName}.js`;
         const complexViewPath = `${viewName}/view.js`;
         let checkForCss = false;
-        let viewFile = this.app.metadataCache.getFirstLinkpathDest(simpleViewPath, this.currentFilePath);
+        let markdownBase = false;
+        let viewFile = this.app.metadataCache.getFirstLinkpathDest(markdownViewPath, this.currentFilePath);
+        if (viewFile) {
+            // Markdown file base found
+            markdownBase = true;
+        } else {
+            // No markdown file base found, try to find a JS file base
+            viewFile = this.app.metadataCache.getFirstLinkpathDest(complexViewPath, this.currentFilePath);
+        }
         if (!viewFile) {
+            // No simple JS file found, try to find a complex JS file
             viewFile = this.app.metadataCache.getFirstLinkpathDest(complexViewPath, this.currentFilePath);
             checkForCss = true;
         }
@@ -333,10 +375,13 @@ export class DataviewInlineApi {
             return;
         }
 
-        let contents = await this.app.vault.read(viewFile);
-        if (contents.contains("await")) contents = "(async () => { " + contents + " })()";
-        contents += `\n//# sourceURL=${viewFile.path}`;
-        let func = new Function("dv", "input", contents);
+        const fileContents = await this.app.vault.read(viewFile);
+
+        let jsContents = markdownBase ? this.extractJavaScriptCodeBlocks(fileContents) : fileContents;
+
+        if (jsContents.contains("await")) jsContents = "(async () => { " + jsContents + " })()";
+        jsContents += `\n//# sourceURL=${viewFile.path}`;
+        let func = new Function("dv", "input", jsContents);
 
         try {
             // This may directly render, in which case it will likely return undefined or null.
@@ -352,6 +397,15 @@ export class DataviewInlineApi {
                 );
         } catch (ex) {
             renderErrorPre(this.container, `Dataview: Failed to execute view '${viewFile.path}'.\n\n${ex}`);
+        }
+
+        if(markdownBase){
+            // Markdown file base found, try to find CSS in the markdown file
+            let cssContents = this.extractCSSCodeBlocks(fileContents);
+            if(cssContents){
+                this.container.createEl("style", { text: cssContents, attr: { scope: " " } });
+            }
+            return;
         }
 
         if (!checkForCss) {
