@@ -516,7 +516,7 @@ export class DataviewApi {
     /** Render a dataview task view with the given tasks. */
     public async taskList(
         tasks: Grouping<SListItem>,
-        groupByFile: boolean = true,
+        groupByFile: boolean = false,
         container: HTMLElement,
         component: Component,
         filePath: string = ""
