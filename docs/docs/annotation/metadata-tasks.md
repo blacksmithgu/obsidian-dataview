@@ -70,7 +70,7 @@ As with pages, Dataview adds a number of implicit fields to each task or list it
 | `tags` | List  | Any tags inside of the text task. |
 | `outlinks` | List |  Any links defined in this task. |
 | `link` | Link  |  link to the closest linkable block near this task; useful for making links which go to the task. |
-| `children` | List  | ny subtasks or sublists of this task. |
+| `children` | List  | Any subtasks or sublists of this task. |
 | `task` | Boolean  | If true, this is a task; otherwise, it is a regular list element. |
 | `annotated` | Boolean  | True if the task text contains any metadata fields, false otherwise. |
 | `parent` | Number |  The line number of the task above this task, if present; will be null if this is a root-level task. |
