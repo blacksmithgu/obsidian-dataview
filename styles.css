@@ -16,6 +16,11 @@
     width: 100%;
 }
 
+/* Allows scrolling when overflow issues occur. Usually happens on mobile but is currently happening with dataviewjs queries on desktop as well */
+:has(> .dataview) {
+	overflow-x: scroll;
+}
+
 .table-view-table > thead > tr, .table-view-table > tbody > tr {
     margin-top: 1em;
     margin-bottom: 1em;
