@@ -10,10 +10,11 @@ export async function replaceInlineFields(ctx: MarkdownPostProcessorContext, ini
     let inlineFields = extractInlineFields(init.container.innerHTML);
     if (inlineFields.length == 0) return;
 
-    const text = ctx.getSectionInfo(init.container)?.text;
+    const info = ctx.getSectionInfo(init.container);
+    const text = info?.text;
     let inlineFieldsFromText: InlineField[] | null = null;
     if (text) {
-        inlineFieldsFromText = extractInlineFields(text);
+        inlineFieldsFromText = extractInlineFields(text.split('\n')[info.lineStart]);
     }
 
     let component = new MarkdownRenderChild(init.container);
