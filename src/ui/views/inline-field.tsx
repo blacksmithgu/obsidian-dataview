@@ -14,7 +14,7 @@ export async function replaceInlineFields(ctx: MarkdownPostProcessorContext, ini
     const text = info?.text;
     let inlineFieldsFromText: InlineField[] | null = null;
     if (text) {
-        inlineFieldsFromText = extractInlineFields(text.split('\n')[info.lineStart]);
+        inlineFieldsFromText = extractInlineFields(text.split("\n")[info.lineStart]);
     }
 
     let component = new MarkdownRenderChild(init.container);
