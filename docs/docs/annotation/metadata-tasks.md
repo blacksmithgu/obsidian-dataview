@@ -86,6 +86,9 @@ With usage of the [shorthand syntax](#field-shorthands), following additional pr
 - `start`: The date a task can be started.
 - `scheduled`: The date a task is scheduled to work on.
 
+!!! Info
+    Related to the `visual` implicit field, if this is set either in a [TASK](../queries/query-types.md#task-queries) query using `FLATTEN ... as visual`, or in javascript doing something like `task.visual=... `, it'll replace the original text of the task, but still keep the link to the original task.
+
 ### Access of Implicit Fields for List Items and Tasks
 
 If you're using a [TASK](../queries/query-types.md#task-queries) Query, your tasks are the top level information and can be used without any prefix:
@@ -106,4 +109,4 @@ WHERE any(file.tasks, (t) => !t.fullyCompleted)
 ```
 ~~~
 
-This'll give you back all file links that have unfinished tasks inside. We get back a list of tasks on page level and thus need to use a [list function](../reference/functions.md) to look at each element. 
+This'll give you back all file links that have unfinished tasks inside. We get back a list of tasks on page level and thus need to use a [list function](../reference/functions.md) to look at each element. Another option if you want to split the tasks/lists into separate rows is to do a `FLATTEN file.lists AS item` in your query, which allows you to do `!item.fullyCompleted` or similar.
