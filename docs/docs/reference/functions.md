@@ -158,7 +158,7 @@ Round a number to a given number of digits. If the second argument is not specif
 otherwise, rounds to the given number of digits.
 
 ```js
-round(16.555555) = 7
+round(16.555555) = 17
 round(16.555555, 2) = 16.56
 ```
 
