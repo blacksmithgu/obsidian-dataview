@@ -714,8 +714,7 @@ striptime(file.mtime) = file.mday
 
 ### `dateformat(date|datetime, string)`
 
-Format a Dataview date using a formatting string.
-Uses [Luxon tokens](https://moment.github.io/luxon/#/formatting?id=table-of-tokens).
+Format a Dataview date using a formatting string. Uses [Luxon tokens](https://moment.github.io/luxon/#/formatting?id=table-of-tokens).
 
 ```js
 dateformat(file.ctime,"yyyy-MM-dd") = "2022-01-05"
@@ -723,6 +722,8 @@ dateformat(file.ctime,"HH:mm:ss") = "12:18:04"
 dateformat(date(now),"x") = "1407287224054"
 dateformat(file.mtime,"ffff") = "Wednesday, August 6, 2014, 1:07 PM Eastern Daylight Time"
 ```
+
+**Note:** `dateformat()` returns a string, not a date, so you can't compare it against the result from a call to `date()` or a variable like `file.day` which already is a date. To make those comparisons you can format both arguments.
 
 ### `durationformat(duration, string)`
 
