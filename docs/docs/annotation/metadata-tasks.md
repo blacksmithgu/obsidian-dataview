@@ -7,12 +7,14 @@ Just like pages, you can also add **fields** on list item and task level to bind
 - [X] I finished this on [completion:: 2021-08-15].
 ```
 
-Tasks and list items are the same data wise, so all your bullet points have all the information described here available, too. 
+Tasks and list items are the same data wise, so all your bullet points have all the information described here available, too.
 
 ## Field Shorthands
 
-For supporting "common use cases", Dataview understands a few shorthands for some fields you may want to annotate task
-with:
+The [Tasks](https://publish.obsidian.md/tasks/Introduction) plugin introduced a different [notation by using Emoji](https://publish.obsidian.md/tasks/Reference/Task+Formats/Tasks+Emoji+Format) to configure the different dates related to a task. In the context of Dataview, this notation is called `Field Shorthands`. The current version of Dataview only support the dates shorthands as shown below. The priorities and recurrence shorthands are not supported.
+
+=== "Example"
+
 
 === "Example"
     - [ ] Due this Saturday 🗓️2021-08-29
