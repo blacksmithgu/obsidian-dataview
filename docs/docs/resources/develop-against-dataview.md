@@ -7,6 +7,12 @@ simply use:
 npm install -D obsidian-dataview
 ```
 
+To verify that it is the correct version installed, do `npm list obsidian-dataview`. If that fails to report the latest version, which currently is 0.5.64, you can do:
+
+```bash
+npm install obsidian-dataview@0.5.64
+```
+
 **Note**: If [Git](http://git-scm.com/) is not already installed on your local system, you will need to install it first. You may need to restart your device to complete the Git installation before you can install the Dataview API.
 
 ##### Accessing the Dataview API
