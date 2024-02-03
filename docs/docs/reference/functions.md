@@ -45,12 +45,12 @@ object("a", 4, "c", "yes") => object which maps a to 4, and c to "yes"
 
 ### `list(value1, value2, ...)`
 
-Creates a new list with the given values in it.
+Creates a new list with the given values in it. `array` can be used an alias for `list`.
 
 ```js
 list() => empty list
 list(1, 2, 3) => list with 1, 2, and 3
-list("a", "b", "c") => list with "a", "b", and "c"
+array("a", "b", "c") => list with "a", "b", and "c"
 ```
 
 ### `date(any)`
@@ -236,6 +236,20 @@ product([1,2,3]) = 6
 product([]) = null
 
 product(nonnull([null, 1, 2, 4])) = 8
+```
+
+### `reduce(array, operand)`
+
+A generic function to reduce a list into a single value, valid operands are `"+"`, `"-"`, `"*"`, `"/"` and the boolean operands `"&"` and `"|"`. Note that using `"+"` and `"*"` equals the `sum()` and `product()` functions, and using `"&"` and `"|"` matches `all()` and `any()`.
+
+```js
+reduce([100, 20, 3], "-") = 77
+reduce([200, 10, 2], "/") = 10 
+reduce(values, "*") = Multiplies every element of values, same as product(values)
+reduce(values, this.operand) = Applies the local field operand to each of the values
+reduce(["⭐", 3], "*") = "⭐⭐⭐", same as "⭐" * 3
+
+reduce([1]), "+") = 1, has the side effect of reducing the list into a single element
 ```
 
 ### `average(array)`
@@ -732,6 +746,17 @@ durationformat(dur("3 days 7 hours 43 seconds"), "ddd'd' hh'h' ss's'") = "003d 0
 durationformat(dur("365 days 5 hours 49 minutes"), "yyyy ddd hh mm ss") = "0001 000 05 49 00"
 durationformat(dur("2000 years"), "M months") = "24000 months"
 durationformat(dur("14d"), "s 'seconds'") = "1209600 seconds"
+```
+
+### `currencyformat(number, [currency])`
+
+Presents the number depending on your current locale, according to the `currency` code, from [ISO 4217](https://en.wikipedia.org/wiki/ISO_4217#List_of_ISO_4217_currency_codes).
+
+```
+number = 123456.789
+currencyformat(number, "EUR") =  €123,456.79  in locale: en_US)
+currencyformat(number, "EUR") =  123.456,79 € in locale: de_DE)
+currencyformat(number, "EUR") =  € 123 456,79 in locale: nb)
 ```
 
 ### `localtime(date)`
