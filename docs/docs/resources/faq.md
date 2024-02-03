@@ -102,3 +102,5 @@ table:has([href="#myId"]) {
 ```
 
 Which would end up having a grey background on the entire table, and the first cell in every even row a different variant of grey. **Disclaimer:** We're not style gurus, so this is just an example to show some of the syntax needed for styling different parts of a table. 
+
+Furthermore, in [Style dataview table columns](https://s-blu.github.io/obsidian_dataview_example_vault/20%20Dataview%20Queries/Style%20dataview%20table%20columns/) @s-blu describes an alternate trick using `<span>` to style various parts of table cells (and columns).
