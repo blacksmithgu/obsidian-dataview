@@ -72,6 +72,25 @@ test("Evaluate flat()", () => {
     expect(parseEval("flat(list(1, list(2, list(3, list(4, list(5))))), 10)")).toEqual(parseEval("list(1,2,3,4,5)")); // flat(..., 10)
 });
 
+// <-- slice() -->
+
+test("Evaluate slice()", () => {
+    expect(parseEval("slice(list(1, 2, 3, 4, 5), 3)")).toEqual(parseEval("list(4, 5)")); // slice(..., 3)
+    expect(parseEval("slice(list(1, 2, 3, 4, 5), 0, 2)")).toEqual(parseEval("list(1, 2)")); // slice(..., 0, 2)
+    expect(parseEval("slice(list(1, 2, 3, 4, 5), -2)")).toEqual(parseEval("list(4, 5)")); // slice(..., -2)
+    expect(parseEval("slice(list(1, 2, 3, 4, 5), -1, 1)")).toEqual(parseEval("list()")); // slice(..., -1, 1)
+    expect(parseEval("slice(list(1, 2, 3, 4, 5))")).toEqual(parseEval("list(1, 2, 3, 4, 5)")); // slice(...)
+    expect(parseEval('slice(list(date("2021-01-01"), date("2022-02-02"), date("2023-03-03")), -2)')).toEqual([
+        DateTime.fromObject({ year: 2022, month: 2, day: 2 }),
+        DateTime.fromObject({ year: 2023, month: 3, day: 3 }),
+    ]); // slice(date list, -2)
+    expect(parseEval('slice(["ant", "bison", "camel", "duck", "elephant"], -3)')).toEqual([
+        "camel",
+        "duck",
+        "elephant",
+    ]); // slice(string list, -3)
+});
+
 // <-- sort() -->
 
 describe("sort()", () => {

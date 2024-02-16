@@ -831,6 +831,20 @@ export namespace DefaultFunctions {
         })
         .add1("null", () => null)
         .build();
+
+    // Slices the array into a new array
+    export const slice = new FunctionBuilder("slice")
+        .add1("array", a => {
+            return a.slice();
+        })
+        .add2("array", "number", (a, start) => {
+            return a.slice(start);
+        })
+        .add3("array", "number", "number", (a, start, end) => {
+            return a.slice(start, end);
+        })
+        .add1("null", () => null)
+        .build();
 }
 
 /** Default function implementations for the expression evaluator. */
@@ -889,6 +903,7 @@ export const DEFAULT_FUNCTIONS: Record<string, FunctionImpl> = {
     reverse: DefaultFunctions.reverse,
     sort: DefaultFunctions.sort,
     flat: DefaultFunctions.flat,
+    slice: DefaultFunctions.slice,
 
     // Aggregation operations like reduce.
     reduce: DefaultFunctions.reduce,
