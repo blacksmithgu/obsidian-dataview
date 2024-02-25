@@ -1,0 +1,3 @@
+// język polski
+
+export default {};

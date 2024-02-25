@@ -1,0 +1,3 @@
+// العربية
+
+export default {};

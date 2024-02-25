@@ -1,0 +1,3 @@
+// русский
+
+export default {};
