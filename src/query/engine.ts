@@ -11,6 +11,7 @@ import { Field, Fields } from "expression/field";
 import { QuerySettings } from "settings";
 import { DateTime } from "luxon";
 import { SListItem } from "data-model/serialized/markdown";
+import { randomUUID } from "crypto";
 
 function iden<T>(x: T): T {
     return x;
@@ -297,6 +298,7 @@ export async function executeList(
     // Extract information about the origin page to add to the root context.
     let rootContext = new Context(defaultLinkHandler(index, origin), settings, {
         this: index.pages.get(origin)?.serialize(index) ?? {},
+        queryUUID: randomUUID(),
     });
 
     let targetField = (query.header as ListQuery).format;
@@ -339,6 +341,7 @@ export async function executeTable(
     // Extract information about the origin page to add to the root context.
     let rootContext = new Context(defaultLinkHandler(index, origin), settings, {
         this: index.pages.get(origin)?.serialize(index) ?? {},
+        queryUUID: randomUUID(),
     });
 
     let targetFields = (query.header as TableQuery).fields;
@@ -419,6 +422,7 @@ export async function executeTask(
     // Extract information about the origin page to add to the root context.
     let rootContext = new Context(defaultLinkHandler(index, origin), settings, {
         this: index.pages.get(origin)?.serialize(index) ?? {},
+        queryUUID: randomUUID(),
     });
 
     return executeCore(incomingTasks, rootContext, query.operations).map(core => {
@@ -441,6 +445,7 @@ export function executeInline(
 ): Result<Literal, string> {
     return new Context(defaultLinkHandler(index, origin), settings, {
         this: index.pages.get(origin)?.serialize(index) ?? {},
+        queryUUID: randomUUID(),
     }).evaluate(field);
 }
 
@@ -481,6 +486,7 @@ export async function executeCalendar(
     // Extract information about the origin page to add to the root context.
     let rootContext = new Context(defaultLinkHandler(index, origin), settings, {
         this: index.pages.get(origin)?.serialize(index) ?? {},
+        queryUUID: randomUUID(),
     });
 
     let targetField = (query.header as CalendarQuery).field.field;

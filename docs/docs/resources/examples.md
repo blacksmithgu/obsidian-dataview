@@ -83,3 +83,18 @@ List all files which have a date in their title (of the form `yyyy-mm-dd`), and 
 === "Output"
     - [2021-08-07](#): August 07, 2021
     - [2020-08-10](#): August 10, 2020
+
+---
+
+Get three random links from your vault, which changes every day, but are consistent throughout the day. Similar queries can also be used to get random quotes, or other random items to your liking. 
+
+=== "Query"
+   ```sql
+   LIST 
+   FLATTEN srandom(dateformat(date(today), "yyyy-MM-dd")) as randomValue
+   SORT randomValue
+   LIMIT 3
+   ```
+=== "Output"
+
+Three random links from your vault, where on any given day the three links are consistently the same. The only thing capable of changing it, is changing the source list from where you're pulling the random items.

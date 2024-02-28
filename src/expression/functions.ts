@@ -9,6 +9,7 @@ import { Fields } from "./field";
 import { EXPRESSION } from "./parse";
 import { escapeRegex } from "util/normalize";
 import { DataArray } from "api/data-array";
+import { executeSrandom } from "util/srandom";
 
 /**
  * A function implementation which takes in a function context and a variable number of arguments. Throws an error if an
@@ -441,6 +442,15 @@ export namespace DefaultFunctions {
         .add2("null", "function", (_arr, _func, _ctx) => null)
         .build();
 
+    export const srandom: FunctionImpl = new FunctionBuilder("srandom")
+        .add1("number", (seed, ctx) => {
+            return executeSrandom(seed.toString(), ctx);
+        })
+        .add1("string", (seed, ctx) => {
+            return executeSrandom(seed, ctx);
+        })
+        .build();
+
     export const striptime = new FunctionBuilder("striptime")
         .add1("date", d => DateTime.fromObject({ year: d.year, month: d.month, day: d.day }))
         .add1("null", _n => null)
@@ -861,6 +871,7 @@ export const DEFAULT_FUNCTIONS: Record<string, FunctionImpl> = {
     max: DefaultFunctions.max,
     minby: DefaultFunctions.minby,
     maxby: DefaultFunctions.maxby,
+    srandom: DefaultFunctions.srandom,
 
     // String operations.
     regexreplace: DefaultFunctions.regexreplace,

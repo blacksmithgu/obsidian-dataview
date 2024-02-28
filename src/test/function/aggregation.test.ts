@@ -1,4 +1,5 @@
-import { expectEvals } from "test/common";
+import { EXPRESSION } from "expression/parse";
+import { expectEvals, simpleContext } from "test/common";
 
 describe("map()", () => {
     test("empty list", () => expectEvals("map([], (k) => 6)", []));
@@ -37,6 +38,20 @@ describe("maxby()", () => {
     test("empty", () => expectEvals("maxby([], (k) => k)", null));
     test("single", () => expectEvals("maxby([1], (k) => k)", 1));
     test("multiple", () => expectEvals("maxby([1, 2, 3], (k) => 0 - k)", 1));
+});
+
+describe("srandom()", () => {
+    let context = simpleContext().set("queryUUID", "abcdef-1234");
+    test("12345", () =>
+        expect(
+            context.tryEvaluate(EXPRESSION.field.tryParse("list(srandom(12345), srandom(12345), srandom(12345))"))
+        ).toEqual([0.6462731098290533, 0.5638589910231531, 0.35898207360878587]));
+    test('"2024-02-28"', () =>
+        expect(
+            context.tryEvaluate(
+                EXPRESSION.field.tryParse('list(srandom("2024-02-28"), srandom("2024-02-28"), srandom("2024-02-28"))')
+            )
+        ).toEqual([0.44641065830364823, 0.988620902877301, 0.01667086035013199]));
 });
 
 describe("sum()", () => {

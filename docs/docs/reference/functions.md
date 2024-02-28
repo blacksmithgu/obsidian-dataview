@@ -272,7 +272,17 @@ maxby([1, 2, 3], (k) => 0 - k) => 1
 maxby(this.file.tasks, (k) => k.due) => (latest due)
 ```
 
---
+### `srandom([number|text])`
+
+Returns a seeded random number based on either a `number` or a `text`. Repeated calls to `srandom()` with the same seed, gives the same sequence of random numbers. This is useful in a query when combined with sorting a list on this sequence, and then doing a `LIMIT` on that sequence, to get a given set of random items for that seed.
+
+In other words, if used with a date, you can sort your list/quotes/... and get a random element from that list, and it'll change when your date string changes. This way you can get a random item each day, each hour, etc based on what you use as the seed.
+
+```js
+srandom(12345) x3 = 0.6462731098290533, 0.5638589910231531, 0.35898207360878587 
+srandom("2024-02-28") x3 = 0.44641065830364823, 0.988620902877301, 0.01667086035013199 
+```
+---
 
 ## Objects, Arrays, and String Operations
 
