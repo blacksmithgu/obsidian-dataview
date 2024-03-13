@@ -1,4 +1,4 @@
-import { Component, MarkdownRenderer } from "obsidian";
+import { App, Component, MarkdownRenderer } from "obsidian";
 import { DataArray } from "api/data-array";
 import { QuerySettings } from "settings";
 import { currentLocale } from "util/locale";
@@ -7,6 +7,7 @@ import { Literal, Values, Widgets } from "data-model/value";
 
 /** Render simple fields compactly, removing wrapping content like paragraph and span. */
 export async function renderCompactMarkdown(
+    app: App,
     markdown: string,
     container: HTMLElement,
     sourcePath: string,
@@ -15,7 +16,7 @@ export async function renderCompactMarkdown(
 ) {
     // check if the call is from the CM6 view plugin defined in src/ui/views/inline-field-live-preview.ts
     if (isInlineFieldLivePreview) {
-        await renderCompactMarkdownForInlineFieldLivePreview(markdown, container, sourcePath, component);
+        await renderCompactMarkdownForInlineFieldLivePreview(app, markdown, container, sourcePath, component);
     } else {
         let subcontainer = container.createSpan();
         await MarkdownRenderer.render(app, markdown, subcontainer, sourcePath, component);
@@ -31,6 +32,7 @@ export async function renderCompactMarkdown(
 }
 
 async function renderCompactMarkdownForInlineFieldLivePreview(
+    app: App,
     markdown: string,
     container: HTMLElement,
     sourcePath: string,
@@ -68,6 +70,7 @@ export type ValueRenderContext = "root" | "list";
 
 /** Prettily render a value into a container with the given settings. */
 export async function renderValue(
+    app: App,
     field: Literal,
     container: HTMLElement,
     originFile: string,
@@ -85,20 +88,21 @@ export async function renderValue(
     }
 
     if (Values.isNull(field)) {
-        await renderCompactMarkdown(settings.renderNullAs, container, originFile, component, isInlineFieldLivePreview);
+        await renderCompactMarkdown(app, settings.renderNullAs, container, originFile, component, isInlineFieldLivePreview);
     } else if (Values.isDate(field)) {
         container.appendText(renderMinimalDate(field, settings, currentLocale()));
     } else if (Values.isDuration(field)) {
         container.appendText(renderMinimalDuration(field));
     } else if (Values.isString(field) || Values.isBoolean(field) || Values.isNumber(field)) {
-        await renderCompactMarkdown("" + field, container, originFile, component, isInlineFieldLivePreview);
+        await renderCompactMarkdown(app, "" + field, container, originFile, component, isInlineFieldLivePreview);
     } else if (Values.isLink(field)) {
-        await renderCompactMarkdown(field.markdown(), container, originFile, component, isInlineFieldLivePreview);
+        await renderCompactMarkdown(app, field.markdown(), container, originFile, component, isInlineFieldLivePreview);
     } else if (Values.isHtml(field)) {
         container.appendChild(field);
     } else if (Values.isWidget(field)) {
         if (Widgets.isListPair(field)) {
             await renderValue(
+                app,
                 field.key,
                 container,
                 originFile,
@@ -111,6 +115,7 @@ export async function renderValue(
             );
             container.appendText(": ");
             await renderValue(
+                app,
                 field.value,
                 container,
                 originFile,
@@ -146,6 +151,7 @@ export async function renderValue(
             for (let child of field) {
                 let li = list.createEl("li", { cls: "dataview-result-list-li" });
                 await renderValue(
+                    app,
                     child,
                     li,
                     originFile,
@@ -170,6 +176,7 @@ export async function renderValue(
                 else span.appendText(", ");
 
                 await renderValue(
+                    app,
                     val,
                     span,
                     originFile,
@@ -195,6 +202,7 @@ export async function renderValue(
                 let li = list.createEl("li", { cls: ["dataview", "dataview-li", "dataview-result-object-li"] });
                 li.appendText(key + ": ");
                 await renderValue(
+                    app,
                     value,
                     li,
                     originFile,
@@ -220,6 +228,7 @@ export async function renderValue(
 
                 span.appendText(key + ": ");
                 await renderValue(
+                    app,
                     value,
                     span,
                     originFile,
