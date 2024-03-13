@@ -18,7 +18,7 @@ export async function renderCompactMarkdown(
         await renderCompactMarkdownForInlineFieldLivePreview(markdown, container, sourcePath, component);
     } else {
         let subcontainer = container.createSpan();
-        await MarkdownRenderer.renderMarkdown(markdown, subcontainer, sourcePath, component);
+        await MarkdownRenderer.render(app, markdown, subcontainer, sourcePath, component);
 
         let paragraph = subcontainer.querySelector(":scope > p");
         if (subcontainer.children.length == 1 && paragraph) {
@@ -37,7 +37,7 @@ async function renderCompactMarkdownForInlineFieldLivePreview(
     component: Component
 ) {
     const tmpContainer = createSpan();
-    await MarkdownRenderer.renderMarkdown(markdown, tmpContainer, sourcePath, component);
+    await MarkdownRenderer.render(app, markdown, tmpContainer, sourcePath, component);
 
     let paragraph = tmpContainer.querySelector(":scope > p");
     if (tmpContainer.childNodes.length == 1 && paragraph) {
