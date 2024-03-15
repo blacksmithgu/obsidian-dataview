@@ -288,7 +288,7 @@ export class DataviewInlineApi {
         }
 
         let _el = container.createEl(el, options);
-        renderValue(wrapped.value, _el, this.currentFilePath, this.component, this.settings, true);
+        renderValue(this.app, wrapped.value, _el, this.currentFilePath, this.component, this.settings, true);
         return _el;
     }
 
@@ -343,6 +343,7 @@ export class DataviewInlineApi {
             let result = await Promise.resolve(func(this, input));
             if (result)
                 await renderValue(
+                    this.app,
                     result as any,
                     this.container,
                     this.currentFilePath,

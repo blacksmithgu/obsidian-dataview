@@ -317,7 +317,7 @@ export function inlinePlugin(app: App, index: FullIndex, settings: DataviewSetti
                             } else {
                                 const { value } = intermediateResult;
                                 result = value;
-                                renderValue(result, el, currentFile.path, this.component, settings);
+                                renderValue(app, result, el, currentFile.path, this.component, settings);
                             }
                         }
                     } else {
@@ -334,12 +334,12 @@ export function inlinePlugin(app: App, index: FullIndex, settings: DataviewSetti
                             if (code.includes("await")) {
                                 (evalInContext("(async () => { " + PREAMBLE + code + " })()") as Promise<any>).then(
                                     (result: any) => {
-                                        renderValue(result, el, currentFile.path, this.component, settings);
+                                        renderValue(app, result, el, currentFile.path, this.component, settings);
                                     }
                                 );
                             } else {
                                 result = evalInContext(PREAMBLE + code);
-                                renderValue(result, el, currentFile.path, this.component, settings);
+                                renderValue(app, result, el, currentFile.path, this.component, settings);
                             }
 
                             function evalInContext(script: string): any {
