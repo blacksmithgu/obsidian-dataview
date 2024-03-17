@@ -9,6 +9,7 @@ import { Fields } from "./field";
 import { EXPRESSION } from "./parse";
 import { escapeRegex } from "util/normalize";
 import { DataArray } from "api/data-array";
+import { cyrb53 } from "util/hash";
 
 /**
  * A function implementation which takes in a function context and a variable number of arguments. Throws an error if an
@@ -704,6 +705,18 @@ export namespace DefaultFunctions {
         .vectorize(3, [0])
         .build();
 
+    export const hash = new FunctionBuilder("hash")
+        .add2("string", "number", (seed, variant) => {
+            return cyrb53(seed, variant);
+        })
+        .add2("string", "string", (seed, text) => {
+            return cyrb53(seed + text);
+        })
+        .add3("string", "string", "number", (seed, text, variant) => {
+            return cyrb53(seed + text, variant);
+        })
+        .build();
+
     export const reduce = new FunctionBuilder("reduce")
         .add2("array", "string", (lis, op, context) => {
             if (lis.length == 0) return null;
@@ -924,5 +937,6 @@ export const DEFAULT_FUNCTIONS: Record<string, FunctionImpl> = {
     default: DefaultFunctions.fdefault,
     ldefault: DefaultFunctions.ldefault,
     choice: DefaultFunctions.choice,
+    hash: DefaultFunctions.hash,
     meta: DefaultFunctions.meta,
 };
