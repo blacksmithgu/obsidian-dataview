@@ -543,7 +543,7 @@ export class DataviewApi {
         filePath: string,
         inline: boolean = false
     ) {
-        return renderValue(value as Literal, container, filePath, component, this.settings, inline);
+        return renderValue(this.app, value as Literal, container, filePath, component, this.settings, inline);
     }
 
     /////////////////

@@ -5,7 +5,7 @@
     "inlineSourceMap": true,
     "inlineSources": true,
     "module": "ESNext",
-    "target": "es2018",
+    "target": "ES2022",
     "allowJs": false,
     "jsx": "react",
     "jsxFactory": "h",
@@ -19,7 +19,7 @@
     "importHelpers": true,
     "downlevelIteration": true,
     "esModuleInterop": true,
-    "lib": ["dom", "es5", "scripthost", "es2018", "DOM.Iterable"]
+    "lib": ["dom", "scripthost", "ES2022"]
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"],
   "exclude": ["lib/**/*"]

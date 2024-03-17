@@ -533,6 +533,18 @@ flat(list(1, list(21, 22), list(list (311, 312, 313))), 4) => list(1, 21, 22, 31
 flat(rows.file.outlinks)) => All the file outlinks at first level in output
 ```
 
+### `slice(array, [start, [end]])`
+
+Returns a shallow copy of a portion of an array into a new array object selected from `start`
+to `end` (`end` not included) where `start` and `end` represents the index of items in that array.
+
+```js
+slice([1, 2, 3, 4, 5], 3) = [4, 5] => All items from given position, 0 as first
+slice(["ant", "bison", "camel", "duck", "elephant"], 0, 2) = ["ant", "bison"] => First two items 
+slice([1, 2, 3, 4, 5], -2) = [4, 5] => counts from the end, last two items
+slice(someArray) => a copy of someArray
+```
+
 ---
 
 ## String Operations
