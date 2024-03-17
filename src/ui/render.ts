@@ -88,7 +88,14 @@ export async function renderValue(
     }
 
     if (Values.isNull(field)) {
-        await renderCompactMarkdown(app, settings.renderNullAs, container, originFile, component, isInlineFieldLivePreview);
+        await renderCompactMarkdown(
+            app,
+            settings.renderNullAs,
+            container,
+            originFile,
+            component,
+            isInlineFieldLivePreview
+        );
     } else if (Values.isDate(field)) {
         container.appendText(renderMinimalDate(field, settings, currentLocale()));
     } else if (Values.isDuration(field)) {
