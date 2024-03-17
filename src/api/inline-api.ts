@@ -319,6 +319,7 @@ export class DataviewInlineApi {
         const simpleViewPath = `${viewName}.js`;
         const complexViewPath = `${viewName}/view.js`;
         let checkForCss = false;
+        let cssElement = undefined;
         let viewFile = this.app.metadataCache.getFirstLinkpathDest(simpleViewPath, this.currentFilePath);
         if (!viewFile) {
             viewFile = this.app.metadataCache.getFirstLinkpathDest(complexViewPath, this.currentFilePath);
@@ -331,6 +332,16 @@ export class DataviewInlineApi {
                 `Dataview: custom view not found for '${simpleViewPath}' or '${complexViewPath}'.`
             );
             return;
+        }
+
+        if (checkForCss) {
+            // Check for optional CSS.
+            let cssFile = this.app.metadataCache.getFirstLinkpathDest(`${viewName}/view.css`, this.currentFilePath);
+            if (cssFile) {
+                let cssContents = await this.app.vault.read(cssFile);
+                cssContents += `\n/*# sourceURL=${location.origin}/${cssFile.path} */`;
+                cssElement = this.container.createEl("style", { text: cssContents, attr: { scope: " " } });
+            }
         }
 
         let contents = await this.app.vault.read(viewFile);
@@ -352,20 +363,9 @@ export class DataviewInlineApi {
                     true
                 );
         } catch (ex) {
+            if (cssElement) this.container.removeChild(cssElement);
             renderErrorPre(this.container, `Dataview: Failed to execute view '${viewFile.path}'.\n\n${ex}`);
         }
-
-        if (!checkForCss) {
-            return;
-        }
-
-        // Check for optional CSS.
-        let cssFile = this.app.metadataCache.getFirstLinkpathDest(`${viewName}/view.css`, this.currentFilePath);
-        if (!cssFile) return;
-
-        let cssContents = await this.app.vault.read(cssFile);
-        cssContents += `\n/*# sourceURL=${location.origin}/${cssFile.path} */`;
-        this.container.createEl("style", { text: cssContents, attr: { scope: " " } });
     }
 
     /** Render a dataview list of the given values. */
