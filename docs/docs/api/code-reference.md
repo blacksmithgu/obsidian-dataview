@@ -190,8 +190,9 @@ dv.list(dv.pages("#book").where(p => p.rating > 7)) => list of all books with ra
 
 ### `dv.taskList(tasks, groupByFile)`
 
-Render a dataview list of `Task` objects, as obtained by `page.file.tasks`. Only the first argument is required; if the
-second argument `groupByFile` is provided (and is true), then tasks will be grouped by the file they come from automatically.
+Render a dataview list of `Task` objects, as obtained by `page.file.tasks`. By default, this view will automatically
+group the tasks by their origin file. If you provide `false` as a second argument explicitly, it will instead render them
+as a single unified list.
 
 ```js
 // List all tasks from pages marked '#project'
@@ -204,6 +205,9 @@ dv.taskList(dv.pages("#project").file.tasks
 // List all tasks tagged with '#tag' from pages marked #project
 dv.taskList(dv.pages("#project").file.tasks
     .where(t => t.text.includes("#tag")))
+
+// List all tasks from pages marked '#project', without grouping.
+dv.taskList(dv.pages("#project").file.tasks, false)
 ```
 
 ### `dv.table(headers, elements)`

@@ -72,7 +72,7 @@ export class DataviewInlineJSRenderer extends DataviewRefreshableRenderer {
             this.target = temp;
             if (result === undefined) return;
 
-            renderValue(result, temp, this.origin, this, this.settings, false);
+            renderValue(this.api.app, result, temp, this.origin, this, this.settings, false);
         } catch (e) {
             this.errorbox = this.container.createEl("div");
             renderErrorPre(this.errorbox, "Dataview (for inline JS query '" + this.script + "'): " + e);

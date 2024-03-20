@@ -7,12 +7,14 @@ Just like pages, you can also add **fields** on list item and task level to bind
 - [X] I finished this on [completion:: 2021-08-15].
 ```
 
-Tasks and list items are the same data wise, so all your bullet points have all the information described here available, too. 
+Tasks and list items are the same data wise, so all your bullet points have all the information described here available, too.
 
 ## Field Shorthands
 
-For supporting "common use cases", Dataview understands a few shorthands for some fields you may want to annotate task
-with:
+The [Tasks](https://publish.obsidian.md/tasks/Introduction) plugin introduced a different [notation by using Emoji](https://publish.obsidian.md/tasks/Reference/Task+Formats/Tasks+Emoji+Format) to configure the different dates related to a task. In the context of Dataview, this notation is called `Field Shorthands`. The current version of Dataview only support the dates shorthands as shown below. The priorities and recurrence shorthands are not supported.
+
+=== "Example"
+
 
 === "Example"
     - [ ] Due this Saturday 🗓️2021-08-29
@@ -62,7 +64,7 @@ As with pages, Dataview adds a number of implicit fields to each task or list it
 | `completed` |  Boolean  | Whether or not this *specific* task has been completed; this does not consider the completion or non-completion of any child tasks. A task is explicitly considered "completed" if it has been marked with an `"x"`. If you use a custom status, e.g. `[-]`, `checked` will be true, whereas `completed` will be false. |
 | `fullyCompleted` |  Boolean  | Whether or not this task and **all** of its subtasks are completed. |
 | `text` |  Text  | The plain text of this task, including any metadata field annotations. |
-| `visual` | Text | The text of this task, which is rendered by Dataview. It can be modified to render arbitrary text. |
+| `visual` | Text | The text of this task, which is rendered by Dataview. This field can be overriden in DataviewJS to allow for different task text to be rendered than the regular task text, while still allowing the task to be checked (since Dataview validation logic normally checks the text against the text in-file). |
 | `line` |  Number  | The line of the file this task shows up on. |
 | `lineCount` |  Number  | The number of Markdown lines that this task takes up. |
 | `path` |  Text  | The full path of the file this task is in. Equals to `file.path` for [pages](./metadata-pages.md). |
