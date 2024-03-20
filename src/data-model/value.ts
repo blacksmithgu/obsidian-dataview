@@ -554,9 +554,9 @@ export class Link {
 
     /** Convert the inner part of the link to something that Obsidian can open / understand. */
     public obsidianLink(): string {
-        const escaped = this.path.replace("|", "\\|");
-        if (this.type == "header") return escaped + "#" + this.subpath?.replace("|", "\\|");
-        if (this.type == "block") return escaped + "#^" + this.subpath?.replace("|", "\\|");
+        const escaped = this.path.replaceAll("|", "\\|");
+        if (this.type == "header") return escaped + "#" + this.subpath?.replaceAll("|", "\\|");
+        if (this.type == "block") return escaped + "#^" + this.subpath?.replaceAll("|", "\\|");
         else return escaped;
     }
 

@@ -543,7 +543,7 @@ export class DataviewApi {
         filePath: string,
         inline: boolean = false
     ) {
-        return renderValue(value as Literal, container, filePath, component, this.settings, inline);
+        return renderValue(this.app, value as Literal, container, filePath, component, this.settings, inline);
     }
 
     /////////////////
@@ -608,6 +608,8 @@ export type QueryApiSettings = {
 
 /** Determines if source-path has a `?no-dataview` annotation that disables dataview. */
 export function isDataviewDisabled(sourcePath: string): boolean {
+    if (!sourcePath) return false;
+
     let questionLocation = sourcePath.lastIndexOf("?");
     if (questionLocation == -1) return false;
 

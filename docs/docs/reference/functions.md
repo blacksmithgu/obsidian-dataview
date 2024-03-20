@@ -45,12 +45,12 @@ object("a", 4, "c", "yes") => object which maps a to 4, and c to "yes"
 
 ### `list(value1, value2, ...)`
 
-Creates a new list with the given values in it.
+Creates a new list with the given values in it. `array` can be used an alias for `list`.
 
 ```js
 list() => empty list
 list(1, 2, 3) => list with 1, 2, and 3
-list("a", "b", "c") => list with "a", "b", and "c"
+array("a", "b", "c") => list with "a", "b", and "c"
 ```
 
 ### `date(any)`
@@ -158,7 +158,7 @@ Round a number to a given number of digits. If the second argument is not specif
 otherwise, rounds to the given number of digits.
 
 ```js
-round(16.555555) = 7
+round(16.555555) = 17
 round(16.555555, 2) = 16.56
 ```
 
@@ -236,6 +236,20 @@ product([1,2,3]) = 6
 product([]) = null
 
 product(nonnull([null, 1, 2, 4])) = 8
+```
+
+### `reduce(array, operand)`
+
+A generic function to reduce a list into a single value, valid operands are `"+"`, `"-"`, `"*"`, `"/"` and the boolean operands `"&"` and `"|"`. Note that using `"+"` and `"*"` equals the `sum()` and `product()` functions, and using `"&"` and `"|"` matches `all()` and `any()`.
+
+```js
+reduce([100, 20, 3], "-") = 77
+reduce([200, 10, 2], "/") = 10 
+reduce(values, "*") = Multiplies every element of values, same as product(values)
+reduce(values, this.operand) = Applies the local field operand to each of the values
+reduce(["⭐", 3], "*") = "⭐⭐⭐", same as "⭐" * 3
+
+reduce([1]), "+") = 1, has the side effect of reducing the list into a single element
 ```
 
 ### `average(array)`
@@ -519,6 +533,18 @@ flat(list(1, list(21, 22), list(list (311, 312, 313))), 4) => list(1, 21, 22, 31
 flat(rows.file.outlinks)) => All the file outlinks at first level in output
 ```
 
+### `slice(array, [start, [end]])`
+
+Returns a shallow copy of a portion of an array into a new array object selected from `start`
+to `end` (`end` not included) where `start` and `end` represents the index of items in that array.
+
+```js
+slice([1, 2, 3, 4, 5], 3) = [4, 5] => All items from given position, 0 as first
+slice(["ant", "bison", "camel", "duck", "elephant"], 0, 2) = ["ant", "bison"] => First two items 
+slice([1, 2, 3, 4, 5], -2) = [4, 5] => counts from the end, last two items
+slice(someArray) => a copy of someArray
+```
+
 ---
 
 ## String Operations
@@ -688,6 +714,25 @@ choice(false, "yes", "no") = "no"
 choice(x > 4, y, z) = y if x > 4, else z
 ```
 
+### `hash(seed, [text], [variant])`
+
+Generate a hash based on the `seed`, and the optional extra `text` or a variant `number`. The function
+generates a fixed number based on the combination of these parameters, which can be used to randomise 
+the sort order of files or lists/tasks. If you choose a `seed` based on a date, i.e. "2024-03-17",
+or another timestamp, i.e. "2024-03-17 19:13", you can make the "randomness" be fixed
+related to that timestamp. `variant` is a number, which in some cases is needed to make the combination of
+`text` and `variant` become unique.
+
+```js
+hash(dateformat(date(today), "YYYY-MM-DD"), file.name) = ... A unique value for a given date in time
+hash(dateformat(date(today), "YYYY-MM-DD"), file.name, position.start.line) = ... A unique "random" value in a TASK query
+```
+
+This function can be used in a `SORT` statement to randomise the order. If you're using a `TASK` query, 
+since the file name could be the same for multiple tasks, you can add some number like the starting line
+number (as shown above) to make it a unique combination. If using something like `FLATTEN file.lists as item`, 
+the similar addition would be to do `item.position.start.line` as the last parameter.
+
 ### `striptime(date)`
 
 Strip the time component of a date, leaving only the year, month, and day. Good for date comparisons if you don't care
@@ -700,8 +745,7 @@ striptime(file.mtime) = file.mday
 
 ### `dateformat(date|datetime, string)`
 
-Format a Dataview date using a formatting string.
-Uses [Luxon tokens](https://moment.github.io/luxon/#/formatting?id=table-of-tokens).
+Format a Dataview date using a formatting string. Uses [Luxon tokens](https://moment.github.io/luxon/#/formatting?id=table-of-tokens).
 
 ```js
 dateformat(file.ctime,"yyyy-MM-dd") = "2022-01-05"
@@ -709,6 +753,8 @@ dateformat(file.ctime,"HH:mm:ss") = "12:18:04"
 dateformat(date(now),"x") = "1407287224054"
 dateformat(file.mtime,"ffff") = "Wednesday, August 6, 2014, 1:07 PM Eastern Daylight Time"
 ```
+
+**Note:** `dateformat()` returns a string, not a date, so you can't compare it against the result from a call to `date()` or a variable like `file.day` which already is a date. To make those comparisons you can format both arguments.
 
 ### `durationformat(duration, string)`
 
@@ -732,6 +778,17 @@ durationformat(dur("3 days 7 hours 43 seconds"), "ddd'd' hh'h' ss's'") = "003d 0
 durationformat(dur("365 days 5 hours 49 minutes"), "yyyy ddd hh mm ss") = "0001 000 05 49 00"
 durationformat(dur("2000 years"), "M months") = "24000 months"
 durationformat(dur("14d"), "s 'seconds'") = "1209600 seconds"
+```
+
+### `currencyformat(number, [currency])`
+
+Presents the number depending on your current locale, according to the `currency` code, from [ISO 4217](https://en.wikipedia.org/wiki/ISO_4217#List_of_ISO_4217_currency_codes).
+
+```
+number = 123456.789
+currencyformat(number, "EUR") =  €123,456.79  in locale: en_US)
+currencyformat(number, "EUR") =  123.456,79 € in locale: de_DE)
+currencyformat(number, "EUR") =  € 123 456,79 in locale: nb)
 ```
 
 ### `localtime(date)`
