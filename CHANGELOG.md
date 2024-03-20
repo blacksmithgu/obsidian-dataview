@@ -1,3 +1,14 @@
+# 0.5.65
+
+A maintenance update which fixes some issues with rendering embeds in Dataviews and adds a few new functions.
+
+- Adds the `hash()` function for generating consistent uniformly-distributed values given arbitary inputs. Primarily useful for creating "random" views which remain consistent across page refreshes. Thanks to @holroy.
+- Adds the `slice()` function for slicing arrays, similar to Javascript's `Array.slice`. Thanks to @holroy.
+- Fixes several issues with rendering embeds inside dataviews. Thanks to @GottZ.
+- Several documentation improvements around tasks - thanks to @holroy and @RaviOnline.
+
+---
+
 # 0.5.64
 
 More bug fixes for inline field rendering.
