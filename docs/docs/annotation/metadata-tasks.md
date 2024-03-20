@@ -7,12 +7,14 @@ Just like pages, you can also add **fields** on list item and task level to bind
 - [X] I finished this on [completion:: 2021-08-15].
 ```
 
-Tasks and list items are the same data wise, so all your bullet points have all the information described here available, too. 
+Tasks and list items are the same data wise, so all your bullet points have all the information described here available, too.
 
 ## Field Shorthands
 
-For supporting "common use cases", Dataview understands a few shorthands for some fields you may want to annotate task
-with:
+The [Tasks](https://publish.obsidian.md/tasks/Introduction) plugin introduced a different [notation by using Emoji](https://publish.obsidian.md/tasks/Reference/Task+Formats/Tasks+Emoji+Format) to configure the different dates related to a task. In the context of Dataview, this notation is called `Field Shorthands`. The current version of Dataview only support the dates shorthands as shown below. The priorities and recurrence shorthands are not supported.
+
+=== "Example"
+
 
 === "Example"
     - [ ] Due this Saturday 🗓️2021-08-29
@@ -84,6 +86,9 @@ With usage of the [shorthand syntax](#field-shorthands), following additional pr
 - `start`: The date a task can be started.
 - `scheduled`: The date a task is scheduled to work on.
 
+!!! Info
+    Related to the `visual` implicit field, if this is set either in a [TASK](../queries/query-types.md#task-queries) query using `FLATTEN ... as visual`, or in javascript doing something like `task.visual=... `, it'll replace the original text of the task, but still keep the link to the original task.
+
 ### Access of Implicit Fields for List Items and Tasks
 
 If you're using a [TASK](../queries/query-types.md#task-queries) Query, your tasks are the top level information and can be used without any prefix:
@@ -104,4 +109,4 @@ WHERE any(file.tasks, (t) => !t.fullyCompleted)
 ```
 ~~~
 
-This'll give you back all file links that have unfinished tasks inside. We get back a list of tasks on page level and thus need to use a [list function](../reference/functions.md) to look at each element. 
+This'll give you back all file links that have unfinished tasks inside. We get back a list of tasks on page level and thus need to use a [list function](../reference/functions.md) to look at each element. Another option if you want to split the tasks/lists into separate rows is to do a `FLATTEN file.lists AS item` in your query, which allows you to do `!item.fullyCompleted` or similar.

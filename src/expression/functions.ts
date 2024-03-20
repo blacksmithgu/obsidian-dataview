@@ -862,38 +862,60 @@ export namespace DefaultFunctions {
 }
 
 /** Default function implementations for the expression evaluator. */
+// Keep functions in same order as they're documented !!
 export const DEFAULT_FUNCTIONS: Record<string, FunctionImpl> = {
-    // Constructors.
+    // Constructors
+    object: DefaultFunctions.object,
     list: DefaultFunctions.list,
     array: DefaultFunctions.list,
+    date: DefaultFunctions.date,
+    dur: DefaultFunctions.dur,
+    number: DefaultFunctions.number,
+    string: DefaultFunctions.string,
     link: DefaultFunctions.link,
     embed: DefaultFunctions.embed,
     elink: DefaultFunctions.elink,
-    date: DefaultFunctions.date,
-    dur: DefaultFunctions.dur,
-    dateformat: DefaultFunctions.dateformat,
-    durationformat: DefaultFunctions.durationformat,
-    localtime: DefaultFunctions.localtime,
-    number: DefaultFunctions.number,
-    currencyformat: DefaultFunctions.currencyformat,
-    string: DefaultFunctions.string,
-    object: DefaultFunctions.object,
     typeof: DefaultFunctions.typeOf,
 
-    // Math Operations.
+    // Numeric Operations
     round: DefaultFunctions.round,
     trunc: DefaultFunctions.trunc,
     floor: DefaultFunctions.floor,
     ceil: DefaultFunctions.ceil,
     min: DefaultFunctions.min,
     max: DefaultFunctions.max,
+    sum: DefaultFunctions.sum,
+    product: DefaultFunctions.product,
+    average: DefaultFunctions.average,
     minby: DefaultFunctions.minby,
     maxby: DefaultFunctions.maxby,
 
-    // String operations.
-    regexreplace: DefaultFunctions.regexreplace,
+    // Object, Arrays, and String operations
+    contains: DefaultFunctions.contains,
+    icontains: DefaultFunctions.icontains,
+    econtains: DefaultFunctions.econtains,
+    containsword: DefaultFunctions.containsword,
+    extract: DefaultFunctions.extract,
+    sort: DefaultFunctions.sort,
+    reverse: DefaultFunctions.reverse,
+    length: DefaultFunctions.length,
+    nonnull: DefaultFunctions.nonnull,
+    all: DefaultFunctions.all,
+    any: DefaultFunctions.any,
+    none: DefaultFunctions.none,
+    join: DefaultFunctions.join,
+    filter: DefaultFunctions.filter,
+    map: DefaultFunctions.map,
+    flat: DefaultFunctions.flat,
+    slice: DefaultFunctions.slice,
+    unique: DefaultFunctions.unique,
+
+    reduce: DefaultFunctions.reduce,
+
+    // String Operations
     regextest: DefaultFunctions.regextest,
     regexmatch: DefaultFunctions.regexmatch,
+    regexreplace: DefaultFunctions.regexreplace,
     replace: DefaultFunctions.replace,
     lower: DefaultFunctions.lower,
     upper: DefaultFunctions.upper,
@@ -905,39 +927,15 @@ export const DEFAULT_FUNCTIONS: Record<string, FunctionImpl> = {
     substring: DefaultFunctions.substring,
     truncate: DefaultFunctions.truncate,
 
-    // Date Operations.
-    striptime: DefaultFunctions.striptime,
-
-    // List operations.
-    length: DefaultFunctions.length,
-    contains: DefaultFunctions.contains,
-    icontains: DefaultFunctions.icontains,
-    econtains: DefaultFunctions.econtains,
-    containsword: DefaultFunctions.containsword,
-    reverse: DefaultFunctions.reverse,
-    sort: DefaultFunctions.sort,
-    flat: DefaultFunctions.flat,
-    slice: DefaultFunctions.slice,
-
-    // Aggregation operations like reduce.
-    reduce: DefaultFunctions.reduce,
-    join: DefaultFunctions.join,
-    sum: DefaultFunctions.sum,
-    product: DefaultFunctions.product,
-    average: DefaultFunctions.average,
-    all: DefaultFunctions.all,
-    any: DefaultFunctions.any,
-    none: DefaultFunctions.none,
-    filter: DefaultFunctions.filter,
-    unique: DefaultFunctions.unique,
-    map: DefaultFunctions.map,
-    nonnull: DefaultFunctions.nonnull,
-
-    // Object/Utility operations.
-    extract: DefaultFunctions.extract,
+    // Utility Operations
     default: DefaultFunctions.fdefault,
     ldefault: DefaultFunctions.ldefault,
     choice: DefaultFunctions.choice,
+    striptime: DefaultFunctions.striptime,
+    dateformat: DefaultFunctions.dateformat,
+    durationformat: DefaultFunctions.durationformat,
+    currencyformat: DefaultFunctions.currencyformat,
+    localtime: DefaultFunctions.localtime,
     hash: DefaultFunctions.hash,
     meta: DefaultFunctions.meta,
 };
