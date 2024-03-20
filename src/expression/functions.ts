@@ -293,6 +293,7 @@ export namespace DefaultFunctions {
                 }
             }
         })
+        .add2("null", "string", () => null)
         .add1("null", () => null)
         .vectorize(1, [0])
         .build();

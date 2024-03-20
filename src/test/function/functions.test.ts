@@ -164,4 +164,5 @@ test("Evaluate date()", () => {
     expect(parseEval('date("210313", "yyMMdd")')).toEqual(DateTime.fromObject({ year: 2021, month: 3, day: 13 }));
     expect(parseEval('date("946778645012","x")')).toEqual(DateTime.fromMillis(946778645012));
     expect(parseEval('date("946778645","X")')).toEqual(DateTime.fromMillis(946778645000));
+    expect(DefaultFunctions.date(simpleContext(), null, "MM/dd/yyyy")).toEqual(null);
 });
