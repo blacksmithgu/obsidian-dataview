@@ -608,6 +608,8 @@ export type QueryApiSettings = {
 
 /** Determines if source-path has a `?no-dataview` annotation that disables dataview. */
 export function isDataviewDisabled(sourcePath: string): boolean {
+    if (!sourcePath) return false;
+
     let questionLocation = sourcePath.lastIndexOf("?");
     if (questionLocation == -1) return false;
 
