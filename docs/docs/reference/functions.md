@@ -714,6 +714,25 @@ choice(false, "yes", "no") = "no"
 choice(x > 4, y, z) = y if x > 4, else z
 ```
 
+### `hash(seed, [text], [variant])`
+
+Generate a hash based on the `seed`, and the optional extra `text` or a variant `number`. The function
+generates a fixed number based on the combination of these parameters, which can be used to randomise 
+the sort order of files or lists/tasks. If you choose a `seed` based on a date, i.e. "2024-03-17",
+or another timestamp, i.e. "2024-03-17 19:13", you can make the "randomness" be fixed
+related to that timestamp. `variant` is a number, which in some cases is needed to make the combination of
+`text` and `variant` become unique.
+
+```js
+hash(dateformat(date(today), "YYYY-MM-DD"), file.name) = ... A unique value for a given date in time
+hash(dateformat(date(today), "YYYY-MM-DD"), file.name, position.start.line) = ... A unique "random" value in a TASK query
+```
+
+This function can be used in a `SORT` statement to randomise the order. If you're using a `TASK` query, 
+since the file name could be the same for multiple tasks, you can add some number like the starting line
+number (as shown above) to make it a unique combination. If using something like `FLATTEN file.lists as item`, 
+the similar addition would be to do `item.position.start.line` as the last parameter.
+
 ### `striptime(date)`
 
 Strip the time component of a date, leaving only the year, month, and day. Good for date comparisons if you don't care

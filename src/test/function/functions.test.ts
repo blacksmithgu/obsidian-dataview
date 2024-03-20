@@ -124,6 +124,13 @@ test("Evaluate choose()", () => {
     expect(parseEval("choice(false, 1, 2)")).toEqual(2);
 });
 
+test("Evaulate hash()", () => {
+    expect(DefaultFunctions.hash(simpleContext(), "2024-03-17", "")).toEqual(3259376374957153);
+    expect(DefaultFunctions.hash(simpleContext(), "2024-03-17", 2)).toEqual(271608741894590);
+    expect(DefaultFunctions.hash(simpleContext(), "2024-03-17", "Home")).toEqual(3041844187830523);
+    expect(DefaultFunctions.hash(simpleContext(), "2024-03-17", "note a1", 21)).toEqual(1143088188331616);
+});
+
 // <-- extract() -->
 
 test("Evaluate 1 field extract()", () => {
@@ -157,4 +164,5 @@ test("Evaluate date()", () => {
     expect(parseEval('date("210313", "yyMMdd")')).toEqual(DateTime.fromObject({ year: 2021, month: 3, day: 13 }));
     expect(parseEval('date("946778645012","x")')).toEqual(DateTime.fromMillis(946778645012));
     expect(parseEval('date("946778645","X")')).toEqual(DateTime.fromMillis(946778645000));
+    expect(DefaultFunctions.date(simpleContext(), null, "MM/dd/yyyy")).toEqual(null);
 });
