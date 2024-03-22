@@ -218,6 +218,7 @@ export default class DataviewPlugin extends Plugin {
         component: Component | MarkdownPostProcessorContext,
         sourcePath: string
     ) {
+        el.style.overflowX = "auto";
         this.api.execute(source, el, component, sourcePath);
     }
 
@@ -228,6 +229,7 @@ export default class DataviewPlugin extends Plugin {
         component: Component | MarkdownPostProcessorContext,
         sourcePath: string
     ) {
+        el.style.overflowX = "auto";
         this.api.executeJs(source, el, component, sourcePath);
     }
 
