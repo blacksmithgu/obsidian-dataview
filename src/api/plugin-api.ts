@@ -105,13 +105,13 @@ export class DataviewApi {
         compare: (op: CompareOperator, ver: string) => boolean;
         satisfies: (range: string) => boolean;
     } = (() => {
-        const { verNum: version } = this;
+        const self = this;
         return {
             get current() {
-                return version;
+                return self.verNum;
             },
-            compare: (op: CompareOperator, ver: string) => compare(version, ver, op),
-            satisfies: (range: string) => satisfies(version, range),
+            compare: (op: CompareOperator, ver: string) => compare(this.verNum, ver, op),
+            satisfies: (range: string) => satisfies(this.verNum, range),
         };
     })();
 
