@@ -2,7 +2,7 @@
   "compilerOptions": {
     "baseUrl": "src",
     "sourceMap": true,
-    "inlineSourceMap": true,
+    "inlineSourceMap": false,
     "inlineSources": true,
     "module": "ESNext",
     "target": "ES2022",
