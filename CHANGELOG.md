@@ -1,3 +1,9 @@
+# 0.5.66
+
+Bugfix for version comparisons to fix some other plugins having broken interactions with Dataview.
+
+---
+
 # 0.5.65
 
 A maintenance update which fixes some issues with rendering embeds in Dataviews and adds a few new functions.
