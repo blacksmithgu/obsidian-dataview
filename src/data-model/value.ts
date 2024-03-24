@@ -349,7 +349,7 @@ export namespace Values {
     }
 
     export function isTableItem(val: any): val is TableItem {
-        return val?.json.length > 0;
+        return val?.json?.length > 0;
     }
 
     export function isWidget(val: any): val is Widget {
