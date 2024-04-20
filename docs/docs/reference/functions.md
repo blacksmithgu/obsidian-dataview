@@ -218,7 +218,7 @@ max("a", "ab", "abc") = "abc"
 
 ### `sum(array)`
 
-Sums all numeric values in the array. If you have null values in your average, you can eliminate them via the `nonnull` function.
+Sums all numeric values in the array. If you have null values in your sum, you can eliminate them via the `nonnull` function.
 
 ```js
 sum([1, 2, 3]) = 6
