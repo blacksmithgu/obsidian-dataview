@@ -216,7 +216,24 @@ export function parseLists(
         );
 
         // Find the section we belong to as well.
-        let sectionName = findPreviousHeader(rawElement.position.start.line, metadata.headings || []);
+        const headings = [];
+        let sectionName = undefined;
+        var headers = metadata.headings || [];
+        let sectionIndex = headers.length;
+        let line = rawElement.position.start.line;
+        let level = 9;
+        while (sectionIndex >= 0) {
+            sectionIndex = findPreviousHeader(line, headers, sectionIndex, level);
+            if (sectionIndex < 0) {
+                break;
+            }
+            var section = metadata.headings[sectionIndex];
+            sectionName ||= section.heading; //level, position
+            headings.push(section);
+            level = section.level;
+            line = section.position.start.line - 1;
+        }
+        headings.reverse(); //sort in ascending order, so you can group by e.g. the Top Heading
         let sectionLink = sectionName === undefined ? Link.file(path) : Link.header(path, sectionName);
         let closestLink = rawElement.id === undefined ? sectionLink : Link.block(path, rawElement.id);
 
@@ -232,6 +249,7 @@ export function parseLists(
             link: closestLink,
             links: links,
             section: sectionLink,
+            headings: headings, //.map(s => [s.heading, s.level, s.position]),
             text: textWithNewline,
             tags: common.extractTags(textNoNewline),
             line: rawElement.position.start.line,
@@ -415,12 +433,15 @@ export function mergeFieldGroups(target: Map<string, Literal[]>, source: Map<str
 }
 
 /** Find the header that is most immediately above the given line number. */
-export function findPreviousHeader(line: number, headers: HeadingCache[]): string | undefined {
-    if (headers.length == 0) return undefined;
-    if (headers[0].position.start.line > line) return undefined;
+export function findPreviousHeader(line: number, headers: HeadingCache[], start: number, level: number): number {
+    if (level <= 0) return -1;
+    if (headers.length == 0) return -1;
+    if (headers[0].position.start.line > line) return -1;
 
-    let index = headers.length - 1;
-    while (index >= 0 && headers[index].position.start.line > line) index--;
+    let index = start - 1;
+    while (index >= 0
+        && headers[index].level >= level
+        && headers[index].position.start.line > line) index--;
 
-    return headers[index].heading;
+    return index;
 }

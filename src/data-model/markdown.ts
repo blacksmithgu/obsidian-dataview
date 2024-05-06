@@ -168,6 +168,8 @@ export class ListItem {
     link: Link;
     /** A link to the section that contains this list element; could be a file if this is not in a section. */
     section: Link;
+    /** List of all Headings 'above' this one in ascending Order, to be able to properly group List Items */
+    headings: HeadingCache[];
     /** The text of this list item. This may be multiple lines of markdown. */
     text: string;
     /** The line that this list item starts on in the file. */
@@ -256,6 +258,7 @@ export class ListItem {
             symbol: this.symbol,
             link: this.link,
             section: this.section,
+            headings: Array.from(this.headings),
             text: this.text,
             tags: Array.from(this.tags),
             line: this.line,
