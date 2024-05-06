@@ -5,6 +5,7 @@ import { Literal, Link, Values } from "data-model/value";
 import { DataObject } from "index";
 import { SListItem, SMarkdownPage } from "data-model/serialized/markdown";
 import { Pos } from "obsidian";
+import { HeadingCache } from "obsidian";
 
 /** All extracted markdown file metadata obtained from a file. */
 export class PageMetadata {
@@ -258,7 +259,14 @@ export class ListItem {
             symbol: this.symbol,
             link: this.link,
             section: this.section,
-            headings: Array.from(this.headings),
+            headings: this.headings.map(h => "#".repeat(h.level) + " " + h.heading), /*{
+                const heading: HeadingCache = {
+                    heading: h.heading,
+                    level: h.level,
+                    position: h.position
+                }
+                return heading;
+            }),*/
             text: this.text,
             tags: Array.from(this.tags),
             line: this.line,
