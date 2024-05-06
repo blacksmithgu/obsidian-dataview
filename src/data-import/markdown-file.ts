@@ -252,7 +252,7 @@ export function parseLists(
             link: closestLink,
             links: links,
             section: sectionLink,
-            headings: headings, //.map(s => [s.heading, s.level, s.position]),
+            headings: headings,
             text: textWithNewline,
             tags: common.extractTags(textNoNewline),
             line: rawElement.position.start.line,
