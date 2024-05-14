@@ -163,7 +163,9 @@ export default class DataviewPlugin extends Plugin {
         );
 
         window.CodeMirror.defineMode("dataviewjs", config => window.CodeMirror.getMode(config, "javascript"));
-        this.register(() => window.CodeMirror.defineMode("dataviewjs", config => window.CodeMirror.getMode(config, "null")));
+        this.register(() =>
+            window.CodeMirror.defineMode("dataviewjs", config => window.CodeMirror.getMode(config, "null"))
+        );
     }
 
     private debouncedRefresh: () => void = () => null;
