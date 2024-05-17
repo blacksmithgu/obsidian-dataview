@@ -162,9 +162,19 @@ export default class DataviewPlugin extends Plugin {
             })
         );
 
-        window.CodeMirror.defineMode("dataviewjs", config => window.CodeMirror.getMode(config, "javascript"));
-        this.register(() =>
-            window.CodeMirror.defineMode("dataviewjs", config => window.CodeMirror.getMode(config, "null"))
+        this.registerDataviewjsCodeHighlighting();
+        this.register(() => this.unregisterDataviewjsCodeHighlighting());
+    }
+
+    public registerDataviewjsCodeHighlighting(): void {
+        window.CodeMirror.defineMode(this.settings.dataviewJsKeyword, config =>
+            window.CodeMirror.getMode(config, "javascript")
+        );
+    }
+
+    public unregisterDataviewjsCodeHighlighting(): void {
+        window.CodeMirror.defineMode(this.settings.dataviewJsKeyword, config =>
+            window.CodeMirror.getMode(config, "null")
         );
     }
 
@@ -384,7 +394,9 @@ class GeneralSettingsTab extends PluginSettingTab {
                     .setValue(this.plugin.settings.dataviewJsKeyword)
                     .onChange(async value => {
                         if (value.length == 0) return;
+                        this.plugin.unregisterDataviewjsCodeHighlighting();
                         await this.plugin.updateSettings({ dataviewJsKeyword: value });
+                        this.plugin.registerDataviewjsCodeHighlighting();
                     })
             );
 
