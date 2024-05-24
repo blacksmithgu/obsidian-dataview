@@ -316,7 +316,6 @@ class GeneralSettingsTab extends PluginSettingTab {
 
     public display(): void {
         this.containerEl.empty();
-        this.containerEl.createEl("h2", { text: "General settings" });
 
         new Setting(this.containerEl)
             .setName("Enable inline queries")
@@ -366,7 +365,7 @@ class GeneralSettingsTab extends PluginSettingTab {
                 })
             );
 
-        this.containerEl.createEl("h2", { text: "Codeblock settings" });
+        new Setting(this.containerEl).setName("Codeblocks").setHeading();
 
         new Setting(this.containerEl)
             .setName("DataviewJS keyword")
@@ -420,8 +419,7 @@ class GeneralSettingsTab extends PluginSettingTab {
                     .onChange(async value => await this.plugin.updateSettings({ inlineQueriesInCodeblocks: value }))
             );
 
-        this.containerEl.createEl("h2", { text: "View settings" });
-        this.containerEl.createEl("h3", { text: "General" });
+        new Setting(this.containerEl).setName("View").setHeading();
 
         new Setting(this.containerEl)
             .setName("Display result count")
@@ -530,7 +528,7 @@ class GeneralSettingsTab extends PluginSettingTab {
                     })
             );
 
-        this.containerEl.createEl("h3", { text: "Table settings" });
+        new Setting(this.containerEl).setName("Tables").setHeading();
 
         new Setting(this.containerEl)
             .setName("Primary column name")
@@ -563,7 +561,7 @@ class GeneralSettingsTab extends PluginSettingTab {
                     })
             );
 
-        this.containerEl.createEl("h3", { text: "Task settings" });
+        new Setting(this.containerEl).setName("Tasks").setHeading();
 
         let taskCompletionSubsettingsEnabled = this.plugin.settings.taskCompletionTracking;
         let taskCompletionInlineSubsettingsEnabled =
