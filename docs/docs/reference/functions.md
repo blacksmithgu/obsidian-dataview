@@ -372,10 +372,10 @@ The outputs are different for different types of input, see examples.
     containsword("word", "word") = true
     containsword("word", "Word") = true
     containsword("words", "Word") = false
-    containsword("Hello there!, "hello") = true
-    containsword("Hello there!, "HeLLo") = true
-    containsword("Hello there chaps!, "chap") = false
-    containsword("Hello there chaps!, "chaps") = true
+    containsword("Hello there!", "hello") = true
+    containsword("Hello there!", "HeLLo") = true
+    containsword("Hello there chaps!", "chap") = false
+    containsword("Hello there chaps!", "chaps") = true
     ```
 
 - For lists, it returns a list of booleans indicating if the word's exact case insensitive match was found.
