@@ -179,6 +179,16 @@ describe("last", () => {
     test("nonempty", () => expect(da([1, 2, 3]).last()).toEqual(3));
 });
 
+describe("sum", () => {
+    test("empty", () => expect(da([]).sum()).toEqual(0));
+    test("numbers", () => expect(da([1, 10, 2]).sum()).toEqual(13));
+});
+
+describe("avg", () => {
+    test("empty", () => expect(da([]).avg()).toEqual(NaN));
+    test("numbers", () => expect(da([5, 10, 15]).avg()).toEqual(10));
+});
+
 /** Utility function for quickly creating a data array. */
 function da<T>(val: T[]): DataArray<T> {
     return DataArray.wrap(val, DEFAULT_QUERY_SETTINGS);

@@ -115,6 +115,12 @@ export interface DataArray<T> {
     /** Run a lambda on each element in the array. */
     forEach(f: ArrayFunc<T, void>): void;
 
+    /** Calculate the sum of the elements of the array. */
+    sum(): number;
+
+    /** Calculate the average of the elements of the array. */
+    avg(): number | undefined;
+
     /** Convert this to a plain javascript array. */
     array(): T[];
 
@@ -164,6 +170,8 @@ class DataArrayImpl<T> implements DataArray<T> {
         "defaultComparator",
         "toString",
         "settings",
+        "sum",
+        "avg"
     ]);
 
     private static ARRAY_PROXY: ProxyHandler<DataArrayImpl<any>> = {
@@ -444,6 +452,14 @@ class DataArrayImpl<T> implements DataArray<T> {
         for (let index = 0; index < this.values.length; index++) {
             f(this.values[index], index, this.values);
         }
+    }
+
+    public sum() {
+        return this.values.reduce((a, b) => a + b, 0);
+    }
+
+    public avg() {
+        return this.sum() / this.values.length;
     }
 
     public array(): T[] {
