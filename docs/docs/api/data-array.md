@@ -122,6 +122,11 @@ export interface DataArray<T> {
     /** Calculate the average of the elements in the array. */
     avg(): number;
 
+    /** Calculate the minimum of the elements in the array. */
+    min(): number;
+
+    /** Calculate the maximum of the elements in the array. */
+    max(): number;
 
     /** Convert this to a plain javascript array. */
     array(): T[];

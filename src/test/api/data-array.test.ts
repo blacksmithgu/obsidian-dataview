@@ -189,6 +189,16 @@ describe("avg", () => {
     test("numbers", () => expect(da([5, 10, 15]).avg()).toEqual(10));
 });
 
+describe("min", () => {
+    test("empty", () => expect(da([]).min()).toEqual(Infinity));
+    test("numbers", () => expect(da([14, 10, 15]).min()).toEqual(10));
+});
+
+describe("max", () => {
+    test("empty", () => expect(da([]).max()).toEqual(-Infinity));
+    test("numbers", () => expect(da([14, 10, 15]).max()).toEqual(15));
+});
+
 /** Utility function for quickly creating a data array. */
 function da<T>(val: T[]): DataArray<T> {
     return DataArray.wrap(val, DEFAULT_QUERY_SETTINGS);
