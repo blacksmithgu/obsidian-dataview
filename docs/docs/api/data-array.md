@@ -116,11 +116,17 @@ export interface DataArray<T> {
     /** Run a lambda on each element in the array. */
     forEach(f: ArrayFunc<T, void>): void;
 
-    /** Calculate the sum of the elements of the array. */
+    /** Calculate the sum of the elements in the array. */
     sum(): number;
 
-    /** Calculate the average of the elements of the array. */
-    avg(): number | undefined;
+    /** Calculate the average of the elements in the array. */
+    avg(): number;
+
+    /** Calculate the minimum of the elements in the array. */
+    min(): number;
+
+    /** Calculate the maximum of the elements in the array. */
+    max(): number;
 
     /** Convert this to a plain javascript array. */
     array(): T[];
