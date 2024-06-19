@@ -55,7 +55,7 @@ export async function replaceInlineFields(ctx: MarkdownPostProcessorContext, ini
     init.container.replaceChildren(...template.content.childNodes);
     let text: any;
     let inlineFieldsFromText: InlineField[] | undefined;
-    let dataCheck: boolean = false;
+    let hasRetrievedText: boolean = false;
     for (let index = 0; index < inlineFields.length; index++) {
         const box = init.container.querySelector("#dataview-inline-field-" + index);
         if (!box) continue;
@@ -64,8 +64,8 @@ export async function replaceInlineFields(ctx: MarkdownPostProcessorContext, ini
         const parseInlineValueWrapper = (fieldVal: string) => {
             if (fieldVal.startsWith("<span class=\"math\"")) {
                 // allows math symbols to be rendered in reading view
-                if (!dataCheck) {
-                    dataCheck = true;
+                if (!hasRetrievedText) {
+                    hasRetrievedText = true;
                     text = ctx.getSectionInfo(init.container)?.text;
                     if (text) {
                         inlineFieldsFromText = extractInlineFields(text);
