@@ -6,10 +6,10 @@ import { canonicalizeVarName } from "util/normalize";
 
 /** Replaces raw textual inline fields in text containers with pretty HTML equivalents. */
 export async function replaceInlineFields(ctx: MarkdownPostProcessorContext, init: DataviewInit): Promise<void> {
-    let inlineFields = extractInlineFields(init.container.innerHTML);
+    const inlineFields = extractInlineFields(init.container.innerHTML);
     if (inlineFields.length == 0) return;
 
-    let component = new MarkdownRenderChild(init.container);
+    const component = new MarkdownRenderChild(init.container);
     ctx.addChild(component);
 
     // Iterate through the raw HTML and replace inline field matches with corresponding rendered values.
@@ -53,7 +53,6 @@ export async function replaceInlineFields(ctx: MarkdownPostProcessorContext, ini
     // Replace the container children with the new rendered children.
     // TODO: Replace this with a dom-to-dom diff to reduce the actual amount of updates.
     init.container.replaceChildren(...template.content.childNodes);
-    let text: any;
     let inlineFieldsFromText: InlineField[] | undefined;
     let hasRetrievedText: boolean = false;
     for (let index = 0; index < inlineFields.length; index++) {
@@ -66,7 +65,7 @@ export async function replaceInlineFields(ctx: MarkdownPostProcessorContext, ini
                 // allows math symbols to be rendered in reading view
                 if (!hasRetrievedText) {
                     hasRetrievedText = true;
-                    text = ctx.getSectionInfo(init.container)?.text;
+                    let text = ctx.getSectionInfo(init.container)?.text;
                     if (text) {
                         inlineFieldsFromText = extractInlineFields(text);
                     }
