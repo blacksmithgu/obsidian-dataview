@@ -61,7 +61,7 @@ export async function replaceInlineFields(ctx: MarkdownPostProcessorContext, ini
 
         const context = Object.assign({}, init, { container: box, component: component });
         const parseInlineValueWrapper = (fieldVal: string) => {
-            if (fieldVal.startsWith("<span class=\"math\"")) {
+            if (fieldVal.startsWith('<span class="math"')) {
                 // allows math symbols to be rendered in reading view
                 if (!hasRetrievedText) {
                     hasRetrievedText = true;
@@ -75,11 +75,15 @@ export async function replaceInlineFields(ctx: MarkdownPostProcessorContext, ini
             } else {
                 return parseInlineValue(fieldVal);
             }
-        }
+        };
 
         render(
             <DataviewContext.Provider value={context}>
-                <Lit value={parseInlineValueWrapper(inlineFields[index].value)} inline={true} sourcePath={ctx.sourcePath} />
+                <Lit
+                    value={parseInlineValueWrapper(inlineFields[index].value)}
+                    inline={true}
+                    sourcePath={ctx.sourcePath}
+                />
             </DataviewContext.Provider>,
             box
         );
