@@ -1,3 +1,13 @@
+# 0.5.67
+
+Includes several documentation fixes and several community-contributed bug fixes.
+
+- @reply2za: Fixed inline rendering in the reading view.
+- @carlesalbasboix: Adds sum(), avg(), min(), and max() to data arrays.
+- @mnaoumov: Adds code mirror configuration which code highlights dataviewjs!
+
+---
+
 # 0.5.66
 
 Bugfix for version comparisons to fix some other plugins having broken interactions with Dataview.
