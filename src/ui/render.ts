@@ -11,18 +11,18 @@ export async function renderCompactMarkdown(
     markdown: string,
     container: HTMLElement,
     sourcePath: string,
-    component: Component,
+    component: Component
 ) {
-        let subcontainer = container.createSpan();
-        await MarkdownRenderer.render(app, markdown, subcontainer, sourcePath, component);
+    let subcontainer = container.createSpan();
+    await MarkdownRenderer.render(app, markdown, subcontainer, sourcePath, component);
 
-        let paragraph = subcontainer.querySelector(":scope > p");
-        if (subcontainer.children.length == 1 && paragraph) {
-            while (paragraph.firstChild) {
-                subcontainer.appendChild(paragraph.firstChild);
-            }
-            subcontainer.removeChild(paragraph);
+    let paragraph = subcontainer.querySelector(":scope > p");
+    if (subcontainer.children.length == 1 && paragraph) {
+        while (paragraph.firstChild) {
+            subcontainer.appendChild(paragraph.firstChild);
         }
+        subcontainer.removeChild(paragraph);
+    }
 }
 
 /** Render a pre block with an error in it; returns the element to allow for dynamic updating. */
@@ -62,13 +62,7 @@ export async function renderValue(
     }
 
     if (Values.isNull(field)) {
-        await renderCompactMarkdown(
-            app,
-            settings.renderNullAs,
-            container,
-            originFile,
-            component,
-        );
+        await renderCompactMarkdown(app, settings.renderNullAs, container, originFile, component);
     } else if (Values.isDate(field)) {
         container.appendText(renderMinimalDate(field, settings, currentLocale()));
     } else if (Values.isDuration(field)) {
