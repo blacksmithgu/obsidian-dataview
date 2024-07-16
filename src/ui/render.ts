@@ -11,44 +11,18 @@ export async function renderCompactMarkdown(
     markdown: string,
     container: HTMLElement,
     sourcePath: string,
-    component: Component,
-    isInlineFieldLivePreview: boolean = false
-) {
-    // check if the call is from the CM6 view plugin defined in src/ui/views/inline-field-live-preview.ts
-    if (isInlineFieldLivePreview) {
-        await renderCompactMarkdownForInlineFieldLivePreview(app, markdown, container, sourcePath, component);
-    } else {
-        let subcontainer = container.createSpan();
-        await MarkdownRenderer.render(app, markdown, subcontainer, sourcePath, component);
-
-        let paragraph = subcontainer.querySelector(":scope > p");
-        if (subcontainer.children.length == 1 && paragraph) {
-            while (paragraph.firstChild) {
-                subcontainer.appendChild(paragraph.firstChild);
-            }
-            subcontainer.removeChild(paragraph);
-        }
-    }
-}
-
-async function renderCompactMarkdownForInlineFieldLivePreview(
-    app: App,
-    markdown: string,
-    container: HTMLElement,
-    sourcePath: string,
     component: Component
 ) {
-    const tmpContainer = createSpan();
-    await MarkdownRenderer.render(app, markdown, tmpContainer, sourcePath, component);
+    let subcontainer = container.createSpan();
+    await MarkdownRenderer.render(app, markdown, subcontainer, sourcePath, component);
 
-    let paragraph = tmpContainer.querySelector(":scope > p");
-    if (tmpContainer.childNodes.length == 1 && paragraph) {
-        container.replaceChildren(...paragraph.childNodes);
-    } else {
-        container.replaceChildren(...tmpContainer.childNodes);
+    let paragraph = subcontainer.querySelector(":scope > p");
+    if (subcontainer.children.length == 1 && paragraph) {
+        while (paragraph.firstChild) {
+            subcontainer.appendChild(paragraph.firstChild);
+        }
+        subcontainer.removeChild(paragraph);
     }
-
-    tmpContainer.remove();
 }
 
 /** Render a pre block with an error in it; returns the element to allow for dynamic updating. */
@@ -88,22 +62,15 @@ export async function renderValue(
     }
 
     if (Values.isNull(field)) {
-        await renderCompactMarkdown(
-            app,
-            settings.renderNullAs,
-            container,
-            originFile,
-            component,
-            isInlineFieldLivePreview
-        );
+        await renderCompactMarkdown(app, settings.renderNullAs, container, originFile, component);
     } else if (Values.isDate(field)) {
         container.appendText(renderMinimalDate(field, settings, currentLocale()));
     } else if (Values.isDuration(field)) {
         container.appendText(renderMinimalDuration(field));
     } else if (Values.isString(field) || Values.isBoolean(field) || Values.isNumber(field)) {
-        await renderCompactMarkdown(app, "" + field, container, originFile, component, isInlineFieldLivePreview);
+        await renderCompactMarkdown(app, "" + field, container, originFile, component);
     } else if (Values.isLink(field)) {
-        await renderCompactMarkdown(app, field.markdown(), container, originFile, component, isInlineFieldLivePreview);
+        await renderCompactMarkdown(app, field.markdown(), container, originFile, component);
     } else if (Values.isHtml(field)) {
         container.appendChild(field);
     } else if (Values.isWidget(field)) {
