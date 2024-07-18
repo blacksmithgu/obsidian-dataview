@@ -35,7 +35,7 @@ import { Query } from "query/query";
 import { DataviewCalendarRenderer } from "ui/views/calendar-view";
 import { DataviewJSRenderer } from "ui/views/js-view";
 import { markdownList, markdownTable, markdownTaskList } from "ui/export/markdown";
-import { ExtensionRegistry } from "util/extensionRegistry";
+import { extensionRegistry } from "util/extensionRegistry";
 
 /** Asynchronous API calls related to file / system IO. */
 export class DataviewIOApi {
@@ -89,7 +89,7 @@ export class DataviewApi {
     /** Re-exporting of luxon for people who can't easily require it. Sorry! */
     public luxon = Luxon;
     /** Programmatic extensions to tweak dataview behavior */
-    public extensionRegistry: ExtensionRegistry;
+    public extensionRegistry = extensionRegistry;
 
     public constructor(
         public app: App,
