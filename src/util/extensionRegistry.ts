@@ -1,10 +1,10 @@
 import type { InlineField } from "data-import/inline-field";
 
-interface CustomSpecialTaskFieldExtractor {
+export interface CustomSpecialTaskFieldExtractor {
     name: string;
     exec: (line: string) => InlineField;
 }
-class ExtensionRegistry {
+export class ExtensionRegistry {
     _customSpecialTaskFieldExtractors: Array<CustomSpecialTaskFieldExtractor> = [];
 
     addCustomSpecialTaskFieldExtractor(customExtractor: CustomSpecialTaskFieldExtractor) {
