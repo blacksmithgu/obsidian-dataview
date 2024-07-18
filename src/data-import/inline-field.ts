@@ -4,6 +4,7 @@ import { EXPRESSION } from "expression/parse";
 import { Literal } from "data-model/value";
 import * as P from "parsimmon";
 import emojiRegex from "emoji-regex";
+import { extensionRegistry } from "util/extensionRegistry";
 
 /** A parsed inline field. */
 export interface InlineField {
@@ -209,6 +210,14 @@ function extractSpecialTaskFields(line: string): InlineField[] {
             end: match.index + match[0].length,
             wrapping: "emoji-shorthand",
         });
+    }
+
+    for (const customExtractor of extensionRegistry._customSpecialTaskFieldExtractors) {
+        try {
+            results.push(customExtractor.exec(line));
+        } catch (ex) {
+            console.error(`Custom extractor ${customExtractor.name} failed to extract metadata`, ex, line);
+        }
     }
 
     return results;
