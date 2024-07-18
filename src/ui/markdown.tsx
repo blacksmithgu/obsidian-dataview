@@ -11,6 +11,7 @@ import { renderMinimalDate, renderMinimalDuration } from "util/normalize";
 import { currentLocale } from "util/locale";
 import { DataArray } from "api/data-array";
 import { extractImageDimensions, isImageEmbed } from "util/media";
+import { TableGrouping } from "./views/table-view";
 
 export type MarkdownProps = { contents: string; sourcePath: string };
 export type MarkdownContext = { component: Component };
@@ -134,6 +135,9 @@ export function RawLit({
         }
 
         return <Markdown content={value.markdown()} sourcePath={sourcePath} />;
+    } else if (Values.isTableItem(value)) {
+        const { headers, rows } = value;
+        return <TableGrouping headings={headers} values={rows} sourcePath={sourcePath} />
     } else if (Values.isHtml(value)) {
         return <EmbedHtml element={value} />;
     } else if (Values.isWidget(value)) {
