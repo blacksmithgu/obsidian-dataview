@@ -81,7 +81,7 @@ export class FullIndex extends Component {
     }
 
     /** Trigger a metadata event on the metadata cache. */
-    private trigger(...args: any[]): void {
+    public trigger(...args: any[]): void {
         this.metadataCache.trigger("dataview:metadata-change", ...args);
     }
 

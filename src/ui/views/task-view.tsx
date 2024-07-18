@@ -89,6 +89,7 @@ function TaskItem({ item }: { item: STask }) {
                     );
                 }
                 await rewriteTask(context.app.vault, _item, status, updatedText);
+                context.index.trigger("task-click", _item, status, updatedText)
             }
             context.app.workspace.trigger("dataview:refresh-views");
         }
