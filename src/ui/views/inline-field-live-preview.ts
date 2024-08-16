@@ -235,12 +235,11 @@ class InlineFieldWidget extends WidgetType {
                 },
             });
 
-            renderCompactMarkdown(this.app, this.field.key, key, this.sourcePath, this.component);
+            renderCompactMarkdown(this.app, this.field.key, key, this.sourcePath, this.component, true);
 
             const value = renderContainer.createSpan({
                 cls: ["dataview", "inline-field-value"],
             });
-
             renderValue(
                 this.app,
                 parseInlineValue(this.field.value),
@@ -260,7 +259,6 @@ class InlineFieldWidget extends WidgetType {
             const value = renderContainer.createSpan({
                 cls: ["dataview", "inline-field-standalone-value"],
             });
-
             renderValue(
                 this.app,
                 parseInlineValue(this.field.value),
