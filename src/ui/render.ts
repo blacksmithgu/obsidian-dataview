@@ -42,9 +42,8 @@ async function renderCompactMarkdownForInlineFieldLivePreview(
     await MarkdownRenderer.render(app, markdown, tmpContainer, sourcePath, component);
     let paragraph = tmpContainer.querySelector(":scope > p");
     if (tmpContainer.childNodes.length == 1 && paragraph) {
-        container.appendChild(paragraph.childNodes.item(paragraph.childNodes.length-1));
+        container.appendChild(paragraph.childNodes.item(paragraph.childNodes.length - 1));
     } else {
-        console.log("B");
         container.replaceChildren(...tmpContainer.childNodes);
     }
 
