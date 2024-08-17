@@ -58,7 +58,7 @@ function buildInlineFields(state: EditorState): RangeSet<InlineFieldValue> {
 export const inlineFieldsField = StateField.define<RangeSet<InlineFieldValue>>({
     create: buildInlineFields,
     update(oldFields, tr) {
-            return buildInlineFields(tr.state);
+        return buildInlineFields(tr.state);
     },
 });
 
