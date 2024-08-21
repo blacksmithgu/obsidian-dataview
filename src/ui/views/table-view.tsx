@@ -1,7 +1,7 @@
 import { Literal } from "data-model/value";
 import { executeTable } from "query/engine";
 import { Query } from "query/query";
-import { asyncTryOrPropogate } from "util/normalize";
+import { asyncTryOrPropagate } from "util/normalize";
 import {
     DataviewContext,
     DataviewInit,
@@ -82,7 +82,7 @@ export function TableView({ query, sourcePath }: { query: Query; sourcePath: str
         context.index,
         { state: "loading" },
         async () => {
-            let result = await asyncTryOrPropogate(() =>
+            let result = await asyncTryOrPropagate(() =>
                 executeTable(query, context.index, sourcePath, context.settings)
             );
             if (!result.successful) return { state: "error", error: result.error };

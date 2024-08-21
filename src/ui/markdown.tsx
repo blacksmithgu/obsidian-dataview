@@ -233,7 +233,7 @@ export function ErrorMessage({ message }: { message: string }) {
 }
 
 /**
- * Complex convienence hook which calls `compute` every time the index updates, updating the current state.
+ * Complex convenience hook which calls `compute` every time the index updates, updating the current state.
  */
 export function useIndexBackedState<T>(
     container: HTMLElement,

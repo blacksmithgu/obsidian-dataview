@@ -78,7 +78,7 @@ export interface DataArray<T> {
 
     /**
      * Return a sorted array sorted by the given key; an optional comparator can be provided, which will
-     * be used to compare the keys in leiu of the default dataview comparator.
+     * be used to compare the keys in lieu of the default dataview comparator.
      */
     sort<U>(key: ArrayFunc<T, U>, direction?: "asc" | "desc", comparator?: ArrayComparator<U>): DataArray<T>;
 

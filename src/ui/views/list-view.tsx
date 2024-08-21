@@ -1,7 +1,7 @@
 import { MarkdownRenderChild } from "obsidian";
 import { executeList } from "query/engine";
 import { Query } from "query/query";
-import { asyncTryOrPropogate } from "util/normalize";
+import { asyncTryOrPropagate } from "util/normalize";
 import { useContext } from "preact/hooks";
 import {
     DataviewContext,
@@ -43,7 +43,7 @@ export function ListView({ query, sourcePath }: { query: Query; sourcePath: stri
         context.index,
         { state: "loading" },
         async () => {
-            let result = await asyncTryOrPropogate(() =>
+            let result = await asyncTryOrPropagate(() =>
                 executeList(query, context.index, sourcePath, context.settings)
             );
 

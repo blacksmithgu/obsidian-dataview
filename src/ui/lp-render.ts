@@ -34,7 +34,7 @@ import { DataviewSettings } from "../settings";
 import { FullIndex } from "../data-index";
 import { App, Component, editorInfoField, editorLivePreviewField, TFile } from "obsidian";
 import { DataviewApi } from "../api/plugin-api";
-import { tryOrPropogate } from "../util/normalize";
+import { tryOrPropagate } from "../util/normalize";
 import { parseField } from "../expression/parse";
 import { executeInline } from "../query/engine";
 import { Literal } from "../data-model/value";
@@ -302,13 +302,13 @@ export function inlinePlugin(app: App, index: FullIndex, settings: DataviewSetti
                 if (text.startsWith(settings.inlineQueryPrefix)) {
                     if (settings.enableInlineDataview) {
                         code = text.substring(settings.inlineQueryPrefix.length).trim();
-                        const field = tryOrPropogate(() => parseField(code));
+                        const field = tryOrPropagate(() => parseField(code));
                         if (!field.successful) {
                             result = `Dataview (inline field '${code}'): ${field.error}`;
                             el.innerText = result;
                         } else {
                             const fieldValue = field.value;
-                            const intermediateResult = tryOrPropogate(() =>
+                            const intermediateResult = tryOrPropagate(() =>
                                 executeInline(fieldValue, currentFile.path, index, settings)
                             );
                             if (!intermediateResult.successful) {

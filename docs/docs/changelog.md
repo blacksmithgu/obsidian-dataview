@@ -18,7 +18,7 @@ Bugfix for version comparisons to fix some other plugins having broken interacti
 
 A maintenance update which fixes some issues with rendering embeds in Dataviews and adds a few new functions.
 
-- Adds the `hash()` function for generating consistent uniformly-distributed values given arbitary inputs. Primarily useful for creating "random" views which remain consistent across page refreshes. Thanks to @holroy.
+- Adds the `hash()` function for generating consistent uniformly-distributed values given arbitrary inputs. Primarily useful for creating "random" views which remain consistent across page refreshes. Thanks to @holroy.
 - Adds the `slice()` function for slicing arrays, similar to Javascript's `Array.slice`. Thanks to @holroy.
 - Fixes several issues with rendering embeds inside dataviews. Thanks to @GottZ.
 - Several documentation improvements around tasks - thanks to @holroy and @RaviOnline.
@@ -270,7 +270,7 @@ inline queries in codeblocks.
 
 # 0.5.32
 
-The Dataview API has been noticably revamped - there are now approximately twice as many functions available on the
+The Dataview API has been noticeably revamped - there are now approximately twice as many functions available on the
 plugin API as there were before, and some additional utilities have been added to both the plugin and inline API. I
 will be finishing up the associated new "extension" functionality shortly, which will allow:
 
@@ -278,7 +278,7 @@ will be finishing up the associated new "extension" functionality shortly, which
 2. For custom renderable objects (progress bars, embedded task lists, embedded tables) to be added to any Dataview view via plugins.
 3. For plugins to provide alternative behavior for some dataview functionality (such as integrating task plugins with
    the dataview task query).
-   
+
 As part of the API revamp, it is now possible to programmatically execute Dataview and DataviewJS queries - either for
 using the existing Dataview query language in your own plugin, or for embedding dataview. The Dataview npm library also
 now exposes many useful internal Dataview types, including the AST structure for all dataview queries.
@@ -388,7 +388,7 @@ A long-overdue swap from the beta branch to the stable branch. The beta branch s
 changes, and has some nice performance improvements that come along with it! Here are the major changes:
 
 - Most views now use React and no longer flicker when updating; this is not the case yet for DataviewJS, which will be
-  getting equivalent treament in the future.
+  getting equivalent treatment in the future.
 - Dataview now caches metadata, so Dataview loads are very fast after the first time you open your vault. Dataview still
   needs to visit every file when you update the plugin version, so that should be the only times you experience slower
   load times.
@@ -547,7 +547,7 @@ Iterative beta which adds a few nice QoL features and fixes some more bugs:
 - Some issues with array and object rendering were corrected.
 - Error messages on empty dataview results were improved and now show up for all views.
 
-Inline images are now rendered correctly in Dataview tables and lists - no more hacky `app://local/` schenanigans!
+Inline images are now rendered correctly in Dataview tables and lists - no more hacky `app://local/` shenanigans!
 
 ---
 
@@ -560,7 +560,7 @@ Inline images are now rendered correctly in Dataview tables and lists - no more 
 # 0.5.1 (Beta)
 
 - Temporarily revert the new task metadata behavior: inline fields in sublists of tasks are added to the page, instead
-  of the task. This behavior is not good, but is compatible with legacy usages of task metadata, which should uinbreak
+  of the task. This behavior is not good, but is compatible with legacy usages of task metadata, which should not break
   some existing queries.
     - This behavior will be removed in the future behind a flag.
 - Added the 'visual' field to tasks - if set, tasks render 'visual' instead of their regular text.

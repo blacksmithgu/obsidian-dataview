@@ -12,7 +12,7 @@ import {
 import { renderErrorPre } from "ui/render";
 import { FullIndex } from "data-index/index";
 import { parseField } from "expression/parse";
-import { tryOrPropogate } from "util/normalize";
+import { tryOrPropagate } from "util/normalize";
 import { DataviewApi, isDataviewDisabled } from "api/plugin-api";
 import { DataviewSettings, DEFAULT_QUERY_SETTINGS, DEFAULT_SETTINGS } from "settings";
 import { DataviewInlineRenderer } from "ui/views/inline-view";
@@ -279,7 +279,7 @@ export default class DataviewPlugin extends Plugin {
                 let potentialField = text.substring(this.settings.inlineQueryPrefix.length).trim();
                 if (potentialField.length == 0) continue;
 
-                let field = tryOrPropogate(() => parseField(potentialField));
+                let field = tryOrPropagate(() => parseField(potentialField));
                 if (!field.successful) {
                     let errorBlock = el.createEl("div");
                     renderErrorPre(errorBlock, `Dataview (inline field '${potentialField}'): ${field.error}`);

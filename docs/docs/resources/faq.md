@@ -50,9 +50,9 @@ WHERE duration
 
 Gives you
 
-| File (1)	| start| 	end| 	duration| 
-| ---- | ----- | ------ |  ----- | 
-| Example | 7 hours	| 18 hours| 	9 hours, 30 minutes | 
+| File (1)	| start| 	end| 	duration|
+| ---- | ----- | ------ |  ----- |
+| Example | 7 hours	| 18 hours| 	9 hours, 30 minutes |
 
 **But storing a Inline DQL in a field comes with a limitation**: While the value that gets displayed in the result is the calculated one, **the saved value inside your metadata field is still your Inline DQL calculation**. The value is literally `= this.end - this.start - this.pause`. This means you cannot filter for the Inlines' result like:
 
@@ -79,7 +79,7 @@ You can use [CSS Snippets](https://help.obsidian.md/Extending+Obsidian/CSS+snipp
 }
 ```
 
-In general there are no unique ID's given to a specific table on a page, so the mentioned targetting applies to any note having that `cssclasses` defined and **all** tables on that page. Currently you can't target a specific table using an ordinary query, but if you're using javascript, you can add the class `clsname` directly to your query result by doing:
+In general there are no unique ID's given to a specific table on a page, so the mentioned targeting applies to any note having that `cssclasses` defined and **all** tables on that page. Currently you can't target a specific table using an ordinary query, but if you're using javascript, you can add the class `clsname` directly to your query result by doing:
 
 ```js
 dv.container.className += ' clsname'
@@ -96,11 +96,11 @@ table:has([href="#myId"]) {
    /* Style your table as you like */
   background-color: #262626;
   & tr:nth-child(even) td:first-child{
-    background-color: #3f3f3f;  
+    background-color: #3f3f3f;
   }
 }
 ```
 
-Which would end up having a grey background on the entire table, and the first cell in every even row a different variant of grey. **Disclaimer:** We're not style gurus, so this is just an example to show some of the syntax needed for styling different parts of a table. 
+Which would end up having a grey background on the entire table, and the first cell in every even row a different variant of grey. **Disclaimer:** We're not style gurus, so this is just an example to show some of the syntax needed for styling different parts of a table.
 
 Furthermore, in [Style dataview table columns](https://s-blu.github.io/obsidian_dataview_example_vault/20%20Dataview%20Queries/Style%20dataview%20table%20columns/) @s-blu describes an alternate trick using `<span>` to style various parts of table cells (and columns).
