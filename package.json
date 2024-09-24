@@ -40,7 +40,7 @@
     "ts-jest": "^29.1.1",
     "tslib": "^2.6.2",
     "typescript": "^5.2.2",
-    "rollup": "^2.79.1",
+    "rollup": "^3.29.5",
     "rollup-jest": "^3.1.0",
     "rollup-plugin-copy": "^3.5.0",
     "rollup-plugin-typescript2": "^0.35.0",
