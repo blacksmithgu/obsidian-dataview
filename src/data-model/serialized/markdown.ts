@@ -41,7 +41,7 @@ export type SListItem = SListEntry | STask;
 
 /** Shared data between list items. */
 export interface SListItemBase {
-    /** The symbo used to start this list item, like '1.' or '1)' or '*'. */
+    /** The symbol used to start this list item, like '1.' or '1)' or '*'. */
     symbol: string;
     /** A link to the closest thing to this list item (a block, a section, or a file). */
     link: Link;

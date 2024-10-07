@@ -171,7 +171,7 @@ export class DataviewInlineApi {
      * Note that `this` is implicitly available and refers to the current file.
      *
      * This method returns a Result type instead of throwing an error; you can check the result of the
-     * execution via `result.successful` and obtain `result.value` or `result.error` resultingly. If
+     * execution via `result.successful` and obtain `result.value` or `result.error` accordingly. If
      * you'd rather this method throw on an error, use `dv.tryEvaluate`.
      */
     public evaluate(expression: string, context?: DataObject): Result<Literal, string> {
@@ -208,7 +208,7 @@ export class DataviewInlineApi {
         return this.api.array(raw);
     }
 
-    /** Return true if theg given value is a javascript array OR a dataview data array. */
+    /** Return true if the given value is a javascript array OR a dataview data array. */
     public isArray(raw: any): raw is DataArray<any> | Array<any> {
         return this.api.isArray(raw);
     }

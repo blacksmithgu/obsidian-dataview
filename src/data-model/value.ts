@@ -264,7 +264,7 @@ export namespace Values {
         }
     }
 
-    /** Find the corresponding Dataveiw type for an arbitrary value. */
+    /** Find the corresponding Dataview type for an arbitrary value. */
     export function typeOf(val: any): LiteralType | undefined {
         return wrapValue(val)?.type;
     }

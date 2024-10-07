@@ -40,7 +40,7 @@ export function markdownTable(
     let table = `| ${headers.map((v, i) => padright(escapeTable(v), " ", maxLengths[i])).join(" | ")} |\n`;
     // Then the separating column.
     table += `| ${maxLengths.map(i => padright("", "-", i)).join(" | ")} |\n`;
-    // Then the data colunns.
+    // Then the data columns.
     for (let row = 0; row < values.length; row++) {
         table += `| ${mvalues[row].map((v, i) => padright(v, " ", maxLengths[i])).join(" | ")} |\n`;
     }

@@ -57,7 +57,7 @@ function findClosing(
         if (char == open) nesting++;
         else if (char == close) nesting--;
 
-        // Only occurs if we are on a close character and trhere is no more nesting.
+        // Only occurs if we are on a close character and there is no more nesting.
         if (nesting < 0) return { value: line.substring(start, index).trim(), endIndex: index + 1 };
 
         escaped = false;
@@ -74,7 +74,7 @@ function findSeparator(line: string, start: number): { key: string; valueIndex: 
     return { key: line.substring(start, sep).trim(), valueIndex: sep + 2 };
 }
 
-/** Try to completely parse an inline field starting at the given position. Assuems `start` is on a wrapping character. */
+/** Try to completely parse an inline field starting at the given position. Assumes `start` is on a wrapping character. */
 function findSpecificInlineField(line: string, start: number): InlineField | undefined {
     let open = line.charAt(start);
 

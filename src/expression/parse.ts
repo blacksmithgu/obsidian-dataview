@@ -495,7 +495,7 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
 
     atomField: q =>
         P.alt(
-            // Place embed links above negated fields as they are the special parser case '![[thing]]' and are generally unambigious.
+            // Place embed links above negated fields as they are the special parser case '![[thing]]' and are generally unambiguous.
             q.embedLink.map(l => Fields.literal(l)),
             q.negatedField,
             q.linkField,

@@ -33,7 +33,7 @@ There are two specifics to these emoji-shorthands. First, they omit the inline f
 | start | `🛫YYYY-MM-DD` |
 | scheduled | `⏳YYYY-MM-DD` |
 
-This means if you want to query for all tasks that are completed 2021-08-22, you'll write: 
+This means if you want to query for all tasks that are completed 2021-08-22, you'll write:
 
 ~~~markdown
 ```dataview
@@ -54,7 +54,7 @@ Which will list both variants - shorthands and textual annotation:
 As with pages, Dataview adds a number of implicit fields to each task or list item:
 
 !!! info "Inheritance of Fields"
-    Tasks inherit *all fields* from their parent page - so if you have a `rating` field in your page, you can also access it on your task in a `TASK` Query. 
+    Tasks inherit *all fields* from their parent page - so if you have a `rating` field in your page, you can also access it on your task in a `TASK` Query.
 
 
 | Field name | Data Type | Description |
@@ -64,7 +64,7 @@ As with pages, Dataview adds a number of implicit fields to each task or list it
 | `completed` |  Boolean  | Whether or not this *specific* task has been completed; this does not consider the completion or non-completion of any child tasks. A task is explicitly considered "completed" if it has been marked with an `"x"`. If you use a custom status, e.g. `[-]`, `checked` will be true, whereas `completed` will be false. |
 | `fullyCompleted` |  Boolean  | Whether or not this task and **all** of its subtasks are completed. |
 | `text` |  Text  | The plain text of this task, including any metadata field annotations. |
-| `visual` | Text | The text of this task, which is rendered by Dataview. This field can be overriden in DataviewJS to allow for different task text to be rendered than the regular task text, while still allowing the task to be checked (since Dataview validation logic normally checks the text against the text in-file). |
+| `visual` | Text | The text of this task, which is rendered by Dataview. This field can be overridden in DataviewJS to allow for different task text to be rendered than the regular task text, while still allowing the task to be checked (since Dataview validation logic normally checks the text against the text in-file). |
 | `line` |  Number  | The line of the file this task shows up on. |
 | `lineCount` |  Number  | The number of Markdown lines that this task takes up. |
 | `path` |  Text  | The full path of the file this task is in. Equals to `file.path` for [pages](./metadata-pages.md). |
@@ -106,4 +106,4 @@ WHERE any(file.tasks, (t) => !t.fullyCompleted)
 ```
 ~~~
 
-This will give you back all the file links that have unfinished tasks inside. We get back a list of tasks on page level and thus need to use a [list function](../reference/functions.md) to look at each element. 
+This will give you back all the file links that have unfinished tasks inside. We get back a list of tasks on page level and thus need to use a [list function](../reference/functions.md) to look at each element.

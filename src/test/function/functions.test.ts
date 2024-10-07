@@ -124,7 +124,7 @@ test("Evaluate choose()", () => {
     expect(parseEval("choice(false, 1, 2)")).toEqual(2);
 });
 
-test("Evaulate hash()", () => {
+test("Evaluate hash()", () => {
     expect(DefaultFunctions.hash(simpleContext(), "2024-03-17", "")).toEqual(3259376374957153);
     expect(DefaultFunctions.hash(simpleContext(), "2024-03-17", 2)).toEqual(271608741894590);
     expect(DefaultFunctions.hash(simpleContext(), "2024-03-17", "Home")).toEqual(3041844187830523);

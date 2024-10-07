@@ -29,7 +29,7 @@ interface FunctionVariant {
 
 /**
  * Allows for the creation of functions that check the number and type of their arguments, and dispatch
- * to different implemenations based on the types of the inputs.
+ * to different implementations based on the types of the inputs.
  */
 export class FunctionBuilder {
     variants: FunctionVariant[];
@@ -486,7 +486,7 @@ export namespace DefaultFunctions {
         .vectorize(2, [1])
         .build();
 
-    // Case insensitive contains which looks for exact word matches (i.e., boundry-to-boundry match).
+    // Case insensitive contains which looks for exact word matches (i.e., boundary-to-boundary match).
     export const containsword: FunctionImpl = new FunctionBuilder("containsword")
         .add2(
             "string",

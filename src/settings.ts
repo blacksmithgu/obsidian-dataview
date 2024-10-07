@@ -23,7 +23,7 @@ export interface QuerySettings {
     refreshInterval: number;
     /** The default format that dates are rendered in (using luxon's moment-like formatting). */
     defaultDateFormat: string;
-    /** The default format that date-times are rendered in (using luxons moment-like formatting). */
+    /** The default format that date-times are rendered in (using luxon's moment-like formatting). */
     defaultDateTimeFormat: string;
     /** Maximum depth that objects will be expanded when being rendered recursively. */
     maxRecursiveRenderDepth: number;

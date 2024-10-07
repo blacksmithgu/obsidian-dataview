@@ -71,7 +71,7 @@ export function extractSubtags(tag: string): string[] {
 }
 
 /** Try calling the given function; on failure, return the error message.  */
-export function tryOrPropogate<T>(func: () => Result<T, string>): Result<T, string> {
+export function tryOrPropagate<T>(func: () => Result<T, string>): Result<T, string> {
     try {
         return func();
     } catch (error) {
@@ -80,7 +80,7 @@ export function tryOrPropogate<T>(func: () => Result<T, string>): Result<T, stri
 }
 
 /** Try asynchronously calling the given function; on failure, return the error message. */
-export async function asyncTryOrPropogate<T>(func: () => Promise<Result<T, string>>): Promise<Result<T, string>> {
+export async function asyncTryOrPropagate<T>(func: () => Promise<Result<T, string>>): Promise<Result<T, string>> {
     try {
         return await func();
     } catch (error) {

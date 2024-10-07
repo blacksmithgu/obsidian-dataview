@@ -18,7 +18,7 @@ import {
     useIndexBackedState,
     DataviewInit,
 } from "ui/markdown";
-import { asyncTryOrPropogate } from "util/normalize";
+import { asyncTryOrPropagate } from "util/normalize";
 
 /** Function used to test if a given event correspond to a pressed link */
 function wasLinkPressed(evt: preact.JSX.TargetedMouseEvent<HTMLElement>): boolean {
@@ -215,7 +215,7 @@ export function TaskView({ query, sourcePath }: { query: Query; sourcePath: stri
         context.index,
         { state: "loading" },
         async () => {
-            let result = await asyncTryOrPropogate(() =>
+            let result = await asyncTryOrPropagate(() =>
                 executeTask(query, sourcePath, context.index, context.settings)
             );
             if (!result.successful) return { state: "error", error: result.error, sourcePath };

@@ -30,7 +30,7 @@ import { createFixedListView, createListView } from "ui/views/list-view";
 import { createFixedTableView, createTableView } from "ui/views/table-view";
 import { Result } from "api/result";
 import { parseQuery } from "query/parse";
-import { tryOrPropogate } from "util/normalize";
+import { tryOrPropagate } from "util/normalize";
 import { Query } from "query/query";
 import { DataviewCalendarRenderer } from "ui/views/calendar-view";
 import { DataviewJSRenderer } from "ui/views/js-view";
@@ -99,7 +99,7 @@ export class DataviewApi {
         this.io = new DataviewIOApi(this);
     }
 
-    /** Utilities to check the current Dataview version and comapre it to SemVer version ranges. */
+    /** Utilities to check the current Dataview version and compare it to SemVer version ranges. */
     public version: {
         current: string;
         compare: (op: CompareOperator, ver: string) => boolean;
@@ -356,7 +356,7 @@ export class DataviewApi {
      * ```
      *
      * This method returns a Result type instead of throwing an error; you can check the result of the
-     * execution via `result.successful` and obtain `result.value` or `result.error` resultingly. If
+     * execution via `result.successful` and obtain `result.value` or `result.error` accordingly. If
      * you'd rather this method throw on an error, use `dv.tryEvaluate`.
      */
     public evaluate(expression: string, context?: DataObject, originFile?: string): Result<Literal, string> {
@@ -406,7 +406,7 @@ export class DataviewApi {
             return;
         }
 
-        let maybeQuery = tryOrPropogate(() => parseQuery(source));
+        let maybeQuery = tryOrPropagate(() => parseQuery(source));
 
         // In case of parse error, just render the error.
         if (!maybeQuery.successful) {

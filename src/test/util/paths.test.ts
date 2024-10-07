@@ -8,7 +8,7 @@ describe("getFileTitle()", () => {
         expect(getFileTitle("yes")).toEqual("yes");
     });
 
-    test("folder getFielTitle()", () => {
+    test("folder getFileTitle()", () => {
         expect(getFileTitle("ok/yes.md")).toEqual("yes");
         expect(getFileTitle("/yes")).toEqual("yes");
     });

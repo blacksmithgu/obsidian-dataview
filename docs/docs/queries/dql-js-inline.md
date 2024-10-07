@@ -6,7 +6,7 @@ when your vault changes.
 
 ## Dataview Query Language (DQL)
 
-The [**Dataview Query Language**](../../queries/structure) (for short **DQL**) is a SQL-like language and Dataviews core functionality. It supports [four Query Types](./query-types.md) to produce different outputs, [data commands](./data-commands.md) to refine, resort or group your result and [plentiful functions](../reference/functions.md) which allow numerous operations and adjustments to achieve your wanted output. 
+The [**Dataview Query Language**](../../queries/structure) (for short **DQL**) is a SQL-like language and Dataviews core functionality. It supports [four Query Types](./query-types.md) to produce different outputs, [data commands](./data-commands.md) to refine, resort or group your result and [plentiful functions](../reference/functions.md) which allow numerous operations and adjustments to achieve your wanted output.
 
 !!! warning Differences to SQL
     If you are familiar with SQL, please read [Differences to SQL](../../queries/differences-to-sql) to avoid confusing DQL with SQL.
@@ -43,7 +43,7 @@ Inline DQL Queries display **exactly one value** somewhere in the middle of your
 Today is `= date(today)` - `= [[exams]].deadline - date(today)` until exams!
 ~~~
 
-would, for example, render to 
+would, for example, render to
 
 ~~~markdown
 Today is November 07, 2022 - 2 months, 5 days until exams!
@@ -68,7 +68,7 @@ Final paper due in `= [[Computer Science Theory]].due - date(today)`
 
 🏃‍♂️ Goal reached? `= choice(this.steps > 10000, "YES!", "**No**, get moving!")`
 
-You have `= length(filter(link(dateformat(date(today), "yyyy-MM-dd")).file.tasks, (t) => !t.completed))` tasks to do. `= choice(date(today).weekday > 5, "Take it easy!", "Time to get work done!")` 
+You have `= length(filter(link(dateformat(date(today), "yyyy-MM-dd")).file.tasks, (t) => !t.completed))` tasks to do. `= choice(date(today).weekday > 5, "Take it easy!", "Time to get work done!")`
 ~~~
 
 ## Dataview JS
@@ -92,7 +92,7 @@ what you can do with it, see the [API documentation](../../api/code-reference), 
 examples](../../api/code-examples).
 
 !!! attention "Advanced usage"
-    Writing Javascript queries is a advanced technique that requires understanding in programming and JS. Please be aware that JS Queries have access to your file system and be cautious when using other peopless' JS Queries, especially when they are not publicy shared through the Obsidian Community.
+    Writing Javascript queries is a advanced technique that requires understanding in programming and JS. Please be aware that JS Queries have access to your file system and be cautious when using other peoples' JS Queries, especially when they are not publicly shared through the Obsidian Community.
 
 ## Inline Dataview JS
 

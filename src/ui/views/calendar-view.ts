@@ -7,7 +7,7 @@ import { Query } from "query/query";
 import { DataviewSettings } from "settings";
 import { renderErrorPre } from "ui/render";
 import { DataviewRefreshableRenderer } from "ui/refreshable-view";
-import { asyncTryOrPropogate } from "util/normalize";
+import { asyncTryOrPropagate } from "util/normalize";
 import type { Moment } from "moment";
 
 // CalendarFile is a representation of a particular file, displayed in the calendar view.
@@ -31,7 +31,7 @@ export class DataviewCalendarRenderer extends DataviewRefreshableRenderer {
 
     async render() {
         this.container.innerHTML = "";
-        let maybeResult = await asyncTryOrPropogate(() =>
+        let maybeResult = await asyncTryOrPropagate(() =>
             executeCalendar(this.query, this.index, this.origin, this.settings)
         );
         if (!maybeResult.successful) {
