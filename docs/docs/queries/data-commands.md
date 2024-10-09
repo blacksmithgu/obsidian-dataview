@@ -7,7 +7,7 @@ blocks or multiple `GROUP BY` blocks, for example).
 ## FROM
 
 The `FROM` statement determines what pages will initially be collected and passed onto the other commands for further
-filtering. You can select from any [source](../reference/sources), which currently means by folder, by tag, or by incoming/outgoing links.
+filtering. You can select from any [source](../reference/sources.md), which currently means by folder, by tag, or by incoming/outgoing links.
 
 - **Tags**: To select from a tag (and all its subtags), use `FROM #tag`.
 - **Folders**: To select from a folder (and all its subfolders), use `FROM "folder"`.
