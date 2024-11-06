@@ -29,6 +29,15 @@ FROM "projects/brainstorming"
 ```
 ~~~
 
+The query above will include all files in the `"projects/brainstorming"` folder, as well as all subfolders. To exclude subfolders, use the `file.folder` property.
+
+~~~
+```dataview
+TABLE file.ctime, status
+WHERE file.folder = "projects/brainstorming"
+```
+~~~
+
 
 ### Specific Files
 
