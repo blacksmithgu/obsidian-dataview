@@ -557,25 +557,6 @@ export namespace DefaultFunctions {
         .add1("*", e => e)
         .build();
 
-    // Returns the display name of the element.
-    export const display = new FunctionBuilder("display")
-        .add1("null", (): Literal => "")
-        .add1("array", (a: Literal[], ctx: Context): Literal => {
-            return a.map(e => display(ctx, e)).join(", ");  
-        })
-        .add1("string", (str: string): Literal => normalizeMarkdown(str))
-        .add1("link", (a: Link, ctx: Context): Literal => {
-            if (a.display) {
-                return display(ctx, a.display);
-            } else {
-                return Values.toString(a, ctx.settings).replace(/\[\[.*\|(.*)\]\]/, "$1") 
-            }
-        })
-        .add1("*", (a: Literal, ctx: Context): Literal => {
-            return Values.toString(a, ctx.settings);
-        })
-        .build();
-
     export const regextest = new FunctionBuilder("regextest")
         .add2("string", "string", (pattern: string, field: string) => RegExp(pattern).test(field))
         .add2("null", "*", (_n, _a) => false)
@@ -718,6 +699,25 @@ export namespace DefaultFunctions {
 
     export const ldefault = new FunctionBuilder("ldefault")
         .add2("*", "*", (v, bk) => (Values.isNull(v) ? bk : v))
+        .build();
+
+    // Returns the display name of the element.
+    export const display = new FunctionBuilder("display")
+        .add1("null", (): Literal => "")
+        .add1("array", (a: Literal[], ctx: Context): Literal => {
+            return a.map(e => display(ctx, e)).join(", ");  
+        })
+        .add1("string", (str: string): Literal => normalizeMarkdown(str))
+        .add1("link", (a: Link, ctx: Context): Literal => {
+            if (a.display) {
+                return display(ctx, a.display);
+            } else {
+                return Values.toString(a, ctx.settings).replace(/\[\[.*\|(.*)\]\]/, "$1") 
+            }
+        })
+        .add1("*", (a: Literal, ctx: Context): Literal => {
+            return Values.toString(a, ctx.settings);
+        })
         .build();
 
     export const choice = new FunctionBuilder("choice")
@@ -932,7 +932,6 @@ export const DEFAULT_FUNCTIONS: Record<string, FunctionImpl> = {
     reduce: DefaultFunctions.reduce,
 
     // String Operations
-    display: DefaultFunctions.display,
     regextest: DefaultFunctions.regextest,
     regexmatch: DefaultFunctions.regexmatch,
     regexreplace: DefaultFunctions.regexreplace,
@@ -950,6 +949,7 @@ export const DEFAULT_FUNCTIONS: Record<string, FunctionImpl> = {
     // Utility Operations
     default: DefaultFunctions.fdefault,
     ldefault: DefaultFunctions.ldefault,
+    display: DefaultFunctions.display,
     choice: DefaultFunctions.choice,
     striptime: DefaultFunctions.striptime,
     dateformat: DefaultFunctions.dateformat,
