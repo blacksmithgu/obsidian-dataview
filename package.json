@@ -56,6 +56,7 @@
     "obsidian-calendar-ui": "^0.3.12",
     "papaparse": "^5.3.1",
     "parsimmon": "^1.18.0",
-    "preact": "^10.6.5"
+    "preact": "^10.6.5",
+    "remove-markdown": "^0.5.5"
   }
 }
