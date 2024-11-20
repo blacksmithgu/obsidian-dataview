@@ -1,6 +1,7 @@
 /** Provides an AST for complex queries. */
 import { Source } from "data-index/source";
 import { Field } from "expression/field";
+import { DateTime } from "luxon";
 
 /** The supported query types (corresponding to view types). */
 export type QueryType = "list" | "table" | "task" | "calendar";
@@ -67,6 +68,7 @@ export interface CalendarQuery {
     type: "calendar";
     /** The date field that we'll be grouping notes by for the calendar view */
     field: NamedField;
+    displayedMonth?: DateTime;
 }
 
 export type QueryHeader = ListQuery | TableQuery | TaskQuery | CalendarQuery;

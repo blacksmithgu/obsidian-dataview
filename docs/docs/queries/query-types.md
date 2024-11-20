@@ -486,3 +486,14 @@ CALENDAR due
 WHERE typeof(due) = "date"
 ```
 ~~~
+
+### CALENDAR DEFAULT MONTH
+
+If you want to focus the calendar on a particular month (instead of the current month), you can use `CALENDAR DEFAULT MONTH`.
+
+~~~
+```dataview
+CALENDAR file.ctime
+DEFAULT MONTH 2024-11
+```
+~~~
