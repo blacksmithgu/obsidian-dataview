@@ -60,7 +60,7 @@ Literal|Description
 
 ### Dates
 
-Whenever you use a [field value in Date ISO format](../annotation/types-of-metadata.md#date), you'll need to compare these fields against date objects. Dataview provides some shorthands for common use cases like tomorrow, start of current week etc. Please note that `date()` is also a [function](../functions/#dateany), which can be called on **text** to extract dates.
+Whenever you use a [field value in Date ISO format](../annotation/types-of-metadata.md#date), you'll need to compare these fields against date objects. Dataview provides some shorthands for common use cases like tomorrow, start of current week etc. Please note that `date()` is also a [function](functions.md#dateany), which can be called on **text** to extract dates.
 
 Literal|Description
 -|-

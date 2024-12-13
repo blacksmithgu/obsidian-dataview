@@ -16,11 +16,11 @@ and many more things.
 
 Dataview is highly generic and high performance, scaling up to hundreds of thousands of annotated notes without issue. 
 
-If the built in [query language](query/queries/) is insufficient for your purpose, you can run arbitrary
-JavaScript against the [dataview API](api/intro/) and build whatever utility you might need yourself, right in your notes.
+If the built in [query language](queries/structure.md) is insufficient for your purpose, you can run arbitrary
+JavaScript against the [dataview API](api/intro.md) and build whatever utility you might need yourself, right in your notes.
 
 !!! info "Dataview is about displaying, not editing"
-    Dataview is meant for displaying and calculating data. It is not meant to edit your notes/metadata and will always leave them untouched (... except if you're checking a [Task](queries/query-types.md#task-queries) through Dataview.)
+    Dataview is meant for displaying and calculating data. It is not meant to edit your notes/metadata and will always leave them untouched (... except if you're checking a [Task](queries/query-types.md#task) through Dataview.)
 
 ## How to Use Dataview
 
@@ -72,14 +72,14 @@ In terms of indexed metadata (or what you can query), they are identical, and on
 
 You can access **indexed data** with the help of **Queries**.
 
-There are **three different ways** you can write a Query: With help of the [Dataview Query Language](queries/dql-js-inline/#dataview-query-language-dql), as an [inline statement](queries/dql-js-inline#inline-dql) or in the most flexible but most complex way: as a [Javascript Query](queries/dql-js-inline#dataview-js). 
+There are **three different ways** you can write a Query: With help of the [Dataview Query Language](queries/dql-js-inline.md#dataview-query-language-dql), as an [inline statement](queries/dql-js-inline.md#inline-dql) or in the most flexible but most complex way: as a [Javascript Query](queries/dql-js-inline.md#dataview-js). 
 
-The **Dataview Query Language** (**DQL**) gives you a broad and powerful toolbelt to query, display and operate on your data. An [**inline query**](queries/dql-js-inline#inline-dql) gives you the possibility to display exactly one indexed value anywhere in your note. You can also do calculations this way. With **DQL** at your hands, you'll be probably fine without any Javascript through your data journey.
+The **Dataview Query Language** (**DQL**) gives you a broad and powerful toolbelt to query, display and operate on your data. An [**inline query**](queries/dql-js-inline.md#inline-dql) gives you the possibility to display exactly one indexed value anywhere in your note. You can also do calculations this way. With **DQL** at your hands, you'll be probably fine without any Javascript through your data journey.
 
 A DQL Query consists of several parts:
 
 - Exactly one [**Query Type**](queries/query-types.md) that determines what your Query Output looks like
-- None or one [**FROM statement**](queries/data-commands#from) to pick a specific tag or folder (or another [source](reference/sources.md)) to look at
+- None or one [**FROM statement**](queries/data-commands.md#from) to pick a specific tag or folder (or another [source](reference/sources.md)) to look at
 - None to multiple [**other Data Commands**](queries/data-commands.md) that help you filter, group and sort your wanted output
 
 For example, a Query can look like this:
@@ -93,7 +93,7 @@ LIST
 which list all files in your vault. 
 
 !!! info "Everything but the Query Type is optional"
-    The only thing you need for a valid DQL Query is the Query Type (and on [CALENDAR](queries/query-types#calendar-queries)s, a date field.)
+    The only thing you need for a valid DQL Query is the Query Type (and on [CALENDAR](queries/query-types.md#calendar)s, a date field.)
 
  A more restricted Query might look like this:
 
