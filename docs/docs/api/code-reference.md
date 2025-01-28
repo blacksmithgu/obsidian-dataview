@@ -149,14 +149,14 @@ Dataview: custom view not found for '.views/view1/view.js' or '.views/view1.js'.
 Also note, directory paths always originate from the vault root.
 
 #### Example
-In this example, we have a custom script file named `view1.js` in the `scripts` directory. 
+In this example, we have a custom script file named `view1.js` in the `scripts` directory.
 
 **File:** `scripts/view1.js`
 ```js
 console.log(`Loading view1`);
 
-function foo(...args) {
-  console.log('foo is called with args', ...args);
+function foo(...input) {
+  console.log('foo is called with input, ...input);
 }
 foo(input)
 ```
@@ -165,14 +165,14 @@ And we have an Obsidian document located under `projects`. We'll call `dv.view()
 
 **Document:** `projects/customViews.md`
 ```js
-await dv.view("scripts/view1", { arg1: 'a', arg2: 'b' }) 
+await dv.view("scripts/view1", { arg1: 'a', arg2: 'b' })
 ```
 
 When the above script is executed, it will print the following:
 
 ```
 Loading view1
-foo is called with args {arg1: 'a', arg2: 'b'}
+foo is called with input {arg1: 'a', arg2: 'b'}
 ```
 
 ## Dataviews
@@ -219,7 +219,7 @@ dv.table(
 	["Col1", "Col2", "Col3"],
 		[
 			["Row1", "Dummy", "Dummy"],
-			["Row2", 
+			["Row2",
 				["Bullet1",
 				 "Bullet2",
 				 "Bullet3"],
@@ -272,7 +272,7 @@ Equivalent to `dv.taskList()`, which renders a task list, but returns plain Mark
 const markdown = dv.markdownTaskList(dv.pages("#project").file.tasks);
 dv.paragraph(markdown);
 ```
- 
+
 ## Utility
 
 ### `dv.array(value)`
