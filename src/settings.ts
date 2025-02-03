@@ -90,6 +90,8 @@ export interface DataviewSettings extends QuerySettings, ExportSettings {
     prettyRenderInlineFieldsInLivePreview: boolean;
     /** The keyword for DataviewJS blocks. */
     dataviewJsKeyword: string;
+    /** The language setting for the plugin. */
+    language: string;
 }
 
 /** Default settings for dataview on install. */
@@ -97,6 +99,7 @@ export const DEFAULT_SETTINGS: DataviewSettings = {
     ...DEFAULT_QUERY_SETTINGS,
     ...DEFAULT_EXPORT_SETTINGS,
     ...{
+        language: 'en',
         inlineQueryPrefix: "=",
         inlineJsQueryPrefix: "$=",
         inlineQueriesInCodeblocks: true,
