@@ -162,13 +162,14 @@ export const QUERY_LANGUAGE = P.createLanguage<QueryLanguageTypes>({
                                     .skip(P.optWhitespace)
                                     .atMost(1),
                                 (field, month) => {
-                                return {
-                                    type,
-                                    showId: true,
-                                    field,
-                                    displayedMonth: month.length == 1 ? month[0] : undefined,
-                                } as QueryHeader;
-                            })
+                                    return {
+                                        type,
+                                        showId: true,
+                                        field,
+                                        displayedMonth: month.length == 1 ? month[0] : undefined,
+                                    } as QueryHeader;
+                                }
+                            )
                         );
                     default:
                         return P.fail(`Unrecognized query type '${type}'`);
