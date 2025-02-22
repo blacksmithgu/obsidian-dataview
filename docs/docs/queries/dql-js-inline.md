@@ -6,10 +6,10 @@ when your vault changes.
 
 ## Dataview Query Language (DQL)
 
-The [**Dataview Query Language**](../../queries/structure) (for short **DQL**) is a SQL-like language and Dataviews core functionality. It supports [four Query Types](./query-types.md) to produce different outputs, [data commands](./data-commands.md) to refine, resort or group your result and [plentiful functions](../reference/functions.md) which allow numerous operations and adjustments to achieve your wanted output.
+The [**Dataview Query Language**](structure.md) (for short **DQL**) is a SQL-like language and Dataviews core functionality. It supports [four Query Types](./query-types.md) to produce different outputs, [data commands](./data-commands.md) to refine, resort or group your result and [plentiful functions](../reference/functions.md) which allow numerous operations and adjustments to achieve your wanted output.
 
 !!! warning Differences to SQL
-    If you are familiar with SQL, please read [Differences to SQL](../../queries/differences-to-sql) to avoid confusing DQL with SQL.
+    If you are familiar with SQL, please read [Differences to SQL](differences-to-sql.md) to avoid confusing DQL with SQL.
 
 You create a **DQL** query with a codeblock that uses `dataview` as type:
 
@@ -24,7 +24,7 @@ SORT rating DESC
     A valid codeblock needs to use backticks (\`) on start and end (three each). Do not confuse the backtick with the similar looking apostrophe ' !
 
 Find a explanation how to write a DQL Query under the [query language
-reference](../../queries/structure). If you learn better by example, take a look at the [query examples](../../resources/examples).
+reference](structure.md). If you learn better by example, take a look at the [query examples](../resources/examples.md).
 
 ## Inline DQL
 
@@ -60,7 +60,7 @@ Today is November 07, 2022 - 2 months, 5 days until exams!
 `= [[secondPage]].someMetadataField`
 ~~~
 
-You can use everything available as [expressions](../../reference/expressions) and [literals](../../reference/literals) in an Inline DQL Query, including [functions](../../reference/functions). Query Types and Data Commands, on the other hand, are **not available in Inlines.**
+You can use everything available as [expressions](../reference/expressions.md) and [literals](../reference/literals.md) in an Inline DQL Query, including [functions](../reference/functions.md). Query Types and Data Commands, on the other hand, are **not available in Inlines.**
 
 ~~~markdown
 Assignment due in `= this.due - date(today)`
@@ -73,7 +73,7 @@ You have `= length(filter(link(dateformat(date(today), "yyyy-MM-dd")).file.tasks
 
 ## Dataview JS
 
-The dataview [JavaScript API](../../api/intro) gives you the full power of JavaScript and provides a DSL for pulling
+The dataview [JavaScript API](../api/intro.md) gives you the full power of JavaScript and provides a DSL for pulling
 Dataview data and executing queries, allowing you to create arbitrarily complex queries and views. Similar to the query
 language, you create Dataview JS blocks via a `dataviewjs`-annotated codeblock:
 
@@ -88,8 +88,8 @@ for (let group of pages.groupBy(b => b.genre)) {
 ~~~
 
 Inside of a JS dataview block, you have access to the full dataview API via the `dv` variable. For an explanation of
-what you can do with it, see the [API documentation](../../api/code-reference), or the [API
-examples](../../api/code-examples).
+what you can do with it, see the [API documentation](../api/code-reference.md), or the [API
+examples](../api/code-examples.md).
 
 !!! attention "Advanced usage"
     Writing Javascript queries is a advanced technique that requires understanding in programming and JS. Please be aware that JS Queries have access to your file system and be cautious when using other peoples' JS Queries, especially when they are not publicly shared through the Obsidian Community.

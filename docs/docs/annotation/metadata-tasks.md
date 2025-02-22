@@ -1,6 +1,6 @@
 # Metadata on Tasks and Lists
 
-Just like pages, you can also add **fields** on list item and task level to bind it to a specific task as context. For this you need to use the [inline field syntax](../add-metadata/#inline-fields):
+Just like pages, you can also add **fields** on list item and task level to bind it to a specific task as context. For this you need to use the [inline field syntax](add-metadata.md#inline-fields):
 
 ```markdown
 - [ ] Hello, this is some [metadata:: value]!
@@ -88,7 +88,7 @@ With usage of the [shorthand syntax](#field-shorthands), following additional pr
 
 ### Accessing Implicit Fields in Queries
 
-If you're using a [TASK](../queries/query-types.md#task-queries) Query, your tasks are the top level information and can be used without any prefix:
+If you're using a [TASK](../queries/query-types.md#task) Query, your tasks are the top level information and can be used without any prefix:
 
 ~~~markdown
 ```dataview

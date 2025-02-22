@@ -22,8 +22,8 @@ Get page information (via `dv.page()`) for the page the script is currently exec
 
 ### `dv.pages(source)`
 
-Take a single string argument, `source`, which is the same form as a [query language source](../../reference/sources).
-Return a [data array](../data-array) of page objects, which are plain objects with all of the page fields as
+Take a single string argument, `source`, which is the same form as a [query language source](../reference/sources.md).
+Return a [data array](data-array.md) of page objects, which are plain objects with all of the page fields as
 values.
 
 ```js
@@ -39,7 +39,7 @@ Note that folders need to be double-quoted inside the string (i.e., `dv.pages("f
 
 ### `dv.pagePaths(source)`
 
-As with `dv.pages`, but just returns a [data array](../data-array) of paths of pages that match the given source.
+As with `dv.pages`, but just returns a [data array](data-array.md) of paths of pages that match the given source.
 
 ```js
 dv.pagePaths("#books") => the paths of pages with tag 'books'
@@ -277,7 +277,7 @@ dv.paragraph(markdown);
 
 ### `dv.array(value)`
 
-Convert a given value or array into a Dataview [data array](../data-array). If the value is already a data array, returns
+Convert a given value or array into a Dataview [data array](data-array.md). If the value is already a data array, returns
 it unchanged.
 
 ```js

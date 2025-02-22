@@ -16,7 +16,7 @@ supports:
 - **Limiting** your result count
 
 !!! warning Differences to SQL
-    If you are familiar with SQL, please read [Differences to SQL](../../queries/differences-to-sql) to avoid confusing DQL with SQL.
+    If you are familiar with SQL, please read [Differences to SQL](differences-to-sql.md) to avoid confusing DQL with SQL.
 
 Let's have a look at how we can put DQL to use.
 
@@ -84,7 +84,7 @@ TABLE due, file.tags AS "tags", average(working-hours)
 
 ## Choose your source
 
-Additionally to the Query Types, you have several **Data Commands** available that help you restrict, refine, sort or group your query. One of these query commands is the **FROM** statement. `FROM` takes a [source](../../reference/sources) or a combination of [sources](../../reference/sources) as an argument and restricts the query to a set of pages that match your source.
+Additionally to the Query Types, you have several **Data Commands** available that help you restrict, refine, sort or group your query. One of these query commands is the **FROM** statement. `FROM` takes a [source](../reference/sources.md) or a combination of [sources](../reference/sources.md) as an argument and restricts the query to a set of pages that match your source.
 
 It behaves differently from the other Data Commands: You can add **zero or one** `FROM` data command to your query, right after your Query Type. You cannot add multiple FROM statements and you cannot add it after other Data Commands.
 

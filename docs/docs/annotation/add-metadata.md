@@ -30,9 +30,9 @@ Frontmatter is a common Markdown extension which allows for YAML metadata to be 
 
 With this your note has metadata fields named `alias`, `last-reviewed`, and `thoughts`. Each of these have different **data types**:
 
-- `alias` is a [text](../types-of-metadata/#text), because its wrapped in ""
-- `last-reviewed` is a [date](../types-of-metadata/#date), because it follows the ISO date format
-- `thoughts` is a [object](../types-of-metadata/#object) field, because it uses the YAML Frontmatter object syntax
+- `alias` is a [text](types-of-metadata.md#text), because its wrapped in ""
+- `last-reviewed` is a [date](types-of-metadata.md#date), because it follows the ISO date format
+- `thoughts` is a [object](types-of-metadata.md#object) field, because it uses the YAML Frontmatter object syntax
 
 You could query for this note with the following query:
 

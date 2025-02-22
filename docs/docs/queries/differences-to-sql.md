@@ -1,3 +1,11 @@
+<!--
+ * @Author: chinesehamburger 2576226012@qq.com
+ * @Date: 2024-12-12 14:24:45
+ * @LastEditors: chinesehamburger 2576226012@qq.com
+ * @LastEditTime: 2024-12-13 16:40:43
+ * @FilePath: \obsidian-dataview\docs\docs\queries\differences-to-sql.md
+ * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
+-->
 # Dataview Query Language (DQL) and SQL
 
 If you are familiar with SQL and experienced in writing SQL queries, you might approach writing a DQL query in a similar way. However, DQL is significantly different from SQL.
@@ -12,7 +20,7 @@ Instead of starting with SELECT, a DQL query starts with a word determining the 
 
 The next line starts with FROM which is not followed by a table name but by a complex expression, similar to an SQL WHERE clause. Here you can filter on many things, like tags in files, file names, path names, etc. In the background, this command already produces a result set which will be our initial set for further data manipulation by 'data commands' on subsequent lines.
 
-You can have as many following lines as you want. Each will start with a [data command](../../queries/data-commands) and will re-shape the result set it received from the previous line. For example:
+You can have as many following lines as you want. Each will start with a [data command](data-commands.md) and will re-shape the result set it received from the previous line. For example:
 
 - The WHERE data command will only keep those lines from the result set which match a given condition. This means that, unless all data in the result set matches the condition, this command will pass on a smaller result set to the next line than it received from the previous line. Unlike in SQL, you can have as many WHERE commands as you like.
 - The FLATTEN data command is not found in common SQL but in DQL you can use it to reduce the depth of the result set.
