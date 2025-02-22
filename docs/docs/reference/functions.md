@@ -704,6 +704,23 @@ default(list(1, 2, null), 3) = list(1, 2, 3)
 ldefault(list(1, 2, null), 3) = list(1, 2, null)
 ```
 
+### `display()`
+
+Display function converts the input into a string representation while trying to
+preserve the display property of data types.
+This means that links and urls will be replaced by their display value.
+
+
+```js
+display("Hello World") = "Hello World"
+display("**Hello** World") = "Hello World"
+display("[Hello](https://example.com) [[World]]") = "Hello World"
+display(link("path/to/file.md")) = "file"
+display(link("path/to/file.md", "displayname")) = "displayname"
+display(date("2024-11-18")) = "November 18, 2024"
+display(list("Hello", "World")) = "Hello, World"
+```
+
 ### `choice(bool, left, right)`
 
 A primitive if statement - if the first argument is truthy, returns left; otherwise, returns right.
