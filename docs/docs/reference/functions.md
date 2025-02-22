@@ -512,6 +512,14 @@ filter([1, 2, 3], (x) => x >= 2) = [2, 3]
 filter(["yes", "no", "yas"], (x) => startswith(x, "y")) = ["yes", "yas"]
 ```
 
+### `unique(array)`
+
+Creates a new array with only unique values. 
+
+```js
+unique([1, 3, 7, 3, 1]) => [1, 3, 7]
+```
+
 ### `map(array, func)`
 
 Applies the function to each element in the array, returning a list of the mapped results.
