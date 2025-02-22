@@ -1,5 +1,6 @@
 // Basic API type.
 export type { DataviewApi } from "api/plugin-api";
+export type { DataviewInlineApi, DataviewInlineIOApi } from "api/inline-api";
 
 // Core Dataview types.
 export type { DateTime, Duration } from "luxon";
