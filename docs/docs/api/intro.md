@@ -20,11 +20,11 @@ reference](../code-reference/).
 
 ## Disabling Automatic View Refresh Individually
 
-This is especially useful when using Dataview to render diagrams that are static and do not change, yet allows for `Automatic view refreshing` to work as intended across the rest of your vault. Simply add `disable-refresh` anywhere as a comment within your codeblock to disable refreshing for that particular script.
+This is especially useful when using Dataview to render diagrams that are static and do not change, yet allows for `Automatic view refreshing` to work as intended across the rest of your vault. Simply add `@dataviewjs-disable-refresh` anywhere as a comment within your codeblock to disable refreshing for that particular script.
 
 ~~~
 ```dataviewjs
-// disable-refresh
+// @dataviewjs-disable-refresh
 await dv.view("diagram", 0)
 ```
 ~~~
