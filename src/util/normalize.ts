@@ -164,13 +164,13 @@ export function setsEqual<T>(first: Set<T>, second: Set<T>): boolean {
 /** Normalize a markdown string. Removes all markdown tags and obsidian links. */
 export function normalizeMarkdown(str: string): string {
     // [[test]] -> test
-    let interim = str.replace(/\[\[([^\|]*?)\]\]/g, "$1")
+    let interim = str.replace(/\[\[([^\|]*?)\]\]/g, "$1");
 
     // [[test|test]] -> test
-    interim = interim.replace(/\[\[.*?\|(.*?)\]\]/, "$1")
-    
+    interim = interim.replace(/\[\[.*?\|(.*?)\]\]/, "$1");
+
     // remove markdown tags
     interim = removeMd(interim);
 
-    return interim
+    return interim;
 }
