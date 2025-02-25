@@ -74,7 +74,7 @@
     padding-right: 8px;
     font-family: var(--font-monospace);
     background-color: var(--background-primary-alt);
-    color: var(--text-nav-selected);
+    color: var(--nav-item-color-selected);
 }
 
 .dataview.inline-field-value {
@@ -82,7 +82,7 @@
     padding-right: 8px;
     font-family: var(--font-monospace);
     background-color: var(--background-secondary-alt);
-    color: var(--text-nav-selected);
+    color: var(--nav-item-color-selected);
 }
 
 .dataview.inline-field-standalone-value {
@@ -90,7 +90,7 @@
     padding-right: 8px;
     font-family: var(--font-monospace);
     background-color: var(--background-secondary-alt);
-    color: var(--text-nav-selected);
+    color: var(--nav-item-color-selected);
 }
 
 /***************/
