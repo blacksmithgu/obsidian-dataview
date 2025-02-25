@@ -705,14 +705,14 @@ export namespace DefaultFunctions {
     export const display = new FunctionBuilder("display")
         .add1("null", (): Literal => "")
         .add1("array", (a: Literal[], ctx: Context): Literal => {
-            return a.map(e => display(ctx, e)).join(", ");  
+            return a.map(e => display(ctx, e)).join(", ");
         })
         .add1("string", (str: string): Literal => normalizeMarkdown(str))
         .add1("link", (a: Link, ctx: Context): Literal => {
             if (a.display) {
                 return display(ctx, a.display);
             } else {
-                return Values.toString(a, ctx.settings).replace(/\[\[.*\|(.*)\]\]/, "$1") 
+                return Values.toString(a, ctx.settings).replace(/\[\[.*\|(.*)\]\]/, "$1");
             }
         })
         .add1("*", (a: Literal, ctx: Context): Literal => {

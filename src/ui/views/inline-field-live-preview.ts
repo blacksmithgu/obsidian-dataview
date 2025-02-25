@@ -237,6 +237,10 @@ class InlineFieldWidget extends WidgetType {
 
             const value = renderContainer.createSpan({
                 cls: ["dataview", "inline-field-value"],
+                attr: {
+                    "data-dv-key": this.field.key,
+                    "data-dv-norm-key": canonicalizeVarName(this.field.key),
+                },
             });
             renderValue(
                 this.app,
