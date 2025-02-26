@@ -12,18 +12,27 @@ function failableImport(path: string, contents: string, stat: FileStats, metadat
     return runImport(path, contents, stat, metadata);
 }
 
+const workerCode = `
+// 导入必要的函数和类型
+const { runImport } = require("data-import/web-worker/import-impl");
+const { Transferable } = require("data-model/transferable");
+
+function failableImport(path, contents, stat, metadata) {
+    if (metadata === undefined || metadata === null) {
+        throw Error("Cannot index file, since it has no Obsidian file metadata.");
+    }
+    return runImport(path, contents, stat, metadata);
+}
+
 onmessage = async evt => {
     try {
         let { path, contents, stat, metadata } = evt.data;
-        let result = failableImport(path, contents, stat, metadata);
-        (postMessage as any)({ path: evt.data.path, result: Transferable.transferable(result) });
+        let result = await runImport(path, contents, stat, metadata);
+        postMessage({ path, result: Transferable.wrap(result) });
     } catch (error) {
-        console.log(error);
-        (postMessage as any)({
-            path: evt.data.path,
-            result: {
-                $error: `Failed to index file: ${evt.data.path}: ${error}`,
-            },
-        });
+        postMessage({ path: evt.data.path, result: Transferable.wrap({ $error: error.message }) });
     }
 };
+`;
+
+export default workerCode;
