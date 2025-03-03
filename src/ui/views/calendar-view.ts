@@ -67,6 +67,15 @@ export class DataviewCalendarRenderer extends DataviewRefreshableRenderer {
 
         const sources: ICalendarSource[] = [querySource];
         const renderer = this;
+
+        const debounce = (func: (...args: any[]) => void, wait: number) => {
+            let timeout: NodeJS.Timeout;
+            return (...args: any[]) => {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), wait);
+            };
+        };
+
         this.calendar = new Calendar({
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             target: (this as any).container,
@@ -79,8 +88,30 @@ export class DataviewCalendarRenderer extends DataviewRefreshableRenderer {
                     if (vals?.length == 0) {
                         return;
                     }
+                    let currentHoverIndex = 0;
 
-                    renderer.app.workspace.trigger("link-hover", {}, targetEl, vals[0].link.path, vals[0].link.path);
+                    const showHoverElement = () => {
+                        // Get the current value in prep for display on hover
+                        const val = vals[currentHoverIndex];
+                        if (!val) {
+                            return;
+                        }
+
+                        // Trigger the "link-hover" event
+                        renderer.app.workspace.trigger("link-hover", {}, targetEl, val.link.path, val.link.path);
+
+                        // Move to the next note in the vals array
+                        currentHoverIndex = (currentHoverIndex + 1) % vals.length;
+                    };
+
+                    // Debounced version of showHoverElement
+                    const debouncedShowHoverElement = debounce(showHoverElement, 100); // 100ms
+
+                    // Show the initial hover element
+                    showHoverElement();
+
+                    // Add event listener for mouse movement to loop through vals
+                    targetEl.addEventListener('mousemove', debouncedShowHoverElement);
                 },
                 onClickDay: async date => {
                     const vals = dateMap.get(date.format("YYYYMMDD"));
