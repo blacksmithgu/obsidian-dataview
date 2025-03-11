@@ -30,7 +30,7 @@ Yes! Please see the [Resources](../resources/resources-and-support.md) page.
 
 ### Can I save the result of a query for reusability?
 
-You can write reusable Javascript Queries with the [dv.view](../../api/code-reference/#dvviewpath-input) function. In DQL, beside the possibility of writing your Query inside a Template and using this template (either with the [Core Plugin Templates](https://help.obsidian.md/Plugins/Templates) or the popular Community Plugin [Templater](https://obsidian.md/plugins?id=templater-obsidian)), you can **save calculations in metadata fields via [Inline DQL](../../queries/dql-js-inline#inline-dql)**, for example:
+You can write reusable Javascript Queries with the [dv.view](../api/code-reference.md#dvviewpath-input) function. In DQL, beside the possibility of writing your Query inside a Template and using this template (either with the [Core Plugin Templates](https://help.obsidian.md/Plugins/Templates) or the popular Community Plugin [Templater](https://obsidian.md/plugins?id=templater-obsidian)), you can **save calculations in metadata fields via [Inline DQL](../queries/dql-js-inline.md#inline-dql)**, for example:
 
 ```markdown
 start:: 07h00m

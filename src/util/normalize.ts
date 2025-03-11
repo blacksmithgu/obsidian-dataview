@@ -3,6 +3,7 @@ import { Result } from "api/result";
 import * as P from "parsimmon";
 import emojiRegex from "emoji-regex";
 import { QuerySettings } from "settings";
+import removeMd from "remove-markdown";
 
 /** Normalize a duration to all of the proper units. */
 export function normalizeDuration(dur: Duration) {
@@ -158,4 +159,18 @@ export function setsEqual<T>(first: Set<T>, second: Set<T>): boolean {
     for (let elem of first) if (!second.has(elem)) return false;
 
     return true;
+}
+
+/** Normalize a markdown string. Removes all markdown tags and obsidian links. */
+export function normalizeMarkdown(str: string): string {
+    // [[test]] -> test
+    let interim = str.replace(/\[\[([^\|]*?)\]\]/g, "$1");
+
+    // [[test|test]] -> test
+    interim = interim.replace(/\[\[.*?\|(.*?)\]\]/, "$1");
+
+    // remove markdown tags
+    interim = removeMd(interim);
+
+    return interim;
 }

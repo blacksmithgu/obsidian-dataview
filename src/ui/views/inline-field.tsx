@@ -39,7 +39,11 @@ export async function replaceInlineFields(ctx: MarkdownPostProcessorContext, ini
         } else {
             renderContainer.createSpan({
                 cls: ["dataview", "inline-field-standalone-value"],
-                attr: { id: "dataview-inline-field-" + x },
+                attr: {
+                    id: "dataview-inline-field-" + x,
+                    "data-dv-key": field.key,
+                    "data-dv-norm-key": canonicalizeVarName(field.key),
+                },
             });
         }
 

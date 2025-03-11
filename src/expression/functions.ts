@@ -7,7 +7,7 @@ import { LiteralReprAll, LiteralTypeOrAll } from "./binaryop";
 import { Context } from "./context";
 import { Fields } from "./field";
 import { EXPRESSION } from "./parse";
-import { escapeRegex } from "util/normalize";
+import { escapeRegex, normalizeMarkdown } from "util/normalize";
 import { DataArray } from "api/data-array";
 import { cyrb53 } from "util/hash";
 
@@ -701,6 +701,25 @@ export namespace DefaultFunctions {
         .add2("*", "*", (v, bk) => (Values.isNull(v) ? bk : v))
         .build();
 
+    // Returns the display name of the element.
+    export const display = new FunctionBuilder("display")
+        .add1("null", (): Literal => "")
+        .add1("array", (a: Literal[], ctx: Context): Literal => {
+            return a.map(e => display(ctx, e)).join(", ");
+        })
+        .add1("string", (str: string): Literal => normalizeMarkdown(str))
+        .add1("link", (a: Link, ctx: Context): Literal => {
+            if (a.display) {
+                return display(ctx, a.display);
+            } else {
+                return Values.toString(a, ctx.settings).replace(/\[\[.*\|(.*)\]\]/, "$1");
+            }
+        })
+        .add1("*", (a: Literal, ctx: Context): Literal => {
+            return Values.toString(a, ctx.settings);
+        })
+        .build();
+
     export const choice = new FunctionBuilder("choice")
         .add3("*", "*", "*", (b, left, right) => (Values.isTruthy(b) ? left : right))
         .vectorize(3, [0])
@@ -930,6 +949,7 @@ export const DEFAULT_FUNCTIONS: Record<string, FunctionImpl> = {
     // Utility Operations
     default: DefaultFunctions.fdefault,
     ldefault: DefaultFunctions.ldefault,
+    display: DefaultFunctions.display,
     choice: DefaultFunctions.choice,
     striptime: DefaultFunctions.striptime,
     dateformat: DefaultFunctions.dateformat,

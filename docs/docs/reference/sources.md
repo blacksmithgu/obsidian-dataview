@@ -1,7 +1,7 @@
 # Sources
 
 A dataview **source** is something that identifies a set of files, tasks, or other data. Sources are indexed internally by
-Dataview, so they are fast to query. The most prominent use of sources is the [FROM data command](../queries#from). They are also used in various JavaScript API query calls.
+Dataview, so they are fast to query. The most prominent use of sources is the [FROM data command](../../queries/data-commands.md#from). They are also used in various JavaScript API query calls.
 
 ## Types of Sources
 
