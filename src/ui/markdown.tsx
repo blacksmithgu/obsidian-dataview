@@ -243,24 +243,13 @@ export function useIndexBackedState<T>(
     initial: T,
     compute: () => Promise<T>
 ): T {
-    let [initialized, setInitialized] = useState(false);
     let [state, updateState] = useState(initial);
-    let [lastReload, setLastReload] = useState(index.revision);
-
-    // Initial setup to queue fetching the correct state.
-    if (!initialized) {
-        setLastReload(index.revision);
-        setInitialized(true);
-
-        compute().then(updateState);
-    }
 
     // Updated on every container re-create; automatically updates state.
     useEffect(() => {
         const refreshOperation = () => {
-            if (lastReload != index.revision && container.isShown() && settings.refreshEnabled) {
+            if (container.isShown() && settings.refreshEnabled) {
                 compute().then(updateState);
-                setLastReload(index.revision);
             }
         };
 
@@ -269,11 +258,14 @@ export function useIndexBackedState<T>(
         // ...or when the DOM is shown (sidebar expands, tab selected, nodes scrolled into view).
         let nodeEvent = container.onNodeInserted(refreshOperation);
 
+        // Handle the initial refresh
+        compute().then(updateState);
+
         return () => {
             app.workspace.offref(workEvent);
             nodeEvent();
         };
-    }, [container, lastReload]);
+    }, [container]);
 
     return state;
 }
