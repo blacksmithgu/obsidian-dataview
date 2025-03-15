@@ -1,10 +1,35 @@
 #!/usr/bin/env bash
 # Automatically update versions in files and create an autorelease.
 # Requires the github CLI and jq (if you don't update the version manually).
+EXIT=""
 NEW_VERSION=$1
 
+if [ -z "$EDITOR" ]; then
+  echo "Specify which editor to use in EDITOR, or by doing: EDITOR=vi ./scripts/release 0.x.y"
+  EXIT=1
+fi
+
+if ! command -v jq 2>&1 >/dev/null; then
+  echo "This script relies on the 'jq' command, please install it"
+  EXIT=1
+fi
+
+if ! command -v gh 2>&1 >/dev/null; then
+  echo "This script relies on the 'gh' command from the Github CLI package, please install it"
+  EXIT=1
+fi
+
+if [ $EXIT ]; then
+  exit $EXIT
+fi
+
 if [ -z "$NEW_VERSION" ]; then
-    NEW_VERSION=$(jq -r ".version" manifest-beta.json | awk -F. -v OFS=. '{$NF += 1 ; print}')
+  NEW_VERSION=$(jq -r ".version" manifest-beta.json | awk -F. -v OFS=. '{$NF += 1 ; print}')
+fi
+
+if [ -z "$NEW_VERSION" ]; then
+  echo "Auto-generating next version number failed, please specify next version : ./scripts/release 0.x.y"
+  exit 1
 fi
 
 # Let users edit release-notes.txt for release notes.
@@ -30,10 +55,10 @@ rm -f manifest-beta.tmp.json
 rm -f versions.tmp.json
 
 # Rewrite versions in relevant files.
-# no jq# jq ".version=\"${NEW_VERSION}\"" package.json > package.tmp.json && mv package.tmp.json package.json
-# no jq# jq ".version=\"${NEW_VERSION}\"" manifest.json > manifest.tmp.json && mv manifest.tmp.json manifest.json
-# no jq# jq ".version=\"${NEW_VERSION}\"" manifest-beta.json > manifest-beta.tmp.json && mv manifest-beta.tmp.json manifest-beta.json
-# no jq# jq ". + {\"${NEW_VERSION}\": \"0.12.0\"}" versions.json > versions.tmp.json && mv versions.tmp.json versions.json
+jq ".version=\"${NEW_VERSION}\"" package.json > package.tmp.json && mv package.tmp.json package.json
+jq ".version=\"${NEW_VERSION}\"" manifest.json > manifest.tmp.json && mv manifest.tmp.json manifest.json
+jq ".version=\"${NEW_VERSION}\"" manifest-beta.json > manifest-beta.tmp.json && mv manifest-beta.tmp.json manifest-beta.json
+jq ". + {\"${NEW_VERSION}\": \"0.12.0\"}" versions.json > versions.tmp.json && mv versions.tmp.json versions.json
 
 # Overwrite the beta manifest as well.
 cp manifest.json manifest-beta.json
