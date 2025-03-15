@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # 0.5.68
 
 - Many fixes to the documentation
@@ -10,8 +9,6 @@ This is the first release done by @holroy, so thanks to him for further developi
 
 ---
 
-=======
->>>>>>> parent of 993bf62 (Auto-release 0.5.68)
 # 0.5.67
 
 Includes several documentation fixes and several community-contributed bug fixes.
