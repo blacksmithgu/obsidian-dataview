@@ -162,6 +162,19 @@ This will install libraries, build dataview, and deploy it to `test-vault`, whic
 will also put `rollup` in watch mode, so any changes to the code will be re-compiled and the test vault will automatically
 reload itself.
 
+#### Preparing for creating pull requests
+
+If you plan on doing pull request, we would also recommend to do the following in advance of creating the pull request:
+
+```console
+foo@bar:~$ npm run dev
+foo@bar:~$ npm run check-format
+foo@bar:~$ npm run format
+foo@bar:~$ npm run test
+```
+
+The third step of `npm run format` is only needed if the format check reports some issue.
+
 #### Installing to Other Vaults
 
 If you want to dogfood dataview in your real vault, you can build and install manually. Dataview is predominantly a
@@ -197,4 +210,8 @@ Have you found the Dataview plugin helpful, and want to support it? I accept don
 development efforts. I generally do not accept payment for bug bounties/feature requests, as financial incentives add
 stress/expectations which I want to avoid for a hobby project!
 
+Support @blacksmithgu:  
 [![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/donate?business=Y9SKV24R5A8BQ&item_name=Open+source+software+development&currency_code=USD)
+
+Support @holroy:  
+<a href="https://www.buymeacoffee.com/holroy" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 40px !important;width: 175px !important;" ></a>
