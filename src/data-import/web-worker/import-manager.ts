@@ -1,8 +1,8 @@
 /** Controls and creates Dataview file importers, allowing for asynchronous loading and parsing of files. */
 
 import { Transferable } from "data-model/transferable";
-import DataviewImportWorker from "web-worker:./import-entry.ts";
 import { Component, MetadataCache, TFile, Vault } from "obsidian";
+const importWorker = () => import('./import-entry');
 
 /** Callback when a file is resolved. */
 type FileCallback = (p: any) => void;
@@ -31,12 +31,14 @@ export class FileImporter extends Component {
         this.callbacks = new Map();
 
         for (let index = 0; index < numWorkers; index++) {
-            let worker = new DataviewImportWorker({ name: "Dataview Indexer " + (index + 1) });
-
-            worker.onmessage = evt => this.finish(evt.data.path, Transferable.value(evt.data.result), index);
-            this.workers.push(worker);
-            this.register(() => worker.terminate());
-            this.busy.push(false);
+            importWorker().then(module => {
+                const blob = new Blob([module.default], { type: 'text/javascript' });
+                const worker = new Worker(URL.createObjectURL(blob));
+                worker.onmessage = evt => this.finish(evt.data.path, Transferable.value(evt.data.result), index);
+                this.workers.push(worker);
+                this.register(() => worker.terminate());
+                this.busy.push(false);
+            });
         }
     }
 
