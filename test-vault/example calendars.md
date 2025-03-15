@@ -1,6 +1,6 @@
-
 ```dataview
 CALENDAR thoughtOfDate
+DEFAULT MONTH 2021-12
 FROM
 "recipes"
 ```
