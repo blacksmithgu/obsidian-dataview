@@ -83,3 +83,10 @@ describe("nonnull()", () => {
     test("empty", () => expectEvals("nonnull([])", []));
     test("[null, false]", () => expectEvals("nonnull([null, false])", [false]));
 });
+
+describe("firstvalue()", () => {
+    test("empty", () => expectEvals("firstvalue([])", null));
+    test("null", () => expectEvals("firstvalue(null)", null));
+    test("[1, 2, 3]", () => expectEvals("firstvalue([1, 2, 3])", 1));
+    test("[null, 1, 2]", () => expectEvals("firstvalue([null, 1, 2])", 1));
+});

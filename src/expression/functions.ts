@@ -878,6 +878,16 @@ export namespace DefaultFunctions {
         })
         .add1("null", () => null)
         .build();
+
+    // Returns the first non-null value from the array as a single element
+    export const firstvalue = new FunctionBuilder("firstvalue")
+        .add1("array", a => {
+            let nonnull = a.filter(v => Values.typeOf(v) != "null");
+            let res = nonnull.length != 0 ? nonnull[0] : null;
+            return res;
+        })
+        .add1("null", () => null)
+        .build();
 }
 
 /** Default function implementations for the expression evaluator. */
@@ -919,6 +929,7 @@ export const DEFAULT_FUNCTIONS: Record<string, FunctionImpl> = {
     reverse: DefaultFunctions.reverse,
     length: DefaultFunctions.length,
     nonnull: DefaultFunctions.nonnull,
+    firstvalue: DefaultFunctions.firstvalue,
     all: DefaultFunctions.all,
     any: DefaultFunctions.any,
     none: DefaultFunctions.none,

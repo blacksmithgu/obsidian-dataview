@@ -432,6 +432,15 @@ nonnull([null, false]) = [false]
 nonnull([1, 2, 3]) = [1, 2, 3]
 ```
 
+### `firstvalue(array)`
+
+Return the first non-null value from the array, as a single element. This can be used to pick the first defined field in the children of a task/list item, like in `firstvalue(children.myField)`.
+
+```js
+firstvalue([null, 1, 2]) => 1
+firstvalue(children.myField) => If children.myField equals [null, null, "myValue", null], it would return "myValue"
+```
+
 ### `all(array)`
 
 Returns `true` only if ALL values in the array are truthy. You can also pass multiple arguments to this function, in
