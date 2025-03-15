@@ -49,7 +49,7 @@ would, for example, render to
 Today is November 07, 2022 - 2 months, 5 days until exams!
 ~~~
 
-**Inline DQL** cannot query multiple pages. They always display exactly one value, not a list (or table) of values. You can either access the properties of the **current page** via prefix `this.` or a different page via `[[linkToPage]]`.
+**Inline DQL** queries always display exactly one value, not a list (or table) of values. You can access the properties of the **current page** via prefix `this.` or a different page via `[[linkToPage]].`.
 
 ~~~markdown
 `= this.file.name`
