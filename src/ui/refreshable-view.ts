@@ -10,7 +10,8 @@ export abstract class DataviewRefreshableRenderer extends MarkdownRenderChild {
         public container: HTMLElement,
         public index: FullIndex,
         public app: App,
-        public settings: DataviewSettings
+        public settings: DataviewSettings,
+        public disableRefreshComment?: boolean
     ) {
         super(container);
         this.lastReload = 0;
@@ -20,11 +21,13 @@ export abstract class DataviewRefreshableRenderer extends MarkdownRenderChild {
 
     onload() {
         this.render();
-        this.lastReload = this.index.revision;
-        // Refresh after index changes stop.
-        this.registerEvent(this.app.workspace.on("dataview:refresh-views", this.maybeRefresh));
-        // ...or when the DOM is shown (sidebar expands, tab selected, nodes scrolled into view).
-        this.register(this.container.onNodeInserted(this.maybeRefresh));
+        if(!this.disableRefreshComment) {
+            this.lastReload = this.index.revision;
+            // Refresh after index changes stop.
+            this.registerEvent(this.app.workspace.on("dataview:refresh-views", this.maybeRefresh));
+            // ...or when the DOM is shown (sidebar expands, tab selected, nodes scrolled into view).
+            this.register(this.container.onNodeInserted(this.maybeRefresh));
+        }
     }
 
     maybeRefresh = () => {
