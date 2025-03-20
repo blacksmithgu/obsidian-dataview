@@ -8,7 +8,8 @@ import { DataviewSettings } from "settings";
 import { renderErrorPre } from "ui/render";
 import { DataviewRefreshableRenderer } from "ui/refreshable-view";
 import { asyncTryOrPropagate } from "util/normalize";
-import { default as moment, type Moment } from "moment";
+import type { Moment } from "moment";
+import moment from "moment";
 
 // CalendarFile is a representation of a particular file, displayed in the calendar view.
 // It'll be represented in the calendar as a dot.
