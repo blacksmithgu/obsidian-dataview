@@ -80,7 +80,26 @@ export class DataviewCalendarRenderer extends DataviewRefreshableRenderer {
                         return;
                     }
 
-                    renderer.app.workspace.trigger("link-hover", {}, targetEl, vals[0].link.path, vals[0].link.path);
+                    let dayEl: Element = targetEl as Element;
+                    while (!dayEl.classList.contains("day")) dayEl = dayEl.parentElement!;
+
+                    for (const [i, dot] of [...dayEl.children[0].children].entries()) {
+                        dot.setAttribute("data-dot-idx", i + "");
+                    }
+
+                    let dotEl: Element = targetEl as Element;
+                    if (dotEl.tagName.toLowerCase() === "div") return; // No dot hovered.
+                    if (dotEl.tagName.toLowerCase() === "circle") dotEl = dotEl.parentElement!;
+
+                    const dotIdx = parseInt(dotEl.getAttribute("data-dot-idx")!);
+
+                    renderer.app.workspace.trigger(
+                        "link-hover",
+                        {},
+                        targetEl,
+                        vals[dotIdx].link.path,
+                        vals[dotIdx].link.path
+                    );
                 },
                 onClickDay: async date => {
                     const vals = dateMap.get(date.format("YYYYMMDD"));
