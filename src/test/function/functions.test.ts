@@ -89,6 +89,9 @@ test("Evaluate slice()", () => {
         "duck",
         "elephant",
     ]); // slice(string list, -3)
+    expect(parseEval("slice(null)")).toEqual(parseEval("null"));
+    expect(parseEval("slice(null, 0)")).toEqual(parseEval("null"));
+    expect(parseEval("slice(null, 0, 1)")).toEqual(parseEval("null"));
 });
 
 // <-- sort() -->

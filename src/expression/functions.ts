@@ -877,6 +877,8 @@ export namespace DefaultFunctions {
             return a.slice(start, end);
         })
         .add1("null", () => null)
+        .add2("null", "*", () => null)
+        .add3("null", "*", "*", () => null)
         .build();
 
     // Returns the first non-null value from the array as a single element
