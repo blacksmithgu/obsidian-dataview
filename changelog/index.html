@@ -1,0 +1,1748 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../friends/">
+      
+      
+      
+      <link rel="icon" href="../assets/obsidian.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.11">
+    
+    
+      
+        <title>Changelog - Dataview</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.4af4bdda.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#0568" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Dataview" class="md-header__button md-logo" aria-label="Dataview" data-md-component="logo">
+      
+  <img src="../assets/obsidian.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Dataview
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Changelog
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/blacksmithgu/obsidian-dataview" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Dataview" class="md-nav__button md-logo" aria-label="Dataview" data-md-component="logo">
+      
+  <img src="../assets/obsidian.png" alt="logo">
+
+    </a>
+    Dataview
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/blacksmithgu/obsidian-dataview" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Metadata
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Metadata
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../annotation/add-metadata/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Adding Metadata
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../annotation/types-of-metadata/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Types
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../annotation/metadata-pages/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Metadata on Pages
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../annotation/metadata-tasks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Metadata on Tasks and Lists
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../queries/dql-js-inline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    DQL, JS and Inlines
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Query Language Reference
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Query Language Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../queries/structure/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Structure of a Query
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../queries/query-types/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Query Types
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../queries/data-commands/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Commands
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../queries/differences-to-sql/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Differences to SQL
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/sources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Sources
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/expressions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Expressions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/literals/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Literals
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/functions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Functions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    JavaScript Reference
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            JavaScript Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/intro/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/data-array/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Arrays
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/code-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Codeblock Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/code-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Codeblock Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    FAQ and Resources
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            FAQ and Resources
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../resources/faq/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Frequently Asked Questions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../resources/examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../resources/develop-against-dataview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Developing Against Dataview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../resources/resources-and-support/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Resources and Support
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../friends/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Friends of Dataview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    Changelog
+    
+  </span>
+  
+
+      </a>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="0568">0.5.68</h1>
+<ul>
+<li>Many fixes to the documentation</li>
+<li>
+<h1 id="2318-co-various-fixes-related-to-live-preview-rendering-of-lists">2318 &amp; co: Various fixes related to <em>live preview</em> rendering of lists</h1>
+</li>
+<li>New/documented functions for <code>unique()</code>, <code>display()</code>, <code>firstvalue()</code></li>
+<li>Added DOM information related to standalone inline fields</li>
+</ul>
+<p>This is the first release done by @holroy, so thanks to him for further developing of <em>Dataview</em>. Thank you also to all the people having contributed through PRs and issues.</p>
+<hr />
+<h1 id="0567">0.5.67</h1>
+<p>Includes several documentation fixes and several community-contributed bug fixes.</p>
+<ul>
+<li>@reply2za: Fixed inline rendering in the reading view.</li>
+<li>@carlesalbasboix: Adds sum(), avg(), min(), and max() to data arrays.</li>
+<li>@mnaoumov: Adds code mirror configuration which code highlights dataviewjs!</li>
+</ul>
+<hr />
+<h1 id="0566">0.5.66</h1>
+<p>Bugfix for version comparisons to fix some other plugins having broken interactions with Dataview.</p>
+<hr />
+<h1 id="0565">0.5.65</h1>
+<p>A maintenance update which fixes some issues with rendering embeds in Dataviews and adds a few new functions.</p>
+<ul>
+<li>Adds the <code>hash()</code> function for generating consistent uniformly-distributed values given arbitrary inputs. Primarily useful for creating "random" views which remain consistent across page refreshes. Thanks to @holroy.</li>
+<li>Adds the <code>slice()</code> function for slicing arrays, similar to Javascript's <code>Array.slice</code>. Thanks to @holroy.</li>
+<li>Fixes several issues with rendering embeds inside dataviews. Thanks to @GottZ.</li>
+<li>Several documentation improvements around tasks - thanks to @holroy and @RaviOnline.</li>
+</ul>
+<hr />
+<h1 id="0564">0.5.64</h1>
+<p>More bug fixes for inline field rendering.</p>
+<hr />
+<h1 id="0563">0.5.63</h1>
+<ul>
+<li>More bugfixes from @RyotaUshio for rendering Markdown paragraphs and other blocks in DataviewJS.</li>
+</ul>
+<hr />
+<h1 id="0562">0.5.62</h1>
+<p>Several more inline field fixes from @RyotaUshio, including more configuration options, fixing inline fields being rendered inside codeblocks, and more. Thanks!</p>
+<hr />
+<h1 id="0561">0.5.61</h1>
+<ul>
+<li>@RyotaUshio: Fix several bugs related to the new inline field rendering, including source mode and fixing date formatting.</li>
+</ul>
+<hr />
+<h1 id="0560">0.5.60</h1>
+<ul>
+<li>@RyotaUshio: Add explicit rendering of inline fields in live preview. They are much more visually distinct now!</li>
+<li>@MarioRicalde: Adds <code>PluginApi#evaluateInline(expression, path)</code> to the plugin API, which evaluate expressions as if you were on the given page.</li>
+</ul>
+<hr />
+<h1 id="0559">0.5.59</h1>
+<ul>
+<li>Fix an issue with the plugin failing to run on iOS due to an esoteric regex issue.</li>
+</ul>
+<hr />
+<h1 id="0558">0.5.58</h1>
+<ul>
+<li>Negative durations will now be properly rendered.</li>
+</ul>
+<hr />
+<h1 id="0557">0.5.57</h1>
+<p>Maintenance patch which bumps many internal dependency versions and which includes approximately ~20 community-contributed PRs which add some new functions, fix some Dataview interactions with properties, and more!</p>
+<hr />
+<h1 id="unreleased">Unreleased</h1>
+<ul>
+<li>DQL: Adds new <code>durationformat(duration, string)</code> function.</li>
+<li>DQL: New math rounding functions, <code>trunc(number)</code>, <code>floor(number)</code>, <code>ceil(number)</code>.</li>
+</ul>
+<h1 id="0556">0.5.56</h1>
+<ul>
+<li>Includes some performance fixes on recent versions of Obsidian 1.3+ due to some API changes. Thanks @kometenstaub.</li>
+<li>Documentation cleanups and improvements by @mocsa, @protofarer, @seanlzx, and @somidad.</li>
+<li>Adds the new <code>flat(array)</code> method for flattening nested arrays, as well as parsing dates using arbitrary formats using
+  <code>date(text, "format")</code>. Thanks @holroy!</li>
+</ul>
+<hr />
+<h1 id="0555">0.5.55</h1>
+<ul>
+<li>Durations are now internationalized using luxon's new internationalization support.</li>
+<li>Dataviews should now properly render inside Canvas and some other contexts. Thanks @GamerGirlandCo!</li>
+</ul>
+<hr />
+<h1 id="0554">0.5.54</h1>
+<ul>
+<li>Regular list items are now also clickable in task views, not just task lines! Thanks to @LilaRest.</li>
+</ul>
+<hr />
+<h1 id="0553">0.5.53</h1>
+<ul>
+<li>Fix some documentation issues causing docs to not be updated.</li>
+</ul>
+<hr />
+<h1 id="0552">0.5.52</h1>
+<p>Substantial documentation improvements thanks to @s-blu and @AB1908!</p>
+<ul>
+<li>For people concerned about dataviewjs code execution from copy-pasting, @eyuelt has made it possible to change the
+  dataviewjs codeblock prefix.</li>
+<li>@sohanglal has added some documentation for <code>task.visual</code> for changing the visual text of a task.</li>
+<li>@Chouffy and @Daryl-Horton have fixed some bad documentation links!</li>
+<li>@vrtmrz swapped the regex used for parsing tags to better match Obsidian's own parser.</li>
+<li>@alexfertel has added <code>regextest</code>, which allows for matching parts of a string instead of the whole thing.</li>
+<li>@iamrecursion has added more metadata to file links, so they now include section metadata. This may cause some slight
+  visual changes in link views.</li>
+</ul>
+<hr />
+<h1 id="0551-beta">0.5.51 (Beta)</h1>
+<ul>
+<li>Allow disabling regular Dataview inline queries via configuration option.</li>
+</ul>
+<hr />
+<h1 id="0550-beta">0.5.50 (Beta)</h1>
+<ul>
+<li>Expose dataview EXPRESSION and QUERY parsing to the dataview npm plugin, so others can parse dataview ASTs.</li>
+<li>Fix documentation issue with <code>join</code>.</li>
+</ul>
+<hr />
+<h1 id="0549-beta">0.5.49 (Beta)</h1>
+<ul>
+<li>Add the <code>average</code> function to compute averages of lists (<code>average([list of things])</code>).</li>
+<li>Added documentation for <code>average</code>, <code>min</code>, <code>max</code>, <code>minby</code>, and <code>maxby</code> functions.</li>
+<li>Fixed the broken <code>nonnull</code> function and documented it.</li>
+</ul>
+<hr />
+<h1 id="0548-beta">0.5.48 (Beta)</h1>
+<p>We're back to more regular beta releases while I trial out new functionality!</p>
+<ul>
+<li>Fixed broken list behavior for <code>dv.markdownTaskList</code>.</li>
+<li>@GamerGirlandCo: Better handling of block IDs when checking off tasks!</li>
+<li>@s-blu and @AB1908: Lots of big documentation upgrades! Nice!</li>
+<li>@leoccyao: More block ID task checking fixes. Should work after this one.</li>
+<li>Add expression/query parsing to the dataview NPM package.</li>
+<li>@charleshan: Fix a missing header level in the dataview <code>dv.header</code> example.</li>
+</ul>
+<hr />
+<h1 id="0547">0.5.47</h1>
+<p>Improves <code>date + duration</code> behavior when either the date or duration are null.</p>
+<hr />
+<h1 id="0546">0.5.46</h1>
+<ul>
+<li>Fix #1412: Fix bad <code>file.cday</code> and <code>file.ctime</code> comparisons due to wrong timezone being set. Ugh.</li>
+</ul>
+<hr />
+<h1 id="0545">0.5.45</h1>
+<ul>
+<li>
+<h1 id="1400-properly-use-the-group-by-field-for-the-group-name">1400: Properly use the group by field for the group name.</h1>
+</li>
+<li>Fix bad table highlighting in some themes.</li>
+</ul>
+<hr />
+<h1 id="0544">0.5.44</h1>
+<ul>
+<li>
+<h1 id="1404-fixed-dates-in-non-local-timezones-parsing-incorrectly">1404: Fixed dates in non-local timezones parsing incorrectly.</h1>
+</li>
+<li>Fixed some build non-determinism issues.</li>
+<li>Swapped to pull requests for adding new functionality, and added some more internal tests.</li>
+</ul>
+<hr />
+<h1 id="0543">0.5.43</h1>
+<ul>
+<li>Fix #1366: Better handling of calendar emoji (used as due dates in tasks).</li>
+</ul>
+<hr />
+<h1 id="0542">0.5.42</h1>
+<p>It's been over a month since the last release! Anyway, this release bundles several nice user-contributed features:</p>
+<ul>
+<li>@AB1908: Tag queries are now case insensitive.</li>
+<li>@AB1908: Shift-clicking a link/task to open in a new tab now works properly on Mac.</li>
+<li>@AB1908: Numerous documentation fixes for clarity and more examples.</li>
+<li>@AnnaKornfeldSimpson: Additional emoji shorthands for more task fields (finished, due).</li>
+<li>@ooker777: Documentation improvements for some DataviewJS functions, and the ability to use inline emoji for the
+  completion tracking feature.</li>
+<li>@mt-krainski: Custom date formats for task completions.</li>
+<li>@gentlegiantJGC: Better support for nested inline fields (i.e., less crashy).</li>
+</ul>
+<hr />
+<h1 id="0541">0.5.41</h1>
+<ul>
+<li>Fix a bad regex doing escaping in markdown tables.</li>
+<li>Improve async documentation.</li>
+</ul>
+<hr />
+<h1 id="0540">0.5.40</h1>
+<p>Adds some more documentation about the new markdown functionality.</p>
+<hr />
+<h1 id="0539">0.5.39</h1>
+<ul>
+<li>Fixed an issue where checking a task in a task view would check the wrong box visually.</li>
+<li>Added experimental plugin APIs for querying dataview directly as markdown, and converting dataview results to properly
+  formatted markdown.</li>
+</ul>
+<hr />
+<h1 id="0538">0.5.38</h1>
+<ul>
+<li>Some minor documentation improvements.</li>
+<li>Fix an issue with inline fields rendering out of order. That was a weird bug.</li>
+</ul>
+<hr />
+<h1 id="0537">0.5.37</h1>
+<p>Fixes inline field rendering to once again work for highlighting/links, as well as some other rendering quirks with
+inline queries in codeblocks.</p>
+<hr />
+<h1 id="0536">0.5.36</h1>
+<ul>
+<li>Fix a bug when checking if an element is an HTMLElement.</li>
+<li>Properly include the nice improvements to the file count in tables and lists.</li>
+</ul>
+<hr />
+<h1 id="0535">0.5.35</h1>
+<ul>
+<li>Fix #1196, #1176: Re-enable HTML values. This was never a featured I advertised since it was just for some internal
+  hackery, but it appears people just discovered it in DataviewJS queries.</li>
+<li>Improved initial time to popular queries that use <code>file.starred</code>.</li>
+</ul>
+<hr />
+<h1 id="0534">0.5.34</h1>
+<ul>
+<li>Fix #1174: Fix indexing with a variable.</li>
+<li>Fix an issue with the experimental calendar view.</li>
+</ul>
+<hr />
+<h1 id="0533">0.5.33</h1>
+<ul>
+<li>Fix a bug with inline views that was introduced in 0.5.32.</li>
+</ul>
+<hr />
+<h1 id="0532">0.5.32</h1>
+<p>The Dataview API has been noticeably revamped - there are now approximately twice as many functions available on the
+plugin API as there were before, and some additional utilities have been added to both the plugin and inline API. I
+will be finishing up the associated new "extension" functionality shortly, which will allow:</p>
+<ol>
+<li>For custom Dataview + DataviewJS functions to be added via plugins.</li>
+<li>For custom renderable objects (progress bars, embedded task lists, embedded tables) to be added to any Dataview view via plugins.</li>
+<li>For plugins to provide alternative behavior for some dataview functionality (such as integrating task plugins with
+   the dataview task query).</li>
+</ol>
+<p>As part of the API revamp, it is now possible to programmatically execute Dataview and DataviewJS queries - either for
+using the existing Dataview query language in your own plugin, or for embedding dataview. The Dataview npm library also
+now exposes many useful internal Dataview types, including the AST structure for all dataview queries.</p>
+<p>I am hoping that cleaning up the Dataview API and making it much more extensible will allow for Dataview <a href="to">to</a> integrate
+much better with existing plugins, and to provide the full power of the in-memory index for plugins. I have been very
+carefully watching index performance in recent weeks to ensure smooth frontend performance for anyone using the API
+(with a goal of &lt;10ms for most queries).</p>
+<hr />
+<h1 id="0531">0.5.31</h1>
+<p>Tasks now have an <code>outlinks</code> list field which includes all links in the task; this can be used for finding tasks with
+links in them.</p>
+<hr />
+<h1 id="0530">0.5.30</h1>
+<ul>
+<li>
+<p>Added the <code>typeof(any)</code> function in Dataview, which obtains the type of any value for comparison:
+<div class="highlight"><pre><span></span><code><span class="ow">typeof</span><span class="p">(</span><span class="s2">&quot;text&quot;</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;string&quot;</span>
+<span class="ow">typeof</span><span class="p">(</span><span class="mf">1</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;number&quot;</span>
+<span class="ow">typeof</span><span class="p">([</span><span class="mf">1</span><span class="p">,</span><span class="w"> </span><span class="mf">2</span><span class="p">,</span><span class="w"> </span><span class="mf">3</span><span class="p">])</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;array&quot;</span>
+</code></pre></div></p>
+</li>
+<li>
+<p>Added the modulo operator (<code>%</code>) for doing integer division remainder. I.e., <code>14 % 2 = 0</code> and <code>14 % 3 = 2</code>.</p>
+</li>
+<li>Fixed some minor spacing issues with lists in tables.</li>
+</ul>
+<hr />
+<h1 id="0529">0.5.29</h1>
+<p>Fix another subtle incompatibility between 0.4.26 and 0.5.29 - if you frequently used empty inline fields (like
+<code>Key::</code> with no value), the 0.5+ behavior is now the same as 0.4 behavior and will map such fields to null instead of an
+empty string.</p>
+<p>This may fix a broad variety of "subtly wrong" queries that you may have seen after the upgrade.</p>
+<hr />
+<h1 id="0528">0.5.28</h1>
+<ul>
+<li>Fix a bug with some more string concatenations and null handling.</li>
+</ul>
+<hr />
+<h1 id="0527">0.5.27</h1>
+<p>More performance + correctness bugfixes.</p>
+<ul>
+<li>The parser has been made a little more robust to prevent major indexing issues (or at least recover from them
+  quickly).</li>
+<li>Several new strange tag variants are now supported.</li>
+<li>Markdown links are now properly indexed again.</li>
+</ul>
+<p>Some DataviewJS performance issues should be resolved now, especially for external plugins using Dataview. This fix
+does involve a slight API break w.r.t. what types are wrapped into Dataview Arrays (which provide functions like
+<code>.where()</code>). Generally, only Dataview-provided implicits are wrapped in data arrays now; frontmatter and inline fields
+are always now regular JS arrays - use <code>dv.array()</code> to explicitly make a data array if you want the advanced querying.</p>
+<hr />
+<h1 id="0526">0.5.26</h1>
+<p>More small bugfixes:</p>
+<ul>
+<li>Fix a few small link rendering issues.</li>
+<li>Tag extraction from tasks now handles punctuation properly.</li>
+<li>Upgrade luxon (which is embedded in DataviewJS) to 2.4.0.</li>
+</ul>
+<hr />
+<h1 id="0525">0.5.25</h1>
+<ul>
+<li>Fix #1147: Fix there being a <code>#null</code> tag for files with an empty <code>tag</code> or <code>tags</code> frontmatter.</li>
+</ul>
+<hr />
+<h1 id="0524">0.5.24</h1>
+<p>Several bugfixes:</p>
+<ul>
+<li>Nulls are now sorted first rather than last; it's generally good practice to explicitly check for nulls in your
+  queries to avoid strange behavior.</li>
+<li>Dataview now properly parses space-delimited tags (like <code>tags: abc def ghi</code>).</li>
+<li>Dataview now supports dropping the entire file cache in case of bugs.</li>
+</ul>
+<hr />
+<h1 id="0523">0.5.23</h1>
+<ul>
+<li>Fix #1140: Force API objects to be arrays if they are iterables.</li>
+</ul>
+<hr />
+<h1 id="0522">0.5.22</h1>
+<ul>
+<li>Fix #1135: Use 'x' instead of 'X' for checkboxes.</li>
+</ul>
+<hr />
+<h1 id="0521">0.5.21</h1>
+<p>A long-overdue swap from the beta branch to the stable branch. The beta branch should not include any (intended) breaking
+changes, and has some nice performance improvements that come along with it! Here are the major changes:</p>
+<ul>
+<li>Most views now use React and no longer flicker when updating; this is not the case yet for DataviewJS, which will be
+  getting equivalent treatment in the future.</li>
+<li>Dataview now caches metadata, so Dataview loads are very fast after the first time you open your vault. Dataview still
+  needs to visit every file when you update the plugin version, so that should be the only times you experience slower
+  load times.</li>
+<li>A brand new task view backend and query which allows you to filter per-task, rather than per-page! Check the
+  documentation for details, but this broadly means <code>WHERE</code> statements now use task properties instead of page
+  properties.</li>
+<li>Some additional metadata is now available for use - <code>file.starred</code>, <code>file.lists</code>, and more metadata in
+  <code>file.tasks</code>.</li>
+</ul>
+<p>There have been some moderate documentation touch-ups to keep things up to date; I'm still working on a walkthrough for
+common Dataview use cases. This review also includes about ~30-40 bugfixes; some new bugs may arise due to internal
+changes, so please flag them if you encounter them.</p>
+<hr />
+<h1 id="0520-beta">0.5.20 (Beta)</h1>
+<p>Slight fix to hopefully improve some strange reported cases of bad indexing at startup.</p>
+<hr />
+<h1 id="0519-beta">0.5.19 (Beta)</h1>
+<p>Dataview now uses IndexedDB to cache file metadata, reducing startup time to virtually nothing if you've opened the
+vault before; if you have a small vault (&lt;1000 notes), you may notice a slight improvement, but large vaults and mobile
+devices will notice a very significant performance improvement to "first valid paint". Some other performance parameters
+have been tuned to hopefully make the default experience better.</p>
+<p>A few small bugs related to rendering have also been squashed, including an issue with images being scaled wrongly.</p>
+<hr />
+<h1 id="0518-beta">0.5.18 (Beta)</h1>
+<ul>
+<li>Tasks in task views now support alternative task status characters like '!' and '/'; thanks @ebullient.</li>
+<li>A few documentation nit fixes.</li>
+<li>Added <code>DataArray#sortInPlace</code> for a more efficient mutable sort for niche use cases.</li>
+</ul>
+<hr />
+<h1 id="0517-beta">0.5.17 (Beta)</h1>
+<ul>
+<li>Improved behavior when clicking on tasks in the task view; will now properly scroll to the relevant line in long
+  files!</li>
+<li>Fixed a bug with incorrect counts being displayed in task views.</li>
+<li>Added <code>tags</code> as a field available on task items, so you can now do things like <code>TASK WHERE contains(tags, "#tag")</code>.</li>
+</ul>
+<hr />
+<h1 id="0516-beta">0.5.16 (Beta)</h1>
+<p>Dataview now tracks initialization and will report when all files have been indexed in the console; you can
+programmatically see this via <code>dataview:index-ready</code>, or by checking <code>api.index.initialized</code>.</p>
+<hr />
+<h1 id="0515-beta">0.5.15 (Beta)</h1>
+<ul>
+<li>Add hover highlights to tables to make seeing rows a little easier.</li>
+<li>Tables and task lists now include counts of the number of results in the headers.</li>
+<li>Further improved task selection in the task view.</li>
+</ul>
+<hr />
+<h1 id="0514-beta">0.5.14 (Beta)</h1>
+<ul>
+<li>Fix task highlighting when not grouping.</li>
+<li>Remove some spurious console logging.</li>
+<li>Slightly improve task highlighting behavior when clicking on a task.</li>
+</ul>
+<hr />
+<h1 id="0513-beta">0.5.13 (Beta)</h1>
+<p>Several smaller bugfixes!</p>
+<ul>
+<li>Fix #997: Use the group by field name in the table name.</li>
+<li>Prevent tons of errors if you incorrectly set the inline query prefix.</li>
+</ul>
+<hr />
+<h1 id="0512-beta">0.5.12 (Beta)</h1>
+<p>Improve error messages for queries somewhat and get rid of some ugly output.</p>
+<hr />
+<h1 id="0511-beta">0.5.11 (Beta)</h1>
+<p>Add detection of tasks inside of block quotes, as well as correctly implement automatic checking and unchecking of these
+tasks.</p>
+<hr />
+<h1 id="0510-beta">0.5.10 (Beta)</h1>
+<p>Adds the <code>Dataview: Force Refresh Views</code> Command (accessible via the Ctrl+P command view) to force current views to
+refresh immediately.</p>
+<hr />
+<h1 id="059-beta">0.5.9 (Beta)</h1>
+<p>Another fix for due-date related emoji in tasks. I hate emoji.</p>
+<hr />
+<h1 id="058-beta">0.5.8 (Beta)</h1>
+<p>Fix some issues with infinite loops of tasks due to bad Obsidian metadata (potentially due to being out of date?).</p>
+<hr />
+<h1 id="057-beta">0.5.7 (Beta)</h1>
+<p>Fix issues with parsing '🗓️2021-08-29' due-date annotations on tasks, as well as an issue with properly extracting
+due/completed/completed times for use in queries.</p>
+<hr />
+<h1 id="056-beta">0.5.6 (Beta)</h1>
+<p>Proper release of 0.5.5 plus one additional small improvement:</p>
+<ul>
+<li>Add <code>duration * number</code> and <code>duration / number</code> operations for manipulation durations numerically.</li>
+</ul>
+<hr />
+<h1 id="055-beta">0.5.5 (Beta)</h1>
+<p>More small features:</p>
+<ul>
+<li>Fix issues with task sorting not doing anything. Sort away!</li>
+<li>Table headers can now be arbitrary markdown. So you can put things like links in your headers: `TABLE (1 + 2) AS
+  "[[File]]".</li>
+<li>You can now specify the size of an image embed by providing WxH in it's display property: <code>![[image.png|50x50]]</code>.</li>
+</ul>
+<hr />
+<h1 id="054-beta">0.5.4 (Beta)</h1>
+<p>Improved image rendering for some link types, and adds the <code>embed(link)</code> and <code>embed(link, false)</code> options to convert
+links to/from their embedded equivalents.</p>
+<hr />
+<h1 id="053-beta">0.5.3 (Beta)</h1>
+<p>Iterative beta which adds a few nice QoL features and fixes some more bugs:</p>
+<ul>
+<li>Internally swapped to a React-based renderer; this should not have a noticeable perf or usability impact, but makes it
+  easier for me to implement complex table/list behaviors.</li>
+<li>Naming your fields with <code>AS "Name"</code> is now optional; Dataview will infer the name from the expression automatically.
+  For example, <code>TABLE 8 + 4, 3 + 6 FROM ...</code> is now a valid table expression, and the columns will be named <code>8 + 4</code> and
+  <code>3 + 6</code> respectively.</li>
+<li>Some issues with array and object rendering were corrected.</li>
+<li>Error messages on empty dataview results were improved and now show up for all views.</li>
+</ul>
+<p>Inline images are now rendered correctly in Dataview tables and lists - no more hacky <code>app://local/</code> shenanigans!</p>
+<hr />
+<h1 id="052-beta">0.5.2 (Beta)</h1>
+<ul>
+<li>Fix #971: Objects now work properly inside DataviewQL evaluation.</li>
+</ul>
+<hr />
+<h1 id="051-beta">0.5.1 (Beta)</h1>
+<ul>
+<li>Temporarily revert the new task metadata behavior: inline fields in sublists of tasks are added to the page, instead
+  of the task. This behavior is not good, but is compatible with legacy usages of task metadata, which should not break
+  some existing queries.<ul>
+<li>This behavior will be removed in the future behind a flag.</li>
+</ul>
+</li>
+<li>Added the 'visual' field to tasks - if set, tasks render 'visual' instead of their regular text.</li>
+<li>Fixed <code>DataArray#mutate()</code>.</li>
+</ul>
+<hr />
+<h1 id="050-beta">0.5.0 (Beta)</h1>
+<p>Re-release of broken release 0.4.23, now hopefully with fixes that make it work on (most) machines. I'll be doing beta
+releases for a little while until I can confirm the new version is stable; use BRAT
+(https://github.com/TfTHacker/obsidian42-brat) to easily track Dataview beta versions if you are interested in cutting
+edge features.</p>
+<hr />
+<h1 id="0425">0.4.25</h1>
+<p>Fix #867: Create a container div per taskList to allow for multiple task views.</p>
+<hr />
+<h1 id="0424">0.4.24</h1>
+<p>Re-release of 0.4.23f since Obsidian does not automatically update between non-semver versions.</p>
+<hr />
+<h1 id="0423f">0.4.23f</h1>
+<p>Remove some code which attempted to make tag queries case-insensitive; I'll reimplement this more generally later (it
+conflicts with existing queries which check tags via <code>contains(file.tags, "#Tag")</code> and similar).</p>
+<hr />
+<h1 id="0423e">0.4.23e</h1>
+<p>More task bugfixes / improvements, and a fix that caused task metadata to be duplicated.</p>
+<hr />
+<h1 id="0423d">0.4.23d</h1>
+<p>More inline field list parsing bug fixes. Hopefully we're back to a nice working order!</p>
+<hr />
+<h1 id="0423c">0.4.23c</h1>
+<p>Bugfix which adds support for '1)' style lists, as well as a very annoying null issue due to JavaScript being a very
+sad, very sad language.</p>
+<hr />
+<h1 id="0423b">0.4.23b</h1>
+<p>Bugfix for bad inlink/outlink computations; links were not being normalized properly so reverse lookups were not
+working.</p>
+<hr />
+<h1 id="0423">0.4.23</h1>
+<p>The Task Update! This release reworks how dataview handles tasks and list items so that they should be much more
+intuitive to use and interact with:</p>
+<ol>
+<li><strong>Subtask Support</strong>: Queries now search over all list items, instead of only over root elements. This should make
+   task filtering much more usable, especially if you tend to put tasks under other list items or care specifically
+   about subtasks.</li>
+<li><strong>Multiline Support</strong>: Dataview now understands multi-line tasks and renders/updates them correctly.</li>
+<li><strong>Immediately Navigate to Task</strong>: The new task view, aside from looking a little cleaner than previous views, now
+   immediately navigates to the task in it's original file on click and selects it.</li>
+<li><strong>Grouping Support</strong>: For DataviewJS users, <code>dv.taskList</code> now supports grouping (as produced by <code>groupBy</code> and the new
+   <code>groupIn</code>) natively.</li>
+</ol>
+<p>For DataviewJS users, the task and list representation has changed: <code>file.tasks</code> (and the new <code>file.lists</code>) contain
+every single task (including subtasks) in the file, instead of only the root elements. You can return to previous
+behavior by filtering out tasks with a non-null parent - i.e., <code>file.tasks.where(task =&gt; !task.parent)</code>. <code>dv.taskList</code>
+will intelligently deal with properly nesting and de-duplicating tasks, so just filter to the tasks you want to render and
+the API will do the rest.</p>
+<p>This release also includes general backend improvements as we prepare for live-editing in Dataview views, as well as
+several community-contributed API improvements:</p>
+<ul>
+<li><code>DataArray#groupIn</code>: For grouping already grouped data, you can now use <code>array.groupIn(v =&gt; ...)</code>, which will group
+  the innermost (original) data in the array instead of the top level groups. This allows for more easily grouping
+  recursively, such as <code>dv.pages().groupBy(page =&gt; page.file.folder).groupIn(page =&gt; page.title)</code> producing a grouping
+  of folders, then page titles.</li>
+<li><code>substring(string, start[, end])</code>: The last major missing string function is now available! Take slices of strings.</li>
+<li>Improved <code>dv.el()</code> and other HTML functions - thanks @vitaly.</li>
+<li>null and undefined entries sort at the end instead of the beginning by default; sorry to those whose code sorts wrong
+  because of this, but it is a better default for most people's use cases.</li>
+<li>All links are now properly normalized to their full paths, fixing many link comparison edge cases in DataviewJS.</li>
+</ul>
+<p>Documentation additions for the new task functionality will be coming out in the next few days. The next release 0.4.24
+is currently targeting expanded <code>FROM</code> query support, basic table view improvements, and general exporting functionality
+for Dataview. See you then!</p>
+<hr />
+<h1 id="0422">0.4.22</h1>
+<p>The @pjeby update! This includes several performance improvements suggested by @pjeby to dramatically improve background
+Dataview performance as well as reduce some memory pressure. It also includes some minor bug-fixes and preliminary
+functionality:</p>
+<ul>
+<li>Target ES2018 for better Promise support</li>
+<li>Allow parsing shorthands in <code>dv.date()</code>.</li>
+<li>Add additional metadata to inline field rendering which can be styled.</li>
+<li>Cleanup events &amp; workers on plugin uninstall, improving the Dataview uninstall/disable/reload experience.</li>
+<li>Add preliminary <code>CALENDAR</code> queries - rendering similar to the obsidian-calendar plugin, see the documentation!</li>
+</ul>
+<p>Dataview should perform much better on startup and when you have lots of tabs open - thanks again to @pjeby.</p>
+<hr />
+<h1 id="0421">0.4.21</h1>
+<p>Bugfix release which primarily fixes issues that Dataview had with the live preview mode in upcoming Obsidian versions;
+Dataview live preview should now be functional. Also includes a number of smaller bugfixes.</p>
+<ul>
+<li>Fix #646: Add <code>date(yesterday)</code> to create a date 24 hours ago.</li>
+<li>Fix #618: Luxon is now available on the dataview API (<code>dv.luxon</code>).</li>
+<li>Fix #510: Add <code>dv.duration()</code> for parsing durations.</li>
+<li>Fix #647: All HTML functions in the DataviewJS API now return their rendered objects.</li>
+<li>Fix #652: Fix parsing of invalid dates.</li>
+<li>Fix #629: Fix block link parsing.</li>
+<li>Fix #601: Timezones are now rendered properly and parsed properly in Dataview dates.</li>
+<li>PR #637: Add <code>meta(link)</code> which allows you to access various metadata about a link itself.</li>
+<li>Various minor null safety fixes.</li>
+<li>Dataview now reports it's exact version and build time in logs.</li>
+</ul>
+<hr />
+<h1 id="0420">0.4.20</h1>
+<p>Some feature work (mostly by other contributors) while I while away at section metadata. May also fix a few bugs!</p>
+<ul>
+<li>Fix #448: You can now use the "Task Completion Tracking" option to automatically add completion metadata to tasks
+  which are checked/unchecked through Dataview. Thanks to @sheeley.</li>
+<li>Add a search bar to documentation. Thanks to @tzhou.</li>
+<li>Add new date expressions for the start of the week (<code>date(sow)</code>), and the end of the week (<code>date(eow)</code>). Thanks
+  @Jeamee and @v_mujunma.</li>
+</ul>
+<p>Small minor bugfix / security releases may follow in the near future; otherwise, the next major release will include
+section and object metadata.</p>
+<hr />
+<h1 id="0419">0.4.19</h1>
+<p>Bugfix release which corrects emoji parsing &amp; localization issues.</p>
+<ul>
+<li>Add <code>DataArray#into</code>, which lets you index into objects without flattening.</li>
+<li>Renamed 'header' to 'section' in task metadata; 'header' will remain around for a few major releases to let people
+  naturally migrate.</li>
+<li>Fix #487: You no longer need spaces around '*' in expressions.</li>
+<li>Fix #559: Fix unicode issues in variable canonicalization which was causing problems with non-Latin inline field
+  keys.</li>
+</ul>
+<h2 id="duration-parsing">Duration Parsing</h2>
+<p>You can now include multiple units in durations: <code>dur(8 minutes, 4 seconds)</code> or <code>dur(2yr8mo12d)</code>. You can separate
+durations by commas, or use the abbreviated syntax with/without spaces.</p>
+<hr />
+<h1 id="0418">0.4.18</h1>
+<p>Bugfix release which fixes bad inline field highlighting if '[' and '(' are mixed on the same line in particular orders.</p>
+<hr />
+<h1 id="0417">0.4.17</h1>
+<p>Minor feature release to patch up more implementation holes.</p>
+<h2 id="single-file-queries">Single File Queries</h2>
+<p>You can now query from a specific file (instead of just folders and tags) by specifying the full file path:</p>
+<div class="highlight"><pre><span></span><code>TASK FROM &quot;dataview/Test&quot;
+...
+</code></pre></div>
+<p>This is primarily useful for task queries, but will soon be useful for section and object queries in the near future as
+well.</p>
+<h2 id="better-inline-field-highlighting">Better Inline Field Highlighting</h2>
+<p>The CSS for inline field highlighting has been fixed and some compatibility issues improved, so it should work on all
+themes now instead of only a few.</p>
+<h2 id="dvel">dv.el()</h2>
+<p>DataviewJS now has <code>dv.el()</code>, which is like existing functions like <code>dv.paragraph</code> and <code>dv.span</code> but can create any
+HTML element type; for example:</p>
+<div class="highlight"><pre><span></span><code><span class="nx">dv</span><span class="p">.</span><span class="nx">el</span><span class="p">(</span><span class="s2">&quot;b&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Text!&quot;</span><span class="p">);</span>
+<span class="nx">dv</span><span class="p">.</span><span class="nx">el</span><span class="p">(</span><span class="s2">&quot;i&quot;</span><span class="p">,</span><span class="w"> </span><span class="mf">18</span><span class="p">);</span>
+</code></pre></div>
+<hr />
+<h1 id="0416">0.4.16</h1>
+<p>Small performance release which substantially reduces the impact Dataview has on vault loading times (by spreading out
+file loading). The Dataview Index is now also eagerly initialized, so plugin consumers of the API can immediately start
+using it instead of waiting for the <code>dataview:api-ready</code> event.</p>
+<hr />
+<h1 id="0415">0.4.15</h1>
+<p>A simple fix for #537 which properly 'awaits' value rendering in <code>dv.view()</code>. Fixes issues with values rendering out of
+order.</p>
+<hr />
+<h1 id="0414">0.4.14</h1>
+<p>Small bugfix release.</p>
+<ul>
+<li>Fixes inline field evaluation when using the new fancy highlighting.</li>
+<li>You can now configure whether task links should show up at the beginning or end of the task (or just disable them)
+  in the "Task Link Location" setting.</li>
+<li>Most setting updates will immediately be applied to existing Dataviews.</li>
+</ul>
+<hr />
+<h1 id="0413">0.4.13</h1>
+<p>Bugfix release which adds fancy rendering to inline-inline fields and includes a few bugfixes.</p>
+<h2 id="pretty-inline-fields">Pretty Inline Fields</h2>
+<p>Inline fields of the form <code>[key:: value]</code> will now be rendered with fancy new HTML! By default, they are rendered with
+both the key and value. You can only render the value using parenthesis instead: <code>(key:: value)</code>. You can disable
+this feature in the configuration.</p>
+<p>Full-line inline fields (that Dataview has supported for a long time) will gain similar rendering support soon; in the
+meanwhile, give the new syntax a try!</p>
+<h3 id="task-linking">Task Linking</h3>
+<p>Tasks now render with a link to the page/section that they are defined in, making <code>GROUP BY</code> and custom task
+editing easier to do:</p>
+<ul class="task-list">
+<li class="task-list-item"><input type="checkbox" disabled/> A Task. 🔗</li>
+<li class="task-list-item"><input type="checkbox" disabled/> Another Task. 🔗<ul class="task-list">
+<li class="task-list-item"><input type="checkbox" disabled/> Some Random Subtask. 🔗</li>
+</ul>
+</li>
+</ul>
+<p>You can configure the symbol for the link or disable it altogether.</p>
+<h3 id="improving-dataviewjs-posture">Improving DataviewJS Posture</h3>
+<p>I am currently actively looking into improving DataviewJS sandboxing and general security posture. As a first small step
+in this, I have made DataviewJS opt-in instead of opt-out, and added a separate control for Inline DataviewJS. You may
+need to re-enable it in your settings if you use it.</p>
+<p>More improvements and better JavaScript sandboxing will follow.</p>
+<hr />
+<h1 id="0412-hotfix1">0.4.12-hotfix1</h1>
+<p>Re-release of 0.4.12 that fixes an important indexing issue.</p>
+<ul>
+<li>Fix #505: Use <code>completion</code> instead of <code>completed</code> when setting task completion time.</li>
+<li>Fix #509: Add <code>startswith</code> / <code>endswith</code> string functions.</li>
+<li>Fix #488: Add <code>padleft</code> and <code>padright</code>, and <code>string</code>.</li>
+<li>Fix #506, #512: Fix date comparisons due to a bizarre date zone issue.</li>
+</ul>
+<hr />
+<h1 id="0412">0.4.12</h1>
+<p>Bugfix release following up 0.4.11 which includes a few minor function additions.</p>
+<ul>
+<li>Fix #512: Strange zone issue causing dates to not be equal.</li>
+<li>Fix #506: Same as #512.</li>
+<li>Fix #488: Add <code>padleft</code> / <code>padright</code> functions.</li>
+<li>Fix #509: Add <code>startswith</code> and <code>endswith</code> functions.</li>
+<li>Fix #505: Correctly read completion dates for tasks from <code>completion</code>.</li>
+</ul>
+<p>This release also includes improved testing thanks to mocking Obsidian plugin APIs!</p>
+<hr />
+<h1 id="0411">0.4.11</h1>
+<p>Fixes task behavior and adds "truly inline" fields!</p>
+<h2 id="improved-task-behavior">Improved Task Behavior</h2>
+<p>Task queries are now much improved from their primitive foundations - you can now filter, sort, and group them! The FROM
+block is still page-based, sadly, though you can simply use <code>WHERE</code> instead if desired. For example, you can now access
+task fields like <code>text</code>, <code>line</code>, or <code>completed</code>:</p>
+<div class="highlight"><pre><span></span><code>TASK WHERE contains(text, &quot;#tag&quot;)
+WHERE !completed
+GROUP BY file.folder
+</code></pre></div>
+<p>The full list of all available task metadata can be found
+<a href="https://blacksmithgu.github.io/obsidian-dataview/data-annotation/#tasks">here</a>; tasks include all the information
+needed to uniquely identify them, and automatically inherit all of the metadata from their parent file as well (so you
+can access <code>file.name</code>, for example). You can also annotate tasks with inline fields, as described in the section below.</p>
+<p>There is some additional UX work to be done - primarily on more easily allowing you to navigate to where the task is
+defined, as well as render tasks in views other than the <code>TASK</code> view.  The semantics of how grouping works (to make it
+more intuitive/useful than it currently is) will likely also be revisited.</p>
+<h2 id="inline-inline-fields">Inline Inline Fields</h2>
+<p>Early support for truly inline fields have been added, where you can add metadata in the middle of a sentence. It looks
+similar to existing inline field syntax, but with brackets or parenthesis:</p>
+<div class="highlight"><pre><span></span><code>I would rate this a [rating:: 6]. It was (thoughts:: acceptable).
+</code></pre></div>
+<p>Improved rendering for all inline fields is coming in an upcoming update to improve the visual look of these inline
+fields.</p>
+<h2 id="issues">Issues</h2>
+<ul>
+<li>Fix #496: Fix task <code>SORT</code> functionality to do something.</li>
+<li>Fix #492: Tasks now properly annotated with parent file information.</li>
+<li>Fix #498: Fix task checking/unchecking logic (which broke due to a change in the task regex...).</li>
+</ul>
+<hr />
+<h1 id="initial">Initial</h1>
+<p>Start of the automatic changelog.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "..", "features": [], "search": "../assets/javascripts/workers/search.f8cc74c7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.c8b220af.min.js"></script>
+      
+    
+  </body>
+</html>

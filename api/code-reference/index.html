@@ -1,0 +1,2297 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../data-array/">
+      
+      
+        <link rel="next" href="../code-examples/">
+      
+      
+      <link rel="icon" href="../../assets/obsidian.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.11">
+    
+    
+      
+        <title>Codeblock Reference - Dataview</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.4af4bdda.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#codeblock-reference" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Dataview" class="md-header__button md-logo" aria-label="Dataview" data-md-component="logo">
+      
+  <img src="../../assets/obsidian.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Dataview
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Codeblock Reference
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/blacksmithgu/obsidian-dataview" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Dataview" class="md-nav__button md-logo" aria-label="Dataview" data-md-component="logo">
+      
+  <img src="../../assets/obsidian.png" alt="logo">
+
+    </a>
+    Dataview
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/blacksmithgu/obsidian-dataview" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Metadata
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Metadata
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../annotation/add-metadata/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Adding Metadata
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../annotation/types-of-metadata/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Types
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../annotation/metadata-pages/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Metadata on Pages
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../annotation/metadata-tasks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Metadata on Tasks and Lists
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../queries/dql-js-inline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    DQL, JS and Inlines
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Query Language Reference
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Query Language Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../queries/structure/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Structure of a Query
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../queries/query-types/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Query Types
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../queries/data-commands/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Commands
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../queries/differences-to-sql/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Differences to SQL
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/sources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Sources
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/expressions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Expressions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/literals/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Literals
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/functions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Functions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    JavaScript Reference
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            JavaScript Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../intro/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../data-array/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Arrays
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Codeblock Reference
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    Codeblock Reference
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#query" class="md-nav__link">
+    <span class="md-ellipsis">
+      Query
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Query">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dvcurrent" class="md-nav__link">
+    <span class="md-ellipsis">
+      dv.current()
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dvpagessource" class="md-nav__link">
+    <span class="md-ellipsis">
+      dv.pages(source)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dvpagepathssource" class="md-nav__link">
+    <span class="md-ellipsis">
+      dv.pagePaths(source)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dvpagepath" class="md-nav__link">
+    <span class="md-ellipsis">
+      dv.page(path)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#render" class="md-nav__link">
+    <span class="md-ellipsis">
+      Render
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Render">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dvelelement-text" class="md-nav__link">
+    <span class="md-ellipsis">
+      dv.el(element, text)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dvheaderlevel-text" class="md-nav__link">
+    <span class="md-ellipsis">
+      dv.header(level, text)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dvparagraphtext" class="md-nav__link">
+    <span class="md-ellipsis">
+      dv.paragraph(text)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dvspantext" class="md-nav__link">
+    <span class="md-ellipsis">
+      dv.span(text)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dvexecutesource" class="md-nav__link">
+    <span class="md-ellipsis">
+      dv.execute(source)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dvexecutejssource" class="md-nav__link">
+    <span class="md-ellipsis">
+      dv.executeJs(source)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dvviewpath-input" class="md-nav__link">
+    <span class="md-ellipsis">
+      dv.view(path, input)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="dv.view(path, input)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dataviews" class="md-nav__link">
+    <span class="md-ellipsis">
+      Dataviews
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Dataviews">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dvlistelements" class="md-nav__link">
+    <span class="md-ellipsis">
+      dv.list(elements)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dvtasklisttasks-groupbyfile" class="md-nav__link">
+    <span class="md-ellipsis">
+      dv.taskList(tasks, groupByFile)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dvtableheaders-elements" class="md-nav__link">
+    <span class="md-ellipsis">
+      dv.table(headers, elements)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#markdown-dataviews" class="md-nav__link">
+    <span class="md-ellipsis">
+      Markdown Dataviews
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Markdown Dataviews">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dvmarkdowntableheaders-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      dv.markdownTable(headers, values)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dvmarkdownlistvalues" class="md-nav__link">
+    <span class="md-ellipsis">
+      dv.markdownList(values)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dvmarkdowntasklisttasks" class="md-nav__link">
+    <span class="md-ellipsis">
+      dv.markdownTaskList(tasks)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#utility" class="md-nav__link">
+    <span class="md-ellipsis">
+      Utility
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Utility">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dvarrayvalue" class="md-nav__link">
+    <span class="md-ellipsis">
+      dv.array(value)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dvisarrayvalue" class="md-nav__link">
+    <span class="md-ellipsis">
+      dv.isArray(value)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dvfilelinkpath-embed-display-name" class="md-nav__link">
+    <span class="md-ellipsis">
+      dv.fileLink(path, [embed?], [display-name])
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dvsectionlinkpath-section-embed-display" class="md-nav__link">
+    <span class="md-ellipsis">
+      dv.sectionLink(path, section, [embed?], [display?])
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dvblocklinkpath-blockid-embed-display" class="md-nav__link">
+    <span class="md-ellipsis">
+      dv.blockLink(path, blockId, [embed?], [display?])
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dvdatetext" class="md-nav__link">
+    <span class="md-ellipsis">
+      dv.date(text)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dvdurationtext" class="md-nav__link">
+    <span class="md-ellipsis">
+      dv.duration(text)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dvcomparea-b" class="md-nav__link">
+    <span class="md-ellipsis">
+      dv.compare(a, b)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dvequala-b" class="md-nav__link">
+    <span class="md-ellipsis">
+      dv.equal(a, b)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dvclonevalue" class="md-nav__link">
+    <span class="md-ellipsis">
+      dv.clone(value)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dvparsevalue" class="md-nav__link">
+    <span class="md-ellipsis">
+      dv.parse(value)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#file-io" class="md-nav__link">
+    <span class="md-ellipsis">
+      File I/O
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="File I/O">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dviocsvpath-origin-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      ⌛ dv.io.csv(path, [origin-file])
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dvioloadpath-origin-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      ⌛ dv.io.load(path, [origin-file])
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dvionormalizepath-origin-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      dv.io.normalize(path, [origin-file])
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#query-evaluation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Query Evaluation
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Query Evaluation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dvquerysource-file-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      ⌛ dv.query(source, [file, settings])
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dvtryquerysource-file-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      ⌛ dv.tryQuery(source, [file, settings])
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dvquerymarkdownsource-file-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      ⌛ dv.queryMarkdown(source, [file], [settings])
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dvtryquerymarkdownsource-file-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      ⌛ dv.tryQueryMarkdown(source, [file], [settings])
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dvtryevaluateexpression-context" class="md-nav__link">
+    <span class="md-ellipsis">
+      dv.tryEvaluate(expression, [context])
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dvevaluateexpression-context" class="md-nav__link">
+    <span class="md-ellipsis">
+      dv.evaluate(expression, [context])
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../code-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Codeblock Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    FAQ and Resources
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            FAQ and Resources
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../resources/faq/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Frequently Asked Questions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../resources/examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../resources/develop-against-dataview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Developing Against Dataview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../resources/resources-and-support/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Resources and Support
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../friends/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Friends of Dataview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../changelog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Changelog
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#query" class="md-nav__link">
+    <span class="md-ellipsis">
+      Query
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Query">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dvcurrent" class="md-nav__link">
+    <span class="md-ellipsis">
+      dv.current()
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dvpagessource" class="md-nav__link">
+    <span class="md-ellipsis">
+      dv.pages(source)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dvpagepathssource" class="md-nav__link">
+    <span class="md-ellipsis">
+      dv.pagePaths(source)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dvpagepath" class="md-nav__link">
+    <span class="md-ellipsis">
+      dv.page(path)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#render" class="md-nav__link">
+    <span class="md-ellipsis">
+      Render
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Render">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dvelelement-text" class="md-nav__link">
+    <span class="md-ellipsis">
+      dv.el(element, text)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dvheaderlevel-text" class="md-nav__link">
+    <span class="md-ellipsis">
+      dv.header(level, text)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dvparagraphtext" class="md-nav__link">
+    <span class="md-ellipsis">
+      dv.paragraph(text)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dvspantext" class="md-nav__link">
+    <span class="md-ellipsis">
+      dv.span(text)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dvexecutesource" class="md-nav__link">
+    <span class="md-ellipsis">
+      dv.execute(source)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dvexecutejssource" class="md-nav__link">
+    <span class="md-ellipsis">
+      dv.executeJs(source)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dvviewpath-input" class="md-nav__link">
+    <span class="md-ellipsis">
+      dv.view(path, input)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="dv.view(path, input)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dataviews" class="md-nav__link">
+    <span class="md-ellipsis">
+      Dataviews
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Dataviews">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dvlistelements" class="md-nav__link">
+    <span class="md-ellipsis">
+      dv.list(elements)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dvtasklisttasks-groupbyfile" class="md-nav__link">
+    <span class="md-ellipsis">
+      dv.taskList(tasks, groupByFile)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dvtableheaders-elements" class="md-nav__link">
+    <span class="md-ellipsis">
+      dv.table(headers, elements)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#markdown-dataviews" class="md-nav__link">
+    <span class="md-ellipsis">
+      Markdown Dataviews
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Markdown Dataviews">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dvmarkdowntableheaders-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      dv.markdownTable(headers, values)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dvmarkdownlistvalues" class="md-nav__link">
+    <span class="md-ellipsis">
+      dv.markdownList(values)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dvmarkdowntasklisttasks" class="md-nav__link">
+    <span class="md-ellipsis">
+      dv.markdownTaskList(tasks)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#utility" class="md-nav__link">
+    <span class="md-ellipsis">
+      Utility
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Utility">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dvarrayvalue" class="md-nav__link">
+    <span class="md-ellipsis">
+      dv.array(value)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dvisarrayvalue" class="md-nav__link">
+    <span class="md-ellipsis">
+      dv.isArray(value)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dvfilelinkpath-embed-display-name" class="md-nav__link">
+    <span class="md-ellipsis">
+      dv.fileLink(path, [embed?], [display-name])
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dvsectionlinkpath-section-embed-display" class="md-nav__link">
+    <span class="md-ellipsis">
+      dv.sectionLink(path, section, [embed?], [display?])
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dvblocklinkpath-blockid-embed-display" class="md-nav__link">
+    <span class="md-ellipsis">
+      dv.blockLink(path, blockId, [embed?], [display?])
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dvdatetext" class="md-nav__link">
+    <span class="md-ellipsis">
+      dv.date(text)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dvdurationtext" class="md-nav__link">
+    <span class="md-ellipsis">
+      dv.duration(text)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dvcomparea-b" class="md-nav__link">
+    <span class="md-ellipsis">
+      dv.compare(a, b)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dvequala-b" class="md-nav__link">
+    <span class="md-ellipsis">
+      dv.equal(a, b)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dvclonevalue" class="md-nav__link">
+    <span class="md-ellipsis">
+      dv.clone(value)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dvparsevalue" class="md-nav__link">
+    <span class="md-ellipsis">
+      dv.parse(value)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#file-io" class="md-nav__link">
+    <span class="md-ellipsis">
+      File I/O
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="File I/O">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dviocsvpath-origin-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      ⌛ dv.io.csv(path, [origin-file])
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dvioloadpath-origin-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      ⌛ dv.io.load(path, [origin-file])
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dvionormalizepath-origin-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      dv.io.normalize(path, [origin-file])
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#query-evaluation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Query Evaluation
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Query Evaluation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dvquerysource-file-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      ⌛ dv.query(source, [file, settings])
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dvtryquerysource-file-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      ⌛ dv.tryQuery(source, [file, settings])
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dvquerymarkdownsource-file-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      ⌛ dv.queryMarkdown(source, [file], [settings])
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dvtryquerymarkdownsource-file-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      ⌛ dv.tryQueryMarkdown(source, [file], [settings])
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dvtryevaluateexpression-context" class="md-nav__link">
+    <span class="md-ellipsis">
+      dv.tryEvaluate(expression, [context])
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dvevaluateexpression-context" class="md-nav__link">
+    <span class="md-ellipsis">
+      dv.evaluate(expression, [context])
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="codeblock-reference">Codeblock Reference</h1>
+<p>Dataview JavaScript Codeblocks are created using the <code>dataviewjs</code> language specification for a codeblock:</p>
+<div class="highlight"><pre><span></span><code>```dataviewjs
+dv.table([], ...)
+```
+</code></pre></div>
+<p>The API is available through the implicitly provided <code>dv</code> (or <code>dataview</code>) variable, through which you can query for
+information, render HTML, and configure the view.</p>
+<p>Asynchronous API calls are marked with <code>⌛</code>.</p>
+<h2 id="query">Query</h2>
+<p>Query methods allow you to query the Dataview index for page metadata; to render this data, use the methods in the <a href="#render">render section</a>.</p>
+<h3 id="dvcurrent"><code>dv.current()</code></h3>
+<p>Get page information (via <code>dv.page()</code>) for the page the script is currently executing on.</p>
+<h3 id="dvpagessource"><code>dv.pages(source)</code></h3>
+<p>Take a single string argument, <code>source</code>, which is the same form as a <a href="../../reference/sources/">query language source</a>.
+Return a <a href="../data-array/">data array</a> of page objects, which are plain objects with all of the page fields as
+values.</p>
+<div class="highlight"><pre><span></span><code><span class="nx">dv</span><span class="p">.</span><span class="nx">pages</span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">all</span><span class="w"> </span><span class="nx">pages</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nx">your</span><span class="w"> </span><span class="nx">vault</span>
+<span class="nx">dv</span><span class="p">.</span><span class="nx">pages</span><span class="p">(</span><span class="s2">&quot;#books&quot;</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">all</span><span class="w"> </span><span class="nx">pages</span><span class="w"> </span><span class="kd">with</span><span class="w"> </span><span class="nx">tag</span><span class="w"> </span><span class="s1">&#39;books&#39;</span>
+<span class="nx">dv</span><span class="p">.</span><span class="nx">pages</span><span class="p">(</span><span class="s1">&#39;&quot;folder&quot;&#39;</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">all</span><span class="w"> </span><span class="nx">pages</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="nx">folder</span><span class="w"> </span><span class="s2">&quot;folder&quot;</span>
+<span class="nx">dv</span><span class="p">.</span><span class="nx">pages</span><span class="p">(</span><span class="s2">&quot;#yes or -#no&quot;</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">all</span><span class="w"> </span><span class="nx">pages</span><span class="w"> </span><span class="kd">with</span><span class="w"> </span><span class="nx">tag</span><span class="w"> </span><span class="n">#yes</span><span class="p">,</span><span class="w"> </span><span class="nx">or</span><span class="w"> </span><span class="nx">which</span><span class="w"> </span><span class="nx">DON</span><span class="s1">&#39;T have tag #no</span>
+<span class="s1">dv.pages(&#39;</span><span class="s2">&quot;folder&quot;</span><span class="w"> </span><span class="nx">or</span><span class="w"> </span><span class="n">#tag</span><span class="err">&#39;</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">all</span><span class="w"> </span><span class="nx">pages</span><span class="w"> </span><span class="kd">with</span><span class="w"> </span><span class="nx">tag</span><span class="w"> </span><span class="n">#tag</span><span class="p">,</span><span class="w"> </span><span class="nx">or</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="nx">folder</span><span class="w"> </span><span class="s2">&quot;folder&quot;</span>
+</code></pre></div>
+<p>Note that folders need to be double-quoted inside the string (i.e., <code>dv.pages("folder")</code> does not work, but
+<code>dv.pages('"folder"')</code> does) - this is to exactly match how sources are written in the query language.</p>
+<h3 id="dvpagepathssource"><code>dv.pagePaths(source)</code></h3>
+<p>As with <code>dv.pages</code>, but just returns a <a href="../data-array/">data array</a> of paths of pages that match the given source.</p>
+<div class="highlight"><pre><span></span><code><span class="nx">dv</span><span class="p">.</span><span class="nx">pagePaths</span><span class="p">(</span><span class="s2">&quot;#books&quot;</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">the</span><span class="w"> </span><span class="nx">paths</span><span class="w"> </span><span class="k">of</span><span class="w"> </span><span class="nx">pages</span><span class="w"> </span><span class="kd">with</span><span class="w"> </span><span class="nx">tag</span><span class="w"> </span><span class="s1">&#39;books&#39;</span>
+</code></pre></div>
+<h3 id="dvpagepath"><code>dv.page(path)</code></h3>
+<p>Map a simple path or link to the full page object, which includes all of the pages fields. Automatically does link resolution,
+and will figure out the extension automatically if not present.</p>
+<div class="highlight"><pre><span></span><code><span class="nx">dv</span><span class="p">.</span><span class="nx">page</span><span class="p">(</span><span class="s2">&quot;Index&quot;</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">The</span><span class="w"> </span><span class="nx">page</span><span class="w"> </span><span class="nx">object</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="err">/Index</span>
+<span class="nx">dv</span><span class="p">.</span><span class="nx">page</span><span class="p">(</span><span class="s2">&quot;books/The Raisin.md&quot;</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">The</span><span class="w"> </span><span class="nx">page</span><span class="w"> </span><span class="nx">object</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="err">/books/The Raisin.md</span>
+</code></pre></div>
+<h2 id="render">Render</h2>
+<h3 id="dvelelement-text"><code>dv.el(element, text)</code></h3>
+<p>Render arbitrary text in the given html element.
+<div class="highlight"><pre><span></span><code><span class="nx">dv</span><span class="p">.</span><span class="nx">el</span><span class="p">(</span><span class="s2">&quot;b&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;This is some bold text&quot;</span><span class="p">);</span>
+</code></pre></div></p>
+<p>You can specify custom classes to add to the element via <code>cls</code>, and additional attributes via <code>attr</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="nx">dv</span><span class="p">.</span><span class="nx">el</span><span class="p">(</span><span class="s2">&quot;b&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;This is some text&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">cls</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;dataview dataview-class&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">attr</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">alt</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;Nice!&quot;</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">});</span>
+</code></pre></div>
+<h3 id="dvheaderlevel-text"><code>dv.header(level, text)</code></h3>
+<p>Render a header of level 1 - 6 with the given text.</p>
+<div class="highlight"><pre><span></span><code><span class="nx">dv</span><span class="p">.</span><span class="nx">header</span><span class="p">(</span><span class="mf">1</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Big!&quot;</span><span class="p">);</span>
+<span class="nx">dv</span><span class="p">.</span><span class="nx">header</span><span class="p">(</span><span class="mf">6</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Tiny&quot;</span><span class="p">);</span>
+</code></pre></div>
+<h3 id="dvparagraphtext"><code>dv.paragraph(text)</code></h3>
+<p>Render arbitrary text in a paragraph.</p>
+<div class="highlight"><pre><span></span><code><span class="nx">dv</span><span class="p">.</span><span class="nx">paragraph</span><span class="p">(</span><span class="s2">&quot;This is some text&quot;</span><span class="p">);</span>
+</code></pre></div>
+<h3 id="dvspantext"><code>dv.span(text)</code></h3>
+<p>Render arbitrary text in a span (no padding above/below, unlike a paragraph).</p>
+<div class="highlight"><pre><span></span><code><span class="nx">dv</span><span class="p">.</span><span class="nx">span</span><span class="p">(</span><span class="s2">&quot;This is some text&quot;</span><span class="p">);</span>
+</code></pre></div>
+<h3 id="dvexecutesource"><code>dv.execute(source)</code></h3>
+<p>Execute an arbitrary dataview query and embed the view into the current page.</p>
+<div class="highlight"><pre><span></span><code><span class="nx">dv</span><span class="p">.</span><span class="nx">execute</span><span class="p">(</span><span class="s2">&quot;LIST FROM #tag&quot;</span><span class="p">);</span>
+<span class="nx">dv</span><span class="p">.</span><span class="nx">execute</span><span class="p">(</span><span class="s2">&quot;TABLE field1, field2 FROM #thing&quot;</span><span class="p">);</span>
+</code></pre></div>
+<h3 id="dvexecutejssource"><code>dv.executeJs(source)</code></h3>
+<p>Execute an arbitrary DataviewJS query and embed the view into the current page.</p>
+<div class="highlight"><pre><span></span><code><span class="nx">dv</span><span class="p">.</span><span class="nx">executeJs</span><span class="p">(</span><span class="s2">&quot;dv.list([1, 2, 3])&quot;</span><span class="p">);</span>
+</code></pre></div>
+<h3 id="dvviewpath-input"><code>dv.view(path, input)</code></h3>
+<p>Complex function which allows for custom views. Will attempt to load a JavaScript file at the given path, passing it
+<code>dv</code> and <code>input</code> and allowing it to execute. This allows for you to re-use custom view code across multiple pages. Note
+that this is an asynchronous function since it involves file I/O - make sure to <code>await</code> the result!</p>
+<div class="highlight"><pre><span></span><code><span class="k">await</span><span class="w"> </span><span class="nx">dv</span><span class="p">.</span><span class="nx">view</span><span class="p">(</span><span class="s2">&quot;views/custom&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">arg1</span><span class="o">:</span><span class="w"> </span><span class="p">...,</span><span class="w"> </span><span class="nx">arg2</span><span class="o">:</span><span class="w"> </span><span class="p">...</span><span class="w"> </span><span class="p">});</span>
+</code></pre></div>
+<p>If you want to also include custom CSS in your view, you can instead pass a path to a folder containing <code>view.js</code> and
+<code>view.css</code>; the CSS will be added to the view automatically:</p>
+<div class="highlight"><pre><span></span><code>views/custom
+ -&gt; view.js
+ -&gt; view.css
+</code></pre></div>
+<p>View scripts have access to the <code>dv</code> object (the API object), and an <code>input</code> object which is exactly whatever the second
+argument of <code>dv.view()</code> was.</p>
+<p>Bear in mind, <code>dv.view()</code> cannot read from directories starting with a dot, like <code>.views</code>. Example of an incorrect usage:</p>
+<p><div class="highlight"><pre><span></span><code><span class="k">await</span><span class="w"> </span><span class="nx">dv</span><span class="p">.</span><span class="nx">view</span><span class="p">(</span><span class="s2">&quot;.views/view1&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">arg1</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;a&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">arg2</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;b&#39;</span><span class="w"> </span><span class="p">});</span>
+</code></pre></div>
+Attempting this will yield the following exception:</p>
+<div class="highlight"><pre><span></span><code>Dataview: custom view not found for &#39;.views/view1/view.js&#39; or &#39;.views/view1.js&#39;.
+</code></pre></div>
+<p>Also note, directory paths always originate from the vault root.</p>
+<h4 id="example">Example</h4>
+<p>In this example, we have a custom script file named <code>view1.js</code> in the <code>scripts</code> directory. </p>
+<p><strong>File:</strong> <code>scripts/view1.js</code>
+<div class="highlight"><pre><span></span><code><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="sb">`Loading view1`</span><span class="p">);</span>
+
+<span class="kd">function</span><span class="w"> </span><span class="nx">foo</span><span class="p">(...</span><span class="nx">args</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">&#39;foo is called with args&#39;</span><span class="p">,</span><span class="w"> </span><span class="p">...</span><span class="nx">args</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="nx">foo</span><span class="p">(</span><span class="nx">input</span><span class="p">)</span>
+</code></pre></div></p>
+<p>And we have an Obsidian document located under <code>projects</code>. We'll call <code>dv.view()</code> from this document using the <code>scripts/view1.js</code> path.</p>
+<p><strong>Document:</strong> <code>projects/customViews.md</code>
+<div class="highlight"><pre><span></span><code><span class="k">await</span><span class="w"> </span><span class="nx">dv</span><span class="p">.</span><span class="nx">view</span><span class="p">(</span><span class="s2">&quot;scripts/view1&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">arg1</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;a&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">arg2</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;b&#39;</span><span class="w"> </span><span class="p">})</span><span class="w"> </span>
+</code></pre></div></p>
+<p>When the above script is executed, it will print the following:</p>
+<div class="highlight"><pre><span></span><code>Loading view1
+foo is called with args {arg1: &#39;a&#39;, arg2: &#39;b&#39;}
+</code></pre></div>
+<h2 id="dataviews">Dataviews</h2>
+<h3 id="dvlistelements"><code>dv.list(elements)</code></h3>
+<p>Render a dataview list of elements; accept both vanilla arrays and data arrays.</p>
+<div class="highlight"><pre><span></span><code><span class="nx">dv</span><span class="p">.</span><span class="nx">list</span><span class="p">([</span><span class="mf">1</span><span class="p">,</span><span class="w"> </span><span class="mf">2</span><span class="p">,</span><span class="w"> </span><span class="mf">3</span><span class="p">])</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">list</span><span class="w"> </span><span class="k">of</span><span class="w"> </span><span class="mf">1</span><span class="p">,</span><span class="w"> </span><span class="mf">2</span><span class="p">,</span><span class="w"> </span><span class="mf">3</span>
+<span class="nx">dv</span><span class="p">.</span><span class="nx">list</span><span class="p">(</span><span class="nx">dv</span><span class="p">.</span><span class="nx">pages</span><span class="p">().</span><span class="nx">file</span><span class="p">.</span><span class="nx">name</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">list</span><span class="w"> </span><span class="k">of</span><span class="w"> </span><span class="nx">all</span><span class="w"> </span><span class="nx">file</span><span class="w"> </span><span class="nx">names</span>
+<span class="nx">dv</span><span class="p">.</span><span class="nx">list</span><span class="p">(</span><span class="nx">dv</span><span class="p">.</span><span class="nx">pages</span><span class="p">().</span><span class="nx">file</span><span class="p">.</span><span class="nx">link</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">list</span><span class="w"> </span><span class="k">of</span><span class="w"> </span><span class="nx">all</span><span class="w"> </span><span class="nx">file</span><span class="w"> </span><span class="nx">links</span>
+<span class="nx">dv</span><span class="p">.</span><span class="nx">list</span><span class="p">(</span><span class="nx">dv</span><span class="p">.</span><span class="nx">pages</span><span class="p">(</span><span class="s2">&quot;#book&quot;</span><span class="p">).</span><span class="nx">where</span><span class="p">(</span><span class="nx">p</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">p</span><span class="p">.</span><span class="nx">rating</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">7</span><span class="p">))</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">list</span><span class="w"> </span><span class="k">of</span><span class="w"> </span><span class="nx">all</span><span class="w"> </span><span class="nx">books</span><span class="w"> </span><span class="kd">with</span><span class="w"> </span><span class="nx">rating</span><span class="w"> </span><span class="nx">greater</span><span class="w"> </span><span class="nx">than</span><span class="w"> </span><span class="mf">7</span>
+</code></pre></div>
+<h3 id="dvtasklisttasks-groupbyfile"><code>dv.taskList(tasks, groupByFile)</code></h3>
+<p>Render a dataview list of <code>Task</code> objects, as obtained by <code>page.file.tasks</code>. By default, this view will automatically
+group the tasks by their origin file. If you provide <code>false</code> as a second argument explicitly, it will instead render them
+as a single unified list.</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// List all tasks from pages marked &#39;#project&#39;</span>
+<span class="nx">dv</span><span class="p">.</span><span class="nx">taskList</span><span class="p">(</span><span class="nx">dv</span><span class="p">.</span><span class="nx">pages</span><span class="p">(</span><span class="s2">&quot;#project&quot;</span><span class="p">).</span><span class="nx">file</span><span class="p">.</span><span class="nx">tasks</span><span class="p">)</span>
+
+<span class="c1">// List all *uncompleted* tasks from pages marked #project</span>
+<span class="nx">dv</span><span class="p">.</span><span class="nx">taskList</span><span class="p">(</span><span class="nx">dv</span><span class="p">.</span><span class="nx">pages</span><span class="p">(</span><span class="s2">&quot;#project&quot;</span><span class="p">).</span><span class="nx">file</span><span class="p">.</span><span class="nx">tasks</span>
+<span class="w">    </span><span class="p">.</span><span class="nx">where</span><span class="p">(</span><span class="nx">t</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="o">!</span><span class="nx">t</span><span class="p">.</span><span class="nx">completed</span><span class="p">))</span>
+
+<span class="c1">// List all tasks tagged with &#39;#tag&#39; from pages marked #project</span>
+<span class="nx">dv</span><span class="p">.</span><span class="nx">taskList</span><span class="p">(</span><span class="nx">dv</span><span class="p">.</span><span class="nx">pages</span><span class="p">(</span><span class="s2">&quot;#project&quot;</span><span class="p">).</span><span class="nx">file</span><span class="p">.</span><span class="nx">tasks</span>
+<span class="w">    </span><span class="p">.</span><span class="nx">where</span><span class="p">(</span><span class="nx">t</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">t</span><span class="p">.</span><span class="nx">text</span><span class="p">.</span><span class="nx">includes</span><span class="p">(</span><span class="s2">&quot;#tag&quot;</span><span class="p">)))</span>
+
+<span class="c1">// List all tasks from pages marked &#39;#project&#39;, without grouping.</span>
+<span class="nx">dv</span><span class="p">.</span><span class="nx">taskList</span><span class="p">(</span><span class="nx">dv</span><span class="p">.</span><span class="nx">pages</span><span class="p">(</span><span class="s2">&quot;#project&quot;</span><span class="p">).</span><span class="nx">file</span><span class="p">.</span><span class="nx">tasks</span><span class="p">,</span><span class="w"> </span><span class="kc">false</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="dvtableheaders-elements"><code>dv.table(headers, elements)</code></h3>
+<p>Renders a dataview table. <code>headers</code> is an array of column headers. <code>elements</code> is an array of rows. Each row is itself an array of columns. Inside a row, every column which is an array will be rendered with bullet points.</p>
+<div class="highlight"><pre><span></span><code><span class="nx">dv</span><span class="p">.</span><span class="nx">table</span><span class="p">(</span>
+<span class="w">    </span><span class="p">[</span><span class="s2">&quot;Col1&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Col2&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Col3&quot;</span><span class="p">],</span>
+<span class="w">        </span><span class="p">[</span>
+<span class="w">            </span><span class="p">[</span><span class="s2">&quot;Row1&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Dummy&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Dummy&quot;</span><span class="p">],</span>
+<span class="w">            </span><span class="p">[</span><span class="s2">&quot;Row2&quot;</span><span class="p">,</span><span class="w"> </span>
+<span class="w">                </span><span class="p">[</span><span class="s2">&quot;Bullet1&quot;</span><span class="p">,</span>
+<span class="w">                 </span><span class="s2">&quot;Bullet2&quot;</span><span class="p">,</span>
+<span class="w">                 </span><span class="s2">&quot;Bullet3&quot;</span><span class="p">],</span>
+<span class="w">             </span><span class="s2">&quot;Dummy&quot;</span><span class="p">],</span>
+<span class="w">            </span><span class="p">[</span><span class="s2">&quot;Row3&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Dummy&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Dummy&quot;</span><span class="p">]</span>
+<span class="w">        </span><span class="p">]</span>
+<span class="w">    </span><span class="p">);</span>
+</code></pre></div>
+<p>An example of how to render a simple table of book info sorted by rating.</p>
+<div class="highlight"><pre><span></span><code><span class="nx">dv</span><span class="p">.</span><span class="nx">table</span><span class="p">([</span><span class="s2">&quot;File&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Genre&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Time Read&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Rating&quot;</span><span class="p">],</span><span class="w"> </span><span class="nx">dv</span><span class="p">.</span><span class="nx">pages</span><span class="p">(</span><span class="s2">&quot;#book&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="nx">sort</span><span class="p">(</span><span class="nx">b</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">b</span><span class="p">.</span><span class="nx">rating</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="nx">map</span><span class="p">(</span><span class="nx">b</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">[</span><span class="nx">b</span><span class="p">.</span><span class="nx">file</span><span class="p">.</span><span class="nx">link</span><span class="p">,</span><span class="w"> </span><span class="nx">b</span><span class="p">.</span><span class="nx">genre</span><span class="p">,</span><span class="w"> </span><span class="nx">b</span><span class="p">[</span><span class="s2">&quot;time-read&quot;</span><span class="p">],</span><span class="w"> </span><span class="nx">b</span><span class="p">.</span><span class="nx">rating</span><span class="p">]))</span>
+</code></pre></div>
+<h2 id="markdown-dataviews">Markdown Dataviews</h2>
+<p>Functions which render to plain Markdown strings which you can then render or manipulate as desired.</p>
+<h3 id="dvmarkdowntableheaders-values"><code>dv.markdownTable(headers, values)</code></h3>
+<p>Equivalent to <code>dv.table()</code>, which renders a table with the given list of headers and 2D array of elements, but
+returns plain Markdown.</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// Render a simple table of book info sorted by rating.</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">table</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">dv</span><span class="p">.</span><span class="nx">markdownTable</span><span class="p">([</span><span class="s2">&quot;File&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Genre&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Time Read&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Rating&quot;</span><span class="p">],</span><span class="w"> </span><span class="nx">dv</span><span class="p">.</span><span class="nx">pages</span><span class="p">(</span><span class="s2">&quot;#book&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="nx">sort</span><span class="p">(</span><span class="nx">b</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">b</span><span class="p">.</span><span class="nx">rating</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="nx">map</span><span class="p">(</span><span class="nx">b</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">[</span><span class="nx">b</span><span class="p">.</span><span class="nx">file</span><span class="p">.</span><span class="nx">link</span><span class="p">,</span><span class="w"> </span><span class="nx">b</span><span class="p">.</span><span class="nx">genre</span><span class="p">,</span><span class="w"> </span><span class="nx">b</span><span class="p">[</span><span class="s2">&quot;time-read&quot;</span><span class="p">],</span><span class="w"> </span><span class="nx">b</span><span class="p">.</span><span class="nx">rating</span><span class="p">]))</span>
+
+<span class="nx">dv</span><span class="p">.</span><span class="nx">paragraph</span><span class="p">(</span><span class="nx">table</span><span class="p">);</span>
+</code></pre></div>
+<h3 id="dvmarkdownlistvalues"><code>dv.markdownList(values)</code></h3>
+<p>Equivalent to <code>dv.list()</code>, which renders a list of the given elements, but returns plain Markdown.</p>
+<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">markdown</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">dv</span><span class="p">.</span><span class="nx">markdownList</span><span class="p">([</span><span class="mf">1</span><span class="p">,</span><span class="w"> </span><span class="mf">2</span><span class="p">,</span><span class="w"> </span><span class="mf">3</span><span class="p">]);</span>
+<span class="nx">dv</span><span class="p">.</span><span class="nx">paragraph</span><span class="p">(</span><span class="nx">markdown</span><span class="p">);</span>
+</code></pre></div>
+<h3 id="dvmarkdowntasklisttasks"><code>dv.markdownTaskList(tasks)</code></h3>
+<p>Equivalent to <code>dv.taskList()</code>, which renders a task list, but returns plain Markdown.</p>
+<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">markdown</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">dv</span><span class="p">.</span><span class="nx">markdownTaskList</span><span class="p">(</span><span class="nx">dv</span><span class="p">.</span><span class="nx">pages</span><span class="p">(</span><span class="s2">&quot;#project&quot;</span><span class="p">).</span><span class="nx">file</span><span class="p">.</span><span class="nx">tasks</span><span class="p">);</span>
+<span class="nx">dv</span><span class="p">.</span><span class="nx">paragraph</span><span class="p">(</span><span class="nx">markdown</span><span class="p">);</span>
+</code></pre></div>
+<h2 id="utility">Utility</h2>
+<h3 id="dvarrayvalue"><code>dv.array(value)</code></h3>
+<p>Convert a given value or array into a Dataview <a href="../data-array/">data array</a>. If the value is already a data array, returns
+it unchanged.</p>
+<div class="highlight"><pre><span></span><code><span class="nx">dv</span><span class="p">.</span><span class="nx">array</span><span class="p">([</span><span class="mf">1</span><span class="p">,</span><span class="w"> </span><span class="mf">2</span><span class="p">,</span><span class="w"> </span><span class="mf">3</span><span class="p">])</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">dataview</span><span class="w"> </span><span class="nx">data</span><span class="w"> </span><span class="nx">array</span><span class="w"> </span><span class="p">[</span><span class="mf">1</span><span class="p">,</span><span class="w"> </span><span class="mf">2</span><span class="p">,</span><span class="w"> </span><span class="mf">3</span><span class="p">]</span>
+</code></pre></div>
+<h3 id="dvisarrayvalue"><code>dv.isArray(value)</code></h3>
+<p>Returns true if the given value is an array or dataview array.</p>
+<div class="highlight"><pre><span></span><code><span class="nx">dv</span><span class="p">.</span><span class="nx">isArray</span><span class="p">(</span><span class="nx">dv</span><span class="p">.</span><span class="nx">array</span><span class="p">([</span><span class="mf">1</span><span class="p">,</span><span class="w"> </span><span class="mf">2</span><span class="p">,</span><span class="w"> </span><span class="mf">3</span><span class="p">]))</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="kc">true</span>
+<span class="nx">dv</span><span class="p">.</span><span class="nx">isArray</span><span class="p">([</span><span class="mf">1</span><span class="p">,</span><span class="w"> </span><span class="mf">2</span><span class="p">,</span><span class="w"> </span><span class="mf">3</span><span class="p">])</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="kc">true</span>
+<span class="nx">dv</span><span class="p">.</span><span class="nx">isArray</span><span class="p">({</span><span class="w"> </span><span class="nx">x</span><span class="o">:</span><span class="w"> </span><span class="mf">1</span><span class="w"> </span><span class="p">})</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="kc">false</span>
+</code></pre></div>
+<h3 id="dvfilelinkpath-embed-display-name"><code>dv.fileLink(path, [embed?], [display-name])</code></h3>
+<p>Converts a textual path into a Dataview <code>Link</code> object; you can optionally also specify if the link is embedded as well
+as it's display name.</p>
+<div class="highlight"><pre><span></span><code><span class="nx">dv</span><span class="p">.</span><span class="nx">fileLink</span><span class="p">(</span><span class="s2">&quot;2021-08-08&quot;</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">link</span><span class="w"> </span><span class="nx">to</span><span class="w"> </span><span class="nx">file</span><span class="w"> </span><span class="nx">named</span><span class="w"> </span><span class="s2">&quot;2021-08-08&quot;</span>
+<span class="nx">dv</span><span class="p">.</span><span class="nx">fileLink</span><span class="p">(</span><span class="s2">&quot;book/The Raisin&quot;</span><span class="p">,</span><span class="w"> </span><span class="kc">true</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">embed</span><span class="w"> </span><span class="nx">link</span><span class="w"> </span><span class="nx">to</span><span class="w"> </span><span class="s2">&quot;The Raisin&quot;</span>
+<span class="nx">dv</span><span class="p">.</span><span class="nx">fileLink</span><span class="p">(</span><span class="s2">&quot;Test&quot;</span><span class="p">,</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Test File&quot;</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">link</span><span class="w"> </span><span class="nx">to</span><span class="w"> </span><span class="nx">file</span><span class="w"> </span><span class="s2">&quot;Test&quot;</span><span class="w"> </span><span class="kd">with</span><span class="w"> </span><span class="nx">display</span><span class="w"> </span><span class="nx">name</span><span class="w"> </span><span class="s2">&quot;Test File&quot;</span>
+</code></pre></div>
+<h3 id="dvsectionlinkpath-section-embed-display"><code>dv.sectionLink(path, section, [embed?], [display?])</code></h3>
+<p>Converts a textual path + section name into a Dataview <code>Link</code> object; you can optionally also specify if the link is embedded and
+it's display name.</p>
+<div class="highlight"><pre><span></span><code><span class="nx">dv</span><span class="p">.</span><span class="nx">sectionLink</span><span class="p">(</span><span class="s2">&quot;Index&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Books&quot;</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">[[</span><span class="nx">Index</span><span class="n">#Books</span><span class="p">]]</span>
+<span class="nx">dv</span><span class="p">.</span><span class="nx">sectionLink</span><span class="p">(</span><span class="s2">&quot;Index&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Books&quot;</span><span class="p">,</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;My Books&quot;</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">[[</span><span class="nx">Index</span><span class="n">#Books</span><span class="o">|</span><span class="nx">My</span><span class="w"> </span><span class="nx">Books</span><span class="p">]]</span>
+</code></pre></div>
+<h3 id="dvblocklinkpath-blockid-embed-display"><code>dv.blockLink(path, blockId, [embed?], [display?])</code></h3>
+<p>Converts a textual path + block ID into a Dataview <code>Link</code> object; you
+can optionally also specify if the link is embedded and it's display name.</p>
+<div class="highlight"><pre><span></span><code><span class="nx">dv</span><span class="p">.</span><span class="nx">blockLink</span><span class="p">(</span><span class="s2">&quot;Notes&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;12gdhjg3&quot;</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">[[</span><span class="nx">Index</span><span class="err">#</span><span class="o">^</span><span class="mf">12</span><span class="nx">gdhjg3</span><span class="p">]]</span>
+</code></pre></div>
+<h3 id="dvdatetext"><code>dv.date(text)</code></h3>
+<p>Coerce text and links to luxon <code>DateTime</code>; if provided with a <code>DateTime</code>, return it unchanged.</p>
+<div class="highlight"><pre><span></span><code><span class="nx">dv</span><span class="p">.</span><span class="nx">date</span><span class="p">(</span><span class="s2">&quot;2021-08-08&quot;</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">DateTime</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="nx">August</span><span class="w"> </span><span class="mf">8</span><span class="nx">th</span><span class="p">,</span><span class="w"> </span><span class="mf">2021</span>
+<span class="nx">dv</span><span class="p">.</span><span class="nx">date</span><span class="p">(</span><span class="nx">dv</span><span class="p">.</span><span class="nx">fileLink</span><span class="p">(</span><span class="s2">&quot;2021-08-07&quot;</span><span class="p">))</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">dateTime</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="nx">August</span><span class="w"> </span><span class="mf">8</span><span class="nx">th</span><span class="p">,</span><span class="w"> </span><span class="mf">2021</span>
+</code></pre></div>
+<h3 id="dvdurationtext"><code>dv.duration(text)</code></h3>
+<p>Coerce text to a luxon <code>Duration</code>; uses the same parsing rules as Dataview duration types.</p>
+<div class="highlight"><pre><span></span><code><span class="nx">dv</span><span class="p">.</span><span class="nx">duration</span><span class="p">(</span><span class="s2">&quot;8 minutes&quot;</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">Duration</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="mf">8</span><span class="w"> </span><span class="nx">minutes</span><span class="w"> </span><span class="p">}</span>
+<span class="nx">dv</span><span class="p">.</span><span class="nx">duration</span><span class="p">(</span><span class="s2">&quot;9 hours, 2 minutes, 3 seconds&quot;</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">Duration</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="mf">9</span><span class="w"> </span><span class="nx">hours</span><span class="p">,</span><span class="w"> </span><span class="mf">2</span><span class="w"> </span><span class="nx">minutes</span><span class="p">,</span><span class="w"> </span><span class="mf">3</span><span class="w"> </span><span class="nx">seconds</span><span class="w"> </span><span class="p">}</span>
+</code></pre></div>
+<h3 id="dvcomparea-b"><code>dv.compare(a, b)</code></h3>
+<p>Compare two arbitrary JavaScript values according to dataview's default comparison rules; useful if you are writing a
+custom comparator and want to fall back to the default behavior. Returns a negative value if <code>a &lt; b</code>, 0 if <code>a = b</code>, and
+a positive value if <code>a &gt; b</code>.</p>
+<div class="highlight"><pre><span></span><code><span class="nx">dv</span><span class="p">.</span><span class="nx">compare</span><span class="p">(</span><span class="mf">1</span><span class="p">,</span><span class="w"> </span><span class="mf">2</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">-</span><span class="mf">1</span>
+<span class="nx">dv</span><span class="p">.</span><span class="nx">compare</span><span class="p">(</span><span class="s2">&quot;yes&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;no&quot;</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1</span>
+<span class="nx">dv</span><span class="p">.</span><span class="nx">compare</span><span class="p">({</span><span class="w"> </span><span class="nx">what</span><span class="o">:</span><span class="w"> </span><span class="mf">0</span><span class="w"> </span><span class="p">},</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">what</span><span class="o">:</span><span class="w"> </span><span class="mf">0</span><span class="w"> </span><span class="p">})</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0</span>
+</code></pre></div>
+<h3 id="dvequala-b"><code>dv.equal(a, b)</code></h3>
+<p>Compare two arbitrary JavaScript values and return true if they are equal according to Dataview's default comparison
+rules.</p>
+<div class="highlight"><pre><span></span><code><span class="nx">dv</span><span class="p">.</span><span class="nx">equal</span><span class="p">(</span><span class="mf">1</span><span class="p">,</span><span class="w"> </span><span class="mf">2</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+<span class="nx">dv</span><span class="p">.</span><span class="nx">equal</span><span class="p">(</span><span class="mf">1</span><span class="p">,</span><span class="w"> </span><span class="mf">1</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
+</code></pre></div>
+<h3 id="dvclonevalue"><code>dv.clone(value)</code></h3>
+<p>Deep clone any Dataview value, including dates, arrays, and links.</p>
+<div class="highlight"><pre><span></span><code><span class="nx">dv</span><span class="p">.</span><span class="nx">clone</span><span class="p">(</span><span class="mf">1</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1</span>
+<span class="nx">dv</span><span class="p">.</span><span class="nx">clone</span><span class="p">({</span><span class="w"> </span><span class="nx">a</span><span class="o">:</span><span class="w"> </span><span class="mf">1</span><span class="w"> </span><span class="p">})</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">a</span><span class="o">:</span><span class="w"> </span><span class="mf">1</span><span class="w"> </span><span class="p">}</span>
+</code></pre></div>
+<h3 id="dvparsevalue"><code>dv.parse(value)</code></h3>
+<p>Parse an arbitrary string object into a complex Dataview type
+(mainly supporting links, dates, and durations).</p>
+<div class="highlight"><pre><span></span><code><span class="nx">dv</span><span class="p">.</span><span class="nx">parse</span><span class="p">(</span><span class="s2">&quot;[[A]]&quot;</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">Link</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="nx">A</span><span class="w"> </span><span class="p">}</span>
+<span class="nx">dv</span><span class="p">.</span><span class="nx">parse</span><span class="p">(</span><span class="s2">&quot;2020-08-14&quot;</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">DateTime</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="mf">2020</span><span class="o">-</span><span class="mf">08</span><span class="o">-</span><span class="mf">14</span><span class="w"> </span><span class="p">}</span>
+<span class="nx">dv</span><span class="p">.</span><span class="nx">parse</span><span class="p">(</span><span class="s2">&quot;9 seconds&quot;</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">Duration</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="mf">9</span><span class="w"> </span><span class="nx">seconds</span><span class="w"> </span><span class="p">}</span>
+</code></pre></div>
+<h2 id="file-io">File I/O</h2>
+<p>These utility methods are all contained in the <code>dv.io</code> sub-API, and are all <em>asynchronous</em> (marked by ⌛).</p>
+<h3 id="dviocsvpath-origin-file">⌛ <code>dv.io.csv(path, [origin-file])</code></h3>
+<p>Load a CSV from the given path (a link or string). Relative paths will be resolved relative to the optional origin file (defaulting to the current file if not provided). Return a dataview array, each element containing an object of the CSV values; if the file does not exist, return <code>undefined</code>.</p>
+<div class="highlight"><pre><span></span><code><span class="k">await</span><span class="w"> </span><span class="nx">dv</span><span class="p">.</span><span class="nx">io</span><span class="p">.</span><span class="nx">csv</span><span class="p">(</span><span class="s2">&quot;hello.csv&quot;</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">[{</span><span class="w"> </span><span class="nx">column1</span><span class="o">:</span><span class="w"> </span><span class="p">...,</span><span class="w"> </span><span class="nx">column2</span><span class="o">:</span><span class="w"> </span><span class="p">...},</span><span class="w"> </span><span class="p">...]</span>
+</code></pre></div>
+<h3 id="dvioloadpath-origin-file">⌛ <code>dv.io.load(path, [origin-file])</code></h3>
+<p>Load the contents of the given path (a link or string) asynchronously. Relative paths will be resolved relative to the
+optional origin file (defaulting to the current file if not provided). Returns the string contents of the file, or
+<code>undefined</code> if the file does not exist.</p>
+<div class="highlight"><pre><span></span><code><span class="k">await</span><span class="w"> </span><span class="nx">dv</span><span class="p">.</span><span class="nx">io</span><span class="p">.</span><span class="nx">load</span><span class="p">(</span><span class="s2">&quot;File&quot;</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="s2">&quot;# File\nThis is an example file...&quot;</span>
+</code></pre></div>
+<h3 id="dvionormalizepath-origin-file"><code>dv.io.normalize(path, [origin-file])</code></h3>
+<p>Convert a relative link or path into an absolute path. If <code>origin-file</code> is provided, then the resolution is doing as if
+you were resolving the link from that file; if not, the path is resolved relative to the current file.</p>
+<div class="highlight"><pre><span></span><code><span class="nx">dv</span><span class="p">.</span><span class="nx">io</span><span class="p">.</span><span class="nx">normalize</span><span class="p">(</span><span class="s2">&quot;Test&quot;</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="s2">&quot;dataview/test/Test.md&quot;</span><span class="p">,</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="nx">inside</span><span class="w"> </span><span class="s2">&quot;dataview/test&quot;</span>
+<span class="nx">dv</span><span class="p">.</span><span class="nx">io</span><span class="p">.</span><span class="nx">normalize</span><span class="p">(</span><span class="s2">&quot;Test&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;dataview/test2/Index.md&quot;</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="s2">&quot;dataview/test2/Test.md&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">irrespective</span><span class="w"> </span><span class="k">of</span><span class="w"> </span><span class="nx">the</span><span class="w"> </span><span class="nx">current</span><span class="w"> </span><span class="nx">file</span>
+</code></pre></div>
+<h2 id="query-evaluation">Query Evaluation</h2>
+<h3 id="dvquerysource-file-settings">⌛ <code>dv.query(source, [file, settings])</code></h3>
+<p>Execute a Dataview query and return the results as a structured return.
+The return type of this function varies by the query type being executed,
+though will always be an object with a <code>type</code> denoting the return type. This version of <code>query</code> returns a result type - you may want <code>tryQuery</code>, which instead throws an error on failed query execution.</p>
+<div class="highlight"><pre><span></span><code><span class="k">await</span><span class="w"> </span><span class="nx">dv</span><span class="p">.</span><span class="nx">query</span><span class="p">(</span><span class="s2">&quot;LIST FROM #tag&quot;</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span>
+<span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="nx">successful</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="nx">value</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">type</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;list&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">values</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="nx">value1</span><span class="p">,</span><span class="w"> </span><span class="nx">value2</span><span class="p">,</span><span class="w"> </span><span class="p">...]</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span>
+
+<span class="k">await</span><span class="w"> </span><span class="nx">dv</span><span class="p">.</span><span class="nx">query</span><span class="p">(</span><span class="sb">`TABLE WITHOUT ID file.name, value FROM &quot;path&quot;`</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span>
+<span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="nx">successful</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="nx">value</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">type</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;table&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">headers</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;file.name&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;value&quot;</span><span class="p">],</span><span class="w"> </span><span class="nx">values</span><span class="o">:</span><span class="w"> </span><span class="p">[[</span><span class="s2">&quot;A&quot;</span><span class="p">,</span><span class="w"> </span><span class="mf">1</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;B&quot;</span><span class="p">,</span><span class="w"> </span><span class="mf">2</span><span class="p">]]</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span>
+
+<span class="k">await</span><span class="w"> </span><span class="nx">dv</span><span class="p">.</span><span class="nx">query</span><span class="p">(</span><span class="s2">&quot;TASK WHERE due&quot;</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span>
+<span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="nx">successful</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="nx">value</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">type</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;task&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">values</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="nx">task1</span><span class="p">,</span><span class="w"> </span><span class="nx">task2</span><span class="p">,</span><span class="w"> </span><span class="p">...]</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span>
+</code></pre></div>
+<p><code>dv.query</code> accepts two additional, optional arguments:
+1. <code>file</code>: The file path to resolve the query from (in case of references to <code>this</code>). Defaults to the current file.
+2. <code>settings</code>: Execution settings for running the query. This is largely an advanced use case (where I recommend you
+   directly check the API implementation to see all available options).</p>
+<h3 id="dvtryquerysource-file-settings">⌛ <code>dv.tryQuery(source, [file, settings])</code></h3>
+<p>Exactly the same as <code>dv.query</code>, but more convenient in short scripts as
+execution failures will be raised as JavaScript exceptions instead of a
+result type.</p>
+<h3 id="dvquerymarkdownsource-file-settings">⌛ <code>dv.queryMarkdown(source, [file], [settings])</code></h3>
+<p>Equivalent to <code>dv.query()</code>, but returns rendered Markdown.</p>
+<div class="highlight"><pre><span></span><code><span class="k">await</span><span class="w"> </span><span class="nx">dv</span><span class="p">.</span><span class="nx">queryMarkdown</span><span class="p">(</span><span class="s2">&quot;LIST FROM #tag&quot;</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span>
+<span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="nx">successful</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="nx">value</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="s2">&quot;- [[Page 1]]\n- [[Page 2]]&quot;</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span>
+</code></pre></div>
+<h3 id="dvtryquerymarkdownsource-file-settings">⌛ <code>dv.tryQueryMarkdown(source, [file], [settings])</code></h3>
+<p>Exactly the same as <code>dv.queryMarkdown()</code>, but throws an error on parse failure.</p>
+<h3 id="dvtryevaluateexpression-context"><code>dv.tryEvaluate(expression, [context])</code></h3>
+<p>Evaluate an arbitrary dataview expression (like <code>2 + 2</code> or <code>link("text")</code> or <code>x * 9</code>); throws an <code>Error</code> on parse or
+evaluation failure. <code>this</code> is an always-available implicit variable which refers to the current file.</p>
+<div class="highlight"><pre><span></span><code><span class="nx">dv</span><span class="p">.</span><span class="nx">tryEvaluate</span><span class="p">(</span><span class="s2">&quot;2 + 2&quot;</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="mf">4</span>
+<span class="nx">dv</span><span class="p">.</span><span class="nx">tryEvaluate</span><span class="p">(</span><span class="s2">&quot;x + 2&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">{</span><span class="nx">x</span><span class="o">:</span><span class="w"> </span><span class="mf">3</span><span class="p">})</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="mf">5</span>
+<span class="nx">dv</span><span class="p">.</span><span class="nx">tryEvaluate</span><span class="p">(</span><span class="s2">&quot;length(this.file.tasks)&quot;</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">number</span><span class="w"> </span><span class="k">of</span><span class="w"> </span><span class="nx">tasks</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nx">the</span><span class="w"> </span><span class="nx">current</span><span class="w"> </span><span class="nx">file</span>
+</code></pre></div>
+<h3 id="dvevaluateexpression-context"><code>dv.evaluate(expression, [context])</code></h3>
+<p>Evaluate an arbitrary dataview expression (like <code>2 + 2</code> or <code>link("text")</code> or <code>x * 9</code>), returning a <code>Result</code> object of
+the result. You can unwrap the result type by checking <code>result.successful</code> (and then fetching either <code>result.value</code>
+or <code>result.error</code>). If you want a simpler API that throws an error on a failed evaluation, use <code>dv.tryEvaluate</code>.</p>
+<div class="highlight"><pre><span></span><code><span class="nx">dv</span><span class="p">.</span><span class="nx">evaluate</span><span class="p">(</span><span class="s2">&quot;2 + 2&quot;</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">Successful</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">value</span><span class="o">:</span><span class="w"> </span><span class="mf">4</span><span class="w"> </span><span class="p">}</span>
+<span class="nx">dv</span><span class="p">.</span><span class="nx">evaluate</span><span class="p">(</span><span class="s2">&quot;2 +&quot;</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">Failure</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">error</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;Failed to parse ... &quot;</span><span class="w"> </span><span class="p">}</span>
+</code></pre></div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../..", "features": [], "search": "../../assets/javascripts/workers/search.f8cc74c7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.c8b220af.min.js"></script>
+      
+    
+  </body>
+</html>
