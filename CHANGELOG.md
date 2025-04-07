@@ -1,3 +1,10 @@
+# 0.5.69 (Beta)
+
+Attempting to fix #2557, but uncertain to any side effects.
+
+
+---
+
 # 0.5.68
 
 - Many fixes to the documentation

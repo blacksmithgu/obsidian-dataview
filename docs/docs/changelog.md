@@ -1,3 +1,10 @@
+# 0.5.69 (Beta)
+
+Attempting to fix #2557, but uncertain to any side effects.
+
+
+---
+
 # 0.5.68
 
 - Many fixes to the documentation
@@ -289,7 +296,7 @@ will be finishing up the associated new "extension" functionality shortly, which
 2. For custom renderable objects (progress bars, embedded task lists, embedded tables) to be added to any Dataview view via plugins.
 3. For plugins to provide alternative behavior for some dataview functionality (such as integrating task plugins with
    the dataview task query).
-
+   
 As part of the API revamp, it is now possible to programmatically execute Dataview and DataviewJS queries - either for
 using the existing Dataview query language in your own plugin, or for embedding dataview. The Dataview npm library also
 now exposes many useful internal Dataview types, including the AST structure for all dataview queries.
