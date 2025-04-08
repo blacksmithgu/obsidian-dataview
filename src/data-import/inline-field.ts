@@ -68,8 +68,30 @@ function findClosing(
 
 /** Find the '::' separator in an inline field. */
 function findSeparator(line: string, start: number): { key: string; valueIndex: number } | undefined {
+    // lookup for inline code blocks on that line.
+    let code_blocks: [number, number][] = []
+    for (let start = line.indexOf("`"); (start < line.length) && (start >= 0); start = line.indexOf("`", start)) {
+        // ignore escaped back ticks.
+        if (line.charAt(start - 1) == "\\") {
+            start = start + 1;
+            continue;
+        }
+        let end = line.indexOf("`", start + 1);
+        code_blocks.push([start, end]);
+        if (end != -1) {
+            start = end + 1;
+        } else {
+            break;
+        }
+    }
+
     let sep = line.indexOf("::", start);
     if (sep < 0) return undefined;
+    for (const pair of code_blocks) {
+        if ((pair[0] < sep) && ((sep < pair[1]) || (pair[1] == -1))) {
+            return undefined;
+        }
+    }
 
     return { key: line.substring(start, sep).trim(), valueIndex: sep + 2 };
 }

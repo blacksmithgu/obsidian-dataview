@@ -39,6 +39,14 @@ describe("Simple Inline Inline", () => {
     test("Incorrect Brackets", () => expect(extractInlineFields("[key:value]")).toEqual([]));
     test("Incorrect Parenthesis", () => expect(extractInlineFields("(key:value)")).toEqual([]));
 
+    test("No Field, Code block between Parenthesis", () => expect(extractInlineFields("(Some `code::inline::codeblock`)")).toEqual([]));
+    test("No Field, multiple Code block between Parenthesis", () =>
+         expect(extractInlineFields("(Some `codeblock` and `another::one`)")).toEqual([])
+        );
+    test("No Field, Parenthesis inside code block", () => expect(extractInlineFields("Some `(inline::codeblock)`")).toEqual([]));
+    test("No Field, Open Parenthesis in Code block, close outside", () => expect(extractInlineFields("Some `(inline::codeblock`)")).toEqual([]));
+    test("No Field, Open Parenthesis outside Code block, close inside", () => expect(extractInlineFields("(Some `inline::codebl)ock`")).toEqual([]));
+
     test("Trivial Brackets", () =>
         expect(extractInlineFields("[key::value]")).toEqual([
             {
@@ -83,6 +91,39 @@ describe("Simple Inline Inline", () => {
             wrapping: "[",
         });
     });
+
+    test("One Field after a codeblock between parenthesis", () =>
+         expect(extractInlineFields("(Some `inline::codeblock`) (key::value)")).toEqual([{
+                key: "key",
+                value: "value",
+                start: 27,
+                startValue: 33,
+                end: 39,
+                wrapping: "(",
+            }
+         ]));
+
+    test("One Field before a codeblock between parenthesis", () =>
+         expect(extractInlineFields("Some (key::value) text (Some `inline::codeblock`)")).toEqual([{
+                key: "key",
+                value: "value",
+                start: 5,
+                startValue: 11,
+                end: 17,
+                wrapping: "(",
+            }
+         ]));
+    test("Escaped back tick outside a code block don’t count as code block start.", () =>
+         expect(extractInlineFields("(some \\` escaped::backtick)")).toEqual([{
+                key: "some \\` escaped",
+                value: "backtick",
+                start: 0,
+                startValue: 18,
+                end: 27,
+                wrapping: "(",
+            }
+         ]))
+
 });
 
 describe("Inline Inline Edge Cases", () => {
