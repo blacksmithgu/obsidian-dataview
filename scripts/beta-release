@@ -69,8 +69,8 @@ git push
 npm run build
 
 # release api
-npm publish --access public
+npm publish --tag beta --access public
 
 # And do a github release.
-gh release create "${NEW_VERSION}" build/main.js styles.css manifest.json --title "${NEW_VERSION}" --notes-file release-notes.md
+gh release create "${NEW_VERSION}" --pre-release build/main.js styles.css manifest.json --title "${NEW_VERSION}" --notes-file release-notes.md
 rm -f release-notes.md
