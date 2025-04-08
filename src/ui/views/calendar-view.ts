@@ -9,6 +9,7 @@ import { renderErrorPre } from "ui/render";
 import { DataviewRefreshableRenderer } from "ui/refreshable-view";
 import { asyncTryOrPropagate } from "util/normalize";
 import type { Moment } from "moment";
+import moment from "moment";
 
 // CalendarFile is a representation of a particular file, displayed in the calendar view.
 // It'll be represented in the calendar as a dot.
@@ -99,6 +100,7 @@ export class DataviewCalendarRenderer extends DataviewRefreshableRenderer {
                 },
                 showWeekNums: false,
                 sources,
+                displayedMonth: moment(maybeResult.value.displayedMonth?.toISO()),
             },
         });
     }

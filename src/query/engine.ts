@@ -489,6 +489,8 @@ export async function executeCalendar(
         link: Fields.indexVariable("file.link"),
     };
 
+    let displayedMonth = (query.header as CalendarQuery).displayedMonth;
+
     return executeCoreExtract(fileset.value, rootContext, query.operations, fields).map(core => {
         let data = core.data.map(p =>
             iden({
@@ -497,11 +499,12 @@ export async function executeCalendar(
             })
         );
 
-        return { core, data };
+        return { core, data, displayedMonth };
     });
 }
 
 export interface CalendarExecution {
     core: CoreExecution;
     data: { date: DateTime; link: Link; value?: Literal[] }[];
+    displayedMonth?: DateTime;
 }

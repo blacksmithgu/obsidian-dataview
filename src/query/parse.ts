@@ -153,13 +153,23 @@ export const QUERY_LANGUAGE = P.createLanguage<QueryLanguageTypes>({
                         return P.succeed({ type });
                     case "calendar":
                         return P.whitespace.then(
-                            P.seqMap(q.namedField, field => {
-                                return {
-                                    type,
-                                    showId: true,
-                                    field,
-                                } as QueryHeader;
-                            })
+                            P.seqMap(
+                                q.namedField,
+                                P.whitespace
+                                    .then(P.regexp(/DEFAULT\s+MONTH/i))
+                                    .then(P.whitespace)
+                                    .then(EXPRESSION.date)
+                                    .skip(P.optWhitespace)
+                                    .atMost(1),
+                                (field, month) => {
+                                    return {
+                                        type,
+                                        showId: true,
+                                        field,
+                                        displayedMonth: month.length == 1 ? month[0] : undefined,
+                                    } as QueryHeader;
+                                }
+                            )
                         );
                     default:
                         return P.fail(`Unrecognized query type '${type}'`);
