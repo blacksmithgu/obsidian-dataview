@@ -1,7 +1,7 @@
 /** Importer for markdown documents. */
 
 import { extractFullLineField, extractInlineFields, parseInlineValue, InlineField } from "data-import/inline-field";
-import { ListItem, PageMetadata } from "data-model/markdown";
+import { ListItem, PageMetadata, TableItem } from "data-model/markdown";
 import { Literal, Link, Values } from "data-model/value";
 import { EXPRESSION } from "expression/parse";
 import { DateTime } from "luxon";
@@ -78,6 +78,7 @@ export function parsePage(path: string, contents: string, stat: FileStats, metad
         links,
         lists: markdownData.lists,
         fields: finalizeInlineFields(fields),
+        tables: markdownData.tables,
         frontmatter: frontmatter,
         ctime: DateTime.fromMillis(stat.ctime),
         mtime: DateTime.fromMillis(stat.mtime),
@@ -136,11 +137,13 @@ export function parseMarkdown(
     contents: string[],
     metadata: CachedMetadata,
     linksByLine: Record<number, Link[]>
-): { fields: Map<string, Literal[]>; lists: ListItem[] } {
+): { fields: Map<string, Literal[]>; lists: ListItem[], tables: TableItem[] } {
     let fields: Map<string, Literal[]> = new Map();
 
     // Extract task data and append the global data extracted from them to our fields.
     let [lists, extraData] = parseLists(path, contents, metadata, linksByLine);
+    let tables = parseTables(contents, metadata);
+
     for (let [key, values] of extraData.entries()) {
         if (!fields.has(key)) fields.set(key, values);
         else fields.set(key, fields.get(key)!!.concat(values));
@@ -176,7 +179,7 @@ export function parseMarkdown(
         }
     }
 
-    return { fields, lists };
+    return { fields, lists, tables };
 }
 
 // TODO: Consider using an actual parser in lieu of a more expensive regex.
@@ -302,6 +305,39 @@ export function parseLists(
     }
 
     return [Object.values(cache), literals];
+}
+
+/**
+ * Parse table from content and meta data. The implementation will not include column spans. It only work for
+ * one column/one cell value.
+ */
+export function parseTables(
+    content: string[],
+    metadata: CachedMetadata,
+): TableItem[] {
+    const result: TableItem[] = [];
+    metadata.sections?.forEach(section => {
+        if (section.type === 'table') {
+            const startLine = section.position.start.line;
+            const endLine = section.position.end.line;
+
+            const headers = content[startLine]
+                .split('|')
+                .slice(1, -1)
+                .map(header => header.trim())
+            const rows = content
+                .slice(startLine + 2, endLine + 1)
+                .map(row => row
+                    .split('|')
+                    .slice(1, -1)
+                    .map(val => val.trim()));
+
+            const json = TableItem.serialize(headers, rows);
+
+            result.push(new TableItem({ headers, rows, json }))
+        }
+    });
+    return result;
 }
 
 /** Attempt to find a date associated with the given page from metadata or filenames. */

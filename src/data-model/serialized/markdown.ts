@@ -1,5 +1,6 @@
 /** Serialized / API facing data types for Dataview objects. */
 
+import { TableItem } from "data-model/markdown";
 import { Link, Literal } from "data-model/value";
 import { DateTime } from "luxon";
 import { Pos } from "obsidian";
@@ -17,6 +18,7 @@ export interface SMarkdownPage {
         aliases: string[];
         lists: SListItem[];
         tasks: STask[];
+        tables: TableItem[];
         ctime: DateTime;
         cday: DateTime;
         mtime: DateTime;
