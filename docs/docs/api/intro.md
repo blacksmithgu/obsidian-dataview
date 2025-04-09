@@ -18,6 +18,17 @@ Code executed in such codeblocks have access to the `dv` variable, which provide
 dataview API (like `dv.table()`, `dv.pages()`, and so on). For more information, check out the [codeblock API
 reference](code-reference.md).
 
+## Disabling Automatic View Refresh Individually
+
+This is especially useful when using Dataview to render diagrams that are static and do not change, yet allows for `Automatic view refreshing` to work as intended across the rest of your vault. Simply add `@dataviewjs-disable-refresh` anywhere as a comment within your codeblock to disable refreshing for that particular script.
+
+~~~
+```dataviewjs
+// @dataviewjs-disable-refresh
+await dv.view("diagram", 0)
+```
+~~~
+
 ## Plugin Access
 
 You can access the Dataview Plugin API (from other plugins or the console) through `app.plugins.plugins.dataview.api`;
