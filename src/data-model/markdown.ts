@@ -33,6 +33,8 @@ export class PageMetadata {
     /** The raw frontmatter for this document. */
     public frontmatter: Record<string, Literal>;
 
+    public tables: TableItem[];
+
     public constructor(path: string, init?: Partial<PageMetadata>) {
         this.path = path;
         this.fields = new Map<string, Literal>();
@@ -40,6 +42,7 @@ export class PageMetadata {
         this.tags = new Set<string>();
         this.aliases = new Set<string>();
         this.links = [];
+        this.tables = [];
 
         Object.assign(this, init);
 
@@ -136,6 +139,7 @@ export class PageMetadata {
                 aliases: Array.from(this.aliases),
                 lists: this.lists.map(l => realCache.get(l.line)),
                 tasks: this.lists.filter(l => !!l.task).map(l => realCache.get(l.line)),
+                tables: this.tables,
                 ctime: this.ctime,
                 cday: stripTime(this.ctime),
                 mtime: this.mtime,
@@ -298,6 +302,46 @@ export class ListItem {
         }
 
         return result as SListItem;
+    }
+}
+
+/** A table item to represent the table */
+export class TableItem {
+    headers: string[];
+    rows: any[][];
+    json: Map<string, any>[];
+
+    constructor(init?: Partial<TableItem>) {
+        Object.assign(this, init);
+
+        this.headers = init?.headers || [];
+        this.rows = init?.rows || [];
+        this.json = init?.json || [];
+    }
+
+    // make table data into array of object
+    public static serialize(headers: string[], rows: any[][]): Map<string, any>[] {
+        // show header to empty value for empty rows.
+        if (rows.length === 0) {
+            return [{
+                headers,
+                rows,
+            }] as any;
+        }
+
+        const result: Map<string, any>[] = [];
+        rows.forEach(row => {
+            if (row.length === headers.length) {
+                // only include for row that has the same amount of column
+                const record = headers.reduce((prev, key, index) => {
+                    prev[key] = row[index];
+                    return prev;
+                }, {} as any);
+                result.push(record);
+            }
+        });
+
+        return result;
     }
 }
 
