@@ -1,15 +1,15 @@
 /** Default function implementations for the expression evaluator. */
 
 import { DateTime } from "luxon";
-import { LiteralType, Link, Literal, Values, Widgets } from "data-model/value";
-import { currentLocale } from "util/locale";
+import { LiteralType, Link, Literal, Values, Widgets } from "../data-model/value";
+import { currentLocale } from "../util/locale";
 import { LiteralReprAll, LiteralTypeOrAll } from "./binaryop";
 import { Context } from "./context";
 import { Fields } from "./field";
 import { EXPRESSION } from "./parse";
-import { escapeRegex, normalizeMarkdown } from "util/normalize";
-import { DataArray } from "api/data-array";
-import { cyrb53 } from "util/hash";
+import { escapeRegex, normalizeMarkdown } from "../util/normalize";
+import { DataArray } from "../api/data-array";
+import { cyrb53 } from "../util/hash";
 
 /**
  * A function implementation which takes in a function context and a variable number of arguments. Throws an error if an

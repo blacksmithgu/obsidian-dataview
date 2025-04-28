@@ -1,6 +1,6 @@
 /** Entry-point script used by the index as a web worker. */
-import { runImport } from "data-import/web-worker/import-impl";
-import { Transferable } from "data-model/transferable";
+import { runImport } from "../../data-import/web-worker/import-impl";
+import { Transferable } from "../../data-model/transferable";
 import { CachedMetadata, FileStats } from "obsidian";
 
 /** An import which can fail and raise an exception, which will be caught by the handler. */

@@ -1,13 +1,13 @@
 /** Importer for markdown documents. */
 
-import { extractFullLineField, extractInlineFields, parseInlineValue, InlineField } from "data-import/inline-field";
-import { ListItem, PageMetadata } from "data-model/markdown";
-import { Literal, Link, Values } from "data-model/value";
-import { EXPRESSION } from "expression/parse";
+import { extractFullLineField, extractInlineFields, parseInlineValue, InlineField } from "../data-import/inline-field";
+import { ListItem, PageMetadata } from "../data-model/markdown";
+import { Literal, Link, Values } from "../data-model/value";
+import { EXPRESSION } from "../expression/parse";
 import { DateTime } from "luxon";
 import { CachedMetadata, FileStats, FrontMatterCache, HeadingCache } from "obsidian";
-import { canonicalizeVarName, extractDate, getFileTitle } from "util/normalize";
-import * as common from "data-import/common";
+import { canonicalizeVarName, extractDate, getFileTitle } from "../util/normalize";
+import * as common from "../data-import/common";
 
 /** Extract markdown metadata from the given Obsidian markdown file. */
 export function parsePage(path: string, contents: string, stat: FileStats, metadata: CachedMetadata): PageMetadata {

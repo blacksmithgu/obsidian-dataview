@@ -1,4 +1,4 @@
-import { parseEval } from "test/common";
+import { parseEval } from "../../test/common";
 
 test("Evaluate meta(link).display", () => {
     expect(parseEval(`meta([[2021-11-01|Displayed link text]]).display`)).toEqual("Displayed link text");

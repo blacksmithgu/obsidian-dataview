@@ -9,11 +9,11 @@ import {
     ViewUpdate,
     WidgetType,
 } from "@codemirror/view";
-import { extractInlineFields, InlineField, parseInlineValue } from "data-import/inline-field";
-import { canonicalizeVarName } from "util/normalize";
-import { renderCompactMarkdown, renderValue } from "ui/render";
-import { DataviewSettings } from "settings";
-import { selectionAndRangeOverlap } from "ui/lp-render";
+import { extractInlineFields, InlineField, parseInlineValue } from "../../data-import/inline-field";
+import { canonicalizeVarName } from "../../util/normalize";
+import { renderCompactMarkdown, renderValue } from "../../ui/render";
+import { DataviewSettings } from "../../settings";
+import { selectionAndRangeOverlap } from "../../ui/lp-render";
 import { syntaxTree } from "@codemirror/language";
 
 class InlineFieldValue extends RangeValue {
@@ -305,8 +305,8 @@ class InlineFieldWidget extends WidgetType {
                 const startPos = this.view.posAtCoords(renderContainer.getBoundingClientRect(), false);
                 const clickedPos = Math.round(
                     startPos +
-                        (this.field.startValue - this.field.start) +
-                        (this.field.end - this.field.startValue) * relativePos
+                    (this.field.startValue - this.field.start) +
+                    (this.field.end - this.field.startValue) * relativePos
                 );
                 this.view.dispatch({ selection: { anchor: clickedPos } });
             }

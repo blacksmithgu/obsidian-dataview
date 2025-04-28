@@ -1,10 +1,10 @@
 // Basic API type.
-export type { DataviewApi } from "api/plugin-api";
-export type { DataviewInlineApi, DataviewInlineIOApi } from "api/inline-api";
+export type { DataviewApi } from "./api/plugin-api";
+export type { DataviewInlineApi, DataviewInlineIOApi } from "./api/inline-api";
 
 // Core Dataview types.
 export type { DateTime, Duration } from "luxon";
-export type {
+export {
     Link,
     DataObject,
     LiteralType,
@@ -13,17 +13,18 @@ export type {
     WrappedLiteral,
     LiteralWrapper,
     Widget,
-} from "data-model/value";
+    Values
+} from "./data-model/value";
 
-export type { Result, Success, Failure } from "api/result";
-export type { DataArray } from "api/data-array";
+export type { Result, Success, Failure } from "./api/result";
+export type { DataArray } from "./api/data-array";
 
 // Dataview Index.
-export type { ListItem, PageMetadata } from "data-model/markdown";
-export type { FullIndex, PrefixIndex, IndexMap } from "data-index/index";
+export type { ListItem, PageMetadata } from "./data-model/markdown";
+export type { FullIndex, PrefixIndex, IndexMap } from "./data-index/index";
 
 // Serialized types which describe all outputs of serialization.
-export type { SMarkdownPage, SListEntry, STask } from "data-model/serialized/markdown";
+export type { SMarkdownPage, SListEntry, STask } from "./data-model/serialized/markdown";
 
 // Useful utilities for directly using dataview parsers.
 export {
@@ -33,15 +34,15 @@ export {
     ExpressionLanguage,
     EXPRESSION,
     parseField,
-} from "expression/parse";
-export { QUERY_LANGUAGE } from "query/parse";
-export { Query } from "query/query";
+} from "./expression/parse";
+export { QUERY_LANGUAGE } from "./query/parse";
+export { Query } from "./query/query";
 
 ////////////////////
 // Implementation //
 ////////////////////
 
-import type { DataviewApi } from "api/plugin-api";
+import type { DataviewApi } from "./api/plugin-api";
 
 import "obsidian";
 import type { App } from "obsidian";

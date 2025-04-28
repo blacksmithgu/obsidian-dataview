@@ -1,8 +1,8 @@
 import { DateTime, Duration } from "luxon";
-import { Result } from "api/result";
+import { Result } from "../api/result";
 import * as P from "parsimmon";
 import emojiRegex from "emoji-regex";
-import { QuerySettings } from "settings";
+import { QuerySettings } from "../settings";
 import removeMd from "remove-markdown";
 
 /** Normalize a duration to all of the proper units. */

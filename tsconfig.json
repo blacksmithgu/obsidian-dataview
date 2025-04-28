@@ -1,8 +1,6 @@
 {
   "compilerOptions": {
-    "baseUrl": "src",
     "sourceMap": true,
-    "inlineSourceMap": false,
     "inlineSources": true,
     "module": "ESNext",
     "target": "ES2022",
@@ -19,8 +17,20 @@
     "importHelpers": true,
     "downlevelIteration": true,
     "esModuleInterop": true,
-    "lib": ["dom", "scripthost", "ES2022"]
+    "lib": [
+      "dom",
+      "scripthost",
+      "ES2022",
+      "ES6",
+      "ES5",
+      "DOM.Iterable"
+    ]
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx"],
-  "exclude": ["lib/**/*"]
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx"
+  ],
+  "exclude": [
+    "lib/**/*"
+  ]
 }

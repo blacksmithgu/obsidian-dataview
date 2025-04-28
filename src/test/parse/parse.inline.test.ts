@@ -1,6 +1,6 @@
-import { EXPRESSION } from "expression/parse";
-import { Link } from "data-model/value";
-import { extractInlineFields, setEmojiShorthandCompletionField, setInlineField } from "data-import/inline-field";
+import { EXPRESSION } from "../../expression/parse";
+import { Link } from "../../data-model/value";
+import { extractInlineFields, setEmojiShorthandCompletionField, setInlineField } from "../../data-import/inline-field";
 
 // <-- Inline field weird edge cases -->
 

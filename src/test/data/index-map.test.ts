@@ -1,4 +1,4 @@
-import { IndexMap } from "data-index/index";
+import { IndexMap } from "../../data-index/index";
 
 test("Simple Set/Get", () => {
     let index = new IndexMap();

@@ -1,4 +1,4 @@
-import { getFileTitle, getParentFolder } from "util/normalize";
+import { getFileTitle, getParentFolder } from "../../util/normalize";
 
 describe("getFileTitle()", () => {
     test("empty", () => expect(getFileTitle("")).toEqual(""));

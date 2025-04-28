@@ -1,13 +1,13 @@
 /** Stores various indices on all files in the vault to make dataview generation fast. */
-import { Result } from "api/result";
-import { parseCsv } from "data-import/csv";
-import { LocalStorageCache } from "data-import/persister";
-import { FileImporter } from "data-import/web-worker/import-manager";
-import { PageMetadata } from "data-model/markdown";
-import { DataObject } from "data-model/value";
+import { Result } from "../api/result";
+import { parseCsv } from "../data-import/csv";
+import { LocalStorageCache } from "../data-import/persister";
+import { FileImporter } from "../data-import/web-worker/import-manager";
+import { PageMetadata } from "../data-model/markdown";
+import { DataObject } from "../data-model/value";
 import { DateTime } from "luxon";
 import { App, Component, MetadataCache, TAbstractFile, TFile, TFolder, Vault } from "obsidian";
-import { getParentFolder, setsEqual } from "util/normalize";
+import { getParentFolder, setsEqual } from "../util/normalize";
 
 /** Aggregate index which has several sub-indices and will initialize all of them. */
 export class FullIndex extends Component {

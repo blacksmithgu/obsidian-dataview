@@ -1,4 +1,4 @@
-import { expectEvals, parseEval } from "test/common";
+import { expectEvals, parseEval } from "../../test/common";
 
 test("number()", () => {
     expect(parseEval('number("hmm")')).toEqual(null);
