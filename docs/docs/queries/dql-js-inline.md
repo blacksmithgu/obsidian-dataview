@@ -92,7 +92,10 @@ what you can do with it, see the [API documentation](../api/code-reference.md), 
 examples](../api/code-examples.md).
 
 !!! attention "Advanced usage"
-    Writing Javascript queries is a advanced technique that requires understanding in programming and JS. Please be aware that JS Queries have access to your file system and be cautious when using other peoples' JS Queries, especially when they are not publicly shared through the Obsidian Community.
+    Writing Javascript queries is an advanced technique that requires understanding programming and JS.
+
+!!! warning "Security risk"
+    Please be aware that JS queries have **access to your file system**. A malicious (or buggy) JS query can result in data loss, including **data theft**! Be cautious when using other people's JS queries, especially when they are not publicly shared through the Obsidian Community.
 
 ## Inline Dataview JS
 
