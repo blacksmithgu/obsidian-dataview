@@ -15,6 +15,7 @@ import {
 import { h, Fragment } from "preact";
 import { useContext } from "preact/hooks";
 import { MarkdownRenderChild } from "obsidian";
+import { withPagination } from "ui/pagination";
 
 /** JSX component which returns the result count. */
 function ResultCount(props: { length: number }) {
@@ -34,7 +35,7 @@ export function TableGrouping({
 }) {
     let settings = useContext(DataviewContext).settings;
 
-    return (
+    return withPagination(values, pageValues => (
         <Fragment>
             <table class="dataview table-view-table">
                 <thead class="table-view-thead">
@@ -42,13 +43,13 @@ export function TableGrouping({
                         {headings.map((heading, index) => (
                             <th class="table-view-th">
                                 <Markdown sourcePath={sourcePath} content={heading} />
-                                {index == 0 && <ResultCount length={values.length} />}
+                                {index == 0 && <ResultCount length={pageValues.length} />}
                             </th>
                         ))}
                     </tr>
                 </thead>
                 <tbody class="table-view-tbody">
-                    {values.map(row => (
+                    {pageValues.map(row => (
                         <tr>
                             {row.map(element => (
                                 <td>
@@ -59,11 +60,11 @@ export function TableGrouping({
                     ))}
                 </tbody>
             </table>
-            {settings.warnOnEmptyResult && values.length == 0 && (
+            {settings.warnOnEmptyResult && pageValues.length == 0 && (
                 <ErrorMessage message="Dataview: No results to show for table query." />
             )}
         </Fragment>
-    );
+    ));
 }
 
 export type TableViewState =

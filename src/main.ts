@@ -380,6 +380,33 @@ class GeneralSettingsTab extends PluginSettingTab {
                 })
             );
 
+        new Setting(this.containerEl)
+            .setName("Enable pagination")
+            .setDesc("Enable or disable pagination of results.")
+            .addToggle(toggle =>
+                toggle.setValue(this.plugin.settings.enablePagination).onChange(async value => {
+                    await this.plugin.updateSettings({ enablePagination: value });
+                })
+            );
+
+        new Setting(this.containerEl)
+            .setName("Enable pagination for short results")
+            .setDesc("Show pagination controls even when there are fewer results than the number of items per page.")
+            .addToggle(toggle =>
+                toggle.setValue(this.plugin.settings.enablePaginationForShortResults).onChange(async value => {
+                    await this.plugin.updateSettings({ enablePaginationForShortResults: value });
+                })
+            );
+
+        new Setting(this.containerEl)
+            .setName("Items per page")
+            .setDesc("The number of items to display per page.")
+            .addText(text =>
+                text.setValue(this.plugin.settings.itemPerPageOptions.join(",")).onChange(async value => {
+                    await this.plugin.updateSettings({ itemPerPageOptions: value.split(",").map(Number) });
+                })
+            );
+
         new Setting(this.containerEl).setName("Codeblocks").setHeading();
 
         new Setting(this.containerEl)

@@ -90,6 +90,12 @@ export interface DataviewSettings extends QuerySettings, ExportSettings {
     prettyRenderInlineFieldsInLivePreview: boolean;
     /** The keyword for DataviewJS blocks. */
     dataviewJsKeyword: string;
+    /** Enable or disable pagination of results. */
+    enablePagination: boolean;
+    /** Enable or disable pagination of results for short results. */
+    enablePaginationForShortResults: boolean;
+    /** The number of items to display per page. */
+    itemPerPageOptions: number[];
 }
 
 /** Default settings for dataview on install. */
@@ -106,5 +112,8 @@ export const DEFAULT_SETTINGS: DataviewSettings = {
         prettyRenderInlineFields: true,
         prettyRenderInlineFieldsInLivePreview: true,
         dataviewJsKeyword: "dataviewjs",
+        enablePagination: false,
+        enablePaginationForShortResults: false,
+        itemPerPageOptions: [10, 20, 50, 100],
     },
 };

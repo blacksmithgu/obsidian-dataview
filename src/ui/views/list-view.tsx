@@ -14,17 +14,18 @@ import {
 } from "ui/markdown";
 import { h, Fragment } from "preact";
 import { Literal } from "data-model/value";
+import { withPagination } from "ui/pagination";
 
 export function ListGrouping({ items, sourcePath }: { items: Literal[]; sourcePath: string }) {
-    return (
+    return withPagination(items, pageItems => (
         <ul class="dataview list-view-ul">
-            {items.map(item => (
+            {pageItems.map(item => (
                 <li>
                     <Lit value={item} sourcePath={sourcePath} />
                 </li>
             ))}
         </ul>
-    );
+    ));
 }
 
 export type ListViewState =

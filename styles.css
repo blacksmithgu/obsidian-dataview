@@ -139,3 +139,33 @@ div.dataview-error-box {
 .dataview.small-text::after {
 	content: ")";
 }
+
+/****************/
+/** Pagination **/
+/****************/
+
+.pagination .page-link.disabled {
+    pointer-events: none;
+    color: var(--text-muted);
+}
+
+.pagination .page-link {
+    margin: 0 5px;
+    cursor: pointer;
+    text-decoration: none;
+    color: var(--link-color);
+}
+
+.pagination .page-link:hover:not(.disabled) {
+    text-decoration: underline;
+}
+
+.pagination .page-link.current {
+    font-weight: bold;
+    text-decoration: underline;
+}
+
+.pagination select,
+.pagination input {
+    margin: 0 5px;
+}
