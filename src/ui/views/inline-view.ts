@@ -37,6 +37,7 @@ export class DataviewInlineRenderer extends DataviewRefreshableRenderer {
             await renderValue(this.app, result.value, temp, this.origin, this, this.settings, false);
 
             this.target.replaceWith(temp);
+            this.target = temp;
         }
     }
 }
