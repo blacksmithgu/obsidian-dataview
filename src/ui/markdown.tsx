@@ -126,7 +126,9 @@ export function RawLit({
             let dimensions = extractImageDimensions(value);
             let resourcePath = context.app.vault.getResourcePath(realFile);
 
-            if (dimensions && dimensions.length == 2)
+            if (dimensions && dimensions.length == 2 && dimensions[0] == 0)
+                return <img alt={value.path} src={resourcePath} width="auto" height={dimensions[1]} />;
+            else if (dimensions && dimensions.length == 2)
                 return <img alt={value.path} src={resourcePath} width={dimensions[0]} height={dimensions[1]} />;
             else if (dimensions && dimensions.length == 1)
                 return <img alt={value.path} src={resourcePath} width={dimensions[0]} />;
