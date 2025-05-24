@@ -63,7 +63,7 @@ SORT field1 [ASCENDING/DESCENDING/ASC/DESC], ..., fieldN [ASC/DESC]
 
 ## GROUP BY
 
-Group all results on a field. Yields one row per unique field value, which has 2 properties: one corresponding to the field being grouped on, and a `rows` array field which contains all of the pages that matched.
+Group all results on a field. Yields one row per unique field value, which has 2 properties: `key` corresponding to the field being grouped on, and a `rows` array field which contains all of the pages that matched.
 
 ```
 GROUP BY field
