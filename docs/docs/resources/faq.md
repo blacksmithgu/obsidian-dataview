@@ -71,10 +71,10 @@ With Dataview 0.5.52, you can hide the result count on TABLE and TASK Queries vi
 
 ### How can I style my queries?
 
-You can use [CSS Snippets](https://help.obsidian.md/Extending+Obsidian/CSS+snippets) to define custom styling in general for Obsidian. So if you define `cssclasses: myTable` as a property, and enable the snippet below you could set the background color of a table from dataview. Similar to target the outer &lt;ul&gt; of a `TASK` or `LIST` query, you could use the `ul.contains-task-list` or `ul.list-view-ul` respectively.
+You can use [CSS Snippets](https://help.obsidian.md/Extending+Obsidian/CSS+snippets) to define custom styling in general for Obsidian. So if you define `cssclasses: myTable` as a property in your note's frontmatter, and enable the snippet below you could set the background color of a table from dataview. Similar to target the outer &lt;ul&gt; of a `TASK` or `LIST` query, you could use the `ul.contains-task-list` or `ul.list-view-ul` respectively.
 
 ```css
-.myTable dataview.table {
+.myTable table.dataview {
     background-color: green
 }
 ```
@@ -82,7 +82,7 @@ You can use [CSS Snippets](https://help.obsidian.md/Extending+Obsidian/CSS+snipp
 In general there are no unique ID's given to a specific table on a page, so the mentioned targeting applies to any note having that `cssclasses` defined and **all** tables on that page. Currently you can't target a specific table using an ordinary query, but if you're using javascript, you can add the class `clsname` directly to your query result by doing:
 
 ```js
-dv.container.className += ' clsname'
+dv.container.classList.add('clsname')
 ```
 
 However, there is a trick to target any table within Obsidian using tags like in the example below, and that would apply to any table having that tag tag within it. This would apply to both manually and dataview generated tables. To make the snippet below work add the tag `#myId` _anywhere_ within your table output.
