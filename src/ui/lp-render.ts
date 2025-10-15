@@ -330,11 +330,13 @@ export function inlinePlugin(app: App, index: FullIndex, settings: DataviewSetti
                         try {
                             // for setting the correct context for dv/dataview
                             const myEl = createDiv();
-                            const dvInlineApi = new DataviewInlineApi(api, this.component, myEl, currentFile.path);
+                            const dvInlineApi = new DataviewInlineApi(api, this.component, code.includes("await") ? el : myEl, currentFile.path);
                             if (code.includes("await")) {
                                 (evalInContext("(async () => { " + PREAMBLE + code + " })()") as Promise<any>).then(
                                     (result: any) => {
-                                        renderValue(app, result, el, currentFile.path, this.component, settings);
+                                        if (result) {
+                                            renderValue(app, result, el, currentFile.path, this.component, settings);
+                                        }
                                     }
                                 );
                             } else {
