@@ -10,7 +10,7 @@ You can add any number of fields to a **note**, a **list item** or a **task**.
 
 ## How do I add fields?
 
-You can add fields to a **note** in three different ways. How a field look like depends on the way you add it.
+You can add fields to a **note** in three different ways. How a field looks depends on the way you add it.
 
 On **tasks or list items**, you will have YAML Frontmatter information available, but won't be able to add them to a specific list item. If you want to add metadata to one list item or task only, use [Inline Fields](#inline-fields).
 
