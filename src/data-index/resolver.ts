@@ -1,9 +1,10 @@
 /** Collect data matching a source query. */
 
+import { DataObject, Link, Literal } from "../data-model/value";
 import { FullIndex, PathFilters } from "data-index/index";
+
 import { Result } from "api/result";
 import { Source } from "./source";
-import { DataObject, Link, Literal } from "../data-model/value";
 
 /** A data row which has an ID and associated data (like page link / page data). */
 export type Datarow<T> = { id: Literal; data: T };
@@ -22,14 +23,19 @@ export function matchingSourcePaths(
         case "csv":
             return Result.success(new Set<string>([index.prefix.resolveRelative(source.path, originFile)]));
         case "folder":
+            // Folder names without / prefix were historically treated as absolute paths.
+            // This check ensures backwards-compatibility.
+            let folderPath: string;
+            if (index.prefix.nodeExists(source.folder)) folderPath = source.folder;
+            else folderPath = index.prefix.resolveRelative(source.folder, originFile);
+
             // Prefer loading from the folder at the given path.
-            if (index.prefix.nodeExists(source.folder))
-                return Result.success(index.prefix.get(source.folder, PathFilters.markdown));
+            if (index.prefix.nodeExists(folderPath))
+                return Result.success(index.prefix.get(folderPath, PathFilters.markdown));
 
             // But allow for loading individual files if they exist.
-            if (index.prefix.pathExists(source.folder)) return Result.success(new Set([source.folder]));
-            else if (index.prefix.pathExists(source.folder + ".md"))
-                return Result.success(new Set([source.folder + ".md"]));
+            if (index.prefix.pathExists(folderPath)) return Result.success(new Set([folderPath]));
+            else if (index.prefix.pathExists(folderPath + ".md")) return Result.success(new Set([folderPath + ".md"]));
 
             // For backwards-compat, return an empty result even if the folder does not exist.
             return Result.success(new Set());
