@@ -281,7 +281,22 @@ export class PrefixIndex extends Component {
         if (!origin) return path;
         else if (path.startsWith("/")) return path.substring(1);
 
-        let relativePath = getParentFolder(origin) + "/" + path;
+        const normalizeSegments = (p: string) => {
+            const parts = p.split("/").filter(part => part.length > 0);
+            const out: string[] = [];
+            for (const part of parts) {
+                if (part === ".") continue;
+                if (part === "..") {
+                    out.pop();
+                } else {
+                    out.push(part);
+                }
+            }
+            return out.join("/");
+        };
+
+        let parent = getParentFolder(origin);
+        let relativePath = parent ? normalizeSegments(parent + "/" + path) : normalizeSegments(path);
         if (this.pathExists(relativePath)) return relativePath;
         else return path;
     }
