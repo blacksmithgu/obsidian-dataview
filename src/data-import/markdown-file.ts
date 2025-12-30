@@ -216,7 +216,27 @@ export function parseLists(
         );
 
         // Find the section we belong to as well.
-        let sectionName = findPreviousHeader(rawElement.position.start.line, metadata.headings || []);
+        let sectionName = undefined;
+        var headers = Array.from(metadata.headings || []);
+        let headings = new Array();
+        let headingIndex = findPreviousHeader(rawElement.position.start.line, headers);
+        if (headingIndex >= 0) {
+            let section = metadata.headings![headingIndex];
+            sectionName = section.heading;
+            headings.push(section);
+            let level = section.level;
+            while (--headingIndex >= 0) {
+                let section = metadata.headings![headingIndex];
+                if (level > section.level) {
+                    level = section.level;
+                    headings.push(section);
+                    if (level <= 1) {
+                        break;
+                    }
+                }
+            }
+        }
+        headings.reverse(); //sort in ascending order, so you can group by e.g. the Top Heading
         let sectionLink = sectionName === undefined ? Link.file(path) : Link.header(path, sectionName);
         let closestLink = rawElement.id === undefined ? sectionLink : Link.block(path, rawElement.id);
 
@@ -232,6 +252,7 @@ export function parseLists(
             link: closestLink,
             links: links,
             section: sectionLink,
+            headings: headings,
             text: textWithNewline,
             tags: common.extractTags(textNoNewline),
             line: rawElement.position.start.line,
@@ -415,12 +436,9 @@ export function mergeFieldGroups(target: Map<string, Literal[]>, source: Map<str
 }
 
 /** Find the header that is most immediately above the given line number. */
-export function findPreviousHeader(line: number, headers: HeadingCache[]): string | undefined {
-    if (headers.length == 0) return undefined;
-    if (headers[0].position.start.line > line) return undefined;
-
+export function findPreviousHeader(line: number, headers: HeadingCache[]): number {
     let index = headers.length - 1;
     while (index >= 0 && headers[index].position.start.line > line) index--;
 
-    return headers[index].heading;
+    return index;
 }
