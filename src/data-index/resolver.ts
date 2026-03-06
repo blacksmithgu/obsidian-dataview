@@ -22,14 +22,18 @@ export function matchingSourcePaths(
         case "csv":
             return Result.success(new Set<string>([index.prefix.resolveRelative(source.path, originFile)]));
         case "folder":
+            // Resolve relative/absolute paths: paths starting with "/" are absolute (from vault root),
+            // paths containing ".." or starting with "./" are relative to the origin file.
+            let resolvedFolder = index.prefix.resolveRelative(source.folder, originFile);
+
             // Prefer loading from the folder at the given path.
-            if (index.prefix.nodeExists(source.folder))
-                return Result.success(index.prefix.get(source.folder, PathFilters.markdown));
+            if (index.prefix.nodeExists(resolvedFolder))
+                return Result.success(index.prefix.get(resolvedFolder, PathFilters.markdown));
 
             // But allow for loading individual files if they exist.
-            if (index.prefix.pathExists(source.folder)) return Result.success(new Set([source.folder]));
-            else if (index.prefix.pathExists(source.folder + ".md"))
-                return Result.success(new Set([source.folder + ".md"]));
+            if (index.prefix.pathExists(resolvedFolder)) return Result.success(new Set([resolvedFolder]));
+            else if (index.prefix.pathExists(resolvedFolder + ".md"))
+                return Result.success(new Set([resolvedFolder + ".md"]));
 
             // For backwards-compat, return an empty result even if the folder does not exist.
             return Result.success(new Set());

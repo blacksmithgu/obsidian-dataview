@@ -276,14 +276,40 @@ export class PrefixIndex extends Component {
 
     /**
      * Use the in-memory prefix index to convert a relative path to an absolute one.
+     * - Absolute paths start with "/" and are resolved from the vault root (the leading "/" is stripped).
+     * - Relative paths starting with "./" or "../" are resolved relative to the origin file's parent folder.
+     * - Other paths are treated as absolute (from vault root) for backward compatibility.
      */
     public resolveRelative(path: string, origin?: string): string {
         if (!origin) return path;
         else if (path.startsWith("/")) return path.substring(1);
 
+        // Only resolve as relative if the path explicitly starts with "./" or "../".
+        // This preserves backward compatibility for absolute paths like "projects/folder".
+
         let relativePath = getParentFolder(origin) + "/" + path;
+        if (path.startsWith("./") || path.startsWith("../")) {
+            // Normalize the path by resolving ".." and "." segments.
+            relativePath = this.normalizePath(relativePath);
+        }
+
         if (this.pathExists(relativePath)) return relativePath;
         else return path;
+    }
+
+    /** Normalize a path by resolving ".." and "." segments. */
+    private normalizePath(path: string): string {
+        let parts = path.split("/").filter(p => p.length > 0);
+        let stack: string[] = [];
+        for (let part of parts) {
+            if (part === ".") continue;
+            else if (part === "..") {
+                if (stack.length > 0) stack.pop();
+            } else {
+                stack.push(part);
+            }
+        }
+        return stack.join("/");
     }
 }
 
