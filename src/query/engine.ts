@@ -47,7 +47,8 @@ export function executeCore(rows: Pagerow[], context: Context, ops: QueryOperati
     let identMeaning: IdentifierMeaning = { type: "path" };
     let startTime = Date.now();
 
-    for (let op of ops) {
+    for (let opIndex = 0; opIndex < ops.length; opIndex++) {
+        let op = ops[opIndex];
         let opStartTime = Date.now();
         let incomingRows = rows.length;
         let errors: { index: number; message: string }[] = [];
@@ -129,12 +130,16 @@ export function executeCore(rows: Pagerow[], context: Context, ops: QueryOperati
                 }
 
                 // Sort by the key, which we will group on shortly.
+                // If a sort operation follows this group, use its direction for the group key sort.
+                let nextSort = ops.slice(opIndex + 1).find(o => o.type === "sort") as any;
+                let groupSortFactor = nextSort?.fields?.[0]?.direction === "descending" ? -1 : 1;
+
                 groupData.sort((a, b) => {
                     let le = context.binaryOps.evaluate("<", a.key, b.key, context).orElse(false);
-                    if (Values.isTruthy(le)) return -1;
+                    if (Values.isTruthy(le)) return groupSortFactor * -1;
 
                     let ge = context.binaryOps.evaluate(">", a.key, b.key, context).orElse(false);
-                    if (Values.isTruthy(ge)) return 1;
+                    if (Values.isTruthy(ge)) return groupSortFactor * 1;
 
                     return 0;
                 });
