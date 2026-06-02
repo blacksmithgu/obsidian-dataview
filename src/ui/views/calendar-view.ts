@@ -9,6 +9,7 @@ import { renderErrorPre } from "ui/render";
 import { DataviewRefreshableRenderer } from "ui/refreshable-view";
 import { asyncTryOrPropagate } from "util/normalize";
 import type { Moment } from "moment";
+import { t } from "i18n";
 
 // CalendarFile is a representation of a particular file, displayed in the calendar view.
 // It'll be represented in the calendar as a dot.
@@ -35,10 +36,10 @@ export class DataviewCalendarRenderer extends DataviewRefreshableRenderer {
             executeCalendar(this.query, this.index, this.origin, this.settings)
         );
         if (!maybeResult.successful) {
-            renderErrorPre(this.container, "Dataview: " + maybeResult.error);
+            renderErrorPre(this.container, t("views.calendarError", maybeResult.error));
             return;
         } else if (maybeResult.value.data.length == 0 && this.settings.warnOnEmptyResult) {
-            renderErrorPre(this.container, "Dataview: Query returned 0 results.");
+            renderErrorPre(this.container, t("views.noResultsCalendar"));
             return;
         }
         let dateMap = new Map<string, CalendarFile[]>();

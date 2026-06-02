@@ -4,6 +4,7 @@ import { QuerySettings } from "settings";
 import { currentLocale } from "util/locale";
 import { renderMinimalDate, renderMinimalDuration } from "util/normalize";
 import { Literal, Values, Widgets } from "data-model/value";
+import { t } from "i18n";
 
 /** Render simple fields compactly, removing wrapping content like paragraph and span. */
 export async function renderCompactMarkdown(
@@ -250,6 +251,6 @@ export async function renderValue(
             }
         }
     } else {
-        container.appendText("Unrecognized: " + JSON.stringify(field));
+        container.appendText(t("views.unrecognizedValue", JSON.stringify(field)));
     }
 }

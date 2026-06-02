@@ -11,6 +11,7 @@ import { Field, Fields } from "expression/field";
 import { QuerySettings } from "settings";
 import { DateTime } from "luxon";
 import { SListItem } from "data-model/serialized/markdown";
+import { t } from "i18n";
 
 function iden<T>(x: T): T {
     return x;
@@ -106,7 +107,7 @@ export function executeCore(rows: Pagerow[], context: Context, ops: QueryOperati
             case "limit":
                 let limiting = context.evaluate(op.amount);
                 if (!limiting.successful)
-                    return Result.failure("Failed to execute 'limit' statement: " + limiting.error);
+                    return Result.failure(t("query.limitError", limiting.error));
                 if (!Values.isNumber(limiting.value))
                     return Result.failure(
                         `Failed to execute 'limit' statement: limit should be a number, but got '${Values.typeOf(
@@ -189,7 +190,7 @@ export function executeCore(rows: Pagerow[], context: Context, ops: QueryOperati
                 if (identMeaning.type == "group" && identMeaning.name == op.field.name) identMeaning = identMeaning.on;
                 break;
             default:
-                return Result.failure("Unrecognized query operation '" + op.type + "'");
+                return Result.failure(t("query.unrecognizedOperation", op.type));
         }
 
         if (errors.length >= incomingRows && incomingRows > 0) {
