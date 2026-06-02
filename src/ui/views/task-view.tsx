@@ -19,6 +19,7 @@ import {
     DataviewInit,
 } from "ui/markdown";
 import { asyncTryOrPropagate } from "util/normalize";
+import { t } from "i18n";
 
 /** Function used to test if a given event correspond to a pressed link */
 function wasLinkPressed(evt: preact.JSX.TargetedMouseEvent<HTMLElement>): boolean {
@@ -151,7 +152,7 @@ function ListItem({ item }: { item: SListEntry }) {
 function TaskList({ items }: { items: SListItem[] }) {
     const settings = useContext(DataviewContext).settings;
     if (items.length == 0 && settings.warnOnEmptyResult)
-        return <ErrorMessage message="Dataview: No results to show for task query." />;
+        return <ErrorMessage message={t("views.noResultsTask")} />;
 
     let [nest, _mask] = nestItems(items);
     return (

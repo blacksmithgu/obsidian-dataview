@@ -14,6 +14,7 @@ import {
 } from "ui/markdown";
 import { h, Fragment } from "preact";
 import { Literal } from "data-model/value";
+import { t } from "i18n";
 
 export function ListGrouping({ items, sourcePath }: { items: Literal[]; sourcePath: string }) {
     return (
@@ -55,7 +56,7 @@ export function ListView({ query, sourcePath }: { query: Query; sourcePath: stri
     if (items.state == "loading")
         return (
             <Fragment>
-                <ErrorPre>Loading...</ErrorPre>
+                <ErrorPre>{t("views.loading")}</ErrorPre>
             </Fragment>
         );
     else if (items.state == "error")
@@ -67,7 +68,7 @@ export function ListView({ query, sourcePath }: { query: Query; sourcePath: stri
         );
 
     if (items.items.length == 0 && context.settings.warnOnEmptyResult)
-        return <ErrorMessage message="Dataview: No results to show for list query." />;
+        return <ErrorMessage message={t("views.noResultsList")} />;
 
     return <ListGrouping items={items.items} sourcePath={sourcePath} />;
 }

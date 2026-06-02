@@ -6,6 +6,7 @@ import { DataviewSettings } from "settings";
 import { renderErrorPre, renderValue } from "ui/render";
 import { DataviewRefreshableRenderer } from "ui/refreshable-view";
 import { tryOrPropagate } from "util/normalize";
+import { t } from "i18n";
 
 /** Refreshable renderer which renders inline instead of in a div. */
 export class DataviewInlineRenderer extends DataviewRefreshableRenderer {
@@ -30,7 +31,7 @@ export class DataviewInlineRenderer extends DataviewRefreshableRenderer {
         let result = tryOrPropagate(() => executeInline(this.field, this.origin, this.index, this.settings));
         if (!result.successful) {
             this.errorbox = this.container.createEl("div");
-            renderErrorPre(this.errorbox, "Dataview (for inline query '" + this.fieldText + "'): " + result.error);
+            renderErrorPre(this.errorbox, t("views.inlineQueryError", this.fieldText, result.error));
         } else {
             let temp = document.createElement("span");
             temp.addClasses(["dataview", "dataview-inline-query"]);

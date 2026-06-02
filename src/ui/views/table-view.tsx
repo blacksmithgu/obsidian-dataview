@@ -15,6 +15,7 @@ import {
 import { h, Fragment } from "preact";
 import { useContext } from "preact/hooks";
 import { MarkdownRenderChild } from "obsidian";
+import { t } from "i18n";
 
 /** JSX component which returns the result count. */
 function ResultCount(props: { length: number }) {
@@ -60,7 +61,7 @@ export function TableGrouping({
                 </tbody>
             </table>
             {settings.warnOnEmptyResult && values.length == 0 && (
-                <ErrorMessage message="Dataview: No results to show for table query." />
+                <ErrorMessage message={t("views.noResultsTable")} />
             )}
         </Fragment>
     );
@@ -93,7 +94,7 @@ export function TableView({ query, sourcePath }: { query: Query; sourcePath: str
     if (items.state == "loading")
         return (
             <Fragment>
-                <ErrorPre>Loading...</ErrorPre>
+                <ErrorPre>{t("views.loading")}</ErrorPre>
             </Fragment>
         );
     else if (items.state == "error")

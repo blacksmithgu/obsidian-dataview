@@ -2,6 +2,7 @@ import { asyncEvalInContext, DataviewInlineApi } from "api/inline-api";
 import { renderErrorPre, renderValue } from "ui/render";
 import { DataviewRefreshableRenderer } from "ui/refreshable-view";
 import { DataviewApi } from "api/plugin-api";
+import { t } from "i18n";
 
 export class DataviewJSRenderer extends DataviewRefreshableRenderer {
     static PREAMBLE: string = "const dataview = this;const dv = this;";
@@ -14,10 +15,7 @@ export class DataviewJSRenderer extends DataviewRefreshableRenderer {
         this.container.innerHTML = "";
         if (!this.settings.enableDataviewJs) {
             this.containerEl.innerHTML = "";
-            renderErrorPre(
-                this.container,
-                "Dataview JS queries are disabled. You can enable them in the Dataview settings."
-            );
+            renderErrorPre(this.container, t("views.jsDisabled"));
             return;
         }
 
@@ -29,7 +27,7 @@ export class DataviewJSRenderer extends DataviewRefreshableRenderer {
             );
         } catch (e) {
             this.containerEl.innerHTML = "";
-            renderErrorPre(this.container, "Evaluation Error: " + e.stack);
+            renderErrorPre(this.container, t("views.evaluationError", e.stack));
         }
     }
 }
@@ -55,7 +53,7 @@ export class DataviewInlineJSRenderer extends DataviewRefreshableRenderer {
         this.errorbox?.remove();
         if (!this.settings.enableDataviewJs || !this.settings.enableInlineDataviewJs) {
             let temp = document.createElement("span");
-            temp.innerText = "(disabled; enable in settings)";
+            temp.innerText = t("views.inlineJsDisabled");
             this.target.replaceWith(temp);
             this.target = temp;
             return;
@@ -75,7 +73,7 @@ export class DataviewInlineJSRenderer extends DataviewRefreshableRenderer {
             renderValue(this.api.app, result, temp, this.origin, this, this.settings, false);
         } catch (e) {
             this.errorbox = this.container.createEl("div");
-            renderErrorPre(this.errorbox, "Dataview (for inline JS query '" + this.script + "'): " + e);
+            renderErrorPre(this.errorbox, t("views.inlineJsQueryError", this.script, String(e)));
         }
     }
 }
