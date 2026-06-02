@@ -1,9 +1,10 @@
 import en from "./locales/en";
+import tr from "./locales/tr";
 
 type LocaleData = typeof en;
 type DeepPartial<T> = { [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P] };
 
-const locales: Record<string, DeepPartial<LocaleData>> = { en };
+const locales: Record<string, DeepPartial<LocaleData>> = { en, tr };
 
 function getNestedValue(obj: Record<string, unknown>, path: string): string | undefined {
     const parts = path.split(".");
