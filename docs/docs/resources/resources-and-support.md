@@ -23,6 +23,10 @@ Feel free to contribute directly to this list, documentation, or even reach out 
 
 - @s-blu has very kindly put together [a vault of example queries](https://github.com/s-blu/obsidian_dataview_example_vault/) that you can use as a playground of sorts.
 
+### Useful DataviewJS Scripts
+
+- @neon-aiart has created [DataView Image Gallery](https://github.com/neon-aiart/dataview-image-gallery), a feature-rich DataviewJS script to display embedded images from notes in a customizable card-style gallery with lightbox, carousel, and filtering support.
+
 ### Blog Posts
 
 - [Obsidian Dataview For Beginners: A checklist to help fix your dataview queries](https://denisetodd.medium.com/obsidian-dataview-for-beginners-a-checklist-to-help-fix-your-dataview-queries-11acc57f1e48)
