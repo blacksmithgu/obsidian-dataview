@@ -11,7 +11,7 @@ import { renderMinimalDate, renderMinimalDuration } from "util/normalize";
 import { currentLocale } from "util/locale";
 import { DataArray } from "api/data-array";
 import { extractImageDimensions, isImageEmbed } from "util/media";
-
+import { beginHeightPreserve, captureViewScroll, scheduleSettledRestore } from "util/scroll";
 export type MarkdownProps = { contents: string; sourcePath: string };
 export type MarkdownContext = { component: Component };
 
@@ -257,11 +257,37 @@ export function useIndexBackedState<T>(
 
     // Updated on every container re-create; automatically updates state.
     useEffect(() => {
-        const refreshOperation = () => {
+        const refreshOperation = (): Promise<void> | undefined => {
             if (lastReload != index.revision && container.isShown() && settings.refreshEnabled) {
-                compute().then(updateState);
+                // Preserve the user's scroll position across the async re-render
+                // (obsidian-dataview#2208): capture the scroll owner's position and hold the
+                // container's height through the rebuild, so the browser cannot clamp the
+                // view's scroll while the content is collapsed.
+                const captured = captureViewScroll(container);
+                const guard = beginHeightPreserve(container);
+                let scheduled = false;
                 setLastReload(index.revision);
+                return compute()
+                    .then(state => {
+                        updateState(state);
+                        // Preact commits after updateState; scheduleSettledRestore restores
+                        // on the frame the new content is laid out (T1, double rAF) and
+                        // re-asserts against late programmatic scroll overwrites
+                        // (keep-caret-visible; #2208). The guard is paired explicitly: the
+                        // window checks/releases exactly the guard this refresh began.
+                        scheduleSettledRestore(captured, container, guard);
+                        scheduled = true;
+                    })
+                    .catch((error: unknown) => {
+                        // On rejection no settle window was started, so this refresh's guard
+                        // would pin the min-height forever: release it (only when the guard
+                        // was never handed to a window). Re-throw so the rejection keeps
+                        // propagating exactly as before — the error is never swallowed.
+                        if (!scheduled) guard.release();
+                        throw error;
+                    });
             }
+            return undefined;
         };
 
         // Refresh after index changes stop.
