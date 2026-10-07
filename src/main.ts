@@ -56,6 +56,18 @@ export default class DataviewPlugin extends Plugin {
         // Set up automatic (intelligent) view refreshing that debounces.
         this.updateRefreshSettings();
 
+        // Queries using date(today) / date(now) are only re-evaluated when the index changes, so they go stale
+        // overnight. Touch the index when the local date rolls over; focus catches up after sleep/backgrounding.
+        let currentDay = DateTime.now().toISODate();
+        const checkDayRollover = () => {
+            const today = DateTime.now().toISODate();
+            if (today === currentDay) return;
+            currentDay = today;
+            this.index.touch();
+        };
+        this.registerInterval(window.setInterval(checkDayRollover, 60 * 1000));
+        this.registerDomEvent(window, "focus", checkDayRollover);
+
         // From this point onwards the dataview API is fully functional (even if the index needs to do some background indexing).
         this.api = new DataviewApi(this.app, this.index, this.settings, this.manifest.version);
 
