@@ -8,6 +8,7 @@ import { DataObject, Link, Literal, Values, Grouping, Widgets } from "data-model
 import { CalendarQuery, ListQuery, Query, QueryOperation, TableQuery } from "query/query";
 import { Result } from "api/result";
 import { Field, Fields } from "expression/field";
+import { resolveDateShorthands } from "expression/parse";
 import { QuerySettings } from "settings";
 import { DateTime } from "luxon";
 import { SListItem } from "data-model/serialized/markdown";
@@ -55,9 +56,10 @@ export function executeCore(rows: Pagerow[], context: Context, ops: QueryOperati
         switch (op.type) {
             case "where":
                 let whereResult: Pagerow[] = [];
+                let clause = resolveDateShorthands(op.clause);
                 for (let index = 0; index < rows.length; index++) {
                     let row = rows[index];
-                    let value = context.evaluate(op.clause, row.data);
+                    let value = context.evaluate(clause, row.data);
                     if (!value.successful) errors.push({ index, message: value.error });
                     else if (Values.isTruthy(value.value)) whereResult.push(row);
                 }
@@ -66,12 +68,13 @@ export function executeCore(rows: Pagerow[], context: Context, ops: QueryOperati
                 break;
             case "sort":
                 let sortFields = op.fields;
+                let sortExprs = sortFields.map(s => resolveDateShorthands(s.field));
                 let taggedData: { data: Pagerow; fields: Literal[] }[] = [];
                 outer: for (let index = 0; index < rows.length; index++) {
                     let row = rows[index];
                     let rowSorts: Literal[] = [];
                     for (let sIndex = 0; sIndex < sortFields.length; sIndex++) {
-                        let value = context.evaluate(sortFields[sIndex].field, row.data);
+                        let value = context.evaluate(sortExprs[sIndex], row.data);
                         if (!value.successful) {
                             errors.push({ index, message: value.error });
                             continue outer;
@@ -118,8 +121,9 @@ export function executeCore(rows: Pagerow[], context: Context, ops: QueryOperati
                 break;
             case "group":
                 let groupData: { data: Pagerow; key: Literal }[] = [];
+                let groupField = resolveDateShorthands(op.field.field);
                 for (let index = 0; index < rows.length; index++) {
-                    let value = context.evaluate(op.field.field, rows[index].data);
+                    let value = context.evaluate(groupField, rows[index].data);
                     if (!value.successful) {
                         errors.push({ index, message: value.error });
                         continue;
@@ -169,9 +173,10 @@ export function executeCore(rows: Pagerow[], context: Context, ops: QueryOperati
                 break;
             case "flatten":
                 let flattenResult: Pagerow[] = [];
+                let flattenField = resolveDateShorthands(op.field.field);
                 for (let index = 0; index < rows.length; index++) {
                     let row = rows[index];
-                    let value = context.evaluate(op.field.field, row.data);
+                    let value = context.evaluate(flattenField, row.data);
                     if (!value.successful) {
                         errors.push({ index, message: value.error });
                         continue;
@@ -234,10 +239,11 @@ export function executeCoreExtract(
     let startTime = Date.now();
     let errors: ExecutionError[] = [];
     let res: Pagerow[] = [];
+    let extractFields = Object.entries(fields).map(([name, field]) => [name, resolveDateShorthands(field)] as const);
 
     outer: for (let index = 0; index < core.data.length; index++) {
         let page: Pagerow = { id: core.data[index].id, data: {} };
-        for (let [name, field] of Object.entries(fields)) {
+        for (let [name, field] of extractFields) {
             let value = context.evaluate(field, core.data[index].data);
             if (!value.successful) {
                 errors.push({ index: index, message: value.error });
@@ -441,7 +447,7 @@ export function executeInline(
 ): Result<Literal, string> {
     return new Context(defaultLinkHandler(index, origin), settings, {
         this: index.pages.get(origin)?.serialize(index) ?? {},
-    }).evaluate(field);
+    }).evaluate(resolveDateShorthands(field));
 }
 
 /** The default link resolver used when creating contexts. */

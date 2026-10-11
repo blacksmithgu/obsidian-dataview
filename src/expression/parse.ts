@@ -78,6 +78,45 @@ export const DATE_SHORTHANDS = {
 };
 
 /**
+ * Return `field` with every date shorthand call (`date(today)`, `date(now)`, ...) replaced by the literal it refers to
+ * right now. The parser leaves shorthands as calls so that long-lived parsed queries do not freeze the date they were
+ * parsed on; query execution runs this on each expression before looping over rows, so that every row sees the same
+ * instant and pays only for a literal rather than re-resolving the shorthand through the `date()` function per row.
+ */
+export function resolveDateShorthands(field: Field): Field {
+    switch (field.type) {
+        case "function":
+            let arg = field.arguments.length == 1 ? field.arguments[0] : undefined;
+            if (
+                field.func.type == "variable" &&
+                field.func.name == "date" &&
+                arg?.type == "literal" &&
+                typeof arg.value == "string" &&
+                Object.prototype.hasOwnProperty.call(DATE_SHORTHANDS, arg.value)
+            )
+                return Fields.literal(DATE_SHORTHANDS[arg.value as keyof typeof DATE_SHORTHANDS]());
+            return Fields.func(resolveDateShorthands(field.func), field.arguments.map(resolveDateShorthands));
+        case "binaryop":
+            return Fields.binaryOp(resolveDateShorthands(field.left), field.op, resolveDateShorthands(field.right));
+        case "negated":
+            return Fields.negate(resolveDateShorthands(field.child));
+        case "index":
+            return Fields.index(resolveDateShorthands(field.object), resolveDateShorthands(field.index));
+        case "lambda":
+            return Fields.lambda(field.arguments, resolveDateShorthands(field.value));
+        case "list":
+            return Fields.list(field.values.map(resolveDateShorthands));
+        case "object":
+            let values: Record<string, Field> = {};
+            for (let [key, value] of Object.entries(field.values)) values[key] = resolveDateShorthands(value);
+            return Fields.object(values);
+        case "variable":
+        case "literal":
+            return field;
+    }
+}
+
+/**
  * Keywords which cannot be used as variables directly. Use `row.<thing>` if it is a variable you have defined and want
  * to access.
  */
