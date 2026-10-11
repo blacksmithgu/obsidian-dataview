@@ -221,9 +221,17 @@ describe("Parse Year-Month-DayTHour:Minute:Second(.Millisecond?)Timezone", () =>
 test("Parse invalid date", () => expect(EXPRESSION.date.parse("4237-14-73").status).toBeFalsy());
 
 test("Parse Today", () => {
-    let date = EXPRESSION.dateField.tryParse("date(today)") as LiteralField;
+    // Shorthands are resolved at evaluation time (so long-lived queries pick up date changes), not at parse time.
+    expect(EXPRESSION.dateField.tryParse("date(today)")).toEqual(
+        Fields.func(Fields.variable("date"), [Fields.literal("today")])
+    );
+    expect(EXPRESSION.dateField.tryParse("date( start-of-week )")).toEqual(
+        Fields.func(Fields.variable("date"), [Fields.literal("start-of-week")])
+    );
+
+    let date = EXPRESSION.dateField.tryParse("date(2021-01-14)") as LiteralField;
     expect(Values.isDate(date.value)).toEqual(true);
-    expect(date.value).toEqual(DateTime.local().startOf("day"));
+    expect(date.value).toEqual(DateTime.fromObject({ year: 2021, month: 1, day: 14 }));
 });
 
 // <-- Durations -->
