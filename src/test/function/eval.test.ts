@@ -2,7 +2,7 @@
 
 import { EXPRESSION } from "expression/parse";
 import { Context, LinkHandler } from "expression/context";
-import { Duration } from "luxon";
+import { DateTime, Duration, Settings } from "luxon";
 import { Fields } from "expression/field";
 import { Literal, Link } from "data-model/value";
 import { DEFAULT_QUERY_SETTINGS } from "settings";
@@ -55,6 +55,41 @@ test("Evaluate date comparisons", () => {
 test("Evaluate date subtraction", () => {
     let duration = parseEval("date(2021-05-04) - date(1997-05-17)") as Duration;
     expect(duration.years).toEqual(23);
+});
+
+describe("Date shorthands", () => {
+    afterEach(() => {
+        Settings.now = () => Date.now();
+    });
+
+    test("Evaluate to the current date", () => {
+        expect(parseEval("date(today)")).toEqual(DateTime.local().startOf("day"));
+        expect(parseEval("date(tomorrow)")).toEqual(DateTime.local().startOf("day").plus({ days: 1 }));
+        expect(parseEval("date(sow)")).toEqual(DateTime.local().startOf("week"));
+        expect(parseEval("date(end-of-month)")).toEqual(DateTime.local().endOf("month"));
+    });
+
+    test("Arithmetic and comparisons", () => {
+        expect(parseEval("date(today) - dur(1 day)")).toEqual(DateTime.local().startOf("day").minus({ days: 1 }));
+        expect(parseEval("date(yesterday) < date(today)")).toEqual(true);
+        expect(parseEval("date(today) <= date(now)")).toEqual(true);
+        expect(parseEval("date(2000-01-01) < date(today)")).toEqual(true);
+        expect(parseEval("date(today).year")).toEqual(DateTime.local().year);
+    });
+
+    test("Resolved when evaluated, not when parsed", () => {
+        // Computed outside the `Settings.now` closures, since constructing a DateTime itself consults `Settings.now`.
+        let march10 = DateTime.local(2024, 3, 10, 12).toMillis();
+        let march14 = DateTime.local(2024, 3, 14, 12).toMillis();
+
+        Settings.now = () => march10;
+        let field = EXPRESSION.field.tryParse("date(today)");
+        expect((simpleContext().tryEvaluate(field) as DateTime).toISODate()).toEqual("2024-03-10");
+
+        // Move the clock forward four days and evaluate the same parsed field again.
+        Settings.now = () => march14;
+        expect((simpleContext().tryEvaluate(field) as DateTime).toISODate()).toEqual("2024-03-14");
+    });
 });
 
 // <-- Field resolution -->

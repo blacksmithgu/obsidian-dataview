@@ -187,7 +187,7 @@ export interface ExpressionLanguage {
     numberField: LiteralField;
     boolField: LiteralField;
     stringField: LiteralField;
-    dateField: LiteralField;
+    dateField: Field;
     durationField: LiteralField;
     linkField: LiteralField;
     nullField: LiteralField;
@@ -438,10 +438,15 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
         P.seqMap(
             P.string("date("),
             P.optWhitespace,
-            q.datePlus,
+            P.alt<Field>(
+                // Shorthands like 'today' are relative to the current time, so defer resolving them to evaluation
+                // time (via the `date()` function) rather than freezing them into the parsed field.
+                q.dateShorthand.map(d => Fields.func(Fields.variable("date"), [Fields.literal(d)])),
+                q.date.map(d => Fields.literal(d))
+            ),
             P.optWhitespace,
             P.string(")"),
-            (prefix, _1, date, _2, postfix) => Fields.literal(date)
+            (prefix, _1, date, _2, postfix) => date
         ).desc("date"),
     durationField: q =>
         P.seqMap(
