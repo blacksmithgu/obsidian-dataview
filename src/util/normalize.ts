@@ -42,6 +42,15 @@ export function getParentFolder(path: string): string {
     return path.split("/").slice(0, -1).join("/");
 }
 
+/** Parse a user-entered list of folders (one per line) into vault-relative paths without leading or trailing slashes. */
+export function parseFolderList(raw: string): string[] {
+    const folders = raw
+        .split("\n")
+        .map(line => line.trim().replace(/^\/+|\/+$/g, ""))
+        .filter(line => line.length > 0);
+    return Array.from(new Set(folders));
+}
+
 /** Get the file name for the file referenced in the given path, by stripping the parent folders. */
 export function getFileName(path: string): string {
     return path.includes("/") ? path.substring(path.lastIndexOf("/") + 1) : path;
