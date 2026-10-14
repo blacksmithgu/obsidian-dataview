@@ -189,6 +189,15 @@ export class FullIndex extends Component {
 
         // The first load of a file is attempted from persisted cache; subsequent loads just use the importer.
         if (this.pages.has(file.path) || this.initialized) {
+            // Obsidian fires 'resolve' for many files whose contents have not changed (for example while it
+            // re-resolves links at startup), so only re-read and re-parse the file if it differs from what was
+            // last indexed. Links may still resolve differently, so re-canonicalize the in-memory metadata.
+            const existing = this.pages.get(file.path);
+            if (existing && FullIndex.isUnchanged(existing, file)) {
+                this.finish(file, existing);
+                return { cached: false, skipped: false };
+            }
+
             await this.import(file);
             return { cached: false, skipped: false };
         } else {
@@ -210,6 +219,11 @@ export class FullIndex extends Component {
                 }
             });
         }
+    }
+
+    /** Whether the indexed metadata was parsed from the file as it currently is on disk (same mtime and size). */
+    private static isUnchanged(meta: PageMetadata, file: TFile): boolean {
+        return meta.mtime?.toMillis() === file.stat.mtime && meta.size === file.stat.size;
     }
 
     /** Import a file directly from disk, skipping the cache. */
