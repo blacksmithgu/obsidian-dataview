@@ -11,9 +11,17 @@ import { getParentFolder, setsEqual } from "util/normalize";
 
 /** Aggregate index which has several sub-indices and will initialize all of them. */
 export class FullIndex extends Component {
-    /** Generate a full index from the given vault. */
-    public static create(app: App, indexVersion: string, onChange: () => void): FullIndex {
-        return new FullIndex(app, indexVersion, onChange);
+    /**
+     * Generate a full index from the given vault. Files inside any of the folders returned by `excludedFolders` are
+     * not indexed.
+     */
+    public static create(
+        app: App,
+        indexVersion: string,
+        onChange: () => void,
+        excludedFolders: () => string[] = () => []
+    ): FullIndex {
+        return new FullIndex(app, indexVersion, onChange, excludedFolders);
     }
 
     /** Whether all files in the vault have been indexed at least once. */
@@ -53,7 +61,12 @@ export class FullIndex extends Component {
     public importer: FileImporter;
 
     /** Construct a new index using the app data and a current data version. */
-    private constructor(public app: App, public indexVersion: string, public onChange: () => void) {
+    private constructor(
+        public app: App,
+        public indexVersion: string,
+        public onChange: () => void,
+        private excludedFolders: () => string[]
+    ) {
         super();
 
         this.initialized = false;
@@ -131,6 +144,35 @@ export class FullIndex extends Component {
         console.log(`Dataview: re-initialized index with ${files.length} files (${(Date.now() - start) / 1000.0}s)`);
     }
 
+    /** Whether the file at the given path is inside a folder which has been excluded from the index. */
+    public isExcluded(path: string): boolean {
+        for (const folder of this.excludedFolders()) {
+            if (path === folder || path.startsWith(folder + "/")) return true;
+        }
+
+        return false;
+    }
+
+    /** Remove a path from all in-memory indices. */
+    private forget(path: string) {
+        this.pages.delete(path);
+        this.tags.delete(path);
+        this.etags.delete(path);
+        this.links.delete(path);
+    }
+
+    /** Apply changes to the excluded folders: drop files which are now excluded and index files which no longer are. */
+    public async refreshExclusions() {
+        for (const path of Array.from(this.pages.keys())) {
+            if (this.isExcluded(path)) this.forget(path);
+        }
+
+        const added = this.vault.getMarkdownFiles().filter(file => !this.pages.has(file.path));
+        await Promise.all(added.map(file => this.reload(file)));
+
+        this.touch();
+    }
+
     /** Internal asynchronous initializer. */
     private async _initialize(files: TFile[]) {
         let reloadStart = Date.now();
@@ -156,8 +198,8 @@ export class FullIndex extends Component {
             }s (${cached} cached, ${skipped} skipped).`
         );
 
-        // Drop keys for files which do not exist anymore.
-        let remaining = await this.persister.synchronize(files.map(l => l.path));
+        // Drop keys for files which do not exist anymore, or which are now excluded from the index.
+        let remaining = await this.persister.synchronize(files.filter(l => !this.isExcluded(l.path)).map(l => l.path));
         if (remaining.size > 0) {
             console.log(`Dataview: Dropped cache entries for ${remaining.size} deleted files.`);
         }
@@ -165,6 +207,20 @@ export class FullIndex extends Component {
 
     public rename(file: TAbstractFile, oldPath: string) {
         if (!(file instanceof TFile) || !PathFilters.markdown(file.path)) return;
+
+        // Files moved into an excluded folder leave the index; files moved out of one are indexed.
+        if (this.isExcluded(file.path)) {
+            if (this.pages.has(oldPath)) {
+                this.forget(oldPath);
+                this.touch();
+                this.trigger("delete", file);
+            }
+            return;
+        }
+        if (this.isExcluded(oldPath)) {
+            this.reload(file);
+            return;
+        }
 
         if (this.pages.has(oldPath)) {
             const oldMeta = this.pages.get(oldPath);
@@ -185,7 +241,7 @@ export class FullIndex extends Component {
 
     /** Queue a file for reloading; this is done asynchronously in the background and may take a few seconds. */
     public async reload(file: TFile): Promise<{ cached: boolean; skipped: boolean }> {
-        if (!PathFilters.markdown(file.path)) return { cached: false, skipped: true };
+        if (!PathFilters.markdown(file.path) || this.isExcluded(file.path)) return { cached: false, skipped: true };
 
         // The first load of a file is attempted from persisted cache; subsequent loads just use the importer.
         if (this.pages.has(file.path) || this.initialized) {

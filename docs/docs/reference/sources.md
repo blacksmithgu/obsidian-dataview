@@ -29,6 +29,8 @@ FROM "projects/brainstorming"
 ```
 ~~~
 
+Files in folders listed under **Excluded folders** in the Dataview settings are not indexed, so they never match any source. Use this to keep large folders you never query out of the index.
+
 
 ### Specific Files
 

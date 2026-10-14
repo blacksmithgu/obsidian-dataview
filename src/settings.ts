@@ -90,6 +90,8 @@ export interface DataviewSettings extends QuerySettings, ExportSettings {
     prettyRenderInlineFieldsInLivePreview: boolean;
     /** The keyword for DataviewJS blocks. */
     dataviewJsKeyword: string;
+    /** Folders (vault-relative paths) whose files are not indexed; useful for very large or irrelevant folders. */
+    excludedFolders: string[];
 }
 
 /** Default settings for dataview on install. */
@@ -106,5 +108,6 @@ export const DEFAULT_SETTINGS: DataviewSettings = {
         prettyRenderInlineFields: true,
         prettyRenderInlineFieldsInLivePreview: true,
         dataviewJsKeyword: "dataviewjs",
+        excludedFolders: [],
     },
 };

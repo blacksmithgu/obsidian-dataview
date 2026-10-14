@@ -12,7 +12,7 @@ import {
 import { renderErrorPre } from "ui/render";
 import { FullIndex } from "data-index/index";
 import { parseField } from "expression/parse";
-import { tryOrPropagate } from "util/normalize";
+import { parseFolderList, tryOrPropagate } from "util/normalize";
 import { DataviewApi, isDataviewDisabled } from "api/plugin-api";
 import { DataviewSettings, DEFAULT_QUERY_SETTINGS, DEFAULT_SETTINGS } from "settings";
 import { DataviewInlineRenderer } from "ui/views/inline-view";
@@ -48,9 +48,14 @@ export default class DataviewPlugin extends Plugin {
         this.addSettingTab(new GeneralSettingsTab(this.app, this));
 
         this.index = this.addChild(
-            FullIndex.create(this.app, this.manifest.version, () => {
-                if (this.settings.refreshEnabled) this.debouncedRefresh();
-            })
+            FullIndex.create(
+                this.app,
+                this.manifest.version,
+                () => {
+                    if (this.settings.refreshEnabled) this.debouncedRefresh();
+                },
+                () => this.settings.excludedFolders ?? []
+            )
         );
 
         // Set up automatic (intelligent) view refreshing that debounces.
@@ -435,6 +440,24 @@ class GeneralSettingsTab extends PluginSettingTab {
                     .setValue(this.plugin.settings.inlineQueriesInCodeblocks)
                     .onChange(async value => await this.plugin.updateSettings({ inlineQueriesInCodeblocks: value }))
             );
+
+        new Setting(this.containerEl).setName("Indexing").setHeading();
+
+        new Setting(this.containerEl)
+            .setName("Excluded folders")
+            .setDesc(
+                "Folders (one vault-relative path per line) whose files are not indexed by Dataview. " +
+                    "Excluding large folders you never query speeds up startup and reduces memory use in large vaults. " +
+                    "Queries will not return pages from these folders. Changes apply when you leave this field."
+            )
+            .addTextArea(text => {
+                text.setPlaceholder("Archive\nClippings/Raw")
+                    .setValue((this.plugin.settings.excludedFolders ?? []).join("\n"))
+                    .onChange(
+                        async value => await this.plugin.updateSettings({ excludedFolders: parseFolderList(value) })
+                    );
+                text.inputEl.addEventListener("blur", () => this.plugin.index.refreshExclusions());
+            });
 
         new Setting(this.containerEl).setName("View").setHeading();
 
