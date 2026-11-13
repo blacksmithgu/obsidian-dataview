@@ -1,4 +1,6 @@
+import { t } from "i18n";
 /** Provides core preact / rendering utilities for all view types. */
+import { booleanLabel } from "ui/boolean";
 import { App, MarkdownRenderChild, MarkdownRenderer } from "obsidian";
 import { h, createContext, ComponentChildren, render, Fragment } from "preact";
 import { useContext, useEffect, useRef, useState } from "preact/hooks";
@@ -112,7 +114,7 @@ export function RawLit({
     } else if (Values.isNumber(value)) {
         return <Fragment>{"" + value}</Fragment>;
     } else if (Values.isBoolean(value)) {
-        return <Fragment>{"" + value}</Fragment>;
+        return <Fragment>{booleanLabel(value)}</Fragment>;
     } else if (Values.isDate(value)) {
         return <Fragment>{renderMinimalDate(value, context.settings, currentLocale())}</Fragment>;
     } else if (Values.isDuration(value)) {
@@ -167,7 +169,7 @@ export function RawLit({
                 </ul>
             );
         } else {
-            if (value.length == 0) return <Fragment>&lt;Empty List&gt;</Fragment>;
+            if (value.length == 0) return <Fragment>{t("<Empty List>")}</Fragment>;
 
             return (
                 <span class="dataview dataview-result-list-span">
@@ -197,7 +199,7 @@ export function RawLit({
                 </ul>
             );
         } else {
-            if (Object.keys(value).length == 0) return <Fragment>&lt;Empty Object&gt;</Fragment>;
+            if (Object.keys(value).length == 0) return <Fragment>{t("<Empty Object>")}</Fragment>;
 
             return (
                 <span class="dataview dataview-result-object-span">
@@ -212,7 +214,12 @@ export function RawLit({
         }
     }
 
-    return <Fragment>&lt;Unrecognized: {JSON.stringify(value)}&gt;</Fragment>;
+    return (
+        <Fragment>
+            &lt;{t("Unrecognized: ")}
+            {JSON.stringify(value)}&gt;
+        </Fragment>
+    );
 }
 
 /** Intelligently render an arbitrary literal value. */

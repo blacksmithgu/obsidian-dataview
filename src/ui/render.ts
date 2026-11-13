@@ -1,3 +1,5 @@
+import { t } from "i18n";
+import { booleanLabel } from "ui/boolean";
 import { App, Component, MarkdownRenderer } from "obsidian";
 import { DataArray } from "api/data-array";
 import { QuerySettings } from "settings";
@@ -101,7 +103,9 @@ export async function renderValue(
         container.appendText(renderMinimalDate(field, settings, currentLocale()));
     } else if (Values.isDuration(field)) {
         container.appendText(renderMinimalDuration(field));
-    } else if (Values.isString(field) || Values.isBoolean(field) || Values.isNumber(field)) {
+    } else if (Values.isBoolean(field)) {
+        container.appendText(booleanLabel(field));
+    } else if (Values.isString(field) || Values.isNumber(field)) {
         await renderCompactMarkdown(app, "" + field, container, originFile, component, isInlineFieldLivePreview);
     } else if (Values.isLink(field)) {
         await renderCompactMarkdown(app, field.markdown(), container, originFile, component, isInlineFieldLivePreview);
@@ -173,7 +177,7 @@ export async function renderValue(
             }
         } else {
             if (field.length == 0) {
-                container.appendText("<empty list>");
+                container.appendText(t("<empty list>"));
                 return;
             }
 
@@ -224,7 +228,7 @@ export async function renderValue(
             }
         } else {
             if (Object.keys(field).length == 0) {
-                container.appendText("<empty object>");
+                container.appendText(t("<empty object>"));
                 return;
             }
 
@@ -250,6 +254,6 @@ export async function renderValue(
             }
         }
     } else {
-        container.appendText("Unrecognized: " + JSON.stringify(field));
+        container.appendText(t("Unrecognized: ") + JSON.stringify(field));
     }
 }
