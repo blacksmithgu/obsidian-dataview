@@ -1,3 +1,4 @@
+import { t as translateUi } from "../../i18n";
 import { Literal } from "data-model/value";
 import { executeTable } from "query/engine";
 import { Query } from "query/query";
@@ -60,7 +61,7 @@ export function TableGrouping({
                 </tbody>
             </table>
             {settings.warnOnEmptyResult && values.length == 0 && (
-                <ErrorMessage message="Dataview: No results to show for table query." />
+                <ErrorMessage message={translateUi("Dataview: No results to show for table query.")} />
             )}
         </Fragment>
     );

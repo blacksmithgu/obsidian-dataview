@@ -1,3 +1,4 @@
+import { t as translateUi } from "../../i18n";
 import { FullIndex } from "data-index";
 import { Link } from "index";
 import { App } from "obsidian";
@@ -38,7 +39,7 @@ export class DataviewCalendarRenderer extends DataviewRefreshableRenderer {
             renderErrorPre(this.container, "Dataview: " + maybeResult.error);
             return;
         } else if (maybeResult.value.data.length == 0 && this.settings.warnOnEmptyResult) {
-            renderErrorPre(this.container, "Dataview: Query returned 0 results.");
+            renderErrorPre(this.container, translateUi("Dataview: Query returned 0 results."));
             return;
         }
         let dateMap = new Map<string, CalendarFile[]>();

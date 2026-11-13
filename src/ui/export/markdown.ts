@@ -1,3 +1,4 @@
+import { displayValue } from "ui/boolean";
 import { SListItem } from "data-model/serialized/markdown";
 import { Grouping, Groupings, Literal, Values, Widgets } from "data-model/value";
 import { DEFAULT_SETTINGS, ExportSettings, QuerySettings } from "settings";
@@ -55,7 +56,7 @@ function tableLiteral(value: Literal, allowHtml: boolean = true, settings?: Quer
 
 /** Convert a value to a Markdown-friendly string; does not do escaping. */
 function rawTableLiteral(value: Literal, allowHtml: boolean = true, settings?: QuerySettings): string {
-    if (!allowHtml) return Values.toString(value, settings);
+    if (!allowHtml) return Values.toString(displayValue(value), settings);
 
     if (Values.isArray(value)) {
         return `<ul>${value.map(v => "<li>" + tableLiteral(v, allowHtml, settings) + "</li>").join("")}</ul>`;
@@ -72,7 +73,7 @@ function rawTableLiteral(value: Literal, allowHtml: boolean = true, settings?: Q
 
         return `<ul>${inner}</ul>`;
     } else {
-        return Values.toString(value, settings);
+        return Values.toString(displayValue(value), settings);
     }
 }
 
@@ -121,7 +122,7 @@ function markdownListRec(input: Literal, settings?: QuerySettings & ExportSettin
         return `${Values.toString(input.key)}: ${markdownListRec(input.value, settings, depth + 1)}`;
     }
 
-    return Values.toString(input);
+    return Values.toString(displayValue(input), settings);
 }
 
 ///////////

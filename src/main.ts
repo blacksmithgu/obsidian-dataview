@@ -1,3 +1,4 @@
+import { t as translateUi } from "./i18n";
 import {
     App,
     Component,
@@ -108,7 +109,7 @@ export default class DataviewPlugin extends Plugin {
         // Dataview "force refresh" operation.
         this.addCommand({
             id: "dataview-force-refresh-views",
-            name: "Force refresh all views and blocks",
+            name: translateUi("Force refresh all views and blocks"),
             callback: () => {
                 this.index.revision += 1;
                 this.app.workspace.trigger("dataview:refresh-views");
@@ -117,7 +118,7 @@ export default class DataviewPlugin extends Plugin {
 
         this.addCommand({
             id: "dataview-drop-cache",
-            name: "Drop all cached file metadata",
+            name: translateUi("Drop all cached file metadata"),
             callback: () => {
                 this.index.reinitialize();
             },
@@ -129,7 +130,7 @@ export default class DataviewPlugin extends Plugin {
 
         this.addCommand({
             id: "dataview-rebuild-current-view",
-            name: "Rebuild current view",
+            name: translateUi("Rebuild current view"),
             callback: () => {
                 const activeView: MarkdownView | null = this.app.workspace.getActiveViewOfType(MarkdownView);
                 if (activeView) {
@@ -333,8 +334,8 @@ class GeneralSettingsTab extends PluginSettingTab {
         this.containerEl.empty();
 
         new Setting(this.containerEl)
-            .setName("Enable inline queries")
-            .setDesc("Enable or disable executing regular inline Dataview queries.")
+            .setName(translateUi("Enable inline queries"))
+            .setDesc(translateUi("Enable or disable executing regular inline Dataview queries."))
             .addToggle(toggle =>
                 toggle
                     .setValue(this.plugin.settings.enableInlineDataview)
@@ -342,8 +343,8 @@ class GeneralSettingsTab extends PluginSettingTab {
             );
 
         new Setting(this.containerEl)
-            .setName("Enable JavaScript queries")
-            .setDesc("Enable or disable executing DataviewJS queries.")
+            .setName(translateUi("Enable JavaScript queries"))
+            .setDesc(translateUi("Enable or disable executing DataviewJS queries."))
             .addToggle(toggle =>
                 toggle
                     .setValue(this.plugin.settings.enableDataviewJs)
@@ -351,9 +352,11 @@ class GeneralSettingsTab extends PluginSettingTab {
             );
 
         new Setting(this.containerEl)
-            .setName("Enable inline JavaScript queries")
+            .setName(translateUi("Enable inline JavaScript queries"))
             .setDesc(
-                "Enable or disable executing inline DataviewJS queries. Requires that DataviewJS queries are enabled."
+                translateUi(
+                    "Enable or disable executing inline DataviewJS queries. Requires that DataviewJS queries are enabled."
+                )
             )
             .addToggle(toggle =>
                 toggle
@@ -362,8 +365,12 @@ class GeneralSettingsTab extends PluginSettingTab {
             );
 
         new Setting(this.containerEl)
-            .setName("Enable inline field highlighting in reading view")
-            .setDesc("Enables or disables visual highlighting / pretty rendering for inline fields in reading view.")
+            .setName(translateUi("Enable inline field highlighting in reading view"))
+            .setDesc(
+                translateUi(
+                    "Enables or disables visual highlighting / pretty rendering for inline fields in reading view."
+                )
+            )
             .addToggle(toggle =>
                 toggle
                     .setValue(this.plugin.settings.prettyRenderInlineFields)
@@ -371,8 +378,12 @@ class GeneralSettingsTab extends PluginSettingTab {
             );
 
         new Setting(this.containerEl)
-            .setName("Enable inline field highlighting in Live Preview")
-            .setDesc("Enables or disables visual highlighting / pretty rendering for inline fields in Live Preview.")
+            .setName(translateUi("Enable inline field highlighting in Live Preview"))
+            .setDesc(
+                translateUi(
+                    "Enables or disables visual highlighting / pretty rendering for inline fields in Live Preview."
+                )
+            )
             .addToggle(toggle =>
                 toggle.setValue(this.plugin.settings.prettyRenderInlineFieldsInLivePreview).onChange(async value => {
                     await this.plugin.updateSettings({ prettyRenderInlineFieldsInLivePreview: value });
@@ -380,12 +391,14 @@ class GeneralSettingsTab extends PluginSettingTab {
                 })
             );
 
-        new Setting(this.containerEl).setName("Codeblocks").setHeading();
+        new Setting(this.containerEl).setName(translateUi("Codeblocks")).setHeading();
 
         new Setting(this.containerEl)
-            .setName("DataviewJS keyword")
+            .setName(translateUi("DataviewJS keyword"))
             .setDesc(
-                "Keyword for DataviewJS blocks. Defaults to 'dataviewjs'. Reload required for changes to take effect."
+                translateUi(
+                    "Keyword for DataviewJS blocks. Defaults to 'dataviewjs'. Reload required for changes to take effect."
+                )
             )
             .addText(text =>
                 text
@@ -400,8 +413,8 @@ class GeneralSettingsTab extends PluginSettingTab {
             );
 
         new Setting(this.containerEl)
-            .setName("Inline query prefix")
-            .setDesc("The prefix to inline queries (to mark them as Dataview queries). Defaults to '='.")
+            .setName(translateUi("Inline query prefix"))
+            .setDesc(translateUi("The prefix to inline queries (to mark them as Dataview queries). Defaults to '='."))
             .addText(text =>
                 text
                     .setPlaceholder("=")
@@ -414,8 +427,12 @@ class GeneralSettingsTab extends PluginSettingTab {
             );
 
         new Setting(this.containerEl)
-            .setName("JavaScript inline query prefix")
-            .setDesc("The prefix to JavaScript inline queries (to mark them as DataviewJS queries). Defaults to '$='.")
+            .setName(translateUi("JavaScript inline query prefix"))
+            .setDesc(
+                translateUi(
+                    "The prefix to JavaScript inline queries (to mark them as DataviewJS queries). Defaults to '$='."
+                )
+            )
             .addText(text =>
                 text
                     .setPlaceholder("$=")
@@ -428,19 +445,23 @@ class GeneralSettingsTab extends PluginSettingTab {
             );
 
         new Setting(this.containerEl)
-            .setName("Code block inline queries")
-            .setDesc("If enabled, inline queries will also be evaluated inside full code blocks.")
+            .setName(translateUi("Code block inline queries"))
+            .setDesc(translateUi("If enabled, inline queries will also be evaluated inside full code blocks."))
             .addToggle(toggle =>
                 toggle
                     .setValue(this.plugin.settings.inlineQueriesInCodeblocks)
                     .onChange(async value => await this.plugin.updateSettings({ inlineQueriesInCodeblocks: value }))
             );
 
-        new Setting(this.containerEl).setName("View").setHeading();
+        new Setting(this.containerEl).setName(translateUi("View")).setHeading();
 
         new Setting(this.containerEl)
-            .setName("Display result count")
-            .setDesc("If toggled off, the small number in the result header of TASK and TABLE queries will be hidden.")
+            .setName(translateUi("Display result count"))
+            .setDesc(
+                translateUi(
+                    "If toggled off, the small number in the result header of TASK and TABLE queries will be hidden."
+                )
+            )
             .addToggle(toggle =>
                 toggle.setValue(this.plugin.settings.showResultCount).onChange(async value => {
                     await this.plugin.updateSettings({ showResultCount: value });
@@ -449,8 +470,8 @@ class GeneralSettingsTab extends PluginSettingTab {
             );
 
         new Setting(this.containerEl)
-            .setName("Warn on empty result")
-            .setDesc("If set, queries which return 0 results will render a warning message.")
+            .setName(translateUi("Warn on empty result"))
+            .setDesc(translateUi("If set, queries which return 0 results will render a warning message."))
             .addToggle(toggle =>
                 toggle.setValue(this.plugin.settings.warnOnEmptyResult).onChange(async value => {
                     await this.plugin.updateSettings({ warnOnEmptyResult: value });
@@ -459,8 +480,12 @@ class GeneralSettingsTab extends PluginSettingTab {
             );
 
         new Setting(this.containerEl)
-            .setName("Render null as")
-            .setDesc("What null/non-existent should show up as in tables, by default. This supports Markdown notation.")
+            .setName(translateUi("Render null as"))
+            .setDesc(
+                translateUi(
+                    "What null/non-existent should show up as in tables, by default. This supports Markdown notation."
+                )
+            )
             .addText(text =>
                 text
                     .setPlaceholder("-")
@@ -472,10 +497,14 @@ class GeneralSettingsTab extends PluginSettingTab {
             );
 
         new Setting(this.containerEl)
-            .setName("Automatic view refreshing")
+            .setName(translateUi("Automatic view refreshing"))
             .setDesc(
-                "If enabled, views will automatically refresh when files in your vault change; this can negatively affect" +
-                    " some functionality like embeds in views, so turn it off if such functionality is not working."
+                translateUi(
+                    "If enabled, views will automatically refresh when files in your vault change; this can negatively affect"
+                ) +
+                    translateUi(
+                        " some functionality like embeds in views, so turn it off if such functionality is not working."
+                    )
             )
             .addToggle(toggle =>
                 toggle.setValue(this.plugin.settings.refreshEnabled).onChange(async value => {
@@ -485,8 +514,10 @@ class GeneralSettingsTab extends PluginSettingTab {
             );
 
         new Setting(this.containerEl)
-            .setName("Refresh interval")
-            .setDesc("How long to wait (in milliseconds) for files to stop changing before updating views.")
+            .setName(translateUi("Refresh interval"))
+            .setDesc(
+                translateUi("How long to wait (in milliseconds) for files to stop changing before updating views.")
+            )
             .addText(text =>
                 text
                     .setPlaceholder("500")
@@ -500,10 +531,10 @@ class GeneralSettingsTab extends PluginSettingTab {
             );
 
         let dformat = new Setting(this.containerEl)
-            .setName("Date format")
+            .setName(translateUi("Date format"))
             .setDesc(
-                "The default date format (see Luxon date format options)." +
-                    " Currently: " +
+                translateUi("The default date format (see Luxon date format options).") +
+                    translateUi(" Currently: ") +
                     DateTime.now().toFormat(this.plugin.settings.defaultDateFormat, { locale: currentLocale() })
             )
             .addText(text =>
@@ -512,8 +543,8 @@ class GeneralSettingsTab extends PluginSettingTab {
                     .setValue(this.plugin.settings.defaultDateFormat)
                     .onChange(async value => {
                         dformat.setDesc(
-                            "The default date format (see Luxon date format options)." +
-                                " Currently: " +
+                            translateUi("The default date format (see Luxon date format options).") +
+                                translateUi(" Currently: ") +
                                 DateTime.now().toFormat(value, { locale: currentLocale() })
                         );
                         await this.plugin.updateSettings({ defaultDateFormat: value });
@@ -523,10 +554,10 @@ class GeneralSettingsTab extends PluginSettingTab {
             );
 
         let dtformat = new Setting(this.containerEl)
-            .setName("Date + time format")
+            .setName(translateUi("Date + time format"))
             .setDesc(
-                "The default date and time format (see Luxon date format options)." +
-                    " Currently: " +
+                translateUi("The default date and time format (see Luxon date format options).") +
+                    translateUi(" Currently: ") +
                     DateTime.now().toFormat(this.plugin.settings.defaultDateTimeFormat, { locale: currentLocale() })
             )
             .addText(text =>
@@ -535,8 +566,8 @@ class GeneralSettingsTab extends PluginSettingTab {
                     .setValue(this.plugin.settings.defaultDateTimeFormat)
                     .onChange(async value => {
                         dtformat.setDesc(
-                            "The default date and time format (see Luxon date format options)." +
-                                " Currently: " +
+                            translateUi("The default date and time format (see Luxon date format options).") +
+                                translateUi(" Currently: ") +
                                 DateTime.now().toFormat(value, { locale: currentLocale() })
                         );
                         await this.plugin.updateSettings({ defaultDateTimeFormat: value });
@@ -545,16 +576,18 @@ class GeneralSettingsTab extends PluginSettingTab {
                     })
             );
 
-        new Setting(this.containerEl).setName("Tables").setHeading();
+        new Setting(this.containerEl).setName(translateUi("Tables")).setHeading();
 
         new Setting(this.containerEl)
-            .setName("Primary column name")
+            .setName(translateUi("Primary column name"))
             .setDesc(
-                "The name of the default ID column in tables; this is the auto-generated first column that links to the source file."
+                translateUi(
+                    "The name of the default ID column in tables; this is the auto-generated first column that links to the source file."
+                )
             )
             .addText(text =>
                 text
-                    .setPlaceholder("File")
+                    .setPlaceholder(translateUi("File"))
                     .setValue(this.plugin.settings.tableIdColumnName)
                     .onChange(async value => {
                         await this.plugin.updateSettings({ tableIdColumnName: value });
@@ -563,14 +596,15 @@ class GeneralSettingsTab extends PluginSettingTab {
             );
 
         new Setting(this.containerEl)
-            .setName("Grouped column name")
+            .setName(translateUi("Grouped column name"))
             .setDesc(
-                "The name of the default ID column in tables, when the table is on grouped data; this is the auto-generated first column" +
-                    "that links to the source file/group."
+                translateUi(
+                    "The name of the default ID column in tables, when the table is on grouped data; this is the auto-generated first column"
+                ) + translateUi("that links to the source file/group.")
             )
             .addText(text =>
                 text
-                    .setPlaceholder("Group")
+                    .setPlaceholder(translateUi("Group"))
                     .setValue(this.plugin.settings.tableGroupColumnName)
                     .onChange(async value => {
                         await this.plugin.updateSettings({ tableGroupColumnName: value });
@@ -578,22 +612,26 @@ class GeneralSettingsTab extends PluginSettingTab {
                     })
             );
 
-        new Setting(this.containerEl).setName("Tasks").setHeading();
+        new Setting(this.containerEl).setName(translateUi("Tasks")).setHeading();
 
         let taskCompletionSubsettingsEnabled = this.plugin.settings.taskCompletionTracking;
         let taskCompletionInlineSubsettingsEnabled =
             taskCompletionSubsettingsEnabled && !this.plugin.settings.taskCompletionUseEmojiShorthand;
 
         new Setting(this.containerEl)
-            .setName("Automatic task completion tracking")
+            .setName(translateUi("Automatic task completion tracking"))
             .setDesc(
                 createFragment(el => {
                     el.appendText(
-                        "If enabled, Dataview will automatically append tasks with their completion date when they are checked in Dataview views."
+                        translateUi(
+                            "If enabled, Dataview will automatically append tasks with their completion date when they are checked in Dataview views."
+                        )
                     );
                     el.createEl("br");
                     el.appendText(
-                        "Example with default field name and date format: - [x] my task [completion:: 2022-01-01]"
+                        translateUi(
+                            "Example with default field name and date format: - [x] my task [completion:: 2022-01-01]"
+                        )
                     );
                 })
             )
@@ -606,23 +644,29 @@ class GeneralSettingsTab extends PluginSettingTab {
             );
 
         let taskEmojiShorthand = new Setting(this.containerEl)
-            .setName("Use emoji shorthand for completion")
+            .setName(translateUi("Use emoji shorthand for completion"))
             .setDisabled(!taskCompletionSubsettingsEnabled);
         if (taskCompletionSubsettingsEnabled)
             taskEmojiShorthand
                 .setDesc(
                     createFragment(el => {
                         el.appendText(
-                            'If enabled, will use emoji shorthand instead of inline field formatting to fill out implicit task field "completion".'
+                            translateUi(
+                                'If enabled, will use emoji shorthand instead of inline field formatting to fill out implicit task field "completion".'
+                            )
                         );
                         el.createEl("br");
-                        el.appendText("Example: - [x] my task ✅ 2022-01-01");
+                        el.appendText(translateUi("Example: - [x] my task ✅ 2022-01-01"));
                         el.createEl("br");
                         el.appendText(
-                            "Disable this to customize the completion date format or field name, or to use Dataview inline field formatting."
+                            translateUi(
+                                "Disable this to customize the completion date format or field name, or to use Dataview inline field formatting."
+                            )
                         );
                         el.createEl("br");
-                        el.appendText('Only available when "automatic task completion tracking" is enabled.');
+                        el.appendText(
+                            translateUi('Only available when "automatic task completion tracking" is enabled.')
+                        );
                     })
                 )
                 .addToggle(toggle =>
@@ -632,21 +676,28 @@ class GeneralSettingsTab extends PluginSettingTab {
                         this.display();
                     })
                 );
-        else taskEmojiShorthand.setDesc('Only available when "automatic task completion tracking" is enabled.');
+        else
+            taskEmojiShorthand.setDesc(
+                translateUi('Only available when "automatic task completion tracking" is enabled.')
+            );
 
         let taskFieldName = new Setting(this.containerEl)
-            .setName("Completion field name")
+            .setName(translateUi("Completion field name"))
             .setDisabled(!taskCompletionInlineSubsettingsEnabled);
         if (taskCompletionInlineSubsettingsEnabled)
             taskFieldName
                 .setDesc(
                     createFragment(el => {
                         el.appendText(
-                            "Text used as inline field key for task completion date when toggling a task's checkbox in a Dataview view."
+                            translateUi(
+                                "Text used as inline field key for task completion date when toggling a task's checkbox in a Dataview view."
+                            )
                         );
                         el.createEl("br");
                         el.appendText(
-                            'Only available when "automatic task completion tracking" is enabled and "use emoji shorthand for completion" is disabled.'
+                            translateUi(
+                                'Only available when "automatic task completion tracking" is enabled and "use emoji shorthand for completion" is disabled.'
+                            )
                         );
                     })
                 )
@@ -657,17 +708,23 @@ class GeneralSettingsTab extends PluginSettingTab {
                 );
         else
             taskFieldName.setDesc(
-                'Only available when "automatic task completion tracking" is enabled and "use emoji shorthand for completion" is disabled.'
+                translateUi(
+                    'Only available when "automatic task completion tracking" is enabled and "use emoji shorthand for completion" is disabled.'
+                )
             );
 
         let taskDtFormat = new Setting(this.containerEl)
-            .setName("Completion date format")
+            .setName(translateUi("Completion date format"))
             .setDisabled(!taskCompletionInlineSubsettingsEnabled);
         if (taskCompletionInlineSubsettingsEnabled) {
             let descTextLines = [
-                "Date-time format for task completion date when toggling a task's checkbox in a Dataview view (see Luxon date format options).",
-                'Only available when "automatic task completion tracking" is enabled and "use emoji shorthand for completion" is disabled.',
-                "Currently: ",
+                translateUi(
+                    "Date-time format for task completion date when toggling a task's checkbox in a Dataview view (see Luxon date format options)."
+                ),
+                translateUi(
+                    'Only available when "automatic task completion tracking" is enabled and "use emoji shorthand for completion" is disabled.'
+                ),
+                translateUi("Currently: "),
             ];
             taskDtFormat
                 .setDesc(
@@ -707,13 +764,17 @@ class GeneralSettingsTab extends PluginSettingTab {
                 );
         } else {
             taskDtFormat.setDesc(
-                'Only available when "automatic task completion tracking" is enabled and "use emoji shorthand for completion" is disabled.'
+                translateUi(
+                    'Only available when "automatic task completion tracking" is enabled and "use emoji shorthand for completion" is disabled.'
+                )
             );
         }
         new Setting(this.containerEl)
-            .setName("Recursive sub-task completion")
+            .setName(translateUi("Recursive sub-task completion"))
             // I gotta word this better :/
-            .setDesc("If enabled, completing a task in a Dataview will automatically complete its subtasks too.")
+            .setDesc(
+                translateUi("If enabled, completing a task in a Dataview will automatically complete its subtasks too.")
+            )
             .addToggle(toggle =>
                 toggle
                     .setValue(this.plugin.settings.recursiveSubTaskCompletion)

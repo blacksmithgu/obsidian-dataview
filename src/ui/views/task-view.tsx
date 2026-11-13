@@ -1,3 +1,4 @@
+import { t as translateUi } from "../../i18n";
 import { setEmojiShorthandCompletionField, setInlineField } from "data-import/inline-field";
 import { LIST_ITEM_REGEX } from "data-import/markdown-file";
 import { SListEntry, SListItem, STask } from "data-model/serialized/markdown";
@@ -151,7 +152,7 @@ function ListItem({ item }: { item: SListEntry }) {
 function TaskList({ items }: { items: SListItem[] }) {
     const settings = useContext(DataviewContext).settings;
     if (items.length == 0 && settings.warnOnEmptyResult)
-        return <ErrorMessage message="Dataview: No results to show for task query." />;
+        return <ErrorMessage message={translateUi("Dataview: No results to show for task query.")} />;
 
     let [nest, _mask] = nestItems(items);
     return (

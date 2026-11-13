@@ -1,3 +1,4 @@
+import { t as translateUi } from "../../i18n";
 import { MarkdownRenderChild } from "obsidian";
 import { executeList } from "query/engine";
 import { Query } from "query/query";
@@ -67,7 +68,7 @@ export function ListView({ query, sourcePath }: { query: Query; sourcePath: stri
         );
 
     if (items.items.length == 0 && context.settings.warnOnEmptyResult)
-        return <ErrorMessage message="Dataview: No results to show for list query." />;
+        return <ErrorMessage message={translateUi("Dataview: No results to show for list query.")} />;
 
     return <ListGrouping items={items.items} sourcePath={sourcePath} />;
 }

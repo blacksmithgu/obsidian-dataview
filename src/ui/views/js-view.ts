@@ -1,3 +1,4 @@
+import { t as translateUi } from "../../i18n";
 import { asyncEvalInContext, DataviewInlineApi } from "api/inline-api";
 import { renderErrorPre, renderValue } from "ui/render";
 import { DataviewRefreshableRenderer } from "ui/refreshable-view";
@@ -16,7 +17,7 @@ export class DataviewJSRenderer extends DataviewRefreshableRenderer {
             this.containerEl.innerHTML = "";
             renderErrorPre(
                 this.container,
-                "Dataview JS queries are disabled. You can enable them in the Dataview settings."
+                translateUi("Dataview JS queries are disabled. You can enable them in the Dataview settings.")
             );
             return;
         }
@@ -29,7 +30,7 @@ export class DataviewJSRenderer extends DataviewRefreshableRenderer {
             );
         } catch (e) {
             this.containerEl.innerHTML = "";
-            renderErrorPre(this.container, "Evaluation Error: " + e.stack);
+            renderErrorPre(this.container, translateUi("Evaluation Error: ") + e.stack);
         }
     }
 }
@@ -55,7 +56,7 @@ export class DataviewInlineJSRenderer extends DataviewRefreshableRenderer {
         this.errorbox?.remove();
         if (!this.settings.enableDataviewJs || !this.settings.enableInlineDataviewJs) {
             let temp = document.createElement("span");
-            temp.innerText = "(disabled; enable in settings)";
+            temp.innerText = translateUi("(disabled; enable in settings)");
             this.target.replaceWith(temp);
             this.target = temp;
             return;
