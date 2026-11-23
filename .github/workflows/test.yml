@@ -1,9 +1,7 @@
 name: Build and test project
 on:
   push:
-    branches: [ master ]
   pull_request:
-    branches: [ master ]
 
 jobs:
   format:
